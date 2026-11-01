@@ -5,6 +5,7 @@ import { buildFieldAliases, type FieldName } from "../settings";
 import { EntityInputSuggest } from "./suggest";
 import { linkTarget } from "../index/reader";
 import { relKind } from "../index/relkinds";
+import { asText } from "../index/text";
 
 /** Where a relationship is written: a property on one of the two notes. */
 export interface LinkSpec {
@@ -82,7 +83,7 @@ export async function removeLink(plugin: ChroniclePlugin, u: Unlink): Promise<bo
 			const generic = GENERIC_RELATIONS.has(key.toLowerCase());
 			// With a kind, only that kind's property, or entries of that kind in a general list.
 			if (want !== undefined && !generic && kindKey(key) !== want) continue;
-			const kindOf = (v: unknown) => kindKey(v && typeof v === "object" ? String((v as Record<string, unknown>).kind ?? "") : "");
+			const kindOf = (v: unknown) => kindKey(v && typeof v === "object" ? asText((v as Record<string, unknown>).kind ?? "") : "");
 			const matches = (v: unknown) => linkTarget(v)?.toLowerCase() === u.name.toLowerCase() && (want === undefined || !generic || kindOf(v) === want);
 			if (Array.isArray(cur)) {
 				const next = cur.filter((v) => !matches(v));
@@ -200,8 +201,8 @@ export class AddRelationModal extends Modal {
 				.addText((t) => t.setPlaceholder(this.spec.ask === "role" ? "Knight, steward, member…" : "mentor, rival, ally…").onChange((v) => (extra[this.spec.ask!] = v)));
 		}
 		if (this.spec.dates) {
-			new Setting(this.contentEl).setName("From").addText((t) => t.setPlaceholder("optional").onChange((v) => (extra.from = v)));
-			new Setting(this.contentEl).setName("To").addText((t) => t.setPlaceholder("optional").onChange((v) => (extra.to = v)));
+			new Setting(this.contentEl).setName("From").addText((t) => t.setPlaceholder("Optional").onChange((v) => (extra.from = v)));
+			new Setting(this.contentEl).setName("To").addText((t) => t.setPlaceholder("Optional").onChange((v) => (extra.to = v)));
 		}
 		const submit = async () => {
 			const name = (this.picked && nameInput.value === this.picked.name ? this.picked.name : nameInput.value).trim();

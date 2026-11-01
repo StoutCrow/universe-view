@@ -6,6 +6,7 @@ import { formatDay } from "../dates/parser";
 import { moonIcon } from "../render/calendar";
 import { el } from "../render/common";
 import { rowEditor } from "./rows";
+import { asText } from "../index/text";
 
 /**
  * Everything about a calendar in one window, with proper controls: months (and festival days),
@@ -78,10 +79,10 @@ export class CalendarEditorModal extends Modal {
 			c.name = v;
 			this.titleEl.setText(`Calendar: ${v}`);
 		}));
-		new Setting(basics).setName("Id").setDesc("What notes write in `calendar:`. Changing it unlinks notes that use the old one.").addText((t) => t.setValue(c.id).onChange((v) => (c.id = v.trim().toLowerCase().replace(/\s+/g, "-"))));
+		new Setting(basics).setName("ID").setDesc("What notes write in `calendar:`. Changing it unlinks notes that use the old one.").addText((t) => t.setValue(c.id).onChange((v) => (c.id = v.trim().toLowerCase().replace(/\s+/g, "-"))));
 		new Setting(basics).setName("Lines up with real dates").setDesc("The real date of this calendar's year 1, day 1, so dates convert between calendars. Leave empty if it doesn't matter.").addText((t) => {
 			const greg = this.plugin.calendars.get("gregorian");
-			t.setPlaceholder("e.g. 1200-03-01").setValue(c.epoch ? formatDay(c.epoch, greg) : "");
+			t.setPlaceholder("E.g. 1200-03-01").setValue(c.epoch ? formatDay(c.epoch, greg) : "");
 			t.inputEl.addEventListener("change", () => {
 				const d = t.getValue().trim() ? this.plugin.parseDate(t.getValue(), "gregorian") : null;
 				c.epoch = d ? d.start : 0;
@@ -108,7 +109,7 @@ export class CalendarEditorModal extends Modal {
 		}, { blank: () => ({ name: "" }), addLabel: "Add a weekday", reorder: true, empty: "No weeks." });
 		new Setting(weeks).setName("Year 1 began on").addDropdown((d) => {
 			const days = c.weekdays?.length ? c.weekdays : ["(no weeks)"];
-			days.forEach((w, i) => d.addOption(String(i), w));
+			for (const [i, w] of days.entries()) d.addOption(String(i), w);
 			d.setValue(String(c.firstWeekday ?? 0)).onChange((v) => {
 				c.firstWeekday = Number(v);
 				changed();
@@ -148,7 +149,7 @@ export class CalendarEditorModal extends Modal {
 			{ key: "offset", label: "Offset", kind: "number", width: "80px", step: 0.5 },
 			{ key: "color", label: "Colour", kind: "color", width: "90px" },
 		], (c.moons ?? []) as never[], (rows) => {
-			c.moons = (rows as unknown as Record<string, unknown>[]).filter((r) => Number(r.cycle) > 0).map((r) => ({ name: String(r.name || "Moon"), cycle: Number(r.cycle), offset: Number(r.offset) || 0, ...(r.color ? { color: String(r.color) } : {}) }));
+			c.moons = (rows as unknown as Record<string, unknown>[]).filter((r) => Number(r.cycle) > 0).map((r) => ({ name: asText(r.name || "Moon"), cycle: Number(r.cycle), offset: Number(r.offset) || 0, ...(r.color ? { color: asText(r.color) } : {}) }));
 			changed();
 		}, { blank: () => ({ name: "", cycle: 29.5, offset: 0 }) as never, addLabel: "Add a moon", empty: "No moons." });
 
@@ -159,7 +160,7 @@ export class CalendarEditorModal extends Modal {
 			{ key: "day", label: "Day", kind: "number", min: 1, width: "70px" },
 			{ key: "color", label: "Colour", kind: "color", width: "90px" },
 		], (c.seasons ?? []).map((s) => ({ ...s, month: String(s.month) })) as never[], (rows) => {
-			c.seasons = (rows as unknown as Record<string, unknown>[]).filter((r) => r.name).map((r) => ({ name: String(r.name), month: Number(r.month) || 1, day: Math.max(1, Number(r.day) || 1), ...(r.color ? { color: String(r.color) } : {}) }));
+			c.seasons = (rows as unknown as Record<string, unknown>[]).filter((r) => r.name).map((r) => ({ name: asText(r.name), month: Number(r.month) || 1, day: Math.max(1, Number(r.day) || 1), ...(r.color ? { color: asText(r.color) } : {}) }));
 			changed();
 		}, { blank: () => ({ name: "", month: "1", day: 1 }) as never, addLabel: "Add a season", reorder: true, empty: "No seasons." }));
 
@@ -171,7 +172,7 @@ export class CalendarEditorModal extends Modal {
 			{ key: "every", label: "Every (years)", kind: "number", min: 1, width: "100px", placeholder: "1" },
 			{ key: "color", label: "Colour", kind: "color", width: "90px" },
 		], (c.holidays ?? []).map((h) => ({ ...h, month: String(h.month) })) as never[], (rows) => {
-			c.holidays = (rows as unknown as Record<string, unknown>[]).filter((r) => r.name).map((r) => ({ name: String(r.name), month: Number(r.month) || 1, day: Math.max(1, Number(r.day) || 1), ...(Number(r.every) > 1 ? { every: Number(r.every) } : {}), ...(r.color ? { color: String(r.color) } : {}) }));
+			c.holidays = (rows as unknown as Record<string, unknown>[]).filter((r) => r.name).map((r) => ({ name: asText(r.name), month: Number(r.month) || 1, day: Math.max(1, Number(r.day) || 1), ...(Number(r.every) > 1 ? { every: Number(r.every) } : {}), ...(r.color ? { color: asText(r.color) } : {}) }));
 			changed();
 		}, { blank: () => ({ name: "", month: "1", day: 1 }) as never, addLabel: "Add a holiday", empty: "No holidays." }));
 
@@ -243,7 +244,10 @@ export class CalendarEditorModal extends Modal {
 			const cell = el("div", { cls: "chronicle-cal-ed-day" + (festival ? " is-festival" : "") }, grid);
 			el("span", { text: String(d) }, cell);
 			const s = seasonOf(cal, day);
-			if (s && seasonOf(cal, day - 1) !== s) cell.setAttribute("title", `${s.name} begins`), cell.addClass("is-season");
+			if (s && seasonOf(cal, day - 1) !== s) {
+				cell.setAttribute("title", `${s.name} begins`);
+				cell.addClass("is-season");
+			}
 			const hol = holidaysOn(cal, day);
 			if (hol.length) {
 				cell.addClass("is-holiday");

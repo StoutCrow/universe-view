@@ -135,7 +135,7 @@ export function placeStyleFields(container: HTMLElement, plugin: ChroniclePlugin
 		.addDropdown((d) => {
 			layerDrop = d;
 			d.addOption("", "Automatic");
-			LAYER_NAMES.forEach((name, i) => d.addOption(String(i + 1), `${i + 1}: ${name}`));
+			for (const [i, name] of LAYER_NAMES.entries()) d.addOption(String(i + 1), `${i + 1}: ${name}`);
 			d.setValue(place.layer ? String(place.layer) : "");
 			d.onChange((v) => save({ layer: v ? Number(v) : null }));
 		});

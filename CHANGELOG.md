@@ -2,6 +2,14 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.1.2 — 2026-11-01
+More fixes from Obsidian's community directory review.
+- Deleting a note from the inspector, or a calendar in Settings, asks in an Obsidian dialog instead of the browser's.
+- Property values that are lists or objects are read as text properly, never as "[object Object]".
+- Settings read from disk, frontmatter and other plugins' data are typed throughout, with no `any`.
+- Button actions that save or reload handle their work properly; elements are made with Obsidian's helpers; slider values use Obsidian's own display.
+- A few placeholders and labels in sentence case.
+
 ## 1.1.1 — 2026-11-01
 Fixes for Obsidian's community directory review.
 - Needs Obsidian 1.7.2 or later (it uses Obsidian's own trash, which respects your deletion setting, and its way of revealing a view).

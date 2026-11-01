@@ -31,7 +31,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 	opts: { cls?: string; text?: string; attr?: Record<string, string>; title?: string } = {},
 	parent?: HTMLElement,
 ): HTMLElementTagNameMap[K] {
-	const e = document.createElement(tag);
+	const e = createEl(tag);
 	if (opts.cls) e.className = opts.cls;
 	if (opts.text !== undefined) e.textContent = opts.text;
 	if (opts.title) e.setAttribute("aria-label", opts.title);

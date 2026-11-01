@@ -98,14 +98,14 @@ export class TidyModal extends Modal {
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
 		el("button", { text: "Cancel" }, footer).addEventListener("click", () => this.close());
 		const go = el("button", { cls: "mod-cta", text: "Move them" }, footer);
-		go.addEventListener("click", async () => {
+		go.addEventListener("click", () => void (async () => {
 			go.disabled = true;
 			let done = 0;
 			let skipped = 0;
 			for (const m of picked) (await moveTo(this.plugin, m.file, m.to).catch(() => false)) ? done++ : skipped++;
 			new Notice(`Moved ${done} note${done === 1 ? "" : "s"}${skipped ? `; ${skipped} left where they were (a note of that name is already there)` : ""}.`);
 			this.close();
-		});
+		})());
 	}
 
 	onClose() {
@@ -181,7 +181,7 @@ async function retag(plugin: ChroniclePlugin, files: TFile[], oldTag: string, ne
 	const bare = new RegExp(`^((?:[\\w-]+_)?)${esc}$`, "i");
 	for (const f of files) {
 		await plugin.app.vault.process(f, (text) => text.replace(body, (_, pre: string) => `#${pre}${newTag}`));
-		await plugin.app.fileManager.processFrontMatter(f, (fm) => {
+		await plugin.app.fileManager.processFrontMatter(f, (fm: Record<string, unknown>) => {
 			const fix = (t: unknown) => String(t).replace(/^#/, "").replace(bare, (_, pre: string) => `${pre}${newTag}`);
 			if (Array.isArray(fm.tags)) fm.tags = fm.tags.map(fix);
 			else if (typeof fm.tags === "string") fm.tags = fix(fm.tags);

@@ -141,7 +141,7 @@ export function rowEditor<T extends Record<string, unknown>>(app: App, parent: H
 			rows.push(opts.blank());
 			commit();
 			render();
-			(box.querySelector(".chronicle-rows-row:last-of-type input, .chronicle-rows-row:last-of-type select") as HTMLElement | null)?.focus();
+			box.querySelector<HTMLElement>(".chronicle-rows-row:last-of-type input, .chronicle-rows-row:last-of-type select")?.focus();
 		});
 	};
 	render();

@@ -55,5 +55,5 @@ export function expandFolder(view: View, path: string) {
 
 /** The metadata cache as a plain event source, for events other plugins raise on it (Dataview's). */
 export function metadataEvents(app: App): Events {
-	return app.metadataCache as unknown as Events;
+	return app.metadataCache;
 }

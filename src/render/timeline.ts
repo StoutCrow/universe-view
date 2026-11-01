@@ -489,7 +489,7 @@ export class TimelineRenderer {
 			act("file-text", "Open", () => openEntity(p, it.key), "mod-cta");
 			if (idx.get(it.key)) act("panel-right", "Inspect", () => void p.inspect(it.key));
 			const onMap = e.places.length || e.coords || e.map || e.territories.length;
-			if (onMap) act("map", "Map", () => p.openMap(it.key));
+			if (onMap) act("map", "Map", () => void p.openMap(it.key));
 		}
 		act("crosshair", "Centre", () => this.focusOn(it.key));
 		return card;
@@ -540,7 +540,7 @@ export class TimelineRenderer {
 		const cached = this.measureCache.get(text);
 		if (cached !== undefined) return cached;
 		if (!this.measureCtx) {
-			this.measureCtx = document.createElement("canvas").getContext("2d");
+			this.measureCtx = createEl("canvas").getContext("2d");
 			const cs = getComputedStyle(this.root);
 			if (this.measureCtx) this.measureCtx.font = `${cssNumber(this.root, "--chronicle-tl-font-size", 12)}px ${cs.fontFamily}`;
 		}
@@ -615,11 +615,11 @@ export class TimelineRenderer {
 			if (n.dataset.key && !nodes.has(n.dataset.key)) nodes.set(n.dataset.key, n);
 		});
 		const base = this.lanesEl.getBoundingClientRect();
-		const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		const svgEl = createSvg("svg");
 		svgEl.classList.add("chronicle-tl-causes");
 		svgEl.setAttribute("width", String(this.lanesEl.scrollWidth));
 		svgEl.setAttribute("height", String(this.lanesEl.scrollHeight));
-		const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+		const defs = createSvg("defs");
 		defs.append(...svgMarkup(`<marker id="chronicle-tl-cause-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="chronicle-tl-cause-headpath"/></marker>`));
 		svgEl.appendChild(defs);
 		let drawn = 0;
@@ -636,13 +636,13 @@ export class TimelineRenderer {
 				const x2 = rb.left - base.left - 2;
 				const y2 = rb.top + rb.height / 2 - base.top;
 				const bend = Math.max(24, Math.abs(x2 - x1) * 0.4);
-				const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				const path = createSvg("path");
 				path.setAttribute("d", `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`);
 				path.setAttribute("class", "chronicle-tl-cause");
 				path.setAttribute("marker-end", "url(#chronicle-tl-cause-head)");
 				path.dataset.from = cause;
 				path.dataset.to = effect;
-				const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+				const title = createSvg("title");
 				title.textContent = `${idx.get(cause)?.name ?? cause} led to ${idx.get(effect)?.name ?? effect}`;
 				path.appendChild(title);
 				svgEl.appendChild(path);

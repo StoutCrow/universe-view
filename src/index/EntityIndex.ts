@@ -8,6 +8,7 @@ import { relInverse } from "./relkinds";
 import { readNames } from "./renames";
 import { readHolders, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
+import { asText } from "./text";
 import {
 	PropReader, cleanLinkText, genderFromTags, normalizeGender, normalizeType, normalizeValue, readCategory, readIcon, readLayer, readPair, readPinSize,
 	readPoints, readRefs, readTimedRefs, typeFromTag,
@@ -150,7 +151,7 @@ export class EntityIndex extends Events {
 		const out: Scene[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (this.isTemplate(file.path)) continue;
-			const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+			const fm: Record<string, unknown> | undefined = this.app.metadataCache.getFileCache(file)?.frontmatter;
 			if (!fm) continue;
 			const rawDate = SCENE_DATE_KEYS.map((k) => fm[k]).find((v) => v !== undefined && v !== null && v !== "");
 			if (rawDate === undefined) continue;
@@ -165,7 +166,7 @@ export class EntityIndex extends Events {
 			if (!cast.length && self?.type === "event") cast = self.participants;
 			let places = refsOf(SCENE_PLACE_KEYS);
 			if (!places.length && self?.type === "event") places = self.places;
-			const flag = String(fm.flashback ?? fm.dream ?? fm["out-of-time"] ?? "").toLowerCase();
+			const flag = asText(fm.flashback ?? fm.dream ?? fm["out-of-time"]).toLowerCase();
 			out.push({ path: file.path, name: file.basename, date, cast, places, flashback: flag === "true" || flag === "yes" });
 		}
 		return out.sort((a, b) => a.date.start - b.date.start);
@@ -250,7 +251,7 @@ export class EntityIndex extends Events {
 		} else {
 			e.position = readPair(reader.get("position"));
 			// "position-origin: bottom" keeps pixel positions measured from the image's bottom edge.
-			if (String(fm["position-origin"] ?? "").toLowerCase() === "bottom") e.positionFromBottom = true;
+			if (asText(fm["position-origin"] ?? "").toLowerCase() === "bottom") e.positionFromBottom = true;
 		}
 		const latLng = fm.coordinates_lat !== undefined ? readPair([fm.coordinates_lat, fm.coordinates_long]) : readPair(reader.get("coordinates"));
 		if ((e.map || e.mapHint) && !e.position) e.position = latLng;
@@ -312,11 +313,11 @@ export class EntityIndex extends Events {
 					const to = o.to ?? o.until ?? o.end;
 					if (from !== undefined && from !== null && from !== "") {
 						t.from = parseDate(from, cal) ?? undefined;
-						t.fromText = String(from);
+						t.fromText = asText(from);
 					}
 					if (to !== undefined && to !== null && to !== "") {
 						t.to = parseDate(to, cal) ?? undefined;
-						t.toText = String(to);
+						t.toText = asText(to);
 					}
 				}
 				if (t) out.push(t);
@@ -367,12 +368,12 @@ export class EntityIndex extends Events {
 		const date = (field: FieldName): ChronDate | undefined => {
 			const v = reader.get(field);
 			if (v === undefined) return undefined;
-			if (/^\s*(present|now|ongoing|living|alive|today|still|-+|–)\s*$/i.test(String(v))) {
+			if (/^\s*(present|now|ongoing|living|alive|today|still|-+|–)\s*$/i.test(asText(v))) {
 				openEnd = true;
 				return undefined;
 			}
 			// "1292 C.E. -" in a start date: begins then and is still going.
-			if (/[-–]\s*$/.test(String(v))) {
+			if (/[-–]\s*$/.test(asText(v))) {
 				const s = parseSpan(v, cal);
 				if (s.ok && s.start && !s.end) {
 					openEnd = true;
@@ -380,7 +381,7 @@ export class EntityIndex extends Events {
 				}
 			}
 			const d = parseDate(v, cal);
-			if (!d) issues.push(`Could not read ${field} "${String(v)}"`);
+			if (!d) issues.push(`Could not read ${field} "${asText(v)}"`);
 			return d ?? undefined;
 		};
 		const refs = (field: FieldName) => readRefs(reader.getAll(field).map((x) => x.value), resolve);
@@ -439,7 +440,7 @@ export class EntityIndex extends Events {
 		const popN = typeof pop === "number" ? pop : typeof pop === "string" ? Number(pop.replace(/[,_\s]/g, "").replace(/^~|^c\.?/i, "")) : NaN;
 		if (Number.isFinite(popN) && popN >= 0) e.population = popN;
 		if (typeof fm.terrain === "string") e.terrain = fm.terrain.trim().toLowerCase();
-		const rep = String(fm.repeat ?? fm.repeats ?? fm.recurring ?? fm.recurs ?? (fm.annual === true ? "yearly" : "")).toLowerCase();
+		const rep = asText(fm.repeat ?? fm.repeats ?? fm.recurring ?? fm.recurs ?? (fm.annual === true ? "yearly" : "")).toLowerCase();
 		e.repeat = /year|annual/.test(rep) ? "yearly" : /month/.test(rep) ? "monthly" : /week/.test(rep) ? "weekly" : undefined;
 		// Cause and effect between events, written on either side.
 		const linksOf = (...keys: string[]) => readRefs(keys.flatMap((k) => (fm[k] === undefined || fm[k] === null || fm[k] === "" ? [] : Array.isArray(fm[k]) ? (fm[k] as unknown[]) : [fm[k]])), resolve);
@@ -512,7 +513,7 @@ export class EntityIndex extends Events {
 					const o = item as Record<string, unknown>;
 					const img = this.resolveImage(o.image ?? o.file ?? o.map, file.path);
 					if (!img) {
-						issues.push(`Couldn't find the map image ${String(o.image ?? "")}`);
+						issues.push(`Couldn't find the map image ${asText(o.image ?? "")}`);
 						continue;
 					}
 					const when = (v: unknown) => (v === undefined || v === null || v === "" ? undefined : parseDate(v, cal) ?? undefined);
@@ -530,9 +531,9 @@ export class EntityIndex extends Events {
 			if (span.ok) {
 				e.start ??= span.start;
 				e.end ??= span.end;
-				if (!span.end && /[-–]\s*(\?+|present|now|ongoing)?\s*$/i.test(String(lifespan))) openEnd = true;
-			} else if (!/^\s*[?~-]*\s*[-–]?\s*\?*\s*$/.test(String(lifespan))) {
-				issues.push(`Could not read lifespan "${String(lifespan)}"`);
+				if (!span.end && /[-–]\s*(\?+|present|now|ongoing)?\s*$/i.test(asText(lifespan))) openEnd = true;
+			} else if (!/^\s*[?~-]*\s*[-–]?\s*\?*\s*$/.test(asText(lifespan))) {
+				issues.push(`Could not read lifespan "${asText(lifespan)}"`);
 			}
 		}
 		if (type === "event" && !e.start) issues.push("Event has no date");

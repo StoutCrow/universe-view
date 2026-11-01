@@ -396,7 +396,7 @@ export class CreateEntityModal extends Modal {
 				new Setting(this.fieldsEl)
 					.setName("Importance")
 					.setDesc("Higher importance stays visible when you filter the timeline.")
-					.addSlider((sl) => sl.setLimits(1, 5, 1).setValue(this.importance).setDynamicTooltip().onChange((v) => (this.importance = v)));
+					.addSlider((sl) => sl.setLimits(1, 5, 1).setValue(this.importance).onChange((v) => (this.importance = v)));
 				break;
 			case "person":
 				this.dateField("born", "Born", "Birth date, if known.");

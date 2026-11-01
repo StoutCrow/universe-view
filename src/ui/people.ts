@@ -10,6 +10,7 @@ import { generateNames, givenNames, trainNames } from "../index/names";
 import { TYPE_ICONS, el, entityColor, icon, openEntity } from "../render/common";
 import { EntityInputSuggest } from "./suggest";
 import { suggestionPool } from "./CreateEntityModal";
+import { asText } from "../index/text";
 
 const YEAR = 365.25;
 
@@ -152,7 +153,7 @@ export class SuccessionModal extends Modal {
 		const e = plugin.index.get(key);
 		if (e?.type === "culture") this.culture = e.key;
 		else if (e?.type === "person") this.holder = e.key;
-		const ruleProp = String(e?.props.succession ?? "").toLowerCase();
+		const ruleProp = asText(e?.props.succession ?? "").toLowerCase();
 		this.rule = (Object.keys(RULE_NAMES) as SuccessionRule[]).find((r) => ruleProp.includes(r.split("-")[0])) ?? (e ? plugin.index.worldFor(e.path)?.succession : undefined) ?? plugin.settings.successionRule;
 	}
 
@@ -179,7 +180,7 @@ export class SuccessionModal extends Modal {
 		const anchor = idx.get(this.holder ?? this.culture);
 		const cal = this.plugin.calendars.get(anchor?.calendar);
 		new Setting(this.contentEl).setName("On").setDesc("A date (blank = the holder's death, or today's latest record)").addText((t) => {
-			t.setPlaceholder("e.g. SE 40");
+			t.setPlaceholder("E.g. SE 40");
 			t.inputEl.addEventListener("change", () => {
 				const d = t.getValue().trim() ? this.plugin.parseDate(t.getValue(), cal.id) : null;
 				this.day = d ? d.end : undefined;
@@ -211,7 +212,7 @@ export class SuccessionModal extends Modal {
 
 	/** The rule written on a group's note (`succession: male-preference`), if any. */
 	private groupRule(key?: string): SuccessionRule | undefined {
-		const prop = String(this.plugin.index.get(key)?.props.succession ?? "").toLowerCase();
+		const prop = asText(this.plugin.index.get(key)?.props.succession ?? "").toLowerCase();
 		return prop ? (Object.keys(RULE_NAMES) as SuccessionRule[]).find((r) => prop.includes(r.split("-")[0])) : undefined;
 	}
 
@@ -239,10 +240,10 @@ export class SuccessionModal extends Modal {
 		const graph = kinGraph(this.plugin);
 		const heirs = lineOfSuccession({
 			children: (k) => idx.children(k, false),
-			parents: graph.parents,
+			parents: (k) => graph.parents(k),
 			born: (k) => idx.get(k)?.start?.start,
 			died: (k) => idx.get(k)?.end?.end,
-			gender: graph.gender,
+			gender: (k) => graph.gender(k),
 		}, holder.key, day, this.rule);
 		const cal = this.plugin.calendars.get(holder.calendar);
 		el("div", { cls: "chronicle-kin-answer", text: `After ${holder.name}, on ${formatDate({ start: day, end: day, precision: "day", approx: false, calendar: cal.id, raw: "" }, cal)}:` }, out);
@@ -362,7 +363,7 @@ export class KnowledgeModal extends Modal {
 		});
 		const cal = this.plugin.calendars.get(this.plugin.index.get(this.person)?.calendar);
 		new Setting(this.contentEl).setName("On").setDesc("Blank = everything they ever learn").addText((t) => {
-			t.setPlaceholder("e.g. SE 20");
+			t.setPlaceholder("E.g. SE 20");
 			t.inputEl.addEventListener("change", () => {
 				const d = t.getValue().trim() ? this.plugin.parseDate(t.getValue(), cal.id) : null;
 				this.day = d ? d.end : undefined;

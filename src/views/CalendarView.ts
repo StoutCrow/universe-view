@@ -68,7 +68,7 @@ export class CalendarView extends ChronicleView {
 		const cal = r.cal();
 		const today = r.today() ?? this.options.selected;
 		if (today === undefined) {
-			this.plugin.setToday(this.options.folder ?? "", cal.id, this.options.selected ?? 0);
+			void this.plugin.setToday(this.options.folder ?? "", cal.id, this.options.selected ?? 0);
 			return;
 		}
 		await this.plugin.setToday(this.options.folder ?? "", cal.id, today + days);
@@ -173,7 +173,7 @@ export class ConvertModal extends Modal {
 			el("div", { cls: "chronicle-dash-muted", text: "Calendars line up through their epoch (Settings → Calendars). One without an epoch starts its year 1 on 1 January 1970." }, out);
 		};
 		new Setting(this.contentEl).setName("Date").addText((t) => {
-			t.setPlaceholder("e.g. 14 Highsun SE 3").setValue(text).onChange((v) => {
+			t.setPlaceholder("E.g. 14 Highsun SE 3").setValue(text).onChange((v) => {
 				text = v;
 				show();
 			});

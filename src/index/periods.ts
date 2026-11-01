@@ -1,6 +1,7 @@
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import type { HolderSpan, Ref, Side, Transfer } from "../types";
+import { asText } from "./text";
 
 type Resolve = (text: string) => Ref;
 
@@ -84,7 +85,7 @@ export function readSides(value: unknown, victor: unknown, defeated: unknown, re
 				const name = link(first(o, ["party", "who", "realm", "army", "name", "belligerent"]));
 				if (!name) continue;
 				const outcome = first(o, ["outcome", "result"]);
-				out.push({ party: resolve(name), side: String(first(o, ["side", "with"]) ?? "A"), outcome: outcome === undefined ? undefined : String(outcome).toLowerCase() });
+				out.push({ party: resolve(name), side: asText(first(o, ["side", "with"]) ?? "A"), outcome: outcome === undefined ? undefined : asText(outcome).toLowerCase() });
 			} else if (typeof item === "string") {
 				const m = /^\s*(.+?)\s*\(([^)]+)\)\s*$/.exec(item);
 				const name = link(m ? m[1] : item);

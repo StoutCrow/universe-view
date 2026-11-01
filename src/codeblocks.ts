@@ -13,6 +13,7 @@ import { CalendarRenderer, DEFAULT_CALENDAR_OPTIONS } from "./render/calendar";
 import { DEFAULT_HOUSES_OPTIONS, HousesRenderer } from "./render/houses";
 import { DEFAULT_MAP_OPTIONS, MapRenderer, WORLD_MAP } from "./render/map";
 import { el } from "./render/common";
+import { asText } from "./index/text";
 
 export interface Renderer {
 	refresh(): void | Promise<void>;
@@ -34,7 +35,7 @@ export function buildBlock(name: string, source: string, host: HTMLElement, sour
 
 const list = (v: unknown): string[] | undefined => {
 	if (v === undefined || v === null || v === "") return undefined;
-	const arr = Array.isArray(v) ? v : String(v).split(",");
+	const arr = Array.isArray(v) ? v : asText(v).split(",");
 	return arr.map((x) => String(x).replace(/^\[\[|\]\]$/g, "").trim()).filter(Boolean);
 };
 const str = (v: unknown) => (typeof v === "string" ? v.replace(/^\[\[|\]\]$/g, "").trim() : typeof v === "number" ? String(v) : undefined);
@@ -84,7 +85,7 @@ function showError(parent: HTMLElement, message: string) {
 function parseConfig(source: string): Config {
 	const trimmed = source.trim();
 	if (!trimmed) return {};
-	const parsed = parseYaml(trimmed);
+	const parsed: unknown = parseYaml(trimmed);
 	// Only comments → no options.
 	if (parsed === null || parsed === undefined) return {};
 	if (typeof parsed !== "object") throw new Error("Options must be written as `key: value` lines.");
@@ -98,7 +99,7 @@ function filterFrom(plugin: ChroniclePlugin, c: Config): EntityFilter {
 	const day = (v: unknown) => {
 		if (v === undefined) return undefined;
 		const d = plugin.parseDate(v, cal.id);
-		if (!d) throw new Error(`Couldn't read date “${String(v)}”.`);
+		if (!d) throw new Error(`Couldn't read date “${asText(v)}”.`);
 		return d;
 	};
 	return {
@@ -261,7 +262,7 @@ export function registerCodeBlocks(plugin: ChroniclePlugin) {
 		if (rootName && !root) throw new Error(`No organisation called “${rootName}”.`);
 		const cal = plugin.calendars.get(str(c.calendar) ?? root?.calendar);
 		const at = c.at !== undefined ? plugin.parseDate(c.at, cal.id) : null;
-		if (c.at !== undefined && !at) throw new Error(`Couldn't read date “${String(c.at)}”.`);
+		if (c.at !== undefined && !at) throw new Error(`Couldn't read date “${asText(c.at)}”.`);
 		return new OrgChartRenderer(host, plugin, {
 			...DEFAULT_ORG_OPTIONS,
 			root: root?.key,

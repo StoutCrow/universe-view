@@ -20,6 +20,7 @@ import { ConvertModal } from "./CalendarView";
 import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/relations";
 import { relInverse } from "../index/relkinds";
 import { ChronicleView } from "./base";
+import { asText } from "../index/text";
 
 export const VIEW_EXPLORER = "chronicle-explorer";
 
@@ -655,7 +656,7 @@ export class ExplorerView extends ChronicleView {
 				const preview = s.descEl;
 				const show = (v: string) => {
 					if (!v.trim()) {
-						preview.setText(e.props.lifespan && !raw ? `From lifespan: ${String(e.props.lifespan)}` : "");
+						preview.setText(e.props.lifespan && !raw ? `From lifespan: ${asText(e.props.lifespan)}` : "");
 						preview.removeClass("mod-warning");
 						return;
 					}
@@ -665,7 +666,7 @@ export class ExplorerView extends ChronicleView {
 				};
 				s.addText((t) => {
 					t.setPlaceholder(cal.id === "gregorian" ? "1485-08-22, May 1485, c. 1480" : `A date in the ${cal.name} calendar`);
-					t.setValue(raw === undefined || raw === null ? "" : String(raw));
+					t.setValue(raw === undefined || raw === null ? "" : asText(raw));
 					show(t.getValue());
 					t.onChange((v) => show(v));
 					t.inputEl.addEventListener("change", () => void write(key, t.getValue().trim() || null));
@@ -695,7 +696,7 @@ export class ExplorerView extends ChronicleView {
 			});
 		}
 		new Setting(body).setName("Importance").setDesc("1–5: bigger on timelines and in lists.").addSlider((sl) =>
-			sl.setLimits(1, 5, 1).setValue(e.importance).setDynamicTooltip().onChange((v) => void write(keyFor("importance"), v)),
+			sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => void write(keyFor("importance"), v)),
 		);
 		new Setting(body).setName("Color").addColorPicker((c) => {
 			c.setValue(toHex(e.color) ?? "#888888");
@@ -724,7 +725,7 @@ export class ExplorerView extends ChronicleView {
 		for (const k of keys) {
 			el("div", { cls: "chronicle-dash-prop-key", text: k }, table);
 			const v = fm[k];
-			el("div", { cls: "chronicle-dash-prop-value", text: typeof v === "object" ? JSON.stringify(v) : String(v) }, table);
+			el("div", { cls: "chronicle-dash-prop-value", text: typeof v === "object" ? JSON.stringify(v) : asText(v) }, table);
 		}
 	}
 

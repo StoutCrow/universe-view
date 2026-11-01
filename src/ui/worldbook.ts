@@ -134,9 +134,9 @@ export async function buildWorldBook(plugin: ChroniclePlugin, world: string | un
 		if (!list.length) continue;
 		html += `<h2 id="sec-${t}">${label}</h2>`;
 		for (const e of list) {
-			const facts = document.createElement("div");
+			const facts = createDiv();
 			renderFacts(plugin, facts, e.key);
-			const body = document.createElement("div");
+			const body = createDiv();
 			body.className = "body";
 			const text = (await plugin.app.vault.cachedRead(e.file)).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```chronicle-[\s\S]*?```/g, "");
 			await MarkdownRenderer.render(plugin.app, text, body, e.path, comp);

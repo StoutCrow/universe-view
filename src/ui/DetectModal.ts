@@ -273,7 +273,7 @@ export class DetectModal extends Modal {
 		for (const row of this.typeRows) {
 			if (!row.checked || !row.chosen) continue;
 			const type = row.chosen;
-			await fm.processFrontMatter(row.file, (front) => {
+			await fm.processFrontMatter(row.file, (front: Record<string, unknown>) => {
 				if (this.style === "tag") {
 					const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
 					const tag = this.tagForRow(row);
@@ -291,7 +291,7 @@ export class DetectModal extends Modal {
 		for (const row of this.kinRows) {
 			if (!row.checked) continue;
 			const link = `[[${row.finding.target}]]`;
-			await fm.processFrontMatter(row.person.file, (front) => {
+			await fm.processFrontMatter(row.person.file, (front: Record<string, unknown>) => {
 				const single = row.field === "father" || row.field === "mother";
 				const current = front[row.field];
 				if (single) {

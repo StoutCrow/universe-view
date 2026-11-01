@@ -1,3 +1,4 @@
+import { asText } from "../index/text";
 /** Distances, map scales, travel times and journey planning. No Obsidian or Leaflet here, so it's testable. */
 
 export type XY = [number, number];
@@ -24,7 +25,7 @@ export const ROUTE_SPEED: Record<string, number> = { road: 60, path: 45, trade: 
 
 /** A map note's `scale`: `2.5` (units per pixel, with `unit: km`) or `100 px = 5 km`. */
 export function parseScale(raw: unknown, unitProp?: unknown): { perPx: number; unit: string } | undefined {
-	const unit = String(unitProp ?? "units");
+	const unit = asText(unitProp ?? "units");
 	if (typeof raw === "number" && raw > 0) return { perPx: raw, unit };
 	if (typeof raw === "string") {
 		const r = raw.match(/([\d.]+)\s*px\s*=\s*([\d.]+)\s*([^\d\s][\w ]*)?/i);
@@ -140,9 +141,9 @@ export function planJourney(
 	}
 	add(0, 1, opts.dist(from, to), "walk");
 	// Dijkstra (graphs here are small).
-	const best = new Array(nodes.length).fill(Infinity);
+	const best = new Array<number>(nodes.length).fill(Infinity);
 	const prev = new Array<{ from: number; kind: string; name?: string; d: number; cost: number } | undefined>(nodes.length);
-	const done = new Array(nodes.length).fill(false);
+	const done = new Array<boolean>(nodes.length).fill(false);
 	best[0] = 0;
 	for (;;) {
 		let u = -1;

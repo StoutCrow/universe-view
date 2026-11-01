@@ -35,7 +35,10 @@ export function growColor(img: Raster, color: [number, number, number], tol: num
 	const mask = new Uint8Array(n);
 	const queue = new Int32Array(n);
 	let qe = 0;
-	for (let i = 0; i < n; i++) if (colorDist(data, i * 4, color[0], color[1], color[2]) <= tol) (mask[i] = 1), (queue[qe++] = i);
+	for (let i = 0; i < n; i++) if (colorDist(data, i * 4, color[0], color[1], color[2]) <= tol) {
+		mask[i] = 1;
+		queue[qe++] = i;
+	}
 	const step = Math.max(2, tol * 0.45);
 	const far = tol * 2.5;
 	for (let qs = 0; qs < qe; qs++) {
@@ -259,9 +262,15 @@ function boxBlur(img: Raster, r: number): Float32Array {
 			let count = 0;
 			for (let x = -r; x < w; x++) {
 				const add = x + r;
-				if (add < w) (sum += data[(y * w + add) * 4 + c]), count++;
+				if (add < w) {
+					sum += data[(y * w + add) * 4 + c];
+					count++;
+				}
 				const drop = x - r - 1;
-				if (drop >= 0) (sum -= data[(y * w + drop) * 4 + c]), count--;
+				if (drop >= 0) {
+					sum -= data[(y * w + drop) * 4 + c];
+					count--;
+				}
 				if (x >= 0) tmp[(y * w + x) * 3 + c] = sum / count;
 			}
 		}
@@ -272,9 +281,15 @@ function boxBlur(img: Raster, r: number): Float32Array {
 			let count = 0;
 			for (let y = -r; y < h; y++) {
 				const add = y + r;
-				if (add < h) (sum += tmp[(add * w + x) * 3 + c]), count++;
+				if (add < h) {
+					sum += tmp[(add * w + x) * 3 + c];
+					count++;
+				}
 				const drop = y - r - 1;
-				if (drop >= 0) (sum -= tmp[(drop * w + x) * 3 + c]), count--;
+				if (drop >= 0) {
+					sum -= tmp[(drop * w + x) * 3 + c];
+					count--;
+				}
 				if (y >= 0) out[(y * w + x) * 3 + c] = sum / count;
 			}
 		}

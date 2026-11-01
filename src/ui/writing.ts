@@ -13,6 +13,7 @@ import { GROUP_KINDS } from "../render/houses";
 import { makeFolderNote, placementFor } from "./foldernotes";
 import { LinkList } from "./CreateEntityModal";
 import { presetKinds, relKind } from "../index/relkinds";
+import { asText } from "../index/text";
 
 const YEAR = 365.25;
 
@@ -443,7 +444,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 			used.add(k);
 			const s = new Setting(box).setName(label);
 			s.addText((t) => {
-				t.setValue(fm[k] === undefined || fm[k] === null ? "" : String(fm[k]));
+				t.setValue(fm[k] === undefined || fm[k] === null ? "" : asText(fm[k]));
 				const check = () => {
 					const v = t.getValue().trim();
 					const d = v ? p.parseDate(v, cal.id) : null;
@@ -529,7 +530,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 				const listed = ([] as unknown[]).concat(fm[generic] ?? []).map((x) => {
 					const n = names(x)[0];
 					const k = x && typeof x === "object" ? (x as Record<string, unknown>).kind : undefined;
-					return n ? `${n}${k ? ` (${String(k)})` : ""}` : "";
+					return n ? `${n}${k ? ` (${asText(k)})` : ""}` : "";
 				}).filter(Boolean);
 				if (listed.length) new Setting(box).setName("Also related").setDesc(`${listed.join(", ")}. Written in \`${generic}:\`; edit them in the note.`);
 			}
@@ -570,7 +571,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 		const impKey = keyFor("importance");
 		const colKey = keyFor("color");
 		used.add(impKey).add(colKey).add("icon").add("pin-size").add("layer").add(keyFor("calendar"));
-		new Setting(more).setName("Importance").setDesc("1–5: higher stays visible when zoomed out or filtered").addSlider((sl) => sl.setLimits(1, 5, 1).setValue(e.importance).setDynamicTooltip().onChange((v) => changes.set(impKey, v)));
+		new Setting(more).setName("Importance").setDesc("1–5: higher stays visible when zoomed out or filtered").addSlider((sl) => sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => changes.set(impKey, v)));
 		new Setting(more).setName("Colour").addColorPicker((c) => c.setValue(e.color ?? "#7c5cff").onChange((v) => changes.set(colKey, v))).addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Use the default colour").onClick(() => changes.set(colKey, "")));
 		new Setting(more).setName("Icon").setDesc("A Lucide icon name or an emoji, for map pins and cards").addText((t) => t.setValue(e.icon ?? "").onChange((v) => changes.set(has(["icon"]) ?? "icon", v.trim())));
 		if (e.type === "place" && !owned) {
@@ -592,14 +593,14 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 				const complex = v !== null && typeof v === "object" && !(Array.isArray(v) && v.every((x) => typeof x !== "object"));
 				const s = new Setting(more).setName(k);
 				if (complex) s.setDesc("Has structure: edit it in the note");
-				else s.addText((t) => t.setValue(Array.isArray(v) ? v.join(", ") : v === null || v === undefined ? "" : String(v)).onChange((x) => {
+				else s.addText((t) => t.setValue(Array.isArray(v) ? v.join(", ") : v === null || v === undefined ? "" : asText(v)).onChange((x) => {
 					const val = x.trim();
 					changes.set(k, Array.isArray(v) ? val.split(",").map((y) => y.trim()).filter(Boolean) : typeof v === "number" && val !== "" && Number.isFinite(Number(val)) ? Number(val) : typeof v === "boolean" ? val === "true" : val);
 				}));
 			}
 		}
 		new Setting(more).setName("Add a property").addText((t) => {
-			t.setPlaceholder("name: value");
+			t.setPlaceholder("Name: value");
 			t.inputEl.addEventListener("change", () => {
 				const m = t.getValue().match(/^\s*([^:]+):\s*(.*)$/);
 				if (m) changes.set(m[1].trim(), m[2].trim());

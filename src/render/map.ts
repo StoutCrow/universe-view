@@ -40,6 +40,7 @@ import { EntityPickerModal } from "../ui/suggest";
 import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
 import { battlesByWar, isBattle, victorOf } from "../index/wars";
+import { asText } from "../index/text";
 
 export const WORLD_MAP = "world";
 
@@ -468,7 +469,7 @@ export class MapRenderer {
 		this.applyClusters();
 		this.scheduleDeclutter();
 		// An open border check follows the map as it changes (an edit, the time slider).
-		if (this.checkPanel) this.checkBorders();
+		if (this.checkPanel) void this.checkBorders();
 	}
 
 	/** Fog of war: whether the person the map is seen by knows about this note (always, when it's seen by no one). */
@@ -507,7 +508,7 @@ export class MapRenderer {
 		const was = Array.isArray(raw) && raw.length === 2 ? (raw.map(Number) as [number, number]) : undefined;
 		if (!was || !was.every((n) => Number.isFinite(n) && n > 0)) {
 			// First time: just note it, so a later change can be noticed.
-			void this.plugin.app.fileManager.processFrontMatter(file, (fm) => (fm["image-size"] = size));
+			void this.plugin.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => (fm["image-size"] = size));
 			return;
 		}
 		if (was[0] === size[0] && was[1] === size[1]) return;
@@ -535,7 +536,7 @@ export class MapRenderer {
 			keep.addEventListener("click", (evt) => {
 				evt.stopPropagation();
 				notice.hide();
-				void this.plugin.app.fileManager.processFrontMatter(file, (fm) => (fm["image-size"] = size));
+				void this.plugin.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => (fm["image-size"] = size));
 			});
 		});
 		const notice = new Notice(frag, 0);
@@ -595,7 +596,7 @@ export class MapRenderer {
 		// show the copy over the size the map note records.
 		const raw = mapEntity?.props["image-size"];
 		const noted = Array.isArray(raw) && raw.length === 2 ? (raw.map(Number) as [number, number]) : undefined;
-		const copyOnly = mapEntity && !url && noted?.every((n) => Number.isFinite(n) && n > 0) ? phoneCopyByName(this.plugin, String(mapEntity.props.image ?? "")) : undefined;
+		const copyOnly = mapEntity && !url && noted?.every((n) => Number.isFinite(n) && n > 0) ? phoneCopyByName(this.plugin, asText(mapEntity.props.image ?? "")) : undefined;
 		if (copyOnly && noted) {
 			this.stage = "showing the phone copy (the picture itself isn't on this device)";
 			[this.imageWidth, this.imageHeight] = noted;
@@ -1042,7 +1043,7 @@ export class MapRenderer {
 		}
 		const actions = el("div", { cls: "chronicle-popup-actions" }, box);
 		const tl = el("button", { text: "Timeline" }, actions);
-		tl.addEventListener("click", () => this.plugin.openTimeline({ filter: { places: [place.name] } }));
+		tl.addEventListener("click", () => void this.plugin.openTimeline({ filter: { places: [place.name] } }));
 		const add = el("button", { text: "Add event here" }, actions);
 		add.addEventListener("click", () => this.plugin.createEntityPrompt({ type: "event", places: [place.name] }));
 		// Off the map in one click (the note stays; Undo puts the pin back).
@@ -1286,9 +1287,9 @@ export class MapRenderer {
 					overlay = L.polygon(latlngs, { className: `uv-terr-overlay uv-edge-${look.edge ?? "plain"} uv-pat-${look.pattern ?? "flat"} ${tierCls}`, interactive: false, smoothFactor: 1.5 }).addTo(layer);
 					const oe = overlay.getElement() as SVGElement | undefined;
 					if (oe) {
-						const clip = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+						const clip = createSvg("clipPath");
 						clip.id = `uv-clip-${n2}`;
-						const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+						const use = createSvg("use");
 						use.setAttribute("href", `#uv-terr-${n2}`);
 						clip.appendChild(use);
 						svgEl.querySelector("#uv-terr-defs")?.appendChild(clip);
@@ -1615,21 +1616,21 @@ export class MapRenderer {
 		const fixable = issues.filter((i) => i.kind === "crossed" || i.kind === "gap");
 		if (fixable.length) {
 			const all = el("button", { cls: "mod-cta uv-check-fixall", text: `Fix all (${fixable.length})`, attr: { title: "Untangle crossed borders and close the gaps; Undo puts each back" } }, head);
-			all.addEventListener("click", async () => {
+			all.addEventListener("click", () => void (async () => {
 				all.disabled = true;
 				for (const i of fixable.filter((x) => x.kind === "crossed")) await this.untangleArea(i.key, i.n);
 				for (const i of fixable.filter((x) => x.kind === "gap")) await this.closeGap(i, true);
 				const filled = await this.fillPockets(mapSize);
 				new Notice(`Fixed ${fixable.length} border problem${fixable.length === 1 ? "" : "s"}${filled ? `, and filled ${filled} pocket${filled === 1 ? "" : "s"} where lands meet` : ""}. Undo puts them back one at a time.`);
 				window.setTimeout(() => this.checkPanel && void this.checkBorders(), 700);
-			});
+			})());
 		}
 		const again = el("button", { cls: "clickable-icon", attr: { "aria-label": "Check again" } }, head);
 		icon(again, "refresh-cw");
-		again.addEventListener("click", () => this.checkBorders());
+		again.addEventListener("click", () => void this.checkBorders());
 		const close = el("button", { cls: "clickable-icon", attr: { "aria-label": "Close" } }, head);
 		icon(close, "x");
-		close.addEventListener("click", () => this.checkBorders(false));
+		close.addEventListener("click", () => void this.checkBorders(false));
 		if (!issues.length) {
 			el("div", { cls: "uv-check-empty", text: "No overlaps, gaps, stray pieces or crossed borders. Lands fit inside the lands they're part of." }, panel);
 			return;
@@ -1666,8 +1667,8 @@ export class MapRenderer {
 			if (!e) return undefined;
 			if (i.kind === "gap") return ["Close the gap", "expand", () => void this.closeGap(i)];
 		if (i.kind === "crossed") return ["Untangle", "wand-sparkles", () => void this.untangleArea(i.key, i.n).then(() => window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600))];
-			if (i.kind === "sliver") return ["Delete it", "trash-2", () => void this.plugin.deleteArea(i.key, this.options.map, i.n).then(() => window.setTimeout(() => this.checkPanel && this.checkBorders(), 600))];
-			if (i.kind === "partial") return ["New land within", "plus-square", () => newLandSheet(this.plugin, e, (file) => this.plugin.drawOnMap(file.path, "paint", 0, this.options.map))];
+			if (i.kind === "sliver") return ["Delete it", "trash-2", () => void this.plugin.deleteArea(i.key, this.options.map, i.n).then(() => window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600))];
+			if (i.kind === "partial") return ["New land within", "plus-square", () => newLandSheet(this.plugin, e, (file) => void this.plugin.drawOnMap(file.path, "paint", 0, this.options.map))];
 			return ["Reshape", "pencil-ruler", () => this.openTerritoryEditor(e, i.n)];
 		};
 		const draw = () => {
@@ -2001,7 +2002,7 @@ export class MapRenderer {
 		bordersFromSheet(this.plugin, e, this.options.map, n, this.options.at, (m, day) => {
 			this.options.at = day;
 			window.setTimeout(() => {
-				this.refresh();
+				void this.refresh();
 				this.startEdit(e.key, m);
 			}, 700);
 		});
@@ -2351,14 +2352,14 @@ export class MapRenderer {
 			const terrSvg = (parts[0].poly.getElement() as unknown as SVGElement | undefined)?.ownerSVGElement;
 			if (depth <= 1 && terrSvg && this.plugin.settings.realmBand !== "off") {
 				ensureTerritoryDefs(terrSvg);
-				const clip = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+				const clip = createSvg("clipPath");
 				clip.id = `uv-realm-clip-${++this.terrSeq}`;
 				clip.setAttribute("class", "uv-realm-clip");
 				for (const a of parts) {
 					const p = a.poly.getElement() as unknown as SVGElement | undefined;
 					if (!p) continue;
 					if (!p.id) p.id = `uv-terr-${++this.terrSeq}`;
-					const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+					const use = createSvg("use");
 					use.setAttribute("href", `#${p.id}`);
 					clip.appendChild(use);
 				}
@@ -2909,7 +2910,7 @@ export class MapRenderer {
 				const scale = Math.max(want, pyr.width / pyr.full.width);
 				const w = Math.max(1, Math.round((x1 - x0) / scale));
 				const h = Math.max(1, Math.round((y1 - y0) / scale));
-				const canvas = document.createElement("canvas");
+				const canvas = createEl("canvas");
 				canvas.width = w;
 				canvas.height = h;
 				const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -2937,7 +2938,7 @@ export class MapRenderer {
 		const scale = Math.max(want, 1 / fx);
 		const w = Math.max(1, Math.round((x1 - x0) / scale));
 		const h = Math.max(1, Math.round((y1 - y0) / scale));
-		const canvas = document.createElement("canvas");
+		const canvas = createEl("canvas");
 		canvas.width = w;
 		canvas.height = h;
 		const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -4299,7 +4300,7 @@ export class MapRenderer {
 		}
 		if (!src) src = await loadImage(url);
 		if (!src) return null;
-		const canvas = document.createElement("canvas");
+		const canvas = createEl("canvas");
 		canvas.width = w;
 		canvas.height = h;
 		const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -5485,7 +5486,7 @@ class TiledImageLayer extends L.GridLayer {
 
 	/** Leaflet waits for `done` because this takes two arguments; close zooms draw from the full image, which may need decoding. */
 	createTile(coords: L.Coords, done: L.DoneCallback): HTMLElement {
-		const tile = document.createElement("canvas");
+		const tile = createEl("canvas");
 		// Leaflet must have stored the tile before it's reported ready.
 		const ready = () => L.Util.requestAnimFrame(() => done(undefined, tile));
 		const size = this.getTileSize();

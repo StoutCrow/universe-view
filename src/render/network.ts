@@ -217,7 +217,10 @@ export class NetworkRenderer {
 			let frontier = [options.focus];
 			for (let d = 0; d < options.depth; d++) {
 				const next: string[] = [];
-				for (const k of frontier) for (const n of adj.get(k) ?? []) if (!keys.has(n)) (keys.add(n), next.push(n));
+				for (const k of frontier) for (const n of adj.get(k) ?? []) if (!keys.has(n)) {
+					keys.add(n);
+					next.push(n);
+				}
 				frontier = next;
 			}
 		}

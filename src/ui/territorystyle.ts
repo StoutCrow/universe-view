@@ -27,7 +27,7 @@ export function styleFor(plugin: ChroniclePlugin, tier: number): TierStyle {
 /** Patterns and the grain filter the territory overlays use, put once into a map's drawing. */
 export function ensureTerritoryDefs(svg: SVGSVGElement | null | undefined) {
 	if (!svg || svg.querySelector("#uv-terr-defs")) return;
-	const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+	const defs = createSvg("defs");
 	defs.id = "uv-terr-defs";
 	defs.append(
 		...svgMarkup(

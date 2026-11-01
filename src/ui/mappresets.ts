@@ -1,6 +1,6 @@
 // Map look presets: a whole look for maps and territories at once (fills, borders, lettering, tier
 // styles, the border band, roughness, rivers), built in or saved from your own settings.
-const copy = <T,>(v: T): T => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+const copy = <T,>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
 import type { ChronicleSettings } from "../settings";
 import { DEFAULT_TIER_STYLES, type TierStyle } from "./tierstyles";
 

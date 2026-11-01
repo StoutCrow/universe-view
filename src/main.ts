@@ -69,6 +69,7 @@ import { GedcomModal } from "./ui/GedcomModal";
 import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
 import type { EntityFilter } from "./types";
+import { asText } from "./index/text";
 
 /** Every view, with its ribbon icon and default hotkey (Ctrl/Cmd + Alt + key; changeable in Settings → Hotkeys). */
 /** This build's version, written in by esbuild.config.mjs (absent in the test harness). */
@@ -268,10 +269,10 @@ export default class ChroniclePlugin extends Plugin {
 		let told = "";
 		const check = async () => {
 			try {
-				const onDisk = JSON.parse(await this.app.vault.adapter.read(`${dir}/manifest.json`)).version as string;
+				const onDisk = (JSON.parse(await this.app.vault.adapter.read(`${dir}/manifest.json`)) as { version?: string }).version;
 				if (!onDisk || onDisk === running || onDisk === told) return;
 				told = onDisk;
-				const frag = document.createDocumentFragment();
+				const frag = createFragment();
 				frag.createSpan({ text: `UniverseView ${onDisk} has arrived (${running} is running). ` });
 				const btn = frag.createEl("button", { text: "Reload UniverseView", cls: "mod-cta" });
 				const notice = new Notice(frag, 0);
@@ -311,7 +312,7 @@ export default class ChroniclePlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = (await this.loadData()) ?? {};
+		const data = ((await this.loadData()) ?? {}) as Partial<ChronicleSettings> & Record<string, unknown>;
 		this.settings = {
 			...structuredClone(DEFAULT_SETTINGS),
 			...data,
@@ -446,7 +447,7 @@ export default class ChroniclePlugin extends Plugin {
 		if (!tree) {
 			tree = realmTree(this.index, (c) => isHouse(this, c), at, tierWordsWith(this.settings.tierWords), { ...DEFAULT_REGION_WORDS, ...tierWords(this.settings.regionWords ?? "") });
 			// Playing through time asks for a tree a frame: keep the latest few, not every one.
-			if (this.realmCache.size >= 24) this.realmCache.delete(this.realmCache.keys().next().value);
+			if (this.realmCache.size >= 24) this.realmCache.delete(this.realmCache.keys().next().value as string);
 			this.realmCache.set(id, tree);
 		}
 		return tree;
@@ -643,20 +644,22 @@ export default class ChroniclePlugin extends Plugin {
 	/** Asks which world to export, then writes a .ged file into "UniverseView exports". */
 	exportGedcomPrompt() {
 		const scopes = ["", ...this.index.topFolders()];
-		const plugin = this;
 		class ScopeModal extends SuggestModal<string> {
+			constructor(readonly plugin: ChroniclePlugin) {
+				super(plugin.app);
+			}
 			getSuggestions(q: string) {
 				return scopes.filter((s) => (s || "whole vault").toLowerCase().includes(q.toLowerCase()));
 			}
 			renderSuggestion(s: string, elx: HTMLElement) {
-				const n = plugin.index.all("person").filter((p) => !s || p.path.startsWith(s + "/")).length;
+				const n = this.plugin.index.all("person").filter((p) => !s || p.path.startsWith(s + "/")).length;
 				elx.setText(`${s || "Whole vault"} (${n} people)`);
 			}
 			onChooseSuggestion(s: string) {
-				void plugin.exportGedcom(s);
+				void this.plugin.exportGedcom(s);
 			}
 		}
-		const m = new ScopeModal(this.app);
+		const m = new ScopeModal(this);
 		m.setPlaceholder("Export the family tree of which folder?");
 		m.open();
 	}
@@ -690,20 +693,22 @@ export default class ChroniclePlugin extends Plugin {
 			run(undefined);
 			return;
 		}
-		const plugin = this;
 		class WorldModal extends SuggestModal<string> {
+			constructor(readonly plugin: ChroniclePlugin) {
+				super(plugin.app);
+			}
 			getSuggestions(q: string) {
 				return ["", ...worlds].filter((s) => (s || "whole vault").toLowerCase().includes(q.toLowerCase()));
 			}
 			renderSuggestion(s: string, elx: HTMLElement) {
-				const n = plugin.index.all().filter((e) => !s || e.path.startsWith(s + "/")).length;
+				const n = this.plugin.index.all().filter((e) => !s || e.path.startsWith(s + "/")).length;
 				elx.setText(`${s || "Whole vault"} (${n} notes)`);
 			}
 			onChooseSuggestion(s: string) {
 				run(s || undefined);
 			}
 		}
-		const m = new WorldModal(this.app);
+		const m = new WorldModal(this);
 		m.setPlaceholder(placeholder);
 		m.open();
 	}
@@ -783,16 +788,19 @@ export default class ChroniclePlugin extends Plugin {
 	}
 
 	pickSavedView() {
-		const plugin = this;
 		class ViewsModal extends SuggestModal<SavedView> {
+			constructor(readonly plugin: ChroniclePlugin) {
+				super(plugin.app);
+			}
 			getSuggestions(q: string) {
-				return plugin.settings.savedViews.filter((s) => s.name.toLowerCase().includes(q.toLowerCase()));
+				return this.plugin.settings.savedViews.filter((s) => s.name.toLowerCase().includes(q.toLowerCase()));
 			}
 			renderSuggestion(s: SavedView, elx: HTMLElement) {
 				elx.createDiv({ text: s.name });
 				elx.createDiv({ text: VIEWS.find((x) => x.type === s.type)?.name ?? s.type, cls: "chronicle-suggest-sub" });
 			}
 			onChooseSuggestion(s: SavedView, evt: MouseEvent | KeyboardEvent) {
+				const plugin = this.plugin;
 				if (evt.shiftKey) {
 					plugin.settings.savedViews = plugin.settings.savedViews.filter((x) => x !== s);
 					void plugin.saveSettings().then(() => new Notice(`Deleted the saved view “${s.name}”.`));
@@ -803,7 +811,7 @@ export default class ChroniclePlugin extends Plugin {
 			new Notice("No saved views yet. Use the bookmark button in a UniverseView view's toolbar.");
 			return;
 		}
-		const m = new ViewsModal(this.app);
+		const m = new ViewsModal(this);
 		m.setPlaceholder("Open a saved view (Shift+Enter deletes it)");
 		m.open();
 	}
@@ -938,7 +946,7 @@ export default class ChroniclePlugin extends Plugin {
 				console.warn("UniverseView: Templater could not process the template", err);
 			}
 		}
-		await this.app.fileManager.processFrontMatter(file, (front) => {
+		await this.app.fileManager.processFrontMatter(file, (front: Record<string, unknown>) => {
 			this.applyType(front, type);
 			for (const [k, v] of Object.entries(fm)) {
 				if (k === "__kind") continue;
@@ -1141,7 +1149,7 @@ export default class ChroniclePlugin extends Plugin {
 					front.custom_coordinates_y = imageHeight ? Math.round(imageHeight - pos[1]) : pos[1];
 					if (mapId) {
 						front.custom_coordinates_map = mapId;
-						const maps = Array.isArray(front.maps) ? front.maps : front.maps ? [front.maps] : [];
+						const maps: unknown[] = Array.isArray(front.maps) ? front.maps : front.maps ? [front.maps] : [];
 						if (!maps.includes(mapId)) front.maps = [...maps, mapId];
 					}
 				}
@@ -1217,7 +1225,7 @@ export default class ChroniclePlugin extends Plugin {
 		// The map note's own drawings (sticky notes, arrows), and its new size.
 		const mf = this.app.vault.getAbstractFileByPath(mapKey);
 		if (mf instanceof TFile) {
-			await this.app.fileManager.processFrontMatter(mf, (front) => {
+			await this.app.fileManager.processFrontMatter(mf, (front: Record<string, unknown>) => {
 				if (Array.isArray(front.annotations)) {
 					front.annotations = (front.annotations as Record<string, unknown>[]).map((a) => (typeof a?.points === "string" ? { ...a, points: writePoints(readPoints(a.points).map(fix)) } : a));
 				}
@@ -1352,7 +1360,7 @@ export default class ChroniclePlugin extends Plugin {
 			let list = Array.isArray(front[field]) ? (front[field] as unknown[]) : front[field] ? [front[field]] : [];
 			if (replace) {
 				list = list.filter((t) => {
-					const m = t && typeof t === "object" ? String((t as Record<string, unknown>).map ?? "") : "";
+					const m = t && typeof t === "object" ? asText((t as Record<string, unknown>).map ?? "") : "";
 					return m.replace(/^\[\[|\]\]$/g, "").toLowerCase() !== name.toLowerCase();
 				});
 			}
@@ -1476,8 +1484,10 @@ export default class ChroniclePlugin extends Plugin {
 			callback: () => {
 				const s = this.settings;
 				const all = [...BUILT_IN_PRESETS, ...(s.mapPresets ?? [])];
-				const plugin = this;
 				const picker = new (class extends FuzzySuggestModal<MapPreset> {
+					constructor(readonly plugin: ChroniclePlugin) {
+						super(plugin.app);
+					}
 					getItems() {
 						return all;
 					}
@@ -1486,6 +1496,7 @@ export default class ChroniclePlugin extends Plugin {
 					}
 					onChooseItem(p: MapPreset) {
 						applyLook(s, p.look);
+						const plugin = this.plugin;
 						void plugin.saveSettings().then(() => {
 							applyAppearance(s);
 							plugin.restyleTerritories?.();
@@ -1493,7 +1504,7 @@ export default class ChroniclePlugin extends Plugin {
 							new Notice(`Map look: ${p.name}`);
 						});
 					}
-				})(this.app);
+				})(this);
 				picker.setPlaceholder("Map look preset…");
 				picker.open();
 			},

@@ -251,7 +251,7 @@ export class TagStandardModal extends Modal {
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
 		el("button", { text: "Cancel" }, footer).addEventListener("click", () => this.close());
 		const go = el("button", { cls: "mod-cta", text: "Apply" }, footer);
-		go.addEventListener("click", async () => {
+		go.addEventListener("click", () => void (async () => {
 			go.disabled = true;
 			let n = 0;
 			for (const r of rows) {
@@ -260,7 +260,7 @@ export class TagStandardModal extends Modal {
 				if (same(next, before)) continue;
 				const file = p.app.vault.getAbstractFileByPath(r.e.path);
 				if (!(file instanceof TFile)) continue;
-				await p.app.fileManager.processFrontMatter(file, (fm) => {
+				await p.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 					// Tags written in the body stay there; the land tags go in the properties.
 					const own = ([] as unknown[]).concat(fm.tags ?? []).map((t) => String(t).replace(/^#/, ""));
 					fm.tags = restandardise(p, own, r.c);
@@ -269,7 +269,7 @@ export class TagStandardModal extends Modal {
 			}
 			new Notice(`Standardised the tags of ${n} note${n === 1 ? "" : "s"}.`);
 			this.close();
-		});
+		})());
 	}
 
 	onClose() {

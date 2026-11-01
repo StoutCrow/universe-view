@@ -25,7 +25,7 @@ import { formatDate, parseDate, parseSpan } from "../src/dates/parser";
 import { findKinship, guessType } from "../src/detect/classify";
 import { convertGedcomDate, parseGedcom } from "../src/import/gedcom";
 import { normalizeType, readCategory, readIcon, readLayer, readPair, readPinSize, readPoints, typeFromTag, writePoints } from "../src/index/reader";
-import { excerptOf } from "../src/index/text";
+import { asText, excerptOf } from "../src/index/text";
 import { fillFrom, rasterize, simplifyRing, snapPoint, snapRing, traceOutlines } from "../src/render/fill";
 import { settle } from "../src/render/layout";
 import { cappedSize, levelFor, MAX_PIXELS, piecesIn } from "../src/render/bigimage";
@@ -242,6 +242,7 @@ eq(
 );
 eq(excerptOf("short\n\nA much longer paragraph that is clearly the real description of this note.").startsWith("A much longer"), true, "excerpt prefers a real paragraph");
 eq(excerptOf("word ".repeat(100), 40).endsWith("…"), true, "excerpt is cut at a word");
+eq([asText("a"), asText(3), asText(true), asText(null), asText(undefined), asText(["x", 2]), asText({ k: 1 })], ["a", "3", "true", "", "", "x,2", '{"k":1}'], "property values as text");
 
 // ---- Board layout ----
 const lay = (r: { id: string; x: number; y: number }[]) => r.map((m) => `${m.id}:${m.x},${m.y}`).sort().join(" ");

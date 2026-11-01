@@ -28,7 +28,7 @@ export class GedcomModal extends Modal {
 			input.hide();
 			contentEl.appendChild(input);
 			b.setButtonText("Choose file…").onClick(() => input.click());
-			input.addEventListener("change", async () => {
+			input.addEventListener("change", () => void (async () => {
 				const file = input.files?.[0];
 				if (!file) return;
 				try {
@@ -38,7 +38,7 @@ export class GedcomModal extends Modal {
 				} catch (err) {
 					this.statusEl.setText(`Couldn't read file: ${(err as Error).message}`);
 				}
-			});
+			})());
 		});
 		new Setting(contentEl).setName("People folder").addText((t) => t.setValue(this.folder).onChange((v) => (this.folder = v)));
 		new Setting(contentEl)

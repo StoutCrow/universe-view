@@ -28,7 +28,7 @@ export function noteIcons(plugin: ChroniclePlugin, path: string): { type?: strin
 	if (!e) {
 		// Not a UniverseView note: only an `icon:` it was given.
 		const f = plugin.app.vault.getAbstractFileByPath(path);
-		const own = f instanceof TFile ? plugin.app.metadataCache.getFileCache(f)?.frontmatter?.icon : undefined;
+		const own: unknown = f instanceof TFile ? plugin.app.metadataCache.getFileCache(f)?.frontmatter?.icon : undefined;
 		return typeof own === "string" && own.trim() ? { kind: own.trim() } : {};
 	}
 	const type = TYPE_ICONS[e.type];

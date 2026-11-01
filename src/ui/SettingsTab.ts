@@ -20,6 +20,7 @@ import { DEFAULT_TIER_NAMES, TIER_NAME_PRESETS, pluralOf, tierName, tierWords, t
 import { DEFAULT_TIER_STYLES, EDGE_NAMES, PATTERN_NAMES, tierStyleNames, type TierStyle } from "./territorystyle";
 import { TagStandardModal } from "./tagstandard";
 import { CALENDAR_PRESETS } from "../dates/calendar-text";
+import { ConfirmPrompt } from "./TextPrompt";
 
 /** The color a CSS variable currently resolves to, for the color pickers. */
 function resolveColor(key: string): string {
@@ -52,7 +53,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 	/** The element that scrolls: the settings page itself, or the modal around it. */
 	private scroller(): HTMLElement {
 		const own = this.containerEl;
-		return own.scrollHeight > own.clientHeight + 1 ? own : (own.closest(".vertical-tab-content-container, .modal-content") as HTMLElement | null) ?? own;
+		return own.scrollHeight > own.clientHeight + 1 ? own : own.closest<HTMLElement>(".vertical-tab-content-container, .modal-content") ?? own;
 	}
 
 	display() {
@@ -206,7 +207,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Brush size")
 			.setDesc("How wide the territory brush is on screen (pixels). [ and ] change it while brushing.")
-			.addSlider((sl) => sl.setLimits(4, 120, 2).setValue(s.brushSize ?? 22).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(4, 120, 2).setValue(s.brushSize ?? 22).onChange(async (v) => {
 				s.brushSize = v;
 				await this.save(false);
 			}));
@@ -231,7 +232,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Colour tolerance")
 			.setDesc("Filling by colour: how different a colour can be and still count as the same area.")
-			.addSlider((sl) => sl.setLimits(2, 60, 1).setValue(s.fillTolerance ?? 14).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(2, 60, 1).setValue(s.fillTolerance ?? 14).onChange(async (v) => {
 				s.fillTolerance = v;
 				await this.save(false);
 			}));
@@ -241,7 +242,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Simplify strength")
 			.setDesc("Simplify's starting strength: how far off the line, on screen, a corner may sit and still be taken away. Real detail such as a jagged coast stays.")
-			.addSlider((sl) => sl.setLimits(1, 15, 1).setValue(s.simplifyPx ?? 3).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(1, 15, 1).setValue(s.simplifyPx ?? 3).onChange(async (v) => {
 				s.simplifyPx = v;
 				await this.save(false);
 			}));
@@ -275,7 +276,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Tag prefix")
 			.setDesc("Only match nested tags, e.g. “chronicle” matches #chronicle/person.")
-			.addText((t) => t.setPlaceholder("none").setValue(s.tagPrefix).onChange(async (v) => {
+			.addText((t) => t.setPlaceholder("None").setValue(s.tagPrefix).onChange(async (v) => {
 				s.tagPrefix = v.trim();
 				await this.save();
 			}));
@@ -548,7 +549,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				.setDesc(cal.id === "gregorian" ? "Empty: today's real date. A world note's `today:` wins for its world." : "The date it is now in this calendar (also the calendar view's Today). A world note's `today:` wins for its world.")
 				.addText((t) => {
 					t.setPlaceholder(cal.id === "gregorian" ? "today" : "e.g. 1292 C.E.").setValue(typeof saved === "number" ? formatDay(saved, cal, "year") : "");
-					t.inputEl.addEventListener("change", async () => {
+					t.inputEl.addEventListener("change", () => void (async () => {
 						const v = t.getValue().trim();
 						const d = v ? this.plugin.parseDate(v, cal.id) : null;
 						const next = { ...s.currentDates };
@@ -557,7 +558,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 						s.currentDates = next;
 						t.inputEl.toggleClass("mod-warning", !!v && !d);
 						await this.save();
-					});
+					})());
 				});
 		}
 		new Setting(containerEl)
@@ -612,7 +613,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 					await this.save(false);
 				}
 			}))
-			.addSlider((sl) => sl.setLimits(1, 18, 1).setValue(s.defaultZoom).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(1, 18, 1).setValue(s.defaultZoom).onChange(async (v) => {
 				s.defaultZoom = v;
 				await this.save(false);
 			}));
@@ -637,7 +638,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Fade small areas when zoomed out")
 			.setDesc("Territories narrower than this on screen fade away as you zoom out, so the big realms stay readable; zoom in and they come back. 0 never fades. (Turn it off per map under Overlays.)")
-			.addSlider((sl) => sl.setLimits(0, 160, 8).setValue(s.fadeAreaPx).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(0, 160, 8).setValue(s.fadeAreaPx).onChange(async (v) => {
 				s.fadeAreaPx = v;
 				await this.save();
 			}));
@@ -727,7 +728,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				new Notice(`Saved the look as “${newName}”`);
 				this.display();
 			}));
-		new Setting(containerEl).setName("Name size").setDesc("Place and territory names, as a multiple of their usual size.").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapLabelScale ?? 1).setDynamicTooltip().onChange(async (v) => {
+		new Setting(containerEl).setName("Name size").setDesc("Place and territory names, as a multiple of their usual size.").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapLabelScale ?? 1).onChange(async (v) => {
 			s.mapLabelScale = v;
 			await restyle();
 		}));
@@ -738,11 +739,11 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			s.mapLabelHalo = v;
 			await restyle();
 		}));
-		new Setting(containerEl).setName("Pin size").setDesc("Every pin, as a multiple of its usual size (each place's own size still applies).").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapPinScale ?? 1).setDynamicTooltip().onChange(async (v) => {
+		new Setting(containerEl).setName("Pin size").setDesc("Every pin, as a multiple of its usual size (each place's own size still applies).").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapPinScale ?? 1).onChange(async (v) => {
 			s.mapPinScale = v;
 			await restyle();
 		}));
-		new Setting(containerEl).setName("Fill strength").setDesc("How strongly every territory is filled with its colour, as a multiple of its tier's fill.").addSlider((sl) => sl.setLimits(0, 3, 0.05).setValue(s.territoryFillScale ?? 1).setDynamicTooltip().onChange(async (v) => {
+		new Setting(containerEl).setName("Fill strength").setDesc("How strongly every territory is filled with its colour, as a multiple of its tier's fill.").addSlider((sl) => sl.setLimits(0, 3, 0.05).setValue(s.territoryFillScale ?? 1).onChange(async (v) => {
 			s.territoryFillScale = v;
 			await restyle();
 		}));
@@ -762,7 +763,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Rivers")
 			.setDesc("Rivers drawn with the route tool are water that widens from source to mouth: how wide, and the water's colour.")
-			.addSlider((sl) => sl.setLimits(0.25, 3, 0.25).setValue(s.riverWidth ?? 1).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(0.25, 3, 0.25).setValue(s.riverWidth ?? 1).onChange(async (v) => {
 				s.riverWidth = v;
 				await this.save(true);
 			}))
@@ -788,7 +789,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Split realms at")
 			.setDesc("On the map, a realm shows as one block until it's this many pixels across, then splits into its duchies (and those into their counties). Bigger: kingdoms appear with less zooming out. The map's Tier button can also hold one level.")
-			.addSlider((sl) => sl.setLimits(160, 1600, 20).setValue(s.tierSplitPx).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(160, 1600, 20).setValue(s.tierSplitPx).onChange(async (v) => {
 				s.tierSplitPx = v;
 				await this.save(false);
 				this.plugin.refreshMaps();
@@ -914,12 +915,12 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			el("div", { cls: "chronicle-theme-name", text: th.name }, card);
 			el("div", { cls: "chronicle-theme-for", text: th.forWhat }, card);
 			card.setAttribute("aria-label", th.description);
-			card.addEventListener("click", async () => {
+			card.addEventListener("click", () => void (async () => {
 				s.theme = th.id;
 				await save();
 				grid.querySelectorAll(".chronicle-theme-card").forEach((c) => c.removeClass("is-active"));
 				card.addClass("is-active");
-			});
+			})());
 		}
 
 		const colors = new Setting(containerEl)
@@ -935,18 +936,18 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			el("span", { text: label }, wrap);
 			const clear = el("span", { cls: "chronicle-color-clear", title: "Use the theme's color" }, wrap);
 			icon(clear, "x");
-			input.addEventListener("input", async () => {
+			input.addEventListener("input", () => void (async () => {
 				s.colors[key] = input.value;
 				wrap.addClass("is-set");
 				await save();
-			});
-			clear.addEventListener("click", async (evt) => {
+			})());
+			clear.addEventListener("click", (evt) => void (async (evt) => {
 				evt.preventDefault();
 				s.colors[key] = "";
 				wrap.removeClass("is-set");
 				await save();
 				input.value = resolveColor(key);
-			});
+			})(evt));
 		}
 
 		new Setting(containerEl)
@@ -969,7 +970,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Corner radius")
 			.setDesc("Roundness of cards and panels. All the way left uses the theme's.")
-			.addSlider((sl) => sl.setLimits(-1, 20, 1).setValue(s.radius).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(-1, 20, 1).setValue(s.radius).onChange(async (v) => {
 				s.radius = v;
 				await save();
 			}));
@@ -995,7 +996,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName(name)
 				.setDesc(desc)
-				.addSlider((sl) => sl.setLimits(min, max, step).setValue(get() ?? dflt).setDynamicTooltip().onChange(async (v) => {
+				.addSlider((sl) => sl.setLimits(min, max, step).setValue(get() ?? dflt).onChange(async (v) => {
 					put(v === dflt ? undefined : v);
 					await save();
 				}))
@@ -1056,10 +1057,10 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			new Setting(containerEl).setName(name).setDesc(desc).addText((t) => {
 				t.setPlaceholder("Theme default").setValue(get() ?? "");
 				t.inputEl.setAttribute("list", fontList);
-				t.inputEl.addEventListener("change", async () => {
+				t.inputEl.addEventListener("change", () => void (async () => {
 					put(t.getValue().trim());
 					await save();
-				});
+				})());
 			});
 		fontField("Text", "UniverseView's views, panels and cards.", () => s.fontUi, (v) => (s.fontUi = v));
 		fontField("Headings and names", "Titles, names on cards, realm names on the map.", () => s.fontDisplay, (v) => (s.fontDisplay = v));
@@ -1164,7 +1165,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			new Setting(strengthBox)
 				.setName(name)
 				.setClass("uv-file-strength-row")
-				.addSlider((sl) => sl.setLimits(0, 100, 5).setValue(strengths[k]).setDynamicTooltip().onChange(async (v) => {
+				.addSlider((sl) => sl.setLimits(0, 100, 5).setValue(strengths[k]).onChange(async (v) => {
 					s.fileStrength = { ...(s.fileStrength ?? {}), [k]: v };
 					await save();
 					this.plugin.repaintFileIcons?.();
@@ -1204,12 +1205,12 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			set.addText((t) => {
 				t.setPlaceholder(fallback).setValue(current ?? "");
 				t.onChange((v) => show(v.trim()));
-				t.inputEl.addEventListener("change", async () => {
+				t.inputEl.addEventListener("change", () => void (async () => {
 					put(t.getValue().trim());
 					applyIconSettings(this.plugin);
 					await this.save();
 					this.plugin.repaintFileIcons?.();
-				});
+				})());
 			});
 		};
 		for (const type of ENTITY_TYPES) iconField(`${TYPE_LABELS[type]} notes`, s.typeIcons?.[type], DEFAULT_TYPE_ICONS[type], (v) => (s.typeIcons = { ...(s.typeIcons ?? {}), [type]: v }));
@@ -1242,12 +1243,12 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Delay")
 			.setDesc("How long to rest on an item before its card opens (milliseconds). Hold Alt to open one at once.")
-			.addSlider((sl) => sl.setLimits(0, 2000, 50).setValue(s.hoverDelay).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(0, 2000, 50).setValue(s.hoverDelay).onChange(async (v) => {
 				s.hoverDelay = v;
 				await save();
 			}));
 		const slider = (name: string, desc: string, min: number, max: number, step: number, get: () => number, put: (v: number) => void) =>
-			new Setting(containerEl).setName(name).setDesc(desc).addSlider((sl) => sl.setLimits(min, max, step).setValue(get()).setDynamicTooltip().onChange(async (v) => {
+			new Setting(containerEl).setName(name).setDesc(desc).addSlider((sl) => sl.setLimits(min, max, step).setValue(get()).onChange(async (v) => {
 				put(v);
 				await save();
 			}));
@@ -1274,7 +1275,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Close after")
 			.setDesc("How long a card stays once the pointer leaves it (milliseconds), so you can move onto it. Drag a card by its handle (or any empty part) to keep it open where you drop it; keys while one is open: P pin, I inspect, E edit, O open the note, Esc close.")
-			.addSlider((sl) => sl.setLimits(0, 1500, 50).setValue(s.hoverHideDelay ?? 180).setDynamicTooltip().onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(0, 1500, 50).setValue(s.hoverHideDelay ?? 180).onChange(async (v) => {
 				s.hoverHideDelay = v;
 				await save();
 			}));
@@ -1308,10 +1309,10 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				try {
 					// Edited right here on the page: a window opened over Settings can end up behind it.
 					card.empty();
-					CalendarEditorModal.inline(this.plugin, card, c, async (next) => {
+					CalendarEditorModal.inline(this.plugin, card, c, (next) => void (async (next) => {
 						s.calendars[index] = next;
 						await this.save();
-					}, () => this.display());
+					})(next), () => this.display());
 				} catch (err) {
 					console.error("UniverseView: couldn't open the calendar editor", err);
 					new Notice(`Couldn't open the calendar editor: ${err instanceof Error ? err.message : String(err)}`);
@@ -1322,11 +1323,11 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				await this.save();
 				this.display();
 			}))
-			.addExtraButton((b) => b.setIcon("trash-2").setTooltip("Delete calendar").onClick(async () => {
-				if (!window.confirm(`Delete the calendar “${c.name}”? Notes using it fall back to the default.`)) return;
-				s.calendars.splice(index, 1);
-				await this.save();
-				this.display();
+			.addExtraButton((b) => b.setIcon("trash-2").setTooltip("Delete calendar").onClick(() => {
+				new ConfirmPrompt(this.plugin, `Delete the calendar “${c.name}”?`, "Notes using it fall back to the default.", "Delete", () => {
+					s.calendars.splice(index, 1);
+					void this.save().then(() => this.display());
+				}).open();
 			}));
 	}
 }

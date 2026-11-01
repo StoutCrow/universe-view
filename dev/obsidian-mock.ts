@@ -84,6 +84,27 @@ N.createDiv = function (o?: any, cb?: any) {
 N.createSpan = function (o?: any, cb?: any) {
 	return this.createEl("span", o, cb);
 };
+// Obsidian's global helpers for elements not yet in the page.
+const G = globalThis as any;
+G.createEl = (tag: string, o?: any, cb?: (el: HTMLElement) => void) => {
+	const el = document.createElement(tag);
+	applyOpts(el, o);
+	cb?.(el);
+	return el;
+};
+G.createDiv = (o?: any, cb?: any) => G.createEl("div", o, cb);
+G.createSpan = (o?: any, cb?: any) => G.createEl("span", o, cb);
+G.createSvg = (tag: string, o?: any, cb?: (el: SVGElement) => void) => {
+	const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+	applyOpts(el as unknown as HTMLElement, o);
+	cb?.(el);
+	return el;
+};
+G.createFragment = (cb?: (f: DocumentFragment) => void) => {
+	const f = document.createDocumentFragment();
+	cb?.(f);
+	return f;
+};
 
 // ---- Utilities -------------------------------------------------------------------------------------
 

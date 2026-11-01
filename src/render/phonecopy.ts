@@ -64,7 +64,7 @@ export async function savePhoneCopy(plugin: ChroniclePlugin, imagePath: string, 
 		const big = pyramid.levels.filter((l) => Math.max(l.width, l.height) >= PHONE_MAX);
 		const level = big[big.length - 1] ?? pyramid.levels[0];
 		const k = Math.min(1, PHONE_MAX / Math.max(level.width, level.height));
-		const c = document.createElement("canvas");
+		const c = createEl("canvas");
 		c.width = Math.round(level.width * k);
 		c.height = Math.round(level.height * k);
 		const ctx = c.getContext("2d");

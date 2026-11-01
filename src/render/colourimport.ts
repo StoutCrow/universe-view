@@ -76,7 +76,7 @@ export class ColourImportModal extends Modal {
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
 		el("button", { text: "Cancel" }, footer).addEventListener("click", () => this.close());
 		const go = el("button", { cls: "mod-cta", text: "Import" }, footer);
-		go.addEventListener("click", async () => {
+		go.addEventListener("click", () => void (async () => {
 			const rows = this.areas.map((area, i) => ({ e: this.picks[i], area })).filter((r): r is { e: Entity; area: ColourArea } => !!r.e);
 			if (!rows.length) {
 				new Notice("Pick a note for at least one colour.");
@@ -85,7 +85,7 @@ export class ColourImportModal extends Modal {
 			go.disabled = true;
 			await this.onImport(rows, this.replace);
 			this.close();
-		});
+		})());
 	}
 
 	onClose() {

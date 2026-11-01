@@ -46,7 +46,7 @@ function toDataUrl(url: string): Promise<string | null> {
 	if (url.startsWith("data:")) return Promise.resolve(url);
 	let p = dataUrls.get(url);
 	if (!p) {
-		if (dataUrls.size > 24) dataUrls.delete(dataUrls.keys().next().value);
+		if (dataUrls.size > 24) dataUrls.delete(dataUrls.keys().next().value as string);
 		dataUrls.set(url, (p = readDataUrl(url)));
 		// A failed read is tried again next time.
 		void p.then((d) => d === null && dataUrls.delete(url));
@@ -63,7 +63,7 @@ async function readDataUrl(url: string): Promise<string | null> {
 			: await (await fetch(url)).blob();
 		return await new Promise((resolve) => {
 			const r = new FileReader();
-			r.onload = () => resolve(String(r.result));
+			r.onload = () => resolve(typeof r.result === "string" ? r.result : null);
 			r.onerror = () => resolve(null);
 			r.readAsDataURL(blob);
 		});
@@ -105,7 +105,7 @@ export async function viewToSvg(target: HTMLElement): Promise<{ svg: string; wid
 
 async function snapshot(target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
 	const bg = getComputedStyle(document.body).getPropertyValue("--background-primary").trim() || "#ffffff";
-	const canvas = target.querySelector("svg.chronicle-canvas") as SVGSVGElement | null;
+	const canvas = target.querySelector<SVGSVGElement>("svg.chronicle-canvas");
 	const layer = canvas?.querySelector(":scope > g:not(defs)") as SVGGElement | null;
 	if (canvas && layer && layer.getBBox().width > 0) {
 		const box = layer.getBBox();
@@ -169,7 +169,7 @@ async function svgToPng(svg: string, width: number, height: number): Promise<Blo
 	const img = new Image();
 	img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 	await img.decode();
-	const c = document.createElement("canvas");
+	const c = createEl("canvas");
 	c.width = Math.max(1, Math.round(width * scale));
 	c.height = Math.max(1, Math.round(height * scale));
 	const ctx = c.getContext("2d")!;
@@ -320,7 +320,7 @@ export async function exportTimelapse(plugin: ChroniclePlugin, target: HTMLEleme
 		const th = Math.round((tw * (thumbs[0]?.img.height ?? 300)) / Math.max(1, thumbs[0]?.img.width ?? 400));
 		const gap = 12;
 		const rows = Math.ceil(thumbs.length / cols);
-		const c = document.createElement("canvas");
+		const c = createEl("canvas");
 		c.width = cols * tw + (cols + 1) * gap;
 		c.height = rows * th + (rows + 1) * gap;
 		const ctx = c.getContext("2d")!;

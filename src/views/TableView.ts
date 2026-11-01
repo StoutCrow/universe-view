@@ -4,6 +4,7 @@ import { buildFieldAliases, type FieldName } from "../settings";
 import { dropdown, el, entityColor, icon, iconButton, openEntity, showEntityMenu, TYPE_LABELS } from "../render/common";
 import { TextPrompt } from "../ui/TextPrompt";
 import { ChronicleView } from "./base";
+import { asText } from "../index/text";
 
 export const VIEW_TABLE = "chronicle-table";
 
@@ -86,7 +87,7 @@ const unlink = (v: unknown): string => {
 		const inner = Object.values(o).find((x) => typeof x === "string" && /\[\[/.test(x));
 		return unlink(inner ?? o.name ?? o.link ?? "");
 	}
-	return String(v).replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, "$1");
+	return asText(v).replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, "$1");
 };
 
 /**

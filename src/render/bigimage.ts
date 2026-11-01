@@ -60,7 +60,7 @@ export class FullImage {
 	constructor(private bitmap: ImageBitmap | null, readonly width: number, readonly height: number) {
 		this.cols = Math.ceil(width / PIECE);
 		this.rows = Math.ceil(height / PIECE);
-		this.pieces = new Array(this.cols * this.rows).fill(null);
+		this.pieces = new Array<Blob | null>(this.cols * this.rows).fill(null);
 	}
 
 	/** Cuts the bitmap into pieces, a few at a time so the app stays responsive, then lets it go. */
@@ -204,7 +204,7 @@ async function build(width: number, height: number, read: () => Promise<ArrayBuf
 }
 
 function shrink(src: CanvasImageSource, w: number, h: number): HTMLCanvasElement | null {
-	const c = document.createElement("canvas");
+	const c = createEl("canvas");
 	c.width = w;
 	c.height = h;
 	const ctx = c.getContext("2d");

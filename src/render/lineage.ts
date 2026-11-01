@@ -458,7 +458,7 @@ export class LineageRenderer {
 				svg("image", { href: logo, x: -(BAR / 2 - 3), y: -(BAR / 2 - 3), width: BAR - 6, height: BAR - 6, "clip-path": `url(#${clipId})`, preserveAspectRatio: "xMidYMid slice" }, badge);
 			} else {
 				const fo = svg("foreignObject", { x: -7, y: -7, width: 14, height: 14, class: "uv-lin-badge-icon" }, badge);
-				const holder = document.createElement("div");
+				const holder = createDiv();
 				fo.appendChild(holder);
 				if (!glyph(holder, c.icon ?? GROUP_KINDS[kind].icon)) icon(holder, GROUP_KINDS[kind].icon);
 			}

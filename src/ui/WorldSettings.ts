@@ -50,7 +50,7 @@ export class WorldSettingsModal extends Modal {
 		const todaySetting = new Setting(box).setName("Today in the world").setDesc("The calendar's Today, and where open spans end");
 		let check = () => {};
 		todaySetting.addText((t) => {
-			t.setPlaceholder("e.g. 16 Highsun SE 3").setValue(v.today);
+			t.setPlaceholder("E.g. 16 Highsun SE 3").setValue(v.today);
 			check = () => {
 				const d = v.today.trim() ? p.parseDate(v.today, v.calendar) : null;
 				todaySetting.setDesc(!v.today.trim() ? "The calendar's Today, and where open spans end" : d ? `= ${formatDay(d.start, p.calendars.get(v.calendar))}` : "This calendar can't read that date");
@@ -64,7 +64,7 @@ export class WorldSettingsModal extends Modal {
 		});
 		const maps = idx.all("map").filter((m) => !folder || m.path.startsWith(folder + "/"));
 		new Setting(box).setName("Main map").setDesc("Opens first in the map view for this world").addDropdown((d) => {
-			d.addOption("", "(none)");
+			d.addOption("", "(None)");
 			for (const m of maps) d.addOption(m.name, m.name);
 			d.setValue(v.map).onChange((x) => (v.map = x));
 		});

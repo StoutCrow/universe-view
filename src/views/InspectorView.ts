@@ -13,6 +13,8 @@ import { readChoice, restandardise, standardFields } from "../ui/tagstandard";
 import { identityHeader } from "../ui/identity";
 import { battlesOf, isBattle, isWar, victorOf, warOf, warTally } from "../index/wars";
 import { formatDay } from "../dates/parser";
+import { asText } from "../index/text";
+import { ConfirmPrompt } from "../ui/TextPrompt";
 
 export const VIEW_INSPECTOR = "chronicle-inspector";
 
@@ -306,13 +308,14 @@ export class InspectorView extends ItemView {
 		icon(el("span", {}, del), "trash-2");
 		el("span", { text: "Delete note…" }, del);
 		del.addEventListener("click", () => {
-			if (!window.confirm(`Delete the note “${e.name}”?\n\nIt moves to Obsidian's trash. Its pin and areas go with it; links to it from other notes stay as unresolved links.`)) return;
-			this.editor = undefined;
-			this.key = undefined;
-			void this.app.fileManager.trashFile(file).then(() => {
-				new Notice(`Moved “${e.name}” to the trash.`);
-				this.render();
-			});
+			new ConfirmPrompt(this.plugin, `Delete the note “${e.name}”?`, "It moves to Obsidian's trash. Its pin and areas go with it; links to it from other notes stay as unresolved links.", "Delete", () => {
+				this.editor = undefined;
+				this.key = undefined;
+				void this.app.fileManager.trashFile(file).then(() => {
+					new Notice(`Moved “${e.name}” to the trash.`);
+					this.render();
+				});
+			}).open();
 		});
 	}
 
@@ -329,7 +332,7 @@ export class InspectorView extends ItemView {
 		icon(el("span", {}, h), o.icon);
 		el("span", { text: o.title }, h);
 		helpTip(h, o.help);
-		const plain = (v: unknown) => (v === undefined || v === null ? "" : String(v).replace(/^\[\[|\]\]$/g, "").split("|")[0]);
+		const plain = (v: unknown) => (v === undefined || v === null ? "" : asText(v).replace(/^\[\[|\]\]$/g, "").split("|")[0]);
 		const raw = this.app.metadataCache.getFileCache(file)?.frontmatter?.[o.field] as unknown;
 		const rows: Record<string, string>[] = ([] as unknown[]).concat(raw ?? []).filter((x) => x && typeof x === "object").map((x) => Object.fromEntries(o.cols.map((c) => [c.key, plain((x as Record<string, unknown>)[c.key])])));
 		const list = el("div", { cls: "uv-names" }, s);
@@ -373,7 +376,7 @@ export class InspectorView extends ItemView {
 			add.addEventListener("click", () => {
 				rows.push({});
 				draw();
-				(list.querySelectorAll(".uv-names-row")[rows.length - 1]?.querySelector("input") as HTMLInputElement | null)?.focus();
+				list.querySelectorAll(".uv-names-row")[rows.length - 1]?.querySelector("input")?.focus();
 			});
 		};
 		draw();
@@ -462,9 +465,9 @@ export class InspectorView extends ItemView {
 		const rows: { name: string; from: string; to: string }[] = ([] as unknown[]).concat(raw ?? []).map((x) => {
 			if (x && typeof x === "object") {
 				const o = x as Record<string, unknown>;
-				return { name: String(o.name ?? ""), from: o.from === undefined ? "" : String(o.from), to: o.to === undefined ? "" : String(o.to) };
+				return { name: asText(o.name ?? ""), from: o.from === undefined ? "" : asText(o.from), to: o.to === undefined ? "" : asText(o.to) };
 			}
-			return { name: String(x ?? ""), from: "", to: "" };
+			return { name: asText(x ?? ""), from: "", to: "" };
 		});
 		const list = el("div", { cls: "uv-names" }, s);
 		const save = () =>
@@ -600,7 +603,7 @@ export class InspectorView extends ItemView {
 							// A list (itself, then its region, then its continent…): change only the region.
 							const self = (v: unknown) => String(v).replace(/^\[\[|\]\]$/g, "").split("|")[0].trim() === e.name;
 							const i = cur.findIndex((v) => !self(v));
-							const next = [...cur];
+							const next: unknown[] = [...(cur as unknown[])];
 							if (i < 0) next.push(`[[${name}]]`);
 							else next[i] = `[[${name}]]`;
 							fm[key] = next;

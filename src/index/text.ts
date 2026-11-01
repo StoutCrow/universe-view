@@ -1,5 +1,15 @@
 /* Plain-text helpers with no Obsidian dependencies (unit-tested). */
 
+/** A property value as text: strings as they are, numbers and yes/no written out, lists joined with commas, anything else as JSON; nothing → "". */
+export function asText(v: unknown): string {
+	if (v === undefined || v === null) return "";
+	if (typeof v === "string") return v;
+	if (typeof v === "number" || typeof v === "boolean" || typeof v === "bigint") return String(v);
+	if (Array.isArray(v)) return v.map(asText).join(",");
+	if (v instanceof Date) return v.toISOString();
+	return JSON.stringify(v) ?? "";
+}
+
 /** Plain-text opening of a note: skips frontmatter, headings, callout titles, tables, embeds and inline fields. */
 export function excerptOf(md: string, max = 240): string {
 	const body = md.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```[\s\S]*?```/g, "").replace(/%%[\s\S]*?%%/g, "");

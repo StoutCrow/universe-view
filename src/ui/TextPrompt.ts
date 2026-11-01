@@ -31,3 +31,26 @@ export class TextPrompt extends Modal {
 		this.contentEl.empty();
 	}
 }
+
+/** A yes/no question before something that can't easily be undone ("Delete the calendar?"). */
+export class ConfirmPrompt extends Modal {
+	constructor(plugin: ChroniclePlugin, private heading: string, private message: string, private action: string, private onConfirm: () => void) {
+		super(plugin.app);
+	}
+	onOpen() {
+		this.modalEl.addClass("chronicle-scope");
+		this.titleEl.setText(this.heading);
+		for (const para of this.message.split("\n\n")) el("p", { text: para }, this.contentEl);
+		const buttons = el("div", { cls: "modal-button-container" }, this.contentEl);
+		const ok = el("button", { cls: "mod-warning", text: this.action }, buttons);
+		ok.addEventListener("click", () => {
+			this.close();
+			this.onConfirm();
+		});
+		el("button", { text: "Cancel" }, buttons).addEventListener("click", () => this.close());
+		window.setTimeout(() => ok.focus(), 30);
+	}
+	onClose() {
+		this.contentEl.empty();
+	}
+}

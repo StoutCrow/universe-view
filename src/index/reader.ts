@@ -3,6 +3,7 @@ import type { ChronDate, EntityType, PinSize, Ref, TimedRef } from "../types";
 import type { FieldName } from "../settings";
 import type { Calendar } from "../dates/calendars";
 import { parseDate } from "../dates/parser";
+import { asText } from "./text";
 
 const TYPE_SYNONYMS: Record<EntityType, string[]> = {
 	event: ["event", "events", "happening", "incident", "battle", "war", "treaty", "occurrence", "period", "era"],
@@ -135,7 +136,7 @@ export function linkTexts(value: unknown): string[] {
 		if (typeof o.path === "string") return [o.path];
 		return [];
 	}
-	const s = String(value).trim();
+	const s = asText(value).trim();
 	if (!s) return [];
 	const matches = [...s.matchAll(LINK_RE)].map((m) => m[1]);
 	if (matches.length) return matches;
@@ -207,7 +208,7 @@ export function readTimedRefs(
 	const dateOf = (v: unknown, label: string): ChronDate | undefined => {
 		if (v === undefined || v === null || v === "") return undefined;
 		const d = parseDate(v, cal);
-		if (!d) issues.push(`Could not read ${label} date "${String(v)}"`);
+		if (!d) issues.push(`Could not read ${label} date "${asText(v)}"`);
 		return d ?? undefined;
 	};
 	for (const { alias, value } of entries) {
@@ -225,7 +226,7 @@ export function readTimedRefs(
 				for (const t of linkTexts(r.value)) {
 					const ref = resolve(t);
 					if (!ref.name) continue;
-					const id = ref.key + "|" + (kind ?? r.kindFromKey ?? aliasKind ?? "");
+					const id = ref.key + "|" + asText(kind ?? r.kindFromKey ?? aliasKind);
 					if (seen.has(id)) continue;
 					seen.add(id);
 					out.push({
@@ -252,7 +253,7 @@ export function readTimedRefs(
 
 export function readPair(value: unknown): [number, number] | undefined {
 	let a: unknown, b: unknown;
-	if (Array.isArray(value) && value.length >= 2) [a, b] = value;
+	if (Array.isArray(value) && value.length >= 2) [a, b] = value as unknown[];
 	else if (typeof value === "string") {
 		const m = value.match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
 		if (!m) return undefined;
@@ -301,7 +302,7 @@ const CATEGORY_KEYS = ["kind", "subtype", "place_type", "place-type", "place_cat
 export function readCategory(fm: Record<string, unknown>, tags: string[], type: EntityType): string | undefined {
 	for (const k of CATEGORY_KEYS) {
 		const v = fm[k];
-		const s = Array.isArray(v) ? v[0] : v;
+		const s: unknown = Array.isArray(v) ? v[0] : v;
 		if (typeof s !== "string" || !s.trim()) continue;
 		const clean = s.replace(/^\[\[|\]\]$/g, "").replace(/^#/, "").trim();
 		// "category: place" is the type itself, not a kind.
@@ -340,7 +341,7 @@ export function readPinSize(fm: Record<string, unknown>): PinSize | undefined {
 			if (n >= 1 && n <= 5) return PIN_SIZES[Math.round(n) - 1];
 			continue;
 		}
-		const w = SIZE_WORDS[String(v).trim().toLowerCase()];
+		const w = SIZE_WORDS[asText(v).trim().toLowerCase()];
 		if (w) return w;
 	}
 	return undefined;
@@ -349,7 +350,7 @@ export function readPinSize(fm: Record<string, unknown>): PinSize | undefined {
 /** Map layer 1–5 from "layer: 3" (also "map-layer", "zoom-layer"). */
 export function readLayer(fm: Record<string, unknown>): number | undefined {
 	for (const k of ["layer", "map-layer", "map_layer", "zoom-layer", "zoom_layer"]) {
-		const n = Number(String(fm[k] ?? "").replace(/^layer\s*/i, ""));
+		const n = Number(asText(fm[k] ?? "").replace(/^layer\s*/i, ""));
 		if (fm[k] !== undefined && fm[k] !== "" && Number.isFinite(n)) return Math.max(1, Math.min(5, Math.round(n)));
 	}
 	return undefined;

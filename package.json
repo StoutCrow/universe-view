@@ -1,6 +1,6 @@
 {
   "name": "universe-view",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Timelines, family trees, organisation charts, relationship graphs and maps for your worlds, built from your notes.",
   "main": "main.js",
   "scripts": {
