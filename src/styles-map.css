@@ -1,0 +1,466 @@
+/* Map: realm tiers, legend, territory looks, picking and editing */
+
+/* ---- Map tiers ---- */
+.chronicle-territory {
+	transition: opacity var(--chronicle-tier-fade, 300ms) ease, fill-opacity var(--chronicle-tier-fade, 300ms) ease, stroke-width var(--chronicle-tier-fade, 300ms) ease, stroke-opacity var(--chronicle-tier-fade, 300ms) ease;
+}
+.chronicle-territory.is-tier-hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+.chronicle-territory.is-tier-merged {
+	fill-opacity: 0.26;
+	stroke-opacity: 0.18;
+	stroke-width: 1;
+}
+.chronicle-territory.is-tier-merged:hover {
+	fill-opacity: 0.36;
+}
+.chronicle-territory.is-tier-outline {
+	fill-opacity: 0;
+	stroke-width: 3.5;
+	stroke-opacity: 0.9;
+	pointer-events: stroke;
+	cursor: zoom-out;
+}
+.chronicle-territory.is-tier-outline:hover {
+	stroke-width: 6;
+}
+.chronicle-territory-label.is-tier-hidden,
+.chronicle-territory-label.is-crowded {
+	opacity: 0 !important;
+}
+.chronicle-territory-label.is-realm {
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+.chronicle-pin-label,
+.chronicle-territory-label {
+	transition: opacity var(--chronicle-label-fade, 150ms) ease !important;
+}
+.chronicle-map-crumbs {
+	position: absolute;
+	top: 10px;
+	left: 54px;
+	z-index: 800;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 2px;
+	max-width: calc(100% - 120px);
+	padding: 2px 4px;
+	border-radius: var(--radius-m);
+	background: color-mix(in srgb, var(--background-primary) 88%, transparent);
+	box-shadow: var(--shadow-s);
+	font-size: var(--font-ui-smaller);
+}
+.chronicle-map-crumbs .chronicle-map-crumb {
+	all: unset;
+	cursor: pointer;
+	padding: 2px 6px;
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+}
+.chronicle-map-crumbs .chronicle-map-crumb:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+.chronicle-map-crumbs .chronicle-map-crumb:last-child {
+	color: var(--text-normal);
+	font-weight: 600;
+}
+.chronicle-map-crumb-sep {
+	color: var(--text-faint);
+}
+
+/* ---- Legend: holder line and zoom button ---- */
+.chronicle-legend .chronicle-legend-label {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+	min-width: 0;
+}
+.chronicle-legend .chronicle-legend-label > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.chronicle-legend-detail {
+	color: var(--text-faint);
+	font-size: 0.85em;
+}
+.chronicle-legend .chronicle-legend-go {
+	flex-shrink: 0;
+	padding: 2px;
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+.chronicle-legend-row:hover .chronicle-legend-go {
+	opacity: 1;
+}
+.chronicle-legend-go svg {
+	width: 13px;
+	height: 13px;
+}
+
+/* ---- Territories: polished edges and textures ---- */
+.uv-terr-overlay { fill: none; stroke: none; pointer-events: none; }
+.uv-terr-overlay.uv-edge-band { stroke: var(--terr-color); stroke-opacity: 0.4; stroke-width: calc(var(--uv-band, 6px) * 2); stroke-linejoin: round; }
+.uv-terr-overlay.uv-edge-double { stroke: var(--background-primary); stroke-opacity: 0.85; stroke-width: 1px; }
+.uv-terr-overlay.uv-pat-hatch { fill: url(#uv-pat-hatch); }
+.uv-terr-overlay.uv-pat-dots { fill: url(#uv-pat-dots); }
+.uv-terr-overlay.uv-pat-grain { fill: #000; filter: url(#uv-grain); }
+.uv-terr-overlay.is-tier-hidden { display: none; }
+.uv-terr-overlay.is-tier-merged { stroke: none; }
+.uv-split-line { stroke: var(--interactive-accent) !important; stroke-dasharray: 8 5; }
+.uv-split-target { fill-opacity: 0.08 !important; }
+.uv-split-piece { cursor: pointer; stroke: var(--terr-color); fill: var(--terr-color); }
+.uv-split-piece.is-suggested { stroke-width: 3px; }
+.uv-split-piece:hover { fill-opacity: 0.5 !important; }
+
+/* ---- Renamings and editing ---- */
+.uv-lin-rename line { stroke: var(--text-normal); stroke-width: 1.5; stroke-dasharray: 3 2; opacity: 0.6; }
+.uv-lin-rename-label { font-size: 9.5px; fill: var(--text-muted); font-style: italic; }
+.chronicle-vertex.is-handle.is-selected { box-shadow: 0 0 0 3px var(--interactive-accent); }
+.chronicle-vertex.is-handle.is-shared { outline: 2px solid var(--background-primary); outline-offset: 1px; box-shadow: 0 0 0 4px var(--terr-color); }
+.uv-names { display: flex; flex-direction: column; gap: 4px; }
+.uv-names-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 4px; align-items: center; }
+.uv-names-row input { min-width: 0; font-size: var(--font-ui-small); }
+.uv-names-add { align-self: flex-start; display: inline-flex; gap: 5px; align-items: center; font-size: var(--font-ui-smaller); height: 26px; }
+.uv-names-add svg { width: 13px; height: 13px; }
+
+/* ---- A realm picked on the map ---- */
+.chronicle-territory.is-picked { stroke-width: 3.5px !important; stroke-opacity: 1 !important; fill-opacity: 0.38 !important; filter: drop-shadow(0 0 6px var(--terr-color)); }
+.uv-map-picked { position: absolute; left: 56px; top: 12px; z-index: 1000; min-width: 200px; max-width: min(340px, calc(100% - 80px)); padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--background-primary) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--terr-color); box-shadow: var(--shadow-s); }
+.uv-map-picked-head { display: flex; align-items: center; gap: 6px; }
+.uv-map-picked-head strong { font-family: var(--chronicle-font-display, inherit); }
+.uv-map-picked-head .clickable-icon { margin-left: auto; }
+.uv-map-picked-sub { font-size: var(--font-ui-smaller); color: var(--text-muted); margin-top: 2px; }
+.uv-map-picked-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.uv-map-picked-actions button { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; font-size: var(--font-ui-smaller); }
+.uv-map-picked-actions svg { width: 12px; height: 12px; }
+
+/* ---- Realm statistics and shading ---- */
+.uv-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.uv-stat { padding: 6px 8px; border-radius: 8px; background: var(--background-secondary); }
+.uv-stat-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.uv-stat-label { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.uv-shade-legend { position: absolute; right: 12px; bottom: 26px; z-index: 1000; width: 170px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--background-primary) 90%, transparent); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); font-size: var(--font-ui-smaller); }
+.uv-shade-title { color: var(--text-muted); margin-bottom: 4px; }
+.uv-shade-ramp { height: 8px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary)), var(--interactive-accent)); }
+.uv-shade-ends { display: flex; justify-content: space-between; margin-top: 2px; font-variant-numeric: tabular-nums; }
+/* ---- Touch screens: bigger targets, no hover-only controls ---- */
+@media (pointer: coarse) {
+	.chronicle-vertex.is-handle { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+	.chronicle-vertex.is-mid { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+	.chronicle-icon-btn, .chronicle-toolbar .clickable-icon { min-width: 36px; min-height: 36px; }
+	.chronicle-toolbar select, .chronicle-toolbar input { min-height: 36px; }
+	.chronicle-chip, .uv-lin-chip, .uv-quickadd-chip { min-height: 32px; }
+	.uv-today-row, .uv-tidy-row, .uv-names-row input { min-height: 34px; }
+	.chronicle-map-banner button, .uv-map-picked-actions button, .uv-notice-actions button { min-height: 36px; padding: 0 12px; }
+	/* No hovering on a touch screen: the timer ring would never show anything useful. */
+	.chronicle-hover-ring { display: none; }
+	.uv-map-picked { left: 8px; right: 8px; top: auto; bottom: 12px; max-width: none; }
+}
+@media (max-width: 600px) {
+	.uv-today { padding: 12px; }
+	.uv-today-grid { grid-template-columns: 1fr; }
+	.uv-stats { grid-template-columns: repeat(2, 1fr); }
+	.uv-cimport-row { grid-template-columns: 28px 1fr; }
+}
+
+/* ---- Colour import ---- */
+.uv-cimport-list { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.uv-cimport-row { display: grid; grid-template-columns: 28px 110px 1fr 14px; gap: 8px; align-items: center; }
+.uv-cimport-swatch { width: 28px; height: 22px; border-radius: 5px; border: 1px solid var(--background-modifier-border); }
+.uv-cimport-share { font-size: var(--font-ui-smaller); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.uv-cimport-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--background-modifier-border); }
+.uv-cimport-opt { display: flex; gap: 6px; align-items: center; font-size: var(--font-ui-small); }
+/* ---- Tool sheets: one form style for every map and territory tool ---- */
+.uv-sheet { width: min(460px, 94vw); }
+.uv-sheet .modal-title { padding-bottom: 0; }
+.uv-sheet-head { display: flex; align-items: center; gap: 10px; font-size: 1.05em; }
+.uv-sheet-icon { width: 34px; height: 34px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 16%, var(--background-secondary)); color: var(--interactive-accent); }
+.uv-sheet-icon.is-danger { background: color-mix(in srgb, var(--color-red) 14%, var(--background-secondary)); color: var(--color-red); }
+.uv-sheet-icon svg { width: 18px; height: 18px; }
+.uv-sheet-intro { margin: 6px 0 12px; color: var(--text-muted); font-size: var(--font-ui-small); line-height: 1.45; }
+.uv-sheet-fields { display: flex; flex-direction: column; gap: 10px; }
+.uv-sheet-field { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 2px 12px; }
+.uv-sheet-label { font-size: var(--font-ui-small); font-weight: 600; color: var(--text-normal); }
+.uv-sheet-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.uv-sheet-control input[type="text"] { flex: 1; min-width: 0; }
+.uv-sheet-control input[type="range"] { flex: 1; min-width: 0; }
+.uv-sheet-num { width: 84px; }
+.uv-sheet-unit { font-size: var(--font-ui-smaller); color: var(--text-muted); white-space: nowrap; }
+.uv-sheet-hint { grid-column: 2; font-size: var(--font-ui-smaller); color: var(--text-faint); min-height: 1.1em; }
+.uv-sheet-hint.is-ok { color: var(--color-green); }
+.uv-sheet-hint.is-bad { color: var(--color-orange); }
+.uv-sheet-segments { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--background-modifier-hover); gap: 2px; }
+.uv-sheet-segment { height: 26px; padding: 0 10px; border-radius: 6px; background: transparent; box-shadow: none; font-size: var(--font-ui-small); }
+.uv-sheet-segment.is-active { background: var(--background-primary); box-shadow: var(--shadow-xs, 0 1px 2px rgba(0,0,0,.12)); }
+.uv-sheet-preview { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 8px 10px; border-radius: 8px; font-size: var(--font-ui-small); background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary)); border: 1px solid color-mix(in srgb, var(--interactive-accent) 20%, transparent); }
+.uv-sheet-preview.is-problem { background: color-mix(in srgb, var(--color-orange) 9%, var(--background-secondary)); border-color: color-mix(in srgb, var(--color-orange) 30%, transparent); }
+.uv-sheet-preview.is-empty { display: none; }
+.uv-sheet-preview svg { width: 14px; height: 14px; flex: none; margin-top: 2px; color: var(--interactive-accent); }
+.uv-sheet-preview.is-problem svg { color: var(--color-orange); }
+.uv-sheet-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+@media (max-width: 480px) { .uv-sheet-field { grid-template-columns: 1fr; } .uv-sheet-hint { grid-column: 1; } }
+
+/* ---- Inspector: Borders card ---- */
+.uv-borders-map { border-radius: 8px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); overflow: hidden; }
+.uv-borders-map-head { display: flex; align-items: center; gap: 6px; padding: 5px 8px; font-size: var(--font-ui-smaller); font-weight: 600; color: var(--text-muted); background: var(--background-modifier-hover); }
+.uv-borders-map-head svg { width: 12px; height: 12px; }
+.uv-borders-count { margin-left: auto; font-weight: normal; color: var(--text-faint); }
+.uv-border-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--background-modifier-border); }
+.uv-border-row:first-of-type { border-top: none; }
+.uv-border-swatch { width: 14px; height: 14px; flex: none; border-radius: 4px; background: color-mix(in srgb, var(--terr-color) 30%, transparent); border: 2px solid var(--terr-color); }
+.uv-border-info { flex: 1; min-width: 0; }
+.uv-border-when { font-size: var(--font-ui-small); font-weight: 500; }
+.uv-border-sub { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.uv-border-tools { display: flex; gap: 0; opacity: 0.75; }
+.uv-border-row:hover .uv-border-tools { opacity: 1; }
+.uv-border-tools .clickable-icon { padding: 3px 4px; }
+.uv-border-tools svg { width: 14px; height: 14px; }
+.uv-border-tools .is-danger:hover { color: var(--color-red); }
+.uv-borders-new { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; margin-top: 4px; }
+.uv-borders-new-btn { display: flex; align-items: center; gap: 6px; justify-content: flex-start; height: auto; padding: 7px 10px; font-size: var(--font-ui-small); }
+.uv-borders-new-btn svg { width: 14px; height: 14px; color: var(--interactive-accent); }
+
+/* ---- Map tool banners: same look as the sheets, with a real switch ---- */
+.chronicle-map-banner { border-radius: 12px !important; box-shadow: var(--shadow-s); }
+.uv-banner-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: var(--font-ui-small); padding: 3px 10px 3px 4px; border-radius: 999px; color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }
+.uv-banner-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.uv-banner-switch-track { position: relative; width: 30px; height: 17px; border-radius: 999px; background: color-mix(in srgb, currentColor 30%, transparent); transition: background 150ms ease; flex: none; }
+.uv-banner-switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--background-primary); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transition: transform 150ms ease; }
+.uv-banner-switch input:checked + .uv-banner-switch-track { background: color-mix(in srgb, currentColor 85%, transparent); }
+.uv-banner-switch input:checked + .uv-banner-switch-track::after { background: var(--interactive-accent); }
+.uv-banner-switch input:checked + .uv-banner-switch-track::after { transform: translateX(13px); }
+.uv-banner-switch input:focus-visible + .uv-banner-switch-track { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+
+/* ---- Territory editor: one bar of tools for an area ---- */
+.uv-terr-editor { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 1000; max-width: calc(100% - 24px); padding: 8px 10px 10px; border-radius: 14px; background: color-mix(in srgb, var(--background-primary) 94%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--terr-color); box-shadow: var(--shadow-l, 0 8px 24px rgba(0, 0, 0, 0.18)); }
+.uv-terr-editor-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: var(--font-ui-small); }
+.uv-terr-editor-swatch { width: 12px; height: 12px; border-radius: 4px; background: color-mix(in srgb, var(--terr-color) 35%, transparent); border: 2px solid var(--terr-color); }
+.uv-terr-editor-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.uv-terr-editor-close { margin-left: auto; padding: 2px 4px; }
+.uv-terr-editor-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.uv-terr-editor-group { display: flex; flex-direction: column; gap: 3px; padding: 0 6px; border-left: 1px solid var(--background-modifier-border); }
+.uv-terr-editor-group:first-child { border-left: none; padding-left: 0; }
+.uv-terr-editor-group-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); padding-left: 2px; }
+.uv-terr-editor-buttons { display: flex; gap: 3px; }
+.uv-terr-tool { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 64px; height: 54px; padding: 4px 2px; border-radius: 9px; background: transparent; box-shadow: none; border: 1px solid transparent; color: var(--text-normal); font-size: 11px; cursor: pointer; }
+.uv-terr-tool:hover { background: color-mix(in srgb, var(--terr-color) 12%, var(--background-secondary)); border-color: color-mix(in srgb, var(--terr-color) 35%, transparent); }
+.uv-terr-tool:active { transform: translateY(1px); }
+.uv-terr-tool-icon { display: flex; }
+.uv-terr-tool-icon svg { width: 18px; height: 18px; color: color-mix(in srgb, var(--terr-color) 70%, var(--text-normal)); }
+.uv-terr-tool-label { white-space: nowrap; }
+.uv-terr-tool.is-danger .uv-terr-tool-icon svg { color: var(--color-red); }
+.uv-terr-tool.is-danger:hover { background: color-mix(in srgb, var(--color-red) 10%, var(--background-secondary)); border-color: color-mix(in srgb, var(--color-red) 30%, transparent); }
+@media (pointer: coarse) { .uv-terr-tool { width: 72px; height: 60px; } }
+/* ---- Brushing and expanding a territory ---- */
+.uv-brush-stroke { stroke: var(--terr-color, var(--interactive-accent)); stroke-opacity: 0.45; fill: none; }
+.uv-brush-stroke.is-erasing { stroke: var(--background-primary); stroke-opacity: 0.7; stroke-dasharray: 2 6; }
+.uv-brush-cursor { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 1.5px solid var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 12%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--background-primary) 70%, transparent); pointer-events: none; }
+.uv-brush-cursor.is-erasing { border-style: dashed; border-color: var(--color-red); background: color-mix(in srgb, var(--color-red) 10%, transparent); }
+.chronicle-map.is-brushing .leaflet-container { cursor: none; }
+/* While drawing, a finger draws: the browser mustn't take the touch for scrolling (which cancels the stroke). Two fingers still pinch the map. */
+.chronicle-map.is-painting .leaflet-container, .chronicle-map.is-filling .leaflet-container { touch-action: none; }
+.chronicle-map.is-brushing.is-brush-panning .leaflet-container { cursor: grab; }
+.chronicle-map.is-brush-panning .uv-brush-cursor { display: none; }
+.uv-grow-lasso { stroke-dasharray: 5 5; }
+/* ---- Phones: Obsidian's bar floats over the bottom of the view (--uv-bottom-inset, measured in main.ts) ---- */
+body.is-mobile .leaflet-bottom { bottom: var(--uv-bottom-inset, 0px); }
+body.is-mobile .uv-terr-editor { left: 8px; right: 8px; transform: none; max-width: none; bottom: calc(var(--uv-bottom-inset, 0px) + 8px); padding: 6px 8px 8px; }
+body.is-mobile .uv-terr-tool { width: 62px; height: 54px; }
+/* While the tools are open the legend steps aside: there's no room for both on a phone. */
+body.is-mobile .has-terr-editor .leaflet-bottom { display: none; }
+body.is-mobile .uv-map-picked { bottom: calc(var(--uv-bottom-inset, 0px) + 12px); }
+body.is-mobile .uv-shade-legend { bottom: calc(var(--uv-bottom-inset, 0px) + 26px); }
+body.is-mobile .chronicle-map-hint { bottom: calc(var(--uv-bottom-inset, 0px) + 16px) !important; }
+/* A tool's banner: its words across the top, its buttons in a row under them. */
+body.is-mobile .chronicle-map-banner.has-actions { left: 8px !important; right: 8px !important; width: auto; max-width: none; margin: 0; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 8px 8px 8px 12px; font-size: var(--font-ui-smaller); }
+body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 1 1 100%; }
+/* ---- Quick delete ---- */
+/* Delete sits apart at the far end, away from Edit. */
+.uv-map-picked-actions .uv-map-picked-delete { color: var(--color-red); margin-left: auto; }
+.uv-map-picked-actions .uv-map-picked-delete:hover { background: color-mix(in srgb, var(--color-red) 12%, var(--background-secondary)); }
+.chronicle-popup-actions .uv-popup-delete { margin-left: auto; padding: 0 8px; color: var(--text-muted); }
+.chronicle-popup-actions .uv-popup-delete:hover { color: var(--color-red); background: color-mix(in srgb, var(--color-red) 12%, transparent); }
+.chronicle-popup-actions .uv-popup-delete svg { width: 14px; height: 14px; }
+/* While splitting, the two pieces are what you click: tools otherwise make territories ignore clicks. */
+.chronicle-map.is-tool .chronicle-territory.uv-split-piece { pointer-events: auto !important; cursor: pointer; }
+/* The territory editor sits along the bottom: the map's bottom controls (legend, scale) lift above it. */
+.has-terr-editor .leaflet-bottom { bottom: 112px; transition: bottom 150ms ease; }
+.uv-banner-segments { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, currentColor 14%, transparent); }
+.uv-banner-segment { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 7px; background: transparent; box-shadow: none; color: inherit; font-size: var(--font-ui-small); }
+.uv-banner-segment svg { width: 13px; height: 13px; }
+.uv-banner-segment.is-active { background: var(--background-primary); color: var(--text-normal); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); }
+/* ---- Wars and battles ---- */
+.uv-campaign { stroke: var(--move-color, #b03a2e); stroke-opacity: 0.85; fill: none; cursor: pointer; }
+.uv-battle-wrap { background: none; border: none; }
+.uv-battle { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--battle-color, #b03a2e); color: #fff; border: 2px solid var(--background-primary); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); cursor: pointer; transition: transform 120ms ease; }
+.uv-battle svg { width: 12px; height: 12px; stroke-width: 2.4; }
+.uv-battle:hover { transform: scale(1.18); }
+.uv-battle.is-undecided { background: var(--background-modifier-border-hover); color: var(--text-normal); }
+.uv-battle.is-latest { animation: uv-battle-pulse 1.6s ease-out infinite; }
+@keyframes uv-battle-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--battle-color, #b03a2e) 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+.uv-battle-tip .is-title { font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .uv-battle.is-latest { animation: none; } }
+.chronicle-toolbar .chronicle-chip.is-active { border-color: var(--interactive-accent); color: var(--text-accent); }
+.chronicle-toolbar .chronicle-chip .chronicle-chip-count:empty { display: none; }
+
+/* ---- Export: the map as a picture, without the buttons and pop-ups around it ---- */
+.chronicle-exporting .leaflet-control-zoom,
+.chronicle-exporting .leaflet-control-attribution,
+.chronicle-exporting .leaflet-popup-pane,
+.chronicle-exporting .chronicle-map-crumbs,
+.chronicle-exporting .chronicle-map-banner,
+.chronicle-exporting .chronicle-map-hint,
+.chronicle-exporting .uv-terr-editor,
+.chronicle-exporting .uv-map-picked { display: none !important; }
+.chronicle-exporting .uv-battle.is-latest { animation: none; }
+
+/* ---- Border check panel ---- */
+.uv-check-panel { position: absolute; top: 52px; right: 12px; z-index: 900; width: 330px; max-width: calc(100% - 24px); max-height: calc(100% - 80px); display: flex; flex-direction: column; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22); font-size: var(--font-ui-small); overflow: hidden; }
+.uv-check-head { display: grid; grid-template-columns: 30px 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 8px 12px; border-bottom: 1px solid var(--background-modifier-border); }
+.uv-check-head-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 15%, transparent); color: var(--text-accent); }
+.uv-check-title { font-weight: 600; font-size: var(--font-ui-medium); }
+.uv-check-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.uv-check-empty { padding: 18px 14px; color: var(--text-muted); }
+.uv-check-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px; border-bottom: 1px solid var(--background-modifier-border); }
+.uv-check-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 12px; font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; }
+.uv-check-chip svg { width: 12px; height: 12px; }
+.uv-check-chip.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+.uv-check-count { opacity: 0.7; font-variant-numeric: tabular-nums; }
+.uv-check-list { overflow-y: auto; padding: 4px 6px 8px; }
+.uv-check-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 6px; border-radius: 8px; }
+.uv-check-row:hover { background: var(--background-modifier-hover); }
+.uv-check-row-icon { color: var(--text-muted); padding-top: 1px; }
+.uv-check-row-icon svg { width: 15px; height: 15px; }
+.uv-check-row.is-overlap .uv-check-row-icon, .uv-check-row.is-crossed .uv-check-row-icon { color: var(--color-red); }
+.uv-check-row.is-outside .uv-check-row-icon, .uv-check-row.is-gap .uv-check-row-icon { color: var(--color-orange); }
+.uv-check-row-title { font-weight: 600; }
+.uv-check-row-detail { color: var(--text-muted); font-size: var(--font-ui-smaller); line-height: 1.4; margin-top: 2px; }
+.uv-check-row-actions { display: flex; gap: 6px; margin-top: 6px; }
+.uv-check-row-actions button { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; font-size: var(--font-ui-smaller); }
+.uv-check-row-actions svg { width: 12px; height: 12px; }
+.uv-check-mark { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: 3px solid var(--color-red); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6); animation: uv-check-ping 1.2s ease-out 3; pointer-events: none; }
+@keyframes uv-check-ping { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.6); opacity: 0.2; } }
+.chronicle-territory.uv-check-flash { animation: uv-check-flash 0.6s ease-in-out 3; }
+@keyframes uv-check-flash { 50% { stroke-width: 6px; fill-opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .uv-check-mark, .chronicle-territory.uv-check-flash { animation: none; } }
+.chronicle-exporting .uv-check-panel { display: none !important; }
+
+/* ---- Strategy look: political colours, a border hierarchy, names across the land ---- */
+/* From afar (--uv-political 1) the colours are solid; close up (0) the drawn map shows through. */
+.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft) {
+	fill-opacity: calc(0.1 + 0.62 * var(--uv-political, 0)) !important;
+	stroke: color-mix(in srgb, var(--terr-color) 55%, #000);
+	stroke-width: 0.8px !important;
+	stroke-opacity: calc(0.75 - 0.45 * var(--uv-political, 0)) !important;
+}
+.chronicle-map.uv-strategy .chronicle-territory.is-tier-merged { stroke-opacity: 0 !important; }
+.chronicle-map.uv-strategy .chronicle-territory.is-tier-outline { stroke-opacity: 0 !important; }
+.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):hover { fill-opacity: calc(0.2 + 0.55 * var(--uv-political, 0)) !important; }
+.chronicle-map.uv-strategy .uv-terr-overlay { opacity: calc(1 - 0.4 * var(--uv-political, 0)); }
+/* One border round each realm: a dark line on a light halo, thickest for the top realm. */
+.uv-realm-edge { stroke: color-mix(in srgb, var(--terr-color) 35%, #120d08); stroke-linejoin: round; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(255, 248, 230, 0.75)); }
+.uv-realm-edge.depth-0 { stroke-width: 3.6px; }
+.uv-realm-edge.depth-1 { stroke-width: 2.4px; }
+.uv-realm-edge.depth-2 { stroke-width: 1.6px; }
+.uv-realm-edge.depth-3 { stroke-width: 1.1px; }
+/* Names: spaced serif capitals across the land, dark on a pale halo. */
+.uv-realm-name { overflow: visible; pointer-events: none; }
+.uv-realm-name text { font-family: var(--chronicle-font-map, "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia, serif); font-weight: 700; fill: rgba(28, 20, 12, 0.86); stroke: rgba(255, 246, 225, 0.7); stroke-width: 0.09em; paint-order: stroke; letter-spacing: 0.08em; }
+.uv-realm-name.depth-0 text { fill: rgba(22, 15, 8, 0.9); }
+.uv-realm-name.depth-2 text, .uv-realm-name.depth-3 text { font-weight: 600; fill: rgba(40, 30, 18, 0.8); }
+.theme-dark .uv-realm-name text { fill: rgba(250, 242, 222, 0.92); stroke: rgba(10, 8, 5, 0.75); }
+.uv-realm-arms { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45)); }
+/* In the strategy look the realm names replace the small area labels (geography keeps its own). */
+.chronicle-map.uv-strategy .chronicle-territory-label:not(.is-region) { display: none; }
+/* Terrain mode: no colour, just the borders over the drawn map. */
+.chronicle-map.uv-paint-terrain .chronicle-territory { fill-opacity: 0 !important; }
+.chronicle-map.uv-paint-terrain .uv-realm-name text { fill: rgba(28, 20, 12, 0.7); }
+@media (prefers-reduced-motion: no-preference) { .uv-realm-name { transition: opacity 200ms ease; } }
+
+/* A phone with no copy of a huge map picture yet: why, over the map. */
+.uv-picture-note { position: absolute; top: 52px; left: 12px; right: 12px; z-index: 900; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); font-size: var(--font-ui-small); line-height: 1.4; }
+.uv-picture-note > span:first-child { color: var(--text-muted); padding-top: 2px; }
+.uv-picture-note > span:nth-child(2) { flex: 1; }
+
+/* ---- Territory tiers: the look of each tier, its values set from Maps & realms > Territory styles ---- */
+.chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-0-width, 2px); stroke-dasharray: var(--uv-tier-0-dash, none); fill-opacity: var(--uv-tier-0-fill, 0.2); }
+.chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-0-fill-hover, 0.32); }
+body.uv-tier-0-glow .chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-0-blur, 4px) var(--terr-color)); }
+body.uv-tier-0-shadow .chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-0-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-0 { --uv-band: var(--uv-tier-0-band, 6px); }
+.chronicle-territory.uv-tier-0.is-tier-outline { stroke-width: var(--uv-tier-0-outline, 3.5px); }
+.chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-1-width, 2px); stroke-dasharray: var(--uv-tier-1-dash, none); fill-opacity: var(--uv-tier-1-fill, 0.2); }
+.chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-1-fill-hover, 0.32); }
+body.uv-tier-1-glow .chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-1-blur, 4px) var(--terr-color)); }
+body.uv-tier-1-shadow .chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-1-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-1 { --uv-band: var(--uv-tier-1-band, 6px); }
+.chronicle-territory.uv-tier-1.is-tier-outline { stroke-width: var(--uv-tier-1-outline, 3.5px); }
+.chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-2-width, 2px); stroke-dasharray: var(--uv-tier-2-dash, none); fill-opacity: var(--uv-tier-2-fill, 0.2); }
+.chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-2-fill-hover, 0.32); }
+body.uv-tier-2-glow .chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-2-blur, 4px) var(--terr-color)); }
+body.uv-tier-2-shadow .chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-2-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-2 { --uv-band: var(--uv-tier-2-band, 6px); }
+.chronicle-territory.uv-tier-2.is-tier-outline { stroke-width: var(--uv-tier-2-outline, 3.5px); }
+.chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-3-width, 2px); stroke-dasharray: var(--uv-tier-3-dash, none); fill-opacity: var(--uv-tier-3-fill, 0.2); }
+.chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-3-fill-hover, 0.32); }
+body.uv-tier-3-glow .chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-3-blur, 4px) var(--terr-color)); }
+body.uv-tier-3-shadow .chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-3-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-3 { --uv-band: var(--uv-tier-3-band, 6px); }
+.chronicle-territory.uv-tier-3.is-tier-outline { stroke-width: var(--uv-tier-3-outline, 3.5px); }
+.chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-4-width, 2px); stroke-dasharray: var(--uv-tier-4-dash, none); fill-opacity: var(--uv-tier-4-fill, 0.2); }
+.chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-4-fill-hover, 0.32); }
+body.uv-tier-4-glow .chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-4-blur, 4px) var(--terr-color)); }
+body.uv-tier-4-shadow .chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-4-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-4 { --uv-band: var(--uv-tier-4-band, 6px); }
+.chronicle-territory.uv-tier-4.is-tier-outline { stroke-width: var(--uv-tier-4-outline, 3.5px); }
+.chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-5-width, 2px); stroke-dasharray: var(--uv-tier-5-dash, none); fill-opacity: var(--uv-tier-5-fill, 0.2); }
+.chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-5-fill-hover, 0.32); }
+body.uv-tier-5-glow .chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-5-blur, 4px) var(--terr-color)); }
+body.uv-tier-5-shadow .chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-5-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-5 { --uv-band: var(--uv-tier-5-band, 6px); }
+.chronicle-territory.uv-tier-5.is-tier-outline { stroke-width: var(--uv-tier-5-outline, 3.5px); }
+.chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-6-width, 2px); stroke-dasharray: var(--uv-tier-6-dash, none); fill-opacity: var(--uv-tier-6-fill, 0.2); }
+.chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-6-fill-hover, 0.32); }
+body.uv-tier-6-glow .chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-6-blur, 4px) var(--terr-color)); }
+body.uv-tier-6-shadow .chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-6-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-6 { --uv-band: var(--uv-tier-6-band, 6px); }
+.chronicle-territory.uv-tier-6.is-tier-outline { stroke-width: var(--uv-tier-6-outline, 3.5px); }
+.chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-7-width, 2px); stroke-dasharray: var(--uv-tier-7-dash, none); fill-opacity: var(--uv-tier-7-fill, 0.2); }
+.chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-7-fill-hover, 0.32); }
+body.uv-tier-7-glow .chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-7-blur, 4px) var(--terr-color)); }
+body.uv-tier-7-shadow .chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-7-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.uv-terr-overlay.uv-tier-7 { --uv-band: var(--uv-tier-7-band, 6px); }
+.chronicle-territory.uv-tier-7.is-tier-outline { stroke-width: var(--uv-tier-7-outline, 3.5px); }
+
+
+/* Simplify: the corners left to edit, and the count on the banner. */
+.uv-simplify-corner { stroke: var(--background-primary); stroke-width: 1.5; fill: var(--interactive-accent); fill-opacity: 1; }
+.uv-simplify-count { font-size: var(--font-ui-smaller); color: var(--text-muted); align-self: center; }
+
+/* A realm's border is drawn in its tier's line (Territory styles), solid, dashed or dotted. */
+.uv-realm-edge.uv-tier-0 { stroke-dasharray: var(--uv-tier-0-dash, none); }
+.uv-realm-edge.uv-tier-1 { stroke-dasharray: var(--uv-tier-1-dash, none); }
+.uv-realm-edge.uv-tier-2 { stroke-dasharray: var(--uv-tier-2-dash, none); }
+.uv-realm-edge.uv-tier-3 { stroke-dasharray: var(--uv-tier-3-dash, none); }
+.uv-realm-edge.uv-tier-4 { stroke-dasharray: var(--uv-tier-4-dash, none); }
+.uv-realm-edge.uv-tier-5 { stroke-dasharray: var(--uv-tier-5-dash, none); }
+.uv-realm-edge.uv-tier-6 { stroke-dasharray: var(--uv-tier-6-dash, none); }
+.uv-realm-edge.uv-tier-7 { stroke-dasharray: var(--uv-tier-7-dash, none); }
+
+/* Strategy look, like the grand strategy games: a soft band of the realm's colour inside its border, fading inwards
+   (three strokes, wide and faint to narrow); strongest close up, where the fill is faint and the map shows through. */
+.uv-realm-band { fill: none; stroke: var(--terr-color); stroke-linejoin: round; stroke-linecap: round; pointer-events: none; --band-w: 24px; --band-a: calc(0.5 - 0.25 * var(--uv-political, 0)); stroke-width: var(--band-w); stroke-opacity: calc(var(--band-a) * 0.3); }
+.uv-realm-band.depth-1 { --band-w: 14px; --band-a: calc(0.35 - 0.2 * var(--uv-political, 0)); }
+.uv-realm-band.layer-1 { stroke-width: calc(var(--band-w) * 0.62); }
+.uv-realm-band.layer-2 { stroke-width: calc(var(--band-w) * 0.3); stroke-opacity: calc(var(--band-a) * 0.45); }
+.chronicle-map.uv-paint-terrain .uv-realm-band { display: none; }
+
+/* Map look: a stronger border band when chosen; the river's water colour. */
+body.uv-band-strong .uv-realm-band { --band-a: calc(0.85 - 0.4 * var(--uv-political, 0)); }
+body.uv-band-strong .uv-realm-band.depth-0 { --band-w: 32px; }

@@ -1,0 +1,416 @@
+/* ==== Themes =================================================================================
+   Each theme sets Chronicle's type colors on <body> and redefines Obsidian's own variables only
+   inside Chronicle surfaces (.chronicle-scope: views, boards, embeds, hover cards, dialogs), so the
+   rest of the app keeps its theme. The "Obsidian" theme defines nothing here. */
+
+/* ---- Parchment: fantasy worldbuilding ---- */
+body.chronicle-theme-parchment {
+	--chronicle-theme-accent: #9a2f1d;
+	--chronicle-theme-event: #9a2f1d;
+	--chronicle-theme-person: #3f6b3a;
+	--chronicle-theme-culture: #6c3f86;
+	--chronicle-theme-place: #a5671e;
+	--chronicle-theme-radius: 4px;
+	--chronicle-font-display: "Cinzel", "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+body.chronicle-theme-parchment .chronicle-scope {
+	--background-primary: #f3e8cf;
+	--background-primary-alt: #efe2c4;
+	--background-secondary: #e7d6b0;
+	--background-secondary-alt: #e0cca1;
+	--background-modifier-border: #cdb68a;
+	--background-modifier-border-hover: #b89c6b;
+	--background-modifier-hover: rgba(120, 80, 30, 0.1);
+	--background-modifier-form-field: #fbf4e2;
+	--interactive-normal: #efe2c3;
+	--interactive-hover: #e5d3aa;
+	--text-normal: #3b2c1a;
+	--text-muted: #6b573a;
+	--text-faint: #988462;
+	--text-on-accent: #fff6e6;
+	--chronicle-grid: rgba(110, 80, 40, 0.2);
+	--chronicle-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 2px 8px rgba(80, 50, 10, 0.16);
+	--chronicle-shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 10px 24px rgba(80, 50, 10, 0.25);
+	--font-interface: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+	--chronicle-backdrop: radial-gradient(ellipse at center, transparent 55%, rgba(110, 70, 20, 0.18) 100%),
+		radial-gradient(circle at 18% 28%, rgba(160, 110, 40, 0.09), transparent 40%),
+		radial-gradient(circle at 82% 72%, rgba(120, 70, 20, 0.08), transparent 45%);
+	color-scheme: light;
+	color: var(--text-normal);
+	font-family: var(--font-interface);
+}
+body.theme-dark.chronicle-theme-parchment {
+	--chronicle-theme-accent: #d68a48;
+	--chronicle-theme-event: #e07a5a;
+	--chronicle-theme-person: #8fbf7a;
+	--chronicle-theme-culture: #b48ad6;
+	--chronicle-theme-place: #e0a556;
+}
+body.theme-dark.chronicle-theme-parchment .chronicle-scope {
+	--background-primary: #1e1812;
+	--background-primary-alt: #241d15;
+	--background-secondary: #2a2219;
+	--background-secondary-alt: #30271c;
+	--background-modifier-border: #4a3c2a;
+	--background-modifier-border-hover: #5e4c35;
+	--background-modifier-hover: rgba(230, 180, 110, 0.08);
+	--background-modifier-form-field: #2a2219;
+	--interactive-normal: #2e2519;
+	--interactive-hover: #3a2f20;
+	--text-normal: #ecdcbc;
+	--text-muted: #bba67f;
+	--text-faint: #8c7a5a;
+	--text-on-accent: #1e1812;
+	--chronicle-grid: rgba(230, 190, 130, 0.12);
+	--chronicle-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+	--chronicle-shadow-lift: 0 12px 28px rgba(0, 0, 0, 0.6);
+	--chronicle-backdrop: radial-gradient(ellipse at 50% 40%, rgba(214, 138, 72, 0.08), transparent 60%),
+		radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
+	color-scheme: dark;
+}
+body.chronicle-theme-parchment .chronicle-card {
+	box-shadow: var(--chronicle-shadow), inset 0 0 0 3px var(--background-primary), inset 0 0 0 4px color-mix(in srgb, var(--card-accent) 30%, transparent);
+}
+body.chronicle-theme-parchment .chronicle-ov-title,
+body.chronicle-theme-parchment .chronicle-module-title,
+body.chronicle-theme-parchment .chronicle-ov-panel-head h3 {
+	letter-spacing: 0.04em;
+}
+body.chronicle-theme-parchment .chronicle-ov-hero {
+	text-align: center;
+	padding-bottom: 16px;
+	background: linear-gradient(90deg, transparent, var(--background-modifier-border-hover), transparent) bottom / 100% 1px no-repeat;
+}
+body.chronicle-theme-parchment .chronicle-map .leaflet-tile-pane {
+	filter: sepia(0.45) saturate(0.8) brightness(0.97);
+}
+
+/* ---- Archive: genealogy & family history ---- */
+body.chronicle-theme-archive {
+	--chronicle-theme-accent: #2f6b57;
+	--chronicle-theme-event: #356f9c;
+	--chronicle-theme-person: #2f6b57;
+	--chronicle-theme-culture: #8a5a2b;
+	--chronicle-theme-place: #a2493b;
+	--chronicle-theme-radius: 12px;
+	--chronicle-font-display: "Libre Baskerville", "Baskerville", Georgia, "Times New Roman", serif;
+}
+body.chronicle-theme-archive .chronicle-scope {
+	--background-primary: #fbf9f4;
+	--background-primary-alt: #f7f3ea;
+	--background-secondary: #f1ece1;
+	--background-secondary-alt: #e9e2d3;
+	--background-modifier-border: #e0d8c7;
+	--background-modifier-border-hover: #cfc4ad;
+	--background-modifier-hover: rgba(80, 70, 40, 0.06);
+	--background-modifier-form-field: #ffffff;
+	--interactive-normal: #f4efe4;
+	--interactive-hover: #ebe4d5;
+	--text-normal: #2b2924;
+	--text-muted: #6a655a;
+	--text-faint: #9c9584;
+	--text-on-accent: #ffffff;
+	--chronicle-grid: rgba(90, 80, 60, 0.12);
+	--chronicle-shadow: 0 1px 2px rgba(60, 50, 30, 0.06), 0 6px 18px rgba(60, 50, 30, 0.07);
+	--chronicle-shadow-lift: 0 2px 4px rgba(60, 50, 30, 0.08), 0 16px 32px rgba(60, 50, 30, 0.14);
+	--chronicle-backdrop: radial-gradient(circle at 1px 1px, rgba(90, 80, 60, 0.08) 1px, transparent 0) 0 0 / 18px 18px;
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.chronicle-theme-archive {
+	--chronicle-theme-accent: #6fbf9f;
+	--chronicle-theme-event: #78aedb;
+	--chronicle-theme-person: #6fbf9f;
+	--chronicle-theme-culture: #d3a26c;
+	--chronicle-theme-place: #e08a7a;
+}
+body.theme-dark.chronicle-theme-archive .chronicle-scope {
+	--background-primary: #1b1e1d;
+	--background-primary-alt: #202423;
+	--background-secondary: #232827;
+	--background-secondary-alt: #2a302e;
+	--background-modifier-border: #353d3a;
+	--background-modifier-border-hover: #46504c;
+	--background-modifier-hover: rgba(200, 230, 215, 0.06);
+	--background-modifier-form-field: #232827;
+	--interactive-normal: #262c2a;
+	--interactive-hover: #2f3633;
+	--text-normal: #e4e8e3;
+	--text-muted: #a9b2ad;
+	--text-faint: #737d78;
+	--text-on-accent: #10201a;
+	--chronicle-grid: rgba(200, 230, 215, 0.08);
+	--chronicle-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+	--chronicle-shadow-lift: 0 14px 30px rgba(0, 0, 0, 0.55);
+	--chronicle-backdrop: radial-gradient(circle at 1px 1px, rgba(200, 230, 215, 0.05) 1px, transparent 0) 0 0 / 18px 18px;
+	color-scheme: dark;
+}
+/* Photo-album cards: square portraits in a white mount, gently aged photos. */
+body.chronicle-theme-archive .chronicle-card-avatar {
+	border-radius: 6px;
+	box-shadow: 0 0 0 2px var(--background-primary), 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+body.chronicle-theme-archive .chronicle-card-avatar img,
+body.chronicle-theme-archive .chronicle-hc-thumb img {
+	filter: sepia(0.25) saturate(0.9) contrast(1.02);
+}
+body.chronicle-theme-archive .chronicle-card {
+	border-left-width: 1px;
+	border-top: 3px solid var(--card-accent);
+}
+body.chronicle-theme-archive .chronicle-hc-thumb {
+	border-radius: 8px;
+	box-shadow: 0 0 0 3px var(--background-primary), 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- Starfield: science fiction (always dark) ---- */
+body.chronicle-theme-starfield {
+	--chronicle-theme-accent: #38d1ff;
+	--chronicle-theme-event: #38d1ff;
+	--chronicle-theme-person: #73f7b4;
+	--chronicle-theme-culture: #c48bff;
+	--chronicle-theme-place: #ffb547;
+	--chronicle-theme-radius: 3px;
+	--chronicle-font-display: "Orbitron", "Eurostile", "Bank Gothic", "Rajdhani", "Segoe UI", sans-serif;
+}
+body.chronicle-theme-starfield .chronicle-scope {
+	--background-primary: #060a14;
+	--background-primary-alt: #0a1020;
+	--background-secondary: #0c1426;
+	--background-secondary-alt: #111b31;
+	--background-modifier-border: rgba(110, 160, 255, 0.2);
+	--background-modifier-border-hover: rgba(110, 160, 255, 0.35);
+	--background-modifier-hover: rgba(56, 209, 255, 0.08);
+	--background-modifier-form-field: #0a1222;
+	--interactive-normal: #0f1a30;
+	--interactive-hover: #15243f;
+	--text-normal: #d7e3ff;
+	--text-muted: #8fa3c9;
+	--text-faint: #5b6c8f;
+	--text-on-accent: #031018;
+	--chronicle-grid: rgba(110, 160, 255, 0.12);
+	--chronicle-shadow: 0 0 0 1px rgba(56, 209, 255, 0.06), 0 6px 20px rgba(0, 0, 0, 0.55);
+	--chronicle-shadow-lift: 0 0 0 1px rgba(56, 209, 255, 0.25), 0 0 24px rgba(56, 209, 255, 0.18), 0 14px 30px rgba(0, 0, 0, 0.6);
+	--font-interface: "Rajdhani", "Exo 2", "Segoe UI", system-ui, sans-serif;
+	--chronicle-backdrop: radial-gradient(70% 60% at 85% 110%, rgba(120, 80, 255, 0.18), transparent 70%),
+		radial-gradient(60% 50% at 0% 0%, rgba(56, 209, 255, 0.1), transparent 70%);
+	color-scheme: dark;
+	color: var(--text-normal);
+	font-family: var(--font-interface);
+}
+body.chronicle-theme-starfield .chronicle-view-body::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	opacity: 0.7;
+	background-image:
+		radial-gradient(1px 1px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 140px 90px, #cfe0ff, transparent),
+		radial-gradient(1.5px 1.5px at 220px 170px, #fff, transparent), radial-gradient(1px 1px at 80px 210px, #9fc3ff, transparent),
+		radial-gradient(1px 1px at 260px 40px, #fff, transparent), radial-gradient(1px 1px at 180px 260px, #e0e8ff, transparent);
+	background-size: 300px 300px;
+}
+body.chronicle-theme-starfield .chronicle-ov-title,
+body.chronicle-theme-starfield .chronicle-module-title,
+body.chronicle-theme-starfield .chronicle-ov-tile-title,
+body.chronicle-theme-starfield .chronicle-hc-eyebrow,
+body.chronicle-theme-starfield .chronicle-ov-panel-head h3 {
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+}
+body.chronicle-theme-starfield .chronicle-tl-dot {
+	box-shadow: 0 0 0 1px var(--item-color), 0 0 10px var(--item-color);
+}
+body.chronicle-theme-starfield .chronicle-pin-dot {
+	box-shadow: 0 0 0 1px var(--pin-color), 0 0 12px var(--pin-color);
+}
+body.chronicle-theme-starfield .chronicle-tl-bar {
+	box-shadow: 0 0 12px color-mix(in srgb, var(--item-color) 35%, transparent);
+}
+body.chronicle-theme-starfield .chronicle-card,
+body.chronicle-theme-starfield .chronicle-module,
+body.chronicle-theme-starfield .chronicle-ov-panel,
+body.chronicle-theme-starfield button.chronicle-ov-tile {
+	background: linear-gradient(180deg, rgba(20, 34, 64, 0.6), rgba(8, 14, 28, 0.75));
+}
+body.chronicle-theme-starfield .chronicle-card:hover,
+body.chronicle-theme-starfield .chronicle-module:hover {
+	box-shadow: var(--chronicle-shadow-lift);
+}
+body.chronicle-theme-starfield .chronicle-map .leaflet-tile-pane {
+	filter: invert(1) hue-rotate(185deg) brightness(0.85) contrast(1.1) saturate(0.6);
+}
+body.chronicle-theme-starfield .chronicle-net-link {
+	stroke-opacity: 0.6;
+}
+
+/* ---- Scholar: history & academic research ---- */
+body.chronicle-theme-scholar {
+	--chronicle-theme-accent: #1f4e8c;
+	--chronicle-theme-event: #1f4e8c;
+	--chronicle-theme-person: #3b7a57;
+	--chronicle-theme-culture: #8b2e3c;
+	--chronicle-theme-place: #b06f1b;
+	--chronicle-theme-radius: 2px;
+	--chronicle-font-display: "Iowan Old Style", "Charter", "Sitka Text", Georgia, serif;
+}
+body.chronicle-theme-scholar .chronicle-scope {
+	--background-primary: #ffffff;
+	--background-primary-alt: #fafbfc;
+	--background-secondary: #f4f5f7;
+	--background-secondary-alt: #eceef2;
+	--background-modifier-border: #d9dde4;
+	--background-modifier-border-hover: #c3c9d3;
+	--background-modifier-hover: rgba(31, 78, 140, 0.06);
+	--background-modifier-form-field: #ffffff;
+	--interactive-normal: #f4f5f7;
+	--interactive-hover: #eaedf1;
+	--text-normal: #1a2230;
+	--text-muted: #4e5a6c;
+	--text-faint: #8a94a5;
+	--text-on-accent: #ffffff;
+	--chronicle-grid: rgba(26, 34, 48, 0.14);
+	--chronicle-shadow: none;
+	--chronicle-shadow-lift: 0 0 0 1px rgba(31, 78, 140, 0.35);
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.chronicle-theme-scholar {
+	--chronicle-theme-accent: #7aa7e6;
+	--chronicle-theme-event: #7aa7e6;
+	--chronicle-theme-person: #7cc29b;
+	--chronicle-theme-culture: #e0808f;
+	--chronicle-theme-place: #e3a65a;
+}
+body.theme-dark.chronicle-theme-scholar .chronicle-scope {
+	--background-primary: #14181f;
+	--background-primary-alt: #181d25;
+	--background-secondary: #1b2029;
+	--background-secondary-alt: #212733;
+	--background-modifier-border: #2f3746;
+	--background-modifier-border-hover: #3e4859;
+	--background-modifier-hover: rgba(122, 167, 230, 0.07);
+	--background-modifier-form-field: #1b2029;
+	--interactive-normal: #1d232d;
+	--interactive-hover: #252c38;
+	--text-normal: #e2e7ef;
+	--text-muted: #a3adbd;
+	--text-faint: #6c7789;
+	--text-on-accent: #0c1420;
+	--chronicle-grid: rgba(226, 231, 239, 0.1);
+	color-scheme: dark;
+}
+body.chronicle-theme-scholar .chronicle-ov-panel-head h3,
+body.chronicle-theme-scholar .chronicle-ov-eyebrow,
+body.chronicle-theme-scholar .chronicle-hc-eyebrow,
+body.chronicle-theme-scholar .chronicle-legend-head {
+	font-variant: small-caps;
+	text-transform: lowercase;
+	letter-spacing: 0.06em;
+	font-family: var(--chronicle-font-display);
+	font-size: 1.05em;
+}
+body.chronicle-theme-scholar .chronicle-tl-gridline {
+	opacity: 1;
+}
+body.chronicle-theme-scholar .chronicle-ov-title {
+	font-weight: 600;
+	border-bottom: 2px solid var(--text-normal);
+	padding-bottom: 6px;
+	display: inline-block;
+}
+body.chronicle-theme-scholar .chronicle-card {
+	border-left-width: 3px;
+}
+body.chronicle-theme-scholar button.chronicle-ov-tile:hover,
+body.chronicle-theme-scholar .chronicle-card:hover {
+	transform: none;
+}
+body.chronicle-theme-scholar .chronicle-map .leaflet-tile-pane {
+	filter: grayscale(0.85) contrast(1.05);
+}
+
+/* ---- Atelier: novels, scripts & story planning ---- */
+body.chronicle-theme-atelier {
+	--chronicle-theme-accent: #7c5cff;
+	--chronicle-theme-event: #7c5cff;
+	--chronicle-theme-person: #21a67a;
+	--chronicle-theme-culture: #e0569a;
+	--chronicle-theme-place: #f08a3c;
+	--chronicle-theme-radius: 16px;
+	--chronicle-font-display: "Inter", "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}
+body.chronicle-theme-atelier .chronicle-scope {
+	--background-primary: #f8f6fd;
+	--background-primary-alt: #f3f0fb;
+	--background-secondary: #ece8f6;
+	--background-secondary-alt: #e4def3;
+	--background-modifier-border: rgba(90, 70, 160, 0.14);
+	--background-modifier-border-hover: rgba(90, 70, 160, 0.25);
+	--background-modifier-hover: rgba(124, 92, 255, 0.08);
+	--background-modifier-form-field: rgba(255, 255, 255, 0.8);
+	--interactive-normal: rgba(255, 255, 255, 0.7);
+	--interactive-hover: #ffffff;
+	--text-normal: #2a2638;
+	--text-muted: #6a6480;
+	--text-faint: #a19bb5;
+	--text-on-accent: #ffffff;
+	--chronicle-grid: rgba(90, 70, 160, 0.1);
+	--chronicle-shadow: 0 1px 2px rgba(60, 40, 120, 0.06), 0 8px 24px rgba(60, 40, 120, 0.08);
+	--chronicle-shadow-lift: 0 2px 6px rgba(60, 40, 120, 0.08), 0 18px 40px rgba(60, 40, 120, 0.16);
+	--chronicle-backdrop: radial-gradient(60% 70% at 0% 0%, rgba(124, 92, 255, 0.12), transparent 70%),
+		radial-gradient(50% 60% at 100% 100%, rgba(240, 138, 60, 0.1), transparent 70%),
+		radial-gradient(40% 50% at 100% 0%, rgba(33, 166, 122, 0.07), transparent 70%);
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.chronicle-theme-atelier {
+	--chronicle-theme-accent: #a08bff;
+	--chronicle-theme-event: #a08bff;
+	--chronicle-theme-person: #4fd1a5;
+	--chronicle-theme-culture: #f27fb6;
+	--chronicle-theme-place: #ffab6b;
+}
+body.theme-dark.chronicle-theme-atelier .chronicle-scope {
+	--background-primary: #17151f;
+	--background-primary-alt: #1c1a26;
+	--background-secondary: #211e2d;
+	--background-secondary-alt: #282436;
+	--background-modifier-border: rgba(180, 160, 255, 0.14);
+	--background-modifier-border-hover: rgba(180, 160, 255, 0.25);
+	--background-modifier-hover: rgba(160, 139, 255, 0.1);
+	--background-modifier-form-field: rgba(255, 255, 255, 0.05);
+	--interactive-normal: rgba(255, 255, 255, 0.06);
+	--interactive-hover: rgba(255, 255, 255, 0.1);
+	--text-normal: #ebe8f5;
+	--text-muted: #aaa3c2;
+	--text-faint: #6f6987;
+	--text-on-accent: #120e22;
+	--chronicle-grid: rgba(180, 160, 255, 0.08);
+	--chronicle-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	--chronicle-shadow-lift: 0 18px 40px rgba(0, 0, 0, 0.55);
+	--chronicle-backdrop: radial-gradient(60% 70% at 0% 0%, rgba(160, 139, 255, 0.14), transparent 70%),
+		radial-gradient(50% 60% at 100% 100%, rgba(255, 171, 107, 0.08), transparent 70%);
+	color-scheme: dark;
+}
+body.chronicle-theme-atelier .chronicle-ov-panel,
+body.chronicle-theme-atelier .chronicle-module,
+body.chronicle-theme-atelier button.chronicle-ov-tile {
+	background: color-mix(in srgb, var(--background-primary) 70%, transparent);
+	backdrop-filter: blur(14px) saturate(1.3);
+	-webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+body.chronicle-theme-atelier .chronicle-ov-title {
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	background: linear-gradient(90deg, var(--chronicle-accent), var(--chronicle-culture-color));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+body.chronicle-theme-atelier .chronicle-card {
+	border-left-width: 1px;
+}
+body.chronicle-theme-atelier .chronicle-card-avatar {
+	background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 40%, transparent), color-mix(in srgb, var(--card-accent) 12%, transparent));
+}

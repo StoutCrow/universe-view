@@ -1,0 +1,46 @@
+# Builds the plugin and makes a draft GitHub release whenever a version tag is pushed
+# (`git tag 0.26.0 && git push origin 0.26.0`). The tag must be the bare version, as in
+# manifest.json, with no "v": Obsidian looks the release up by that exact name.
+# The release starts as a draft, so nothing is public until you choose to publish it.
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Check the tag matches manifest.json
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          version=$(node -p "require('./manifest.json').version")
+          if [ "$tag" != "$version" ]; then echo "Tag $tag doesn't match manifest.json version $version"; exit 1; fi
+
+      - name: Draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" --title="$tag" --draft main.js manifest.json styles.css

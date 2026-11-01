@@ -1,0 +1,1271 @@
+/* ==== Modern layer: motion, boards, hover cards, map tools, settings ============================
+   Durations scale with --chronicle-speed (the "Motion" setting); easing is --chronicle-ease.
+   Entrance animations use fill-mode "backwards" so they never pin a transform after finishing. */
+
+@keyframes chronicle-rise {
+	from { opacity: 0; transform: translateY(10px); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes chronicle-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@keyframes chronicle-pop {
+	0% { opacity: 0; transform: scale(0.4); }
+	70% { opacity: 1; }
+	100% { opacity: 1; transform: scale(1); }
+}
+@keyframes chronicle-leave {
+	to { opacity: 0; transform: scale(0.94); }
+}
+@keyframes chronicle-shimmer {
+	to { background-position: -200% 0; }
+}
+
+.chronicle-view.chronicle-scope {
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+.chronicle-view-body {
+	background: var(--chronicle-backdrop, linear-gradient(transparent, transparent)), var(--background-primary);
+}
+.chronicle-view-body > *:not(.chronicle-map-banner):not(.chronicle-map-hint) {
+	animation: chronicle-fade var(--chronicle-slow) var(--chronicle-ease) backwards;
+}
+.chronicle-toolbar {
+	position: relative;
+	z-index: 6;
+	gap: calc(6px * var(--chronicle-density)) calc(10px * var(--chronicle-density));
+	padding: calc(7px * var(--chronicle-density)) 12px;
+	background: var(--chronicle-glass);
+	backdrop-filter: blur(16px) saturate(1.4);
+	-webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+.chronicle-toolbar .dropdown,
+.chronicle-picker input,
+.chronicle-toolbar .chronicle-search input {
+	border-radius: 8px;
+	transition: box-shadow var(--chronicle-fast) var(--chronicle-ease), border-color var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-chip,
+.chronicle-icon-btn,
+.chronicle-scope button {
+	transition: background-color var(--chronicle-fast) var(--chronicle-ease), color var(--chronicle-fast) var(--chronicle-ease),
+		border-color var(--chronicle-fast) var(--chronicle-ease), transform var(--chronicle-fast) var(--chronicle-ease),
+		box-shadow var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-chip:active,
+.chronicle-icon-btn:active,
+.chronicle-scope button:active {
+	transform: scale(0.96);
+}
+.chronicle-chip.mod-cta-chip {
+	background: var(--interactive-accent);
+	border-color: transparent;
+	color: var(--text-on-accent);
+}
+.chronicle-chip.mod-cta-chip:hover {
+	background: var(--interactive-accent-hover);
+	color: var(--text-on-accent);
+}
+.chronicle-icon-btn {
+	border-radius: 8px;
+}
+
+/* Display font for names and titles (themes change it). */
+.chronicle-ov-title,
+.chronicle-ov-tile-title,
+.chronicle-hc-name,
+.chronicle-card-name,
+.chronicle-module-title,
+.chronicle-popup-title,
+.chronicle-territory-label,
+.chronicle-lineage-label,
+.chronicle-stat-value,
+.chronicle-theme-name {
+	font-family: var(--chronicle-font-display);
+}
+
+/* ---- Overview ---- */
+.chronicle-ov-hero {
+	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+}
+.chronicle-ov-title {
+	font-size: 2.2em;
+	letter-spacing: -0.01em;
+}
+button.chronicle-ov-tile,
+.chronicle-ov-panel {
+	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+	animation-delay: calc(var(--i, 0) * 45ms * var(--chronicle-speed));
+}
+button.chronicle-ov-tile {
+	--tile: var(--chronicle-accent);
+	position: relative;
+	overflow: hidden;
+	border-radius: calc(var(--chronicle-radius) + 4px);
+	transition: border-color var(--chronicle-med) var(--chronicle-ease), transform var(--chronicle-med) var(--chronicle-ease),
+		box-shadow var(--chronicle-med) var(--chronicle-ease);
+}
+button.chronicle-ov-tile::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--tile) 12%, transparent), transparent 60%);
+	opacity: 0;
+	transition: opacity var(--chronicle-med) var(--chronicle-ease);
+	pointer-events: none;
+}
+button.chronicle-ov-tile:hover,
+button.chronicle-ov-tile:focus-visible {
+	border-color: color-mix(in srgb, var(--tile) 60%, var(--background-modifier-border));
+	transform: translateY(-3px);
+	box-shadow: var(--chronicle-shadow-lift);
+}
+button.chronicle-ov-tile:hover::after {
+	opacity: 1;
+}
+.chronicle-ov-tile:nth-child(2) { --tile: var(--chronicle-event-color); }
+.chronicle-ov-tile:nth-child(3) { --tile: var(--chronicle-person-color); }
+.chronicle-ov-tile:nth-child(4) { --tile: var(--color-cyan, var(--chronicle-accent)); }
+.chronicle-ov-tile:nth-child(5) { --tile: var(--chronicle-culture-color); }
+.chronicle-ov-tile:nth-child(6) { --tile: var(--chronicle-place-color); }
+.chronicle-ov-tile-icon {
+	border-radius: 12px;
+	background: linear-gradient(135deg, color-mix(in srgb, var(--tile) 26%, transparent), color-mix(in srgb, var(--tile) 8%, transparent));
+	color: color-mix(in srgb, var(--tile) 85%, var(--text-normal));
+	transition: transform var(--chronicle-med) var(--chronicle-ease);
+}
+button.chronicle-ov-tile:hover .chronicle-ov-tile-icon {
+	transform: scale(1.08) rotate(-4deg);
+}
+.chronicle-ov-panel {
+	border-radius: calc(var(--chronicle-radius) + 4px);
+	box-shadow: var(--chronicle-shadow);
+}
+.chronicle-ov-list li {
+	padding: calc(5px * var(--chronicle-density)) 4px;
+	margin: 0 -4px;
+	border-radius: 6px;
+	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation-delay: calc(var(--i, 0) * 25ms * var(--chronicle-speed));
+	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-ov-list li:hover {
+	background: var(--background-modifier-hover);
+}
+.chronicle-ov-action {
+	border-radius: 999px;
+}
+
+/* ---- Family tree, timeline, graph, embeds ---- */
+.chronicle-card {
+	transition: border-color var(--chronicle-fast) var(--chronicle-ease), transform var(--chronicle-med) var(--chronicle-ease),
+		box-shadow var(--chronicle-med) var(--chronicle-ease);
+}
+.chronicle-card:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--chronicle-shadow-lift);
+}
+.chronicle-tl-dot {
+	transition: transform var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-tl-bar {
+	transition: background-color var(--chronicle-fast) var(--chronicle-ease), box-shadow var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-tl-item:hover .chronicle-tl-bar {
+	box-shadow: 0 2px 10px color-mix(in srgb, var(--item-color) 25%, transparent);
+}
+.chronicle-net-shape {
+	transition: stroke var(--chronicle-fast) var(--chronicle-ease), stroke-width var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-block-host {
+	border-radius: calc(var(--chronicle-radius) + 2px);
+	box-shadow: var(--chronicle-shadow);
+}
+
+/* ==== Hover cards ============================================================================ */
+
+.chronicle-hovercard {
+	position: fixed;
+	z-index: var(--layer-popover, 30);
+	width: 340px;
+	max-width: calc(100vw - 16px);
+	max-height: min(460px, calc(100vh - 16px));
+	overflow: hidden auto;
+	padding: 13px 14px 8px;
+	border-radius: calc(var(--chronicle-radius) + 4px);
+	background: color-mix(in srgb, var(--background-primary) 90%, transparent);
+	backdrop-filter: blur(18px) saturate(1.5);
+	-webkit-backdrop-filter: blur(18px) saturate(1.5);
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: var(--shadow-l), 0 18px 40px rgba(0, 0, 0, 0.18);
+	color: var(--text-normal);
+	font-family: var(--font-interface);
+	font-size: var(--font-ui-small);
+	line-height: 1.45;
+	opacity: 0;
+	transform: translateY(4px) scale(0.985);
+	transform-origin: 24px top;
+	/* A soft fade in; quicker out. */
+	transition: opacity 280ms cubic-bezier(0.2, 0.7, 0.2, 1), transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.chronicle-hovercard[data-placement="above"] {
+	transform: translateY(-6px) scale(0.97);
+	transform-origin: 24px bottom;
+}
+.chronicle-hovercard.is-visible {
+	opacity: 1;
+	transform: none;
+}
+.chronicle-hovercard::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto;
+	height: 3px;
+	background: linear-gradient(90deg, var(--card-accent), color-mix(in srgb, var(--card-accent) 15%, transparent));
+}
+.chronicle-hc-head {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+.chronicle-hc-thumb {
+	flex-shrink: 0;
+	width: 52px;
+	height: 52px;
+	border-radius: calc(var(--chronicle-radius) + 2px);
+	overflow: hidden;
+	background: color-mix(in srgb, var(--card-accent) 18%, var(--background-secondary));
+	color: color-mix(in srgb, var(--card-accent) 80%, var(--text-normal));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: var(--font-bold);
+	font-size: 18px;
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--card-accent) 30%, transparent);
+}
+.chronicle-hc-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.chronicle-hc-thumb svg {
+	width: 24px;
+	height: 24px;
+}
+.chronicle-hc-titles {
+	min-width: 0;
+	flex: 1;
+}
+.chronicle-hc-eyebrow {
+	font-size: 10.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-weight: var(--font-semibold);
+	color: color-mix(in srgb, var(--card-accent) 75%, var(--text-muted));
+}
+.chronicle-hc-name {
+	display: block;
+	font-size: 1.15em;
+	font-weight: var(--font-bold);
+	color: var(--text-normal);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-decoration: none;
+}
+.chronicle-hc-name:hover {
+	color: var(--text-accent);
+}
+.chronicle-hc-sub {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+.chronicle-hc-facts {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 3px 12px;
+	margin-top: 10px;
+	padding-top: 8px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+.chronicle-hc-label {
+	color: var(--text-faint);
+	white-space: nowrap;
+}
+.chronicle-hc-value {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.chronicle-hc-link {
+	color: var(--text-normal);
+	cursor: pointer;
+	text-decoration: none;
+	border-bottom: 1px solid color-mix(in srgb, var(--text-accent) 35%, transparent);
+}
+.chronicle-hc-link:hover {
+	color: var(--text-accent);
+}
+.chronicle-hc-link.is-unresolved {
+	color: var(--text-muted);
+	border-bottom-style: dashed;
+}
+.chronicle-hc-more {
+	color: var(--text-faint);
+}
+.chronicle-hc-excerpt {
+	margin-top: 9px;
+	color: var(--text-muted);
+}
+.chronicle-hc-excerpt.is-loading {
+	height: 2.6em;
+	border-radius: 6px;
+	background: linear-gradient(90deg, var(--background-modifier-hover), transparent, var(--background-modifier-hover));
+	background-size: 200% 100%;
+	animation: chronicle-shimmer 1.2s linear infinite;
+}
+.chronicle-hc-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 8px;
+}
+.chronicle-hc-tag {
+	padding: 0 7px;
+	border-radius: 999px;
+	font-size: 11px;
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+}
+.chronicle-hc-tag.is-warning {
+	background: color-mix(in srgb, var(--color-orange) 18%, transparent);
+	color: var(--color-orange);
+}
+.chronicle-hc-actions {
+	display: flex;
+	gap: 2px;
+	margin: 8px -6px 0;
+	padding-top: 6px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+.chronicle-hc-actions .chronicle-icon-btn svg {
+	width: 15px;
+	height: 15px;
+}
+
+/* ==== Boards ================================================================================= */
+
+.chronicle-view-body > .chronicle-board-scroll {
+	overflow: auto;
+}
+.chronicle-board {
+	position: relative;
+	min-height: 100%;
+}
+.chronicle-module {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	border-radius: calc(var(--chronicle-radius) + 4px);
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: var(--chronicle-shadow);
+	overflow: hidden;
+	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+	animation-delay: calc(var(--i, 0) * 50ms * var(--chronicle-speed));
+}
+.chronicle-board.is-animating .chronicle-module:not(.is-dragging):not(.is-resizing) {
+	transition: left var(--chronicle-med) var(--chronicle-ease), top var(--chronicle-med) var(--chronicle-ease),
+		width var(--chronicle-med) var(--chronicle-ease), height var(--chronicle-med) var(--chronicle-ease);
+}
+.chronicle-module:hover {
+	border-color: color-mix(in srgb, var(--interactive-accent) 35%, var(--background-modifier-border));
+}
+.chronicle-module.is-dragging {
+	z-index: 20;
+	box-shadow: var(--chronicle-shadow-lift), 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 50%, transparent);
+	cursor: grabbing;
+	opacity: 0.96;
+	scale: 1.015;
+	transition: scale var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-module.is-resizing {
+	z-index: 20;
+	box-shadow: var(--chronicle-shadow-lift);
+}
+.chronicle-module.is-new {
+	animation: chronicle-pop var(--chronicle-slow) var(--chronicle-ease) backwards;
+}
+.chronicle-module.is-leaving {
+	animation: chronicle-leave var(--chronicle-med) var(--chronicle-ease) forwards;
+}
+.chronicle-module-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 36px;
+	flex-shrink: 0;
+	padding: 0 6px 0 4px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: color-mix(in srgb, var(--background-secondary) 45%, var(--background-primary));
+	cursor: grab;
+	user-select: none;
+	touch-action: none;
+}
+.chronicle-board.is-locked .chronicle-module-head,
+.chronicle-board.is-stacked .chronicle-module-head {
+	cursor: default;
+}
+.chronicle-module-grip,
+.chronicle-module-icon {
+	display: flex;
+	color: var(--text-faint);
+}
+.chronicle-module-grip {
+	opacity: 0;
+	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-module:hover .chronicle-module-grip {
+	opacity: 1;
+}
+.chronicle-board.is-locked .chronicle-module-grip,
+.chronicle-board.is-stacked .chronicle-module-grip {
+	display: none;
+}
+.chronicle-module-grip svg,
+.chronicle-module-icon svg {
+	width: 15px;
+	height: 15px;
+}
+.chronicle-module-icon {
+	color: var(--text-accent);
+}
+.chronicle-module-title {
+	flex: 1;
+	min-width: 0;
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.chronicle-module-tools {
+	display: flex;
+	opacity: 0;
+	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-module:hover .chronicle-module-tools,
+.chronicle-module:focus-within .chronicle-module-tools {
+	opacity: 1;
+}
+.chronicle-module-tools .chronicle-icon-btn svg {
+	width: 15px;
+	height: 15px;
+}
+.chronicle-module-body.chronicle-block-host {
+	flex: 1;
+	min-height: 0;
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+}
+.chronicle-module-scroll {
+	overflow: auto;
+	padding: 8px 14px 10px;
+}
+.chronicle-module-note {
+	font-size: var(--font-text-size, 15px);
+}
+.chronicle-module-error {
+	padding: 14px;
+	color: var(--text-error);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: flex-start;
+}
+.chronicle-module-resize {
+	position: absolute;
+	right: 2px;
+	bottom: 2px;
+	width: 16px;
+	height: 16px;
+	z-index: 8;
+	cursor: nwse-resize;
+	opacity: 0;
+	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	background: linear-gradient(135deg, transparent 0 55%, var(--text-faint) 55% 62%, transparent 62% 72%, var(--text-faint) 72% 79%, transparent 79%);
+	touch-action: none;
+}
+.chronicle-module:hover .chronicle-module-resize {
+	opacity: 0.8;
+}
+.chronicle-board.is-locked .chronicle-module-resize {
+	display: none;
+}
+.chronicle-board-placeholder {
+	position: absolute;
+	border-radius: calc(var(--chronicle-radius) + 4px);
+	border: 2px dashed color-mix(in srgb, var(--interactive-accent) 70%, transparent);
+	background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
+	opacity: 0;
+	pointer-events: none;
+	transition: left var(--chronicle-fast) var(--chronicle-ease), top var(--chronicle-fast) var(--chronicle-ease),
+		width var(--chronicle-fast) var(--chronicle-ease), height var(--chronicle-fast) var(--chronicle-ease),
+		opacity var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-board-placeholder.is-visible {
+	opacity: 1;
+}
+.chronicle-board-empty {
+	position: absolute;
+	inset: 60px 20px auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-muted);
+	text-align: center;
+}
+.chronicle-module-modal textarea.chronicle-module-source {
+	width: 100%;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+	margin: -6px 0 6px;
+}
+.chronicle-module-options {
+	border-bottom: none;
+}
+.chronicle-module-help pre {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	background: var(--background-secondary);
+	padding: 8px 10px;
+	border-radius: 6px;
+	white-space: pre-wrap;
+}
+.chronicle-module-help summary {
+	cursor: pointer;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+.chronicle-prompt-input {
+	width: 100%;
+}
+
+/* "At a glance" numbers */
+.chronicle-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	gap: 10px;
+	min-height: 100%;
+	align-content: center;
+}
+.chronicle-stat {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	column-gap: 10px;
+	align-items: center;
+	padding: 8px 10px;
+	border-radius: var(--chronicle-radius);
+	background: color-mix(in srgb, var(--background-secondary) 60%, transparent);
+	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+	animation-delay: calc(var(--i, 0) * 50ms * var(--chronicle-speed));
+}
+.chronicle-stat-icon {
+	grid-row: span 2;
+	display: flex;
+	color: var(--text-accent);
+}
+.chronicle-stat-icon svg {
+	width: 22px;
+	height: 22px;
+}
+.chronicle-stat-value {
+	font-size: 1.5em;
+	font-weight: var(--font-bold);
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+}
+.chronicle-stat-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ==== Map: pins, legend, territories, tools ================================================== */
+
+.chronicle-pin-dot {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform var(--chronicle-fast) var(--chronicle-ease), box-shadow var(--chronicle-fast) var(--chronicle-ease);
+	animation: chronicle-pop var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation-delay: calc(var(--i, 0) * 14ms * var(--chronicle-speed));
+}
+.chronicle-pin-label,
+.chronicle-pin-count {
+	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation-delay: calc((var(--i, 0) * 14ms + 80ms) * var(--chronicle-speed));
+	transition: opacity var(--chronicle-med) var(--chronicle-ease);
+}
+.chronicle-pin:has(.has-icon),
+.chronicle-pin:has(.has-logo) {
+	--dot: 24px;
+}
+.chronicle-pin.size-lg:has(.has-icon),
+.chronicle-pin.size-lg:has(.has-logo) {
+	--dot: 30px;
+}
+.chronicle-pin-dot.has-icon {
+	color: #fff;
+}
+.chronicle-pin-glyph {
+	display: flex;
+	line-height: 1;
+}
+.chronicle-pin-glyph svg {
+	width: calc(var(--dot) * 0.55);
+	height: calc(var(--dot) * 0.55);
+	stroke-width: 2.4;
+}
+.chronicle-pin-glyph.is-text-glyph {
+	font-size: calc(var(--dot) * 0.6);
+}
+.chronicle-pin-dot.has-logo {
+	background: var(--background-primary);
+	overflow: hidden;
+}
+.chronicle-pin-dot.has-logo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+	pointer-events: none;
+}
+.chronicle-pin:hover .chronicle-pin-dot {
+	box-shadow: 0 0 0 1px var(--pin-color), 0 0 0 5px color-mix(in srgb, var(--pin-color) 25%, transparent), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.chronicle-pin-label.is-crowded {
+	opacity: 0;
+	pointer-events: none;
+}
+.chronicle-map.hide-labels .chronicle-pin:not(:hover) .chronicle-pin-label {
+	display: none;
+}
+.chronicle-pin:hover .chronicle-pin-label {
+	opacity: 1;
+	display: inline;
+}
+
+.chronicle-territory {
+	stroke: var(--terr-color, var(--interactive-accent));
+	fill: var(--terr-color, var(--interactive-accent));
+	stroke-linejoin: round;
+	stroke-opacity: 0.85;
+	transition: fill-opacity var(--chronicle-fast) var(--chronicle-ease), stroke-width var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-territory:hover {
+	fill-opacity: 0.32;
+	stroke-width: 3;
+}
+.chronicle-territory.is-draft {
+	stroke-dasharray: 7 5;
+	fill-opacity: 0.22;
+}
+.chronicle-map.is-tool .chronicle-territory:not(.is-draft) {
+	pointer-events: none;
+}
+.chronicle-territory-label-wrap {
+	background: none;
+	border: none;
+}
+.chronicle-territory-label {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.2em;
+	color: color-mix(in srgb, var(--terr-color) 70%, var(--text-normal));
+	opacity: 0.75;
+	text-shadow: 0 0 3px var(--background-primary), 0 0 8px var(--background-primary);
+	pointer-events: none;
+	transition: font-size var(--chronicle-med) var(--chronicle-ease), opacity var(--chronicle-med) var(--chronicle-ease);
+}
+.chronicle-territory-label.is-tiny {
+	opacity: 0;
+}
+.chronicle-vertex-wrap {
+	background: none;
+	border: none;
+}
+.chronicle-vertex {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	transform: translate(-50%, -50%);
+	box-sizing: border-box;
+	border-radius: 50%;
+	background: var(--background-primary);
+	border: 2px solid var(--terr-color, var(--interactive-accent));
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.chronicle-vertex.is-first {
+	width: 14px;
+	height: 14px;
+	background: var(--terr-color, var(--interactive-accent));
+}
+.chronicle-vertex.is-handle {
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+	cursor: move;
+}
+.chronicle-vertex.is-mid {
+	width: 9px;
+	height: 9px;
+	opacity: 0.55;
+	cursor: copy;
+}
+.chronicle-vertex.is-mid:hover {
+	opacity: 1;
+}
+.chronicle-draft-line {
+	stroke: var(--terr-color, var(--interactive-accent));
+	fill: none;
+}
+.chronicle-measure-line {
+	stroke: var(--interactive-accent);
+	fill: none;
+	stroke-linecap: round;
+}
+.chronicle-measure-line.is-rubber {
+	stroke-opacity: 0.6;
+}
+.leaflet-tooltip.chronicle-measure-tip {
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	box-shadow: var(--chronicle-shadow);
+	font-weight: var(--font-semibold);
+	font-variant-numeric: tabular-nums;
+}
+.chronicle-map.is-painting .leaflet-container,
+.chronicle-map.is-measuring .leaflet-container {
+	cursor: crosshair;
+}
+.chronicle-map.is-filling .leaflet-container {
+	cursor: cell;
+}
+.chronicle-map.is-filling.is-busy .leaflet-container {
+	cursor: progress;
+}
+/* "Marching ants" make a pale fill easy to see against any map. */
+.chronicle-territory.is-draft.is-fill {
+	stroke: color-mix(in srgb, var(--terr-color) 70%, var(--text-normal));
+	stroke-width: 2.5;
+	stroke-dasharray: 8 5;
+	animation: chronicle-fill-in var(--chronicle-med) var(--chronicle-ease) backwards, chronicle-ants 1.2s linear infinite;
+}
+@keyframes chronicle-fill-in {
+	from {
+		fill-opacity: 0;
+	}
+}
+@keyframes chronicle-ants {
+	to {
+		stroke-dashoffset: -26;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.chronicle-territory.is-draft.is-fill {
+		animation: none;
+	}
+}
+/* Where a click or a dragged corner will snap: a ring on a corner, a square on an edge. */
+.chronicle-snap-ghost {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	transform: translate(-50%, -50%);
+	box-sizing: border-box;
+	border-radius: 50%;
+	border: 2px solid var(--interactive-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--background-primary) 70%, transparent);
+	pointer-events: none;
+}
+.chronicle-snap-ghost.is-edge {
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+/* Timeline by category: a swatch of the category's colour on each lane and in the Categories menu. */
+.chronicle-tl-lane-label.is-category .chronicle-tl-lane-name::before,
+.uv-cat-item .menu-item-title::before {
+	content: "";
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	margin-right: 6px;
+	border-radius: 50%;
+	background: var(--uv-cat-color, transparent);
+	vertical-align: 1px;
+}
+/* Snapped onto the coast or a river in the picture. */
+.chronicle-snap-ghost.is-water {
+	width: 14px;
+	height: 14px;
+	border-color: var(--color-blue);
+	background: color-mix(in srgb, var(--color-blue) 30%, transparent);
+}
+.chronicle-map-banner.has-actions:has(.chronicle-fill-controls) {
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	padding: 6px 6px 6px 14px;
+}
+.chronicle-map-banner .chronicle-banner-text {
+	flex: 1 1 220px;
+}
+.chronicle-fill-controls {
+	order: 5;
+	flex: 1 1 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	padding: 6px 0 2px;
+	border-top: 1px solid color-mix(in srgb, var(--text-on-accent) 25%, transparent);
+}
+.chronicle-fill-control {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--font-ui-smaller);
+}
+.chronicle-fill-control input[type="range"] {
+	width: 110px;
+	accent-color: var(--text-on-accent);
+}
+.chronicle-fill-value {
+	min-width: 2ch;
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--font-semibold);
+}
+.chronicle-map-banner select.chronicle-fill-select {
+	height: 26px;
+	font-size: var(--font-ui-smaller);
+	border-radius: 999px;
+	padding: 0 24px 0 10px;
+	background-color: color-mix(in srgb, var(--text-on-accent) 18%, transparent);
+	color: var(--text-on-accent);
+	border: none;
+	box-shadow: none;
+}
+.chronicle-map-banner select.chronicle-fill-select option {
+	color: var(--text-normal);
+	background: var(--background-primary);
+}
+.chronicle-fill-status {
+	font-size: var(--font-ui-smaller);
+	opacity: 0.85;
+}
+.chronicle-fill-status.is-warning {
+	opacity: 1;
+	font-weight: var(--font-semibold);
+}
+.chronicle-map-banner.has-actions button.chronicle-banner-toggle {
+	background: transparent;
+	border: 1px solid color-mix(in srgb, var(--text-on-accent) 45%, transparent);
+}
+.chronicle-map-banner.has-actions button.chronicle-banner-toggle.is-active {
+	background: var(--text-on-accent);
+	color: var(--interactive-accent);
+	border-color: transparent;
+}
+.chronicle-map-banner.has-actions button.chronicle-banner-toggle.is-active::before {
+	content: "✓ ";
+}
+
+/* ==== On/off buttons ========================================================================== */
+/* A switched-on toggle is filled with the accent colour and shows a check; off is a plain outline. */
+
+.chronicle-chip.is-toggle .chronicle-chip-icon {
+	opacity: 0.75;
+}
+.chronicle-chip.is-toggle.is-active {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	box-shadow: 0 1px 6px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+}
+.chronicle-chip.is-toggle.is-active .chronicle-chip-icon {
+	opacity: 1;
+}
+.chronicle-chip.is-toggle.is-active:hover {
+	background: var(--interactive-accent-hover);
+	color: var(--text-on-accent);
+}
+.chronicle-chip-check {
+	display: inline-flex;
+	width: 0;
+	margin-left: -5px;
+	opacity: 0;
+	overflow: hidden;
+	transition: width var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease), margin var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-chip-check svg {
+	width: 13px;
+	height: 13px;
+	stroke-width: 3;
+}
+.chronicle-chip.is-active .chronicle-chip-check {
+	width: 13px;
+	margin-left: 0;
+	opacity: 1;
+}
+/* Narrow toolbars hide chip labels; the fill alone shows the state there. */
+@container (max-width: 820px) {
+	.chronicle-toolbar .chronicle-chip-check {
+		display: none;
+	}
+}
+.chronicle-icon-btn.is-active,
+.chronicle-icon-btn.is-active:hover {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	box-shadow: 0 1px 6px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+}
+.chronicle-icon-btn.is-active svg {
+	color: var(--text-on-accent);
+}
+.chronicle-legend-row.is-off .chronicle-legend-label {
+	text-decoration: line-through;
+}
+.chronicle-map-banner.has-actions {
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: normal;
+	/* Centred without a transform, so it can wrap to the map's full width. */
+	left: 0 !important;
+	right: 0 !important;
+	transform: none;
+	margin: 0 auto;
+	width: max-content;
+	max-width: calc(100% - 120px);
+	padding: 5px 5px 5px 14px;
+	border-radius: 18px;
+	line-height: 1.3;
+	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+}
+.chronicle-map-banner.has-actions button {
+	height: 26px;
+	padding: 0 12px;
+	border-radius: 999px;
+	font-size: var(--font-ui-smaller);
+	background: color-mix(in srgb, var(--text-on-accent) 18%, transparent);
+	color: var(--text-on-accent);
+	box-shadow: none;
+	flex-shrink: 0;
+}
+.chronicle-map-banner.has-actions button.mod-cta {
+	background: var(--text-on-accent);
+	color: var(--interactive-accent);
+}
+.chronicle-legend {
+	min-width: 170px;
+	max-width: 240px;
+	max-height: 45vh;
+	overflow-y: auto;
+	padding: 6px;
+	border-radius: calc(var(--chronicle-radius) + 2px);
+	background: color-mix(in srgb, var(--background-primary) 85%, transparent);
+	backdrop-filter: blur(14px) saturate(1.4);
+	-webkit-backdrop-filter: blur(14px) saturate(1.4);
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: var(--chronicle-shadow);
+	color: var(--text-normal);
+	font-size: var(--font-ui-smaller);
+	animation: chronicle-rise var(--chronicle-med) var(--chronicle-ease) backwards;
+}
+.chronicle-legend-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 2px 6px 4px;
+	font-weight: var(--font-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+.chronicle-legend-chev {
+	display: flex;
+	transition: transform var(--chronicle-med) var(--chronicle-ease);
+}
+.chronicle-legend-chev svg {
+	width: 14px;
+	height: 14px;
+}
+.chronicle-legend.is-collapsed .chronicle-legend-chev {
+	transform: rotate(-90deg);
+}
+.chronicle-legend.is-collapsed .chronicle-legend-list {
+	display: none;
+}
+button.chronicle-legend-row {
+	all: unset;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 3px 6px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background-color var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease);
+}
+button.chronicle-legend-row:hover {
+	background: var(--background-modifier-hover);
+}
+.chronicle-legend-row.is-off {
+	opacity: 0.4;
+}
+.chronicle-legend-swatch {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--pin-color);
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 9px;
+	box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--pin-color);
+	margin: 2px;
+}
+.chronicle-legend-row.is-off .chronicle-legend-swatch {
+	background: transparent;
+	color: var(--pin-color);
+}
+.chronicle-legend-swatch svg {
+	width: 10px;
+	height: 10px;
+	stroke-width: 2.6;
+}
+.chronicle-legend-label {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.chronicle-legend-count {
+	color: var(--text-faint);
+	font-variant-numeric: tabular-nums;
+}
+.chronicle-trace-stop {
+	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation-delay: calc(var(--i, 0) * 60ms * var(--chronicle-speed));
+}
+.chronicle-popup .leaflet-popup-content-wrapper {
+	animation: chronicle-rise var(--chronicle-med) var(--chronicle-ease) backwards;
+}
+
+/* ==== Settings: theme cards & colors ========================================================== */
+
+.chronicle-theme-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 12px;
+	margin: 8px 0 18px;
+}
+button.chronicle-theme-card {
+	all: unset;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 8px 8px 10px;
+	border-radius: 14px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	cursor: pointer;
+	transition: transform var(--chronicle-med) var(--chronicle-ease), box-shadow var(--chronicle-med) var(--chronicle-ease),
+		border-color var(--chronicle-fast) var(--chronicle-ease);
+}
+button.chronicle-theme-card:hover {
+	transform: translateY(-3px);
+	box-shadow: var(--chronicle-shadow-lift);
+}
+button.chronicle-theme-card.is-active {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 45%, transparent);
+}
+.chronicle-theme-preview {
+	position: relative;
+	height: 82px;
+	margin-bottom: 4px;
+	border-radius: 9px;
+	overflow: hidden;
+	background: var(--pv-bg);
+	border: 1px solid rgba(128, 128, 128, 0.22);
+}
+.chronicle-pv-bar {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	height: 16px;
+	padding: 0 6px;
+	background: var(--pv-panel);
+}
+.chronicle-pv-bar span {
+	width: 16px;
+	height: 5px;
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--pv-text) 25%, transparent);
+}
+.chronicle-pv-bar span:first-child {
+	background: var(--pv-accent);
+}
+.chronicle-pv-rows {
+	position: absolute;
+	inset: 22px 6px 6px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+}
+.chronicle-pv-row {
+	height: 8px;
+	width: var(--pv-w);
+	margin-left: var(--pv-x);
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--pv-c) 32%, var(--pv-bg));
+	border-left: 3px solid var(--pv-c);
+}
+.chronicle-theme-preview.preview-starfield {
+	background:
+		radial-gradient(1px 1px at 18% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #cfe0ff, transparent),
+		radial-gradient(1px 1px at 40% 80%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent),
+		radial-gradient(60% 80% at 80% 100%, rgba(120, 80, 255, 0.35), transparent), var(--pv-bg);
+}
+.chronicle-theme-preview.preview-parchment {
+	background: radial-gradient(ellipse at center, transparent 50%, rgba(110, 70, 20, 0.25)), var(--pv-bg);
+}
+.chronicle-theme-preview.preview-atelier {
+	background: radial-gradient(80% 90% at 0% 0%, rgba(124, 92, 255, 0.22), transparent),
+		radial-gradient(70% 80% at 100% 100%, rgba(240, 138, 60, 0.18), transparent), var(--pv-bg);
+}
+.chronicle-theme-name {
+	font-weight: var(--font-semibold);
+}
+.chronicle-theme-for {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	line-height: 1.3;
+}
+.chronicle-color-setting {
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.chronicle-color-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: flex-end;
+}
+.chronicle-color-pick {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 8px 3px 3px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 999px;
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+.chronicle-color-pick input[type="color"] {
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: none;
+	cursor: pointer;
+	overflow: hidden;
+}
+.chronicle-color-pick input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+.chronicle-color-pick input[type="color"]::-webkit-color-swatch {
+	border: none;
+	border-radius: 50%;
+}
+.chronicle-color-clear {
+	display: none;
+	color: var(--text-faint);
+}
+.chronicle-color-clear svg {
+	width: 12px;
+	height: 12px;
+}
+.chronicle-color-pick.is-set {
+	border-color: var(--interactive-accent);
+}
+.chronicle-color-pick.is-set .chronicle-color-clear {
+	display: flex;
+}
+textarea.chronicle-mono {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+}
+
+/* Hover cards that stay: pinned, draggable, stacked. */
+.chronicle-hc-tools {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	display: flex;
+	gap: 2px;
+	opacity: 0;
+	transition: opacity 150ms ease;
+	z-index: 2;
+}
+.chronicle-hovercard:hover .chronicle-hc-tools,
+.chronicle-hovercard.is-pinned .chronicle-hc-tools {
+	opacity: 1;
+}
+.chronicle-hc-tools .clickable-icon {
+	padding: 3px;
+}
+.chronicle-hc-tools svg {
+	width: 14px;
+	height: 14px;
+}
+.chronicle-hovercard.is-pinned .chronicle-hc-pin {
+	display: none;
+}
+.chronicle-hovercard {
+	cursor: default;
+}
+.chronicle-hovercard.is-pinned {
+	cursor: grab;
+	box-shadow: var(--shadow-l), 0 0 0 2px color-mix(in srgb, var(--card-accent, var(--interactive-accent)) 45%, transparent), 0 22px 46px rgba(0, 0, 0, 0.22);
+}
+.chronicle-hovercard.is-dragging {
+	cursor: grabbing;
+	transition: none;
+	user-select: none;
+}

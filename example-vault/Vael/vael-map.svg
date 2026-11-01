@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <radialGradient id="sea" cx="50%" cy="50%" r="75%">
+      <stop offset="0" stop-color="#b9d3d8"/>
+      <stop offset="1" stop-color="#8fb3bd"/>
+    </radialGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#efe3c4"/>
+      <stop offset="1" stop-color="#e3d2a8"/>
+    </linearGradient>
+    <pattern id="waves" width="40" height="18" patternUnits="userSpaceOnUse">
+      <path d="M0 9 q10 -6 20 0 t20 0" fill="none" stroke="#7fa3ad" stroke-width="1" opacity="0.5"/>
+    </pattern>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="4"/><feDisplacementMap in="SourceGraphic" scale="14"/></filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sea)"/>
+  <rect width="1200" height="800" fill="url(#waves)"/>
+  <g filter="url(#rough)">
+    <path d="M150 300 C170 190 290 120 420 110 C520 70 640 60 760 90 C880 110 1000 150 1060 250 C1110 340 1080 450 1030 520 C980 610 900 690 780 700 C660 720 560 690 450 700 C340 710 240 660 190 580 C140 500 120 400 150 300 Z" fill="url(#land)" stroke="#8a7350" stroke-width="3"/>
+    <path d="M880 610 C930 640 960 700 920 740 C880 770 820 750 830 700 C835 660 850 620 880 610 Z" fill="url(#land)" stroke="#8a7350" stroke-width="3"/>
+  </g>
+  <!-- Mountains -->
+  <g fill="#cbb48a" stroke="#7a6240" stroke-width="2" stroke-linejoin="round">
+    <path d="M540 220 l30 -55 l30 55 Z"/><path d="M585 215 l38 -70 l38 70 Z"/><path d="M650 220 l32 -60 l32 60 Z"/>
+    <path d="M700 215 l35 -64 l35 64 Z"/><path d="M750 222 l28 -50 l28 50 Z"/><path d="M615 245 l26 -45 l26 45 Z"/>
+    <path d="M690 248 l24 -42 l24 42 Z"/>
+  </g>
+  <g fill="#fff8e6" opacity="0.8"><path d="M610 160 l13 -15 l13 15 l-6 -2 l-7 5 l-6 -5 Z"/><path d="M722 166 l13 -15 l13 15 l-6 -2 l-7 5 l-6 -5 Z"/></g>
+  <!-- Forest -->
+  <g fill="#8fa86a" stroke="#5d7442" stroke-width="1.5">
+    <circle cx="700" cy="540" r="16"/><circle cx="725" cy="520" r="14"/><circle cx="750" cy="540" r="17"/><circle cx="780" cy="525" r="14"/>
+    <circle cx="805" cy="548" r="16"/><circle cx="730" cy="565" r="15"/><circle cx="765" cy="585" r="17"/><circle cx="800" cy="580" r="14"/>
+    <circle cx="830" cy="565" r="13"/><circle cx="700" cy="580" r="13"/><circle cx="745" cy="605" r="13"/>
+  </g>
+  <!-- River -->
+  <path d="M660 240 C640 300 580 320 540 360 C500 400 430 430 380 480 C340 520 290 560 250 620 C230 650 215 670 200 690" fill="none" stroke="#7fa3ad" stroke-width="5" stroke-linecap="round"/>
+  <path d="M880 260 C860 320 840 340 800 380 C760 420 700 420 650 400" fill="none" stroke="#7fa3ad" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Roads -->
+  <g fill="none" stroke="#9c7b4f" stroke-width="2" stroke-dasharray="7 6" opacity="0.8">
+    <path d="M520 360 C470 420 400 470 330 520"/><path d="M520 360 C620 330 760 300 905 300"/><path d="M520 360 C560 280 600 220 640 175"/><path d="M520 360 C600 440 690 500 760 560"/>
+  </g>
+  <!-- Border -->
+  <path d="M760 110 C780 220 760 320 800 420 C830 500 860 560 900 610" fill="none" stroke="#a0453a" stroke-width="2.5" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.8"/>
+  <!-- Labels -->
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#5b4630" text-anchor="middle">
+    <text x="430" y="300" font-size="26" letter-spacing="8" opacity="0.55">KINGDOM OF VAEL</text>
+    <text x="930" y="420" font-size="22" letter-spacing="6" opacity="0.55">EASTMARCH</text>
+    <text x="760" y="640" font-size="16" letter-spacing="4" font-style="italic" opacity="0.7">Thornwood</text>
+    <text x="680" y="115" font-size="15" letter-spacing="3" font-style="italic" opacity="0.7">The Ashen Peaks</text>
+  </g>
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#4d6f78" text-anchor="middle" font-style="italic">
+    <text x="90" y="160" font-size="24" letter-spacing="5" opacity="0.8">The Grey Sea</text>
+    <text x="1120" y="720" font-size="20" letter-spacing="4" opacity="0.8">Sunward Deep</text>
+  </g>
+  <!-- Compass -->
+  <g transform="translate(1100 110)" stroke="#5b4630" fill="#efe3c4" stroke-width="1.5">
+    <circle r="34" fill="none" opacity="0.6"/>
+    <path d="M0 -42 L8 0 L0 42 L-8 0 Z"/><path d="M-42 0 L0 8 L42 0 L0 -8 Z" opacity="0.7"/>
+    <path d="M0 -42 L8 0 L-8 0 Z" fill="#5b4630"/>
+    <text y="-48" font-family="Georgia, serif" font-size="14" text-anchor="middle" fill="#5b4630" stroke="none">N</text>
+  </g>
+  <rect x="6" y="6" width="1188" height="788" fill="none" stroke="#5b4630" stroke-width="4" opacity="0.6"/>
+</svg>

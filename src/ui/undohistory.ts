@@ -1,0 +1,77 @@
+import { Modal, TFile } from "obsidian";
+import type ChroniclePlugin from "../main";
+import { el, icon, openEntity } from "../render/common";
+
+/** "just now", "4 min ago", "2 h ago". */
+function ago(ms: number): string {
+	const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+	if (s < 45) return "just now";
+	const m = Math.round(s / 60);
+	if (m < 60) return `${m} min ago`;
+	const h = Math.round(m / 60);
+	return h < 24 ? `${h} h ago` : new Date(ms).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+/**
+ * Every UniverseView change you can undo, newest first: what it did, when, and which notes it
+ * touched. Undo the latest, or go back to any point (everything after it is undone too, in order).
+ * Changes made by typing in a note aren't here; Obsidian's own undo covers those.
+ */
+export class UndoHistoryModal extends Modal {
+	private ref?: { off: () => void };
+
+	constructor(private plugin: ChroniclePlugin) {
+		super(plugin.app);
+	}
+
+	onOpen() {
+		this.modalEl.addClass("chronicle-scope", "uv-sheet", "uv-history");
+		this.titleEl.empty();
+		const head = el("div", { cls: "uv-sheet-head" }, this.titleEl);
+		icon(el("span", { cls: "uv-sheet-icon" }, head), "history");
+		el("span", { text: "Undo history" }, head);
+		const evRef = this.app.workspace.on("chronicle:history-changed" as never, () => this.draw());
+		this.ref = { off: () => this.app.workspace.offref(evRef) };
+		this.draw();
+	}
+
+	private draw() {
+		const { contentEl } = this;
+		contentEl.empty();
+		const steps = this.plugin.undoSteps();
+		el("p", { cls: "uv-sheet-intro", text: "UniverseView's changes to your notes' properties, newest first (the last 50). Undo one, or go back to any point: everything after it is undone too. Typing in a note is undone with Obsidian's own undo." }, contentEl);
+		if (!steps.length) {
+			const empty = el("div", { cls: "uv-history-empty" }, contentEl);
+			icon(el("span", {}, empty), "check-circle-2");
+			el("span", { text: "Nothing to undo yet." }, empty);
+			return;
+		}
+		const list = el("div", { cls: "uv-history-list" }, contentEl);
+		steps.forEach((s, i) => {
+			const row = el("div", { cls: "uv-history-row" + (i === 0 ? " is-latest" : "") }, list);
+			el("span", { cls: "uv-history-dot" }, row);
+			const main = el("div", { cls: "uv-history-main" }, row);
+			el("div", { cls: "uv-history-label", text: s.label }, main);
+			const sub = el("div", { cls: "uv-history-sub" }, main);
+			el("span", { text: ago(s.at) }, sub);
+			// The notes it touched, each one click away.
+			for (const path of s.paths.slice(0, 4)) {
+				el("span", { text: " · " }, sub);
+				const f = this.app.vault.getAbstractFileByPath(path);
+				const a = el("a", { text: f instanceof TFile ? f.basename : path.split("/").pop() ?? path }, sub);
+				a.addEventListener("click", (evt) => openEntity(this.plugin, path, evt));
+			}
+			if (s.paths.length > 4) el("span", { text: ` +${s.paths.length - 4}` }, sub);
+			const b = el("button", { cls: i === 0 ? "mod-cta" : "", text: i === 0 ? "Undo" : `Undo back to here (${i + 1})` }, row);
+			b.addEventListener("click", () => {
+				b.disabled = true;
+				void this.plugin.undoMany(i + 1);
+			});
+		});
+	}
+
+	onClose() {
+		this.ref?.off();
+		this.contentEl.empty();
+	}
+}

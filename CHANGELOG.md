@@ -1,0 +1,215 @@
+# Changelog
+
+What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
+
+## 1.1.0 — 2026-11-01
+- **What's new**: after an update, a window shows what changed since the version you had, and the whole version history is one click away (the *What's new* command, or Settings → Look & cards → About UniverseView). Each version folds open; the newest is open. *Show what's new after an update* turns the window off.
+- The changelog lists every version back to 0.7, the earlier ones pieced together from the chat history the plugin was built in.
+
+## 1.0.0 — 2026-11-01
+
+The first stable release. Since 0.26 most of the work has gone into the map: drawing and editing territories on real hand-drawn maps, looks in the style of grand strategy games, and speed.
+
+### Map editing
+- **Click a territory and its editing panel opens** along the bottom of the map with every tool for it: Reshape, Simplify, Expand, Brush, Grow, New area, Fill, Dates, New borders, Split, New land, Route, Map notes, Import, Check, Erase and Delete. Each has a one-key shortcut (R, S, E, B, G, F, D, X, T, C), shown on its tip.
+- **Expand** circles new land and joins it to the same area; **Brush** paints land on or rubs it out. Corners the area already had stay put, and new ground stops at the neighbours' borders (*Keep off other lands*).
+- **Fill land / sea**, a paint bucket by ground: click land and all the land joined to it fills, whatever is drawn on it, up to the coast, rivers and other territories; click water and the water fills. *Cross rivers* carries on past rivers; *Close gaps* stops leaks through a faint river or a hairline gap, and small pockets left beside the fill join it. *Fill same colour* keeps the colour-based fill. Fill started from the toolbar joins the area it overlaps instead of drawing a second one over it.
+- **Simplify** takes out corners that barely change a border, so it's quicker to edit, keeping real detail like a jagged coast. Corners shared with a neighbour go from both borders, so they stay matched. The corner count is previewed before saving.
+- **Snapping to coasts and rivers**: corners snap onto the water in the picture, read at the detail shown on screen. Between two snapped corners the line follows the neighbour's border or the coastline, all the way round winding coasts and into deep inlets, over a pixel or two where a painted river fades, and never across land.
+- **Borders kept sound on every save**: spikes (including thin wedges from a slipped corner), loops and crossed borders are taken out, and small gaps left enclosed against the neighbours join the territory being saved. *Check borders → Fix all* does the same across the whole map, gaps along rivers included.
+- **Map notes**: arrows and lines can be finished with *Finish*, *Undo point* takes back a point, and *Done* keeps one in progress instead of throwing it away. The points and arrowhead show as you draw.
+- Drawing works with a finger on phones and tablets: one finger draws, two move the map.
+
+### Map looks
+- **Look presets**: *Standard*, *Grand strategy* (bold political colour and a strong border glow, like Crusader Kings or Europa Universalis), *Old atlas*, *Hand-drawn fantasy*, *Clean political* and *Terrain first*. Each sets fills, border colour, lettering, the border glow, roughness, rivers and every tier's style. Save your own look as a preset; switch with the *Map look: switch preset* command.
+- **Realm border glow**: a soft band of each realm's colour just inside its border, fading inwards, strongest close up where the fill thins out (*Off*, *Soft* or *Strong*).
+- **Rivers drawn as water**: river routes become a curved blue ribbon between darker banks, narrow at the source and widening to the mouth. Width and colour are in settings.
+- **Roughen borders**: long straight borders drawn with a hand-drawn wobble. Only the look changes; the notes keep their few corners, borders go plain while a tool is open, and neighbours sharing an edge wobble together.
+- Territory styles' line (solid, dashed, dotted) and texture now show on realm borders and on lands shown as their realm.
+- Realm borders run along the territories' own edges, with no doubled lines and no gaps around small islands.
+- **Tier names of your own**: call the tiers what your world calls them (State and County, Province, Sector…), with presets.
+
+### Settings
+- **A new Map tools tab**: snapping, following borders and coasts, keeping off other lands, brush size, and the Fill and Simplify defaults. Choices made on a tool's banner are remembered there.
+- **Everything the Style Settings plugin offered is built in** under *Look & cards → Views*: timeline row height and label size, family tree card size, gender tints, and a flat style. The Style Settings plugin is no longer needed.
+- **Kind of place** is grouped (settlements, defences, buildings and sites, nature, space), every kind in it reads as a place, and titles' tiers (kingdom, province, county…) are left to the Tier setting.
+
+### Views
+- **Family tree**: *Everyone related* to a person, cards as proper panels, and a cleaner look.
+- **Timeline categories**: battles, treaties, coronations and more, each in its own colour and lane, any of them hidden.
+- **Culture lineage** scrolls and zooms like the timeline.
+
+### Faster and steadier
+- The map's strategy look is redrawn only when what's shown changes, each realm's drawing is reused, and realm outlines are worked out in idle moments. A typical zoom does about half the work it did, without the long pauses when a realm first splits open.
+- The border glow is drawn without a blur filter, and names are sorted out without laying the page out again for each one.
+- Tool sliders save settings once they settle rather than on every step, so Sync has far less to carry.
+- Hover cards come back after a scroll or click while the pointer stays on the same territory, and stay away while a map tool runs.
+- On phones: fixes to Fill, family tree cards, pinch zoom, map panning and the layout. A notice offers to reload when an update arrives (on desktop too).
+
+## 0.38.0 — 2026-11-01
+- The map's strategy look is redrawn only when what's shown changes; each realm's drawing is reused; the border glow uses far fewer lines and points; realm outlines are worked out in idle moments.
+
+## 0.37.5 — 2026-11-01
+- Kind of place: every kind reads as a place, the list is grouped, and titles' tiers and repeats are left out.
+
+## 0.37.4 — 2026-11-01
+- The border glow is drawn without a blur filter; names are sorted out in one pass. Hover cards come back after a scroll or click and stay away while a map tool runs.
+
+## 0.37.3 — 2026-11-01
+- Clicking a territory opens its editing panel at once.
+
+## 0.37.2 — 2026-11-01
+- Map notes: arrows and lines have *Finish* and *Undo point*, and *Done* keeps one in progress.
+
+## 0.37.1 — 2026-11-01
+- Tool sliders save settings once they settle. One-key shortcuts on the territory panel. *Map look: switch preset* command.
+
+## 0.37.0 — 2026-11-01
+- Map look presets, built in and your own.
+
+## 0.36.4 — 2026-11-01
+- The realm border glow is no longer cut off along straight borders.
+
+## 0.36.3 — 2026-10-31
+- Small gaps a territory leaves enclosed against its neighbours join it when it's saved; *Fix all* fills enclosed gaps along rivers too.
+
+## 0.36.2 — 2026-10-31
+- Thin spikes are taken out of a border when it's saved.
+
+## 0.36.1 — 2026-10-31
+- Fill takes in small leftover pockets of land beside what it filled.
+
+## 0.36.0 — 2026-10-31
+- Settings overhaul: the Style Settings options built in (*Views*), a *Map tools* tab, the realm border glow's strength, and river width and colour.
+
+## 0.35.0 — 2026-10-31
+- Realm borders keep small islands' thin tips. A soft glow of each realm's colour inside its border, in the style of grand strategy games.
+
+## 0.34.1 — 2026-10-31
+- Fill from the toolbar joins the area it overlaps. The territory panel gets the Draw tools.
+
+## 0.34.0 — 2026-10-31
+- *Fill land / sea*: a paint bucket by ground rather than colour.
+
+## 0.33.1 — 2026-10-31
+- Following coasts and rivers: winding coasts, deep inlets and small breaks in a river, never across land.
+
+## 0.33.0 — 2026-10-31
+- Rivers drawn as water, widening towards the mouth.
+
+## 0.32.1 — 2026-10-31
+- Territory styles' line and texture show on realms.
+
+## 0.32.0 — 2026-10-31
+- *Simplify*: fewer corners, with shared borders kept matched.
+
+## 0.31.0 — 2026-10-31
+- *Roughen borders*: a hand-drawn wobble on long straight edges, shown only.
+
+## 0.30.3 — 2026-10-31
+- *Fix all* fills only sliver-sized pockets.
+
+## 0.30.2 — 2026-10-31
+- Territories are saved sound (no spikes or loops); the border check finds real gaps; *Fix all*.
+
+## 0.30.1 — 2026-10-31
+- Sharper water snapping and fill, lines that follow borders between corners, and drawing by finger.
+
+## 0.30.0 — 2026-10-31
+- *Expand* and *Brush*: grow the same area by circling or painting land.
+
+## 0.29.0 — 2026-10-31
+- Snap borders to coasts and rivers; timeline categories; the culture lineage scrolls and zooms like the timeline.
+
+## 0.28.3 — 2026-10-31
+- The update notice works on desktop too.
+
+## 0.28.2 — 2026-10-31
+- Realm borders follow the territories' own edges (no doubled lines).
+
+## 0.28.1 — 2026-10-31
+- Panning the map by touch works again.
+
+## 0.28.0 — 2026-10-31
+- Family tree overhaul: *Everyone related*, cards as panels, a cleaner look. Smaller editing panels on phones.
+
+## 0.27.1 — 2026-10-31
+- Phone fixes: Fill, family tree cards, pinch zoom and the layout.
+
+## 0.27.0 — 2026-10-31
+- Tier names of your own (with presets); United States examples.
+
+## 0.26.0 — 2026-10-31
+- Ready for release: licence, release workflow and a private GitHub repository. A notice offers to reload when an update arrives.
+
+## Before 0.26
+
+The project wasn't in a repository before 0.26, so these entries are pieced together from the chat history it was built in: what was asked for, version by version. Smaller releases in between (the `.1`, `.2`… after each) were quick fixes to what that version added. Versions before 0.7 left no record.
+
+### 0.25.0 – 0.25.5 — 2026-10-31
+- 0.25.0: the strategy map look, in the style of Crusader Kings 3 and Europa Universalis: solid realm colours from afar, bold realm borders and names curved across the land.
+- 0.25.1: a county missing from the map shows again.
+- 0.25.2 – 0.25.5: the plugin enables and the map opens on iPhone, including very large map pictures, shown from a smaller copy on phones.
+
+### 0.24.0 – 0.24.1 — 2026-10-31
+- Fixes found by the data checks applied across the vault, and the features from 0.23 finished.
+
+### 0.23.0 – 0.23.8 — 2026-10-31
+- A large round of new features and polish across every view, with bug fixes and optimisation.
+
+### 0.22.0 – 0.22.11 — 2026-10-31
+- Map notes and the territory editor updated; the map toolbar, the settings page and the timeline overhauled; the dashboard and inspector refreshed.
+- Right-click menus tidied (Edit territory apart from Delete; *Inspect* when right-clicking a file).
+- Fixes to counties whose areas drew wrongly.
+
+### 0.21.0 – 0.21.7 — 2026-10-31
+- The territory tools (shared corners, filling to neighbours, an area's dates…) given one consistent look, then gathered into one *Edit territory* tool with tabs; later the bottom editing panel.
+- A delete button for territories and places, also on right-click.
+- *Split from area* works.
+
+### 0.20.0 – 0.20.2 — 2026-10-30
+- Inspector overhaul: every identifier and fact, a new look, and more ways to customise it, the map and territories.
+
+### 0.19.0 – 0.19.3 — 2026-10-30
+- Shared borders done properly (growing to a neighbour adds the matching corner to it, so both move together); borders that change with wars and treaties; more from the feature list.
+
+### 0.18.0 – 0.18.3 — 2026-10-30
+- Realms and territories follow the look settings; bigger realms can be picked when zoomed out, and kingdoms appear with less zooming.
+- Clean-up and fixes.
+
+### 0.17.0 – 0.17.6 — 2026-10-30
+- Geography (continents, sub-continents) told apart from sovereign realms, in the code and the note creator; the land tag standard.
+- The lineage of groups restyled to match the other views.
+- Settings keep their scroll position when changed; people found in their families.
+- Credits to Folder Notes and Iconic in the description.
+
+### 0.16.0 – 0.16.1 — 2026-10-30
+- Ten new features from a brainstorm list.
+
+### 0.14.0 – 0.15.1 — 2026-10-30
+- Font options; icons and territories with many settings per type; settings made easier to find from every view; realms overhauled.
+- The file explorer coloured by realm and tier (a county in a softer shade of its duchy), with more quality-of-life touches.
+
+### 0.13.0 – 0.13.10 — 2026-10-28
+- Hover cards: a proper delay that resets between items, a filling ring by the pointer, kept on screen and above every theme.
+- Seas made editable and deletable in bulk; the realm view fixed.
+- The calendar overhauled and its settings editable; plugin settings in tabs.
+
+### 0.12.0 – 0.12.9 — 2026-10-28
+- **Realm tiers** like strategy games: realms whole from afar, split into duchies and counties as you zoom in or click through.
+- The inspector overhauled, built from parts, with the place's kind, size and map layer merged in; *held by* and the realm tree; the organisation view with overlords and family ties (cadet branches).
+- Faster coast detection (no more freezing) and a more accurate road and river finder.
+- Smarter hover cards: movable, opening after a set delay; help behind "?" tips like strategy games; less cluttered spacing.
+
+### 0.11.0 – 0.11.5 — 2026-10-28
+- Settings in the interface for the calendar and for everything tags tell the plugin.
+- Map fixes: crashes, picture quality, and places missing from search and *Add place*.
+
+### 0.10.0 — 2026-10-27
+- The unified inspector; speed and ease of use; views that work together without clutter; the description showing every feature.
+
+### 0.9.0 — 2026-10-27
+- Renamed **UniverseView**. The calendar overhauled (in the spirit of Calendarium), the culture lineage restyled, and the *current year* for spans with no end.
+
+### 0.7.0 — 2026-10-27
+- The first versions: events and timelines, family trees, people and cultures, places and image maps with territories, a dashboard with places' size, layer and kind, organisation charts with logos, fading small territories, coast detection, *Fill territory*, views opened from shortcuts, menus and the sidebar, themes and customisation, movable and resizable modules, and many features from brainstorm lists.

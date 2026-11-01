@@ -1,0 +1,39 @@
+/* Making notes: where they go, Quick add */
+
+/* ---- Where a new note goes ---- */
+.uv-create-placement { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 6px 0 2px; }
+.uv-create-placement svg { width: 14px; height: 14px; color: var(--interactive-accent); }
+.uv-create-placement-reset { margin-left: auto; cursor: pointer; font-size: var(--font-ui-smaller); }
+
+/* ---- Quick add ---- */
+.uv-quickadd .uv-quickadd-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.uv-quickadd-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; border: 1px solid var(--background-modifier-border); }
+.uv-quickadd-chip svg { width: 14px; height: 14px; }
+.uv-quickadd-chip.is-active { background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); border-color: var(--interactive-accent); color: var(--text-normal); }
+.uv-quickadd .chronicle-quickadd-input { width: 100%; font-size: 1.05em; }
+.uv-quickadd-examples { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 10px; font-size: var(--font-ui-smaller); }
+.uv-quickadd-examples a { color: var(--text-faint); cursor: pointer; text-decoration: none; }
+.uv-quickadd-examples a:hover { color: var(--text-accent); }
+.uv-quickadd-card { border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 10px 12px; background: var(--background-secondary); min-height: 3em; }
+.uv-quickadd-card.is-empty { display: none; }
+.uv-quickadd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.uv-quickadd-icon svg { width: 18px; height: 18px; color: var(--interactive-accent); }
+.uv-quickadd-type { font-size: var(--font-ui-smaller); color: var(--text-muted); padding: 1px 8px; border-radius: 999px; background: var(--background-modifier-hover); }
+.uv-quickadd-warn { font-size: var(--font-ui-smaller); color: var(--color-orange); }
+.uv-quickadd-rows { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: var(--font-ui-small); }
+.uv-quickadd-key { color: var(--text-muted); }
+.uv-quickadd-val { display: flex; flex-wrap: wrap; gap: 4px; }
+.uv-quickadd-ok { color: var(--color-green); }
+.uv-quickadd-bad { color: var(--color-orange); }
+.uv-quickadd-where { margin-top: 10px; }
+.uv-quickadd-footer { align-items: center; }
+.uv-quickadd-open { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; font-size: var(--font-ui-small); color: var(--text-muted); }
+.uv-quickadd-made { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-size: var(--font-ui-smaller); }
+.uv-quickadd-made-item { cursor: pointer; }
+.uv-quickadd-keys { margin-top: 8px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.uv-quickadd-where .chronicle-create-folder { display: flex; align-items: center; gap: 6px; }
+.uv-quickadd-where .chronicle-create-folder input { flex: 1; min-width: 0; }
+
+/* ---- Quick add: several at once, completion ---- */
+.uv-quickadd-many { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-size: var(--font-ui-small); }
+.uv-quickadd-keys.has-completion { color: var(--text-accent); }

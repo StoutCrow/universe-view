@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Built files: made by `npm run build`, and attached to each GitHub release by the workflow
+/main.js
+/styles.css
+
+# Test and harness builds
+dev/out/
+
+# Your own vault paths for dev/install.ps1 (one per line), kept out of the repository
+dev/vaults.local.txt
+
+# The example vault's installed copy of the plugin, and Obsidian's per-device state
+example-vault/.obsidian/plugins/universe-view/
+example-vault/.obsidian/workspace*.json
+example-vault/UniverseView exports/
+
+# Editor and tool settings
+.claude/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

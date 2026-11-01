@@ -1,0 +1,184 @@
+/* File explorer: icons, colours, folder notes, overviews */
+
+/* ---- Icons beside notes in the file explorer and search ---- */
+.uv-file-icons {
+	display: inline-flex;
+	align-items: center;
+	gap: 1px;
+	margin-right: 4px;
+	flex: 0 0 auto;
+	color: var(--text-faint);
+	vertical-align: middle;
+}
+.uv-file-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	height: 14px;
+	font-size: 11px;
+	line-height: 1;
+}
+.uv-file-icon svg {
+	width: 13px;
+	height: 13px;
+}
+.uv-file-icon.is-kind {
+	color: var(--text-muted);
+}
+.nav-file-title:hover .uv-file-icons,
+.is-active > .uv-file-icons {
+	color: var(--text-muted);
+}
+.uv-icon-option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.uv-icon-option-glyph {
+	display: inline-flex;
+	width: 20px;
+	justify-content: center;
+}
+.uv-icon-option-glyph svg {
+	width: 18px;
+	height: 18px;
+}
+.uv-icon-preview {
+	display: inline-flex;
+	width: 18px;
+	margin-right: 8px;
+	vertical-align: middle;
+	color: var(--text-muted);
+}
+.uv-icon-preview svg {
+	width: 16px;
+	height: 16px;
+}
+/* Inspector picture: click to change the icon; the type's icon as a corner badge. */
+.chronicle-ep .chronicle-ep-pic {
+	position: relative;
+	overflow: visible;
+}
+.chronicle-ep .chronicle-ep-pic.is-clickable {
+	cursor: pointer;
+}
+.chronicle-ep .chronicle-ep-pic.is-clickable:hover {
+	box-shadow: 0 0 0 2px var(--ep-accent);
+}
+.chronicle-ep .chronicle-ep-pic > img {
+	border-radius: inherit;
+}
+.chronicle-ep .chronicle-ep-pic-badge {
+	position: absolute;
+	right: -5px;
+	bottom: -5px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--background-primary);
+	box-shadow: 0 0 0 1px var(--background-modifier-border);
+	color: var(--text-muted);
+}
+.chronicle-ep .chronicle-ep-pic-badge svg {
+	width: 11px;
+	height: 11px;
+}
+/* The open note in the status bar. */
+.uv-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+}
+.uv-status.is-hidden {
+	display: none;
+}
+.uv-status-icon {
+	display: inline-flex;
+	color: var(--text-muted);
+}
+.uv-status-icon svg {
+	width: 13px;
+	height: 13px;
+}
+.uv-status-text {
+	white-space: nowrap;
+	max-width: 320px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ---- File explorer colours: by realm, softer for smaller tiers ---- */
+.uv-file-tinted.uv-tint-text,
+.uv-file-tinted.uv-tint-text .nav-file-title-content,
+.uv-file-tinted.uv-tint-text .nav-folder-title-content {
+	color: color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), var(--nav-item-color, var(--text-muted)));
+}
+.uv-file-tinted.uv-tint-bar {
+	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), transparent);
+}
+.uv-file-tinted.uv-tint-bar:not(.is-active):not(:hover) {
+	background-color: color-mix(in srgb, var(--uv-file-color) calc(var(--uv-file-strength) * 0.08), transparent);
+}
+.uv-file-tinted .uv-file-icon.is-type {
+	color: color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), var(--text-faint));
+}
+.uv-file-strengths { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0 18px; padding-left: 12px; border-left: 2px solid var(--background-modifier-border); margin-bottom: 8px; }
+.uv-file-strengths .setting-item { padding: 6px 0; border-top: none; }
+.uv-file-strengths .setting-item:last-child { grid-column: 1 / -1; }
+.uv-tier-names { padding-left: 12px; border-left: 2px solid var(--background-modifier-border); margin-bottom: 8px; }
+.uv-tier-names .setting-item { padding: 6px 0; border-top: none; flex-wrap: wrap; gap: 6px; }
+.uv-tier-names .setting-item-info { flex: 1 1 8em; }
+.uv-tier-names .setting-item-control { flex: 1 1 12em; min-width: 0; flex-wrap: wrap; gap: 6px; }
+.uv-tier-names .setting-item-control input { flex: 1 1 6em; width: auto; min-width: 0; max-width: 11em; }
+
+/* ---- Folder notes ---- */
+.nav-folder-title.uv-has-folder-note .nav-folder-title-content,
+.view-header-breadcrumb.uv-has-folder-note {
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+.nav-folder-title.uv-folder-note-active {
+	background-color: var(--nav-item-background-active, var(--background-modifier-hover));
+	color: var(--nav-item-color-active, var(--text-normal));
+}
+.uv-folder-note-hidden { display: none !important; }
+.nav-folder-title .uv-file-icons { order: 0; }
+.uv-setting-warn { border-left: 3px solid var(--color-orange); padding-left: 10px; }
+
+/* ---- Path above a note, in realm colours ---- */
+.view-header-breadcrumb.uv-crumb-tinted { color: color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), var(--text-muted)); }
+
+/* ---- Explorer ordered by tier ---- */
+.uv-tier-sorted { display: flex; flex-direction: column; }
+
+/* ---- Move into folder notes ---- */
+.uv-tidy-list { max-height: 55vh; overflow: auto; border: 1px solid var(--background-modifier-border); border-radius: 8px; padding: 4px 10px; }
+.uv-tidy-head { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; font-size: var(--font-ui-small); }
+.uv-tidy-head .chronicle-dash-muted { margin-left: auto; font-size: var(--font-ui-smaller); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+.uv-tidy-head svg { width: 14px; height: 14px; color: var(--interactive-accent); }
+.uv-tidy-row { display: flex; align-items: center; gap: 6px; padding: 2px 0 2px 18px; font-size: var(--font-ui-small); }
+.uv-tidy-row .chronicle-dash-muted { margin-left: auto; font-size: var(--font-ui-smaller); }
+.uv-tidy-icon svg { width: 13px; height: 13px; color: var(--text-muted); }
+
+/* ---- Folder overview ---- */
+.uv-folder-overview { border: 1px solid var(--background-modifier-border); border-radius: 12px; padding: 12px 14px; background: var(--background-secondary); }
+.uv-fo-title { font-family: var(--chronicle-font-display, inherit); font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
+.uv-fo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 18px; }
+.uv-fo-head { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 3px; margin-bottom: 4px; }
+.uv-fo-head svg { width: 13px; height: 13px; }
+.uv-fo-count { margin-left: auto; color: var(--text-faint); }
+.uv-fo-item { display: flex; align-items: baseline; gap: 6px; padding: 1px 0 1px 6px; font-size: var(--font-ui-small); border-left: 2px solid transparent; }
+.uv-fo-item.is-tinted { border-left-color: color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), transparent); }
+.uv-fo-item.is-tinted .uv-fo-link { color: color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), var(--text-normal)); }
+.uv-fo-icons { display: inline-flex; gap: 2px; color: var(--text-faint); align-self: center; }
+.uv-fo-icons svg { width: 12px; height: 12px; }
+.uv-fo-link { text-decoration: none; }
+.uv-fo-meta { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+.uv-fo-where { margin-left: auto; color: var(--text-faint); font-size: var(--font-ui-smaller); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }

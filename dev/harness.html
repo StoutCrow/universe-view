@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UniverseView harness</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Approximation of Obsidian's default theme variables, enough to judge UniverseView's styling. */
+body {
+	--font-interface: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+	--font-ui-smaller: 12px; --font-ui-small: 13px; --font-ui-medium: 15px; --font-ui-large: 20px;
+	--font-semibold: 600; --font-bold: 700;
+	--radius-s: 4px; --radius-m: 8px; --input-radius: 5px;
+	--color-red-rgb: 233, 49, 71; --color-green-rgb: 8, 185, 78;
+	--color-red: #e93147; --color-orange: #ec7500; --color-yellow: #e0ac00; --color-green: #08b94e;
+	--color-cyan: #00bfbc; --color-blue: #086ddd; --color-purple: #7852ee; --color-pink: #d53984;
+	--interactive-accent-hsl: 254, 80%, 68%;
+	margin: 0; font-family: var(--font-interface); font-size: 14px;
+	background: var(--background-primary); color: var(--text-normal);
+}
+body.theme-light {
+	--background-primary: #ffffff; --background-secondary: #f6f6f6; --background-modifier-border: #e0e0e0;
+	--background-modifier-border-hover: #d4d4d4; --background-modifier-hover: rgba(0,0,0,0.067);
+	--background-modifier-form-field: #ffffff; --background-modifier-border-focus: #a7a7a7;
+	--text-normal: #222222; --text-muted: #5c5c5c; --text-faint: #ababab; --text-accent: #8a5cf5;
+	--text-on-accent: #ffffff; --text-error: #e93147; --interactive-accent: #8a5cf5; --interactive-accent-hover: #7a4ce5;
+	--shadow-s: 0 1px 2px rgba(0,0,0,.1), 0 3.4px 6.7px rgba(0,0,0,.05); --shadow-l: 0 2.8px 3.6px rgba(0,0,0,.04), 0 8.4px 10.9px rgba(0,0,0,.08), 0 24px 33px rgba(0,0,0,.1);
+}
+body.theme-dark {
+	--background-primary: #1e1e1e; --background-secondary: #262626; --background-modifier-border: #363636;
+	--background-modifier-border-hover: #3f3f3f; --background-modifier-hover: rgba(255,255,255,0.075);
+	--background-modifier-form-field: #2a2a2a; --background-modifier-border-focus: #5a5a5a;
+	--text-normal: #dadada; --text-muted: #b3b3b3; --text-faint: #666666; --text-accent: #a68af9;
+	--text-on-accent: #ffffff; --text-error: #fb464c; --interactive-accent: #8a5cf5; --interactive-accent-hover: #9a6cff;
+	--color-blue: #027aff; --color-purple: #a882ff; --color-green: #44cf6e; --color-orange: #e9973f; --color-pink: #fa99cd; --color-cyan: #53dfdd;
+	--shadow-s: 0 1px 2px rgba(0,0,0,.3); --shadow-l: 0 8px 24px rgba(0,0,0,.5);
+}
+* { box-sizing: border-box; }
+#app { display: flex; height: 100vh; }
+#nav { width: 190px; flex-shrink: 0; padding: 10px 8px; border-right: 1px solid var(--background-modifier-border); background: var(--background-secondary); display: flex; flex-direction: column; gap: 2px; }
+.nav-btn { display: flex; gap: 8px; align-items: center; text-align: left; border: none; background: none; color: var(--text-muted); padding: 6px 8px; border-radius: var(--radius-s); cursor: pointer; font: inherit; font-size: 13px; }
+.nav-btn:hover, .nav-btn.is-active { background: var(--background-modifier-hover); color: var(--text-normal); }
+.theme-toggle { margin-top: auto; }
+#main { flex: 1; position: relative; overflow: auto; }
+.workspace-leaf-content { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.view-header { display: none; }
+.view-content { flex: 1; min-height: 0; }
+button { font: inherit; font-size: var(--font-ui-small); background: var(--background-modifier-form-field); color: var(--text-normal); border: 1px solid var(--background-modifier-border); border-radius: var(--input-radius); padding: 4px 12px; cursor: pointer; height: 30px; }
+button.mod-cta { background: var(--interactive-accent); color: var(--text-on-accent); border-color: transparent; }
+input[type=text], input[type=search], textarea, select { font: inherit; font-size: var(--font-ui-small); background: var(--background-modifier-form-field); color: var(--text-normal); border: 1px solid var(--background-modifier-border); border-radius: var(--input-radius); padding: 4px 8px; }
+input:focus, textarea:focus, select:focus { outline: none; box-shadow: 0 0 0 2px var(--background-modifier-border-focus); }
+.clickable-icon { display: inline-flex; align-items: center; justify-content: center; padding: 5px; border-radius: var(--radius-s); color: var(--text-muted); cursor: pointer; }
+.clickable-icon:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.svg-icon { width: 16px; height: 16px; }
+.search-input-container { position: relative; }
+.search-input-container input { width: 100%; }
+.search-input-clear-button { display: none; }
+.modal-container { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50; }
+.modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,.4); }
+.modal { position: relative; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 12px; padding: 20px 24px; width: 520px; max-height: 88vh; overflow: auto; box-shadow: var(--shadow-l); }
+.modal-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+.modal-close-button { position: absolute; right: 14px; top: 12px; cursor: pointer; width: 18px; height: 18px; }
+.modal-close-button::before { content: "×"; font-size: 20px; color: var(--text-muted); }
+.modal-button-container { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; align-items: center; }
+.prompt { padding: 0; width: 600px; }
+.prompt-input { width: 100%; border: none; border-bottom: 1px solid var(--background-modifier-border); padding: 14px; font-size: 15px; border-radius: 0; }
+.prompt-results { max-height: 50vh; overflow: auto; padding: 6px; }
+.suggestion-container { position: fixed; z-index: 60; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 8px; box-shadow: var(--shadow-l); padding: 4px; max-height: 300px; overflow: auto; }
+.suggestion-item { padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+.suggestion-item:hover { background: var(--background-modifier-hover); }
+.setting-item { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--background-modifier-border); }
+.setting-item-info { flex: 1; }
+.setting-item-name { font-size: 14px; }
+.setting-item-description { font-size: 12px; color: var(--text-muted); padding-top: 3px; }
+.setting-item-control { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.setting-item-heading .setting-item-name { font-weight: 600; font-size: 16px; }
+.checkbox-container { width: 38px; height: 22px; border-radius: 11px; background: var(--background-modifier-border); position: relative; cursor: pointer; }
+.checkbox-container::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: left .1s; }
+.checkbox-container.is-enabled { background: var(--interactive-accent); }
+.checkbox-container.is-enabled::after { left: 19px; }
+.vertical-tab-content { padding: 24px 40px; max-width: 900px; }
+.menu { position: fixed; z-index: 70; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 8px; box-shadow: var(--shadow-l); padding: 4px; min-width: 200px; }
+.menu-item { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.menu-item:hover { background: var(--background-modifier-hover); }
+.menu-separator { height: 1px; background: var(--background-modifier-border); margin: 4px 0; }
+.notice-container { position: fixed; top: 14px; right: 14px; z-index: 80; display: flex; flex-direction: column; gap: 6px; }
+.notice { background: var(--background-secondary); border: 1px solid var(--background-modifier-border); padding: 8px 14px; border-radius: 6px; box-shadow: var(--shadow-s); font-size: 13px; }
+.markdown-preview-view { padding: 24px 48px; max-width: 900px; margin: 0 auto; }
+.embed-label { color: var(--text-faint); font-weight: normal; font-family: monospace; margin: 24px 0 6px; }
+a.internal-link { color: var(--text-accent); text-decoration: none; }
+[aria-label]:hover { position: relative; }
+/* ?mobile=1: like Obsidian on a phone, the view fills the screen and a floating bar sits over its bottom. */
+body.is-mobile #nav { position: fixed; z-index: 90; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform .2s; }
+body.is-mobile.nav-open #nav { transform: none; }
+body.is-mobile .mobile-navbar { position: fixed; z-index: 85; left: 12px; right: 12px; bottom: 10px; height: 54px; border-radius: 27px; background: rgba(40,40,40,.85); }
+body.is-mobile .mobile-navbar button { position: absolute; left: 8px; top: 8px; height: 38px; border-radius: 19px; }
+</style>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="theme-light">
+<div id="app"><div id="nav"></div><div id="main"></div></div>
+<script src="/dev/out/harness.js"></script>
+</body>
+</html>

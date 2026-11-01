@@ -1,0 +1,285 @@
+/* Realms view, the land questions, and the lineage of groups */
+
+/* ---- Realms and cultures view ---- */
+.chronicle-realms {
+	display: grid;
+	grid-template-columns: minmax(220px, 34%) 1fr;
+	height: 100%;
+	min-height: 0;
+}
+.chronicle-realms .chronicle-realms-list {
+	overflow-y: auto;
+	padding: 4px;
+	border-right: 1px solid var(--background-modifier-border);
+}
+.chronicle-realms .chronicle-realms-detail {
+	overflow-y: auto;
+	padding: 8px 14px;
+}
+@media (max-width: 700px) {
+	.chronicle-realms {
+		grid-template-columns: 1fr;
+		grid-template-rows: 45% 55%;
+	}
+	.chronicle-realms .chronicle-realms-list {
+		border-right: none;
+		border-bottom: 1px solid var(--background-modifier-border);
+	}
+}
+.chronicle-realms .chronicle-realms-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 6px 3px calc(4px + var(--depth, 0) * 14px);
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	border-left: 3px solid transparent;
+}
+.chronicle-realms .chronicle-realms-row:hover {
+	background: var(--background-modifier-hover);
+}
+.chronicle-realms .chronicle-realms-row.is-selected {
+	background: color-mix(in srgb, var(--row-color) 16%, transparent);
+	border-left-color: var(--row-color);
+}
+.chronicle-realms .chronicle-realms-row.is-context {
+	opacity: 0.55;
+}
+.chronicle-realms .chronicle-realms-twisty {
+	flex: 0 0 14px;
+	display: inline-flex;
+	color: var(--text-faint);
+}
+.chronicle-realms .chronicle-realms-twisty svg {
+	width: 13px;
+	height: 13px;
+}
+.chronicle-realms .chronicle-realms-pic {
+	flex: 0 0 22px;
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: color-mix(in srgb, var(--row-color) 25%, var(--background-primary));
+	color: var(--row-color);
+}
+.chronicle-realms .chronicle-realms-pic img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.chronicle-realms .chronicle-realms-pic svg {
+	width: 12px;
+	height: 12px;
+}
+.chronicle-realms .chronicle-realms-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	flex: 1;
+	line-height: 1.2;
+}
+.chronicle-realms .chronicle-realms-name {
+	font-size: var(--font-ui-small);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.chronicle-realms .chronicle-realms-sub {
+	font-size: 0.75em;
+	color: var(--text-faint);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.chronicle-realms .chronicle-realms-badge {
+	flex: 0 0 auto;
+	font-size: 0.75em;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+.chronicle-realms .chronicle-realms-heading {
+	margin: 10px 6px 3px;
+	font-size: 0.75em;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-faint);
+}
+.chronicle-realms-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 28px 14px;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+.chronicle-realms-empty-title {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+.chronicle-realms-empty-icon svg {
+	width: 30px;
+	height: 30px;
+	color: var(--text-faint);
+}
+.chronicle-segmented {
+	display: inline-flex;
+	padding: 2px;
+	border-radius: var(--radius-m);
+	background: var(--background-modifier-hover);
+}
+.chronicle-segmented .chronicle-segment {
+	all: unset;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 9px;
+	border-radius: var(--radius-s);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+.chronicle-segmented .chronicle-segment svg {
+	width: 13px;
+	height: 13px;
+}
+.chronicle-segmented .chronicle-segment.is-active {
+	background: var(--background-primary);
+	color: var(--text-normal);
+	box-shadow: var(--shadow-s);
+}
+
+/* Chip rows used outside the panel (inspector realm tab). */
+.chronicle-ep.chronicle-ep-people {
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 0;
+	container-type: normal;
+}
+/* Inspector: the remove section, and keyboard focus on chips. */
+.chronicle-inspector .chronicle-insp-danger .chronicle-insp-section-head {
+	color: var(--text-error);
+}
+.chronicle-inspector .chronicle-insp-danger button.mod-warning {
+	background: color-mix(in srgb, var(--text-error) 15%, var(--interactive-normal));
+	color: var(--text-error);
+}
+.chronicle-ep .chronicle-ep-person:focus-visible,
+.chronicle-ep .chronicle-ep-crumb:focus-visible,
+.chronicle-ep .chronicle-ep-section-action:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 1px;
+}
+.chronicle-inspector .chronicle-insp-pick {
+	grid-template-columns: 74px minmax(0, 1fr) auto;
+}
+
+/* ---- Land questions: ruled land or geography ---- */
+.uv-std-nature { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
+.uv-std-card { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; height: auto; padding: 8px 10px; text-align: left; white-space: normal; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
+.uv-std-card span:last-child { font-size: var(--font-ui-smaller); color: var(--text-muted); font-weight: normal; }
+.uv-std-card.is-active { border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-secondary)); }
+.uv-std-card-icon svg { width: 16px; height: 16px; color: var(--interactive-accent); }
+.uv-std-tags { font-size: var(--font-ui-smaller); color: var(--text-faint); font-family: var(--font-monospace); margin-top: 4px; }
+.uv-std-modal { width: min(900px, 94vw); }
+.uv-std-filter { width: 100%; margin-bottom: 6px; }
+.uv-std-only { display: inline-flex; gap: 6px; align-items: center; font-size: var(--font-ui-small); color: var(--text-muted); margin-bottom: 6px; }
+.uv-std-list { max-height: 58vh; overflow: auto; border: 1px solid var(--background-modifier-border); border-radius: 8px; }
+.uv-std-row { padding: 6px 10px; border-bottom: 1px solid var(--background-modifier-border); }
+.uv-std-row.is-hidden { display: none; }
+.uv-std-row.is-standard .uv-std-now { color: var(--color-green); }
+.uv-std-row-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.uv-std-badge { font-size: var(--font-ui-smaller); padding: 0 7px; border-radius: 999px; background: var(--background-modifier-hover); color: var(--text-muted); }
+.uv-std-now { font-size: var(--font-ui-smaller); font-family: var(--font-monospace); color: var(--text-muted); margin: 3px 0; }
+.uv-std-inline { display: flex; gap: 6px; flex-wrap: wrap; }
+.uv-std-inline select { font-size: var(--font-ui-smaller); height: 26px; }
+
+/* ---- Lineage of groups: chart, legend, lanes, side panel ---- */
+.chronicle-lineage.uv-lin { display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; background: var(--chronicle-surface, var(--background-primary)); }
+.chronicle-lineage.uv-lin.has-side { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
+.uv-lin-chart { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+/* Scrolls up and down like the timeline's lanes; zoom and sideways panning redraw the time axis. */
+.uv-lin-scroll { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; touch-action: pan-y; cursor: grab; }
+.uv-lin.is-panning .uv-lin-scroll { cursor: grabbing; }
+.uv-lin.is-settled .chronicle-lineage-item { animation: none; }
+.uv-lin-scroll > svg.chronicle-canvas { width: 100%; display: block; touch-action: pan-y; cursor: inherit; }
+.uv-lin-scroll > svg.chronicle-canvas.is-hidden { display: none; }
+.uv-lin-side { display: none; min-height: 0; overflow-y: auto; border-left: 1px solid var(--background-modifier-border); background: var(--background-secondary); }
+.uv-lin.has-side .uv-lin-side { display: flex; flex-direction: column; }
+.uv-lin-side-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--background-modifier-border); position: sticky; top: 0; background: var(--background-secondary); z-index: 1; }
+.uv-lin-side-bar .clickable-icon { margin-left: auto; }
+.uv-lin-side-btn { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); height: 26px; padding: 0 10px; border-radius: 999px; }
+.uv-lin-side-btn svg { width: 13px; height: 13px; }
+.uv-lin-side-btn.is-active { background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); color: var(--text-normal); }
+.uv-lin-side-body { padding: 8px 12px 16px; }
+
+.uv-lin-legend { position: absolute; left: 10px; bottom: 10px; z-index: 2; display: flex; flex-wrap: wrap; gap: 5px; max-width: calc(100% - 20px); pointer-events: none; }
+.uv-lin-chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: var(--font-ui-smaller); background: color-mix(in srgb, var(--background-primary) 88%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); }
+.uv-lin-chip.is-active { border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 16%, var(--background-primary)); }
+.uv-lin-chip-icon svg { width: 13px; height: 13px; color: var(--text-muted); }
+.uv-lin-chip-n { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+.uv-lin-axis-bg { fill: var(--chronicle-surface, var(--background-primary)); }
+.uv-lin-lane { fill: transparent; }
+.uv-lin-lane.is-odd { fill: color-mix(in srgb, var(--text-normal) 3%, transparent); }
+.uv-lin-lane-head { font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--text-muted); font-family: var(--chronicle-font-ui, var(--font-interface)); }
+.uv-lin .chronicle-lineage-bar { stroke: color-mix(in srgb, var(--item-color) 70%, var(--background-primary)); stroke-width: 1; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.12)); transition: filter 150ms ease, opacity 150ms ease; }
+.uv-lin .chronicle-lineage-item { cursor: pointer; }
+.uv-lin .chronicle-lineage-item:hover .chronicle-lineage-bar { filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--item-color) 45%, transparent)); }
+.uv-lin .chronicle-lineage-item.is-selected .chronicle-lineage-bar { stroke: var(--text-normal); stroke-width: 2; }
+.uv-lin-badge-icon div { width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, var(--item-color) 75%, var(--text-normal)); }
+.uv-lin-badge-icon svg { width: 13px; height: 13px; }
+.uv-lin-event { fill: var(--background-primary); stroke: color-mix(in srgb, var(--item-color) 80%, var(--text-normal)); stroke-width: 1.4; cursor: pointer; }
+.uv-lin-event:hover { fill: var(--item-color); }
+.uv-lin-leader { stroke: color-mix(in srgb, var(--item-color) 40%, var(--background-primary)); stroke-width: 1.5; stroke-dasharray: 2 2; }
+
+.uv-lin-undated { position: absolute; right: 10px; top: 44px; z-index: 2; width: 220px; max-height: calc(100% - 100px); overflow-y: auto; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--background-primary) 90%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); }
+.uv-lin.has-side .uv-lin-undated { right: 10px; }
+.uv-lin-undated.is-empty { display: none; }
+.uv-lin-undated-head { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.uv-lin-undated-head svg { width: 13px; height: 13px; }
+.uv-lin-undated-list { display: flex; flex-direction: column; gap: 2px; }
+.uv-lin-undated-item { display: flex; align-items: center; gap: 7px; height: auto; padding: 3px 6px; justify-content: flex-start; font-size: var(--font-ui-small); background: none; box-shadow: none; border-radius: 6px; text-align: left; }
+.uv-lin-undated-item:hover, .uv-lin-undated-item.is-selected { background: var(--background-modifier-hover); }
+.uv-lin-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--item-color); flex: none; }
+.uv-lin .chronicle-empty { position: absolute; inset: 0; }
+@media (max-width: 700px) {
+	.chronicle-lineage.uv-lin.has-side { grid-template-columns: 1fr; grid-template-rows: 1fr 45%; }
+	.uv-lin-side { border-left: none; border-top: 1px solid var(--background-modifier-border); }
+	.uv-lin-undated { display: none; }
+}
+
+.uv-lin-undated { width: auto; padding: 0; }
+.uv-lin-undated.is-open { width: 230px; padding: 0 0 6px; }
+.uv-lin-undated-head { width: 100%; height: 28px; margin: 0; padding: 0 10px; background: none; box-shadow: none; border: none; text-transform: none; letter-spacing: 0; font-size: var(--font-ui-smaller); }
+.uv-lin-undated-caret { margin-left: auto; }
+.uv-lin-undated-list { padding: 0 6px; }
+.uv-lin-undated-item { border: none; }
+
+/* ---- Today in the world ---- */
+.uv-today { position: absolute; inset: 0; overflow-y: auto; padding: 20px 24px 40px; }
+.uv-today-hero { margin-bottom: 18px; }
+.uv-today-date { font-family: var(--chronicle-font-display, inherit); font-size: 2em; margin: 4px 0; }
+.uv-today-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.uv-today-card { border: 1px solid var(--background-modifier-border); border-radius: 12px; padding: 10px 12px; background: var(--background-secondary); }
+.uv-today-card.is-wide { grid-column: 1 / -1; }
+.uv-today-card.is-wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px 14px; }
+.uv-today-card.is-wide .uv-today-card-head { grid-column: 1 / -1; }
+.uv-today-card-head { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 6px; }
+.uv-today-card-head svg { width: 14px; height: 14px; }
+.uv-today-row { display: flex; align-items: baseline; gap: 7px; padding: 4px 6px; border-radius: 6px; cursor: pointer; border-left: 3px solid var(--row-color); }
+.uv-today-row:hover { background: var(--background-modifier-hover); }
+.uv-today-row-icon { align-self: center; color: var(--text-faint); }
+.uv-today-row-icon svg { width: 13px; height: 13px; }
+.uv-today-row-name { font-weight: 500; }
+.uv-today-row-sub { margin-left: auto; font-size: var(--font-ui-smaller); color: var(--text-muted); text-align: right; }

@@ -1,0 +1,40 @@
+{
+  "name": "universe-view",
+  "version": "1.1.0",
+  "description": "Timelines, family trees, organisation charts, relationship graphs and maps for your worlds, built from your notes.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "harness": "node esbuild.config.mjs production && node dev/build-harness.mjs --serve",
+    "install-example": "node scripts/install-example.mjs",
+    "test": "node dev/build-tests.mjs && node dev/out/tests.js",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "keywords": [
+    "obsidian",
+    "timeline",
+    "genealogy",
+    "worldbuilding",
+    "map"
+  ],
+  "author": "Oli_G",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/d3-force": "^3.0.9",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^20.14.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.21.5",
+    "lucide": "^0.344.0",
+    "obsidian": "^1.5.7",
+    "tslib": "^2.6.3",
+    "typescript": "^5.4.5",
+    "yaml": "^2.4.5"
+  },
+  "dependencies": {
+    "d3-force": "^3.0.0",
+    "leaflet": "^1.9.4",
+    "polygon-clipping": "0.15.7"
+  }
+}
