@@ -10,7 +10,15 @@ import { entityColor } from "../render/common";
  * the vault actually uses (tags are case-sensitive in the editor's markup), and redrawn as notes change.
  */
 export function styleTags(plugin: ChroniclePlugin) {
-	const style = document.head.createEl("style", { attr: { id: "uv-tag-styles" } });
+	// The rules depend on the tags the vault uses, so they can't sit in styles.css: they go in a
+	// constructed stylesheet (where a phone's browser lacks those, tags just keep their usual look).
+	const sheet = typeof CSSStyleSheet !== "undefined" && "replaceSync" in CSSStyleSheet.prototype && "adoptedStyleSheets" in document ? new CSSStyleSheet() : undefined;
+	if (sheet) document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+	const style = {
+		set textContent(css: string) {
+			sheet?.replaceSync(css);
+		},
+	};
 	const SIZE = /^(gigantic|enormous|massive|huge|large|big|major|medium|small|minor|little|tiny)$/i;
 	const build = () => {
 		if (plugin.settings.styleTags === false) {
@@ -76,7 +84,7 @@ body .cm-hashtag-end:is(${[...colours.keys()].map((t) => `.cm-tag-${cls(t)}`).jo
 	});
 	plugin.register(() => {
 		observer.disconnect();
-		style.remove();
+		if (sheet) document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
 	});
 	return build;
 }

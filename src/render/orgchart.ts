@@ -166,7 +166,7 @@ export function tieOf(self: string, r: TimedRef): Tie {
 	const known = relKind(r.kind);
 	const tone = relTone(r.kind);
 	const directed = !!known && !relSymmetric(r.kind) && tone === "rank";
-	if (directed && POINTS_UP.has(known!.key)) {
+	if (directed && POINTS_UP.has(known.key)) {
 		return { a: r.ref.key, b: self, label: relLabel(relInverse(r.kind)), kind: relInverse(r.kind), tone, directed, from: r.from, to: r.to };
 	}
 	return { a: self, b: r.ref.key, label: relLabel(r.kind), kind: r.kind, tone, directed, from: r.from, to: r.to };
@@ -370,7 +370,7 @@ export class OrgChartRenderer {
 		};
 		// A house's titles, shown as chips on its card.
 		const heldTies = (org: Entity): Tie[] =>
-			mode === "dynasties" && tree ? holdingsOf(tree, org.key).map((k) => ({ a: org.key, b: k, label: "Holds", tone: "rank" as RelTone, directed: false })) : [];
+			mode === "dynasties" && tree ? holdingsOf(tree, org.key).map((k) => ({ a: org.key, b: k, label: "Holds", tone: "rank", directed: false })) : [];
 
 		// Build the tree.
 		const seen = new Set<string>();
@@ -526,7 +526,7 @@ export class OrgChartRenderer {
 		// Room above the top row for the arcs that bow over it.
 		const top = drawn.length ? -90 : -10;
 		this.bbox = { x: -40, y: top, width: left - GAP_X * 2 + 80, height: maxY - top + 30 };
-		if (!this.pz.touched) requestAnimationFrame(() => this.fit());
+		if (!this.pz.touched) window.requestAnimationFrame(() => this.fit());
 		this.drawTimeline();
 	}
 
@@ -766,7 +766,7 @@ export class OrgChartRenderer {
 					evt.stopPropagation();
 					if (!this.pz.justPanned) openEntity(this.plugin, other.key, evt);
 				});
-				bindHover(this.plugin, chip as unknown as HTMLElement, other.key, this.hoverParent);
+				bindHover(this.plugin, chip, other.key, this.hoverParent);
 				x += w + 4;
 				shown++;
 			}

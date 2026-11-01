@@ -189,7 +189,7 @@ export class HousesRenderer {
 		this.drawMarriages(where, x);
 		this.bbox = { x: 0, y: 0, width: LABEL_W + plotW + 40, height: totalH + 10 };
 		// Start at the top left at full size; zoom out to see more.
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			const r = this.svgEl.getBoundingClientRect();
 			this.pz.k = Math.min(1, (r.width || this.bbox.width) / this.bbox.width);
 			this.pz.x = 0;
@@ -256,7 +256,7 @@ export class HousesRenderer {
 			evt.preventDefault();
 			showEntityMenu(this.plugin, h.key, evt);
 		});
-		bindHover(this.plugin, name as unknown as HTMLElement, h.key, this.hoverParent);
+		bindHover(this.plugin, name, h.key, this.hoverParent);
 		// Members' lives.
 		const crowns: { cx: number; cy: number; a: number }[] = [];
 		for (const m of band.members) {
@@ -276,7 +276,7 @@ export class HousesRenderer {
 				evt.preventDefault();
 				showEntityMenu(this.plugin, m.p.key, evt);
 			});
-			bindHover(this.plugin, pg as unknown as HTMLElement, m.p.key, this.hoverParent);
+			bindHover(this.plugin, pg, m.p.key, this.hoverParent);
 			if (!where.has(m.p.key)) where.set(m.p.key, { x1, x2, y: yy + (ROW_H - 6) / 2, band });
 			if (m.head) crowns.push({ cx: x1, cy: yy + (ROW_H - 6) / 2, a: m.a });
 		}

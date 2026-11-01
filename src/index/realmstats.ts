@@ -54,7 +54,7 @@ export function realmStats(plugin: ChroniclePlugin, key: string, map?: string, a
 			return false;
 		})();
 		if (hasLiegeArea) continue;
-		for (const t of current(e)) if (!inside(t.points as P2[])) area += ringArea(t.points as P2[]);
+		for (const t of current(e)) if (!inside(t.points)) area += ringArea(t.points);
 	}
 	const mapNote = map ? idx.get(map) : undefined;
 	const scale = mapNote ? parseScale(mapNote.props.scale, mapNote.props.unit ?? mapNote.props.units) : undefined;

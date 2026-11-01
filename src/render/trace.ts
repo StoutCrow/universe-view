@@ -110,7 +110,7 @@ export function edgeColor(img: Raster): [number, number, number] {
  * and labels smoothed over. Each landmass comes back as an outline.
  */
 export function detectCoast(img: Raster, opts: CoastOptions, seeds: Pt[] = []): CoastResult {
-	const { width: w, height: h, data } = img;
+	const { width: w, height: h } = img;
 	const n = w * h;
 	const color: [number, number, number] = seeds.length
 		? sampleColor(img, Math.round(seeds[0][0]), Math.round(seeds[0][1]), 3)

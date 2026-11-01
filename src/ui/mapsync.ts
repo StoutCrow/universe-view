@@ -32,7 +32,7 @@ function landAt(plugin: ChroniclePlugin, map: string, at: P2, except: Set<string
 function pointOf(e: Entity, map: string): P2 | undefined {
 	if (map === "world" && e.coords) return [e.coords[0], e.coords[1]];
 	if (e.position && e.map?.key === map) return e.position;
-	const areas = e.territories.filter((t) => (t.map === map || t.map === "*") && t.points.length > 2 && !t.to).sort((a, b) => ringArea(b.points as P2[]) - ringArea(a.points as P2[]));
+	const areas = e.territories.filter((t) => (t.map === map || t.map === "*") && t.points.length > 2 && !t.to).sort((a, b) => ringArea(b.points) - ringArea(a.points));
 	const ring = areas[0]?.points;
 	if (!ring) return undefined;
 	return [ring.reduce((s, p) => s + p[0], 0) / ring.length, ring.reduce((s, p) => s + p[1], 0) / ring.length];

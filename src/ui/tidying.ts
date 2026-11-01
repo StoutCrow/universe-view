@@ -48,9 +48,8 @@ export async function mergeNotes(plugin: ChroniclePlugin, keep: Entity, drop: En
 		const f = vault.getAbstractFileByPath(path);
 		if (f instanceof TFile && f.path !== drop.path) await vault.process(f, (t) => relink(t, drop.file.basename, keep.file.basename));
 	}
-	const fm = fileManager as unknown as { trashFile?: (f: TFile) => Promise<void> };
-	if (fm.trashFile) await fm.trashFile(drop.file);
-	else await vault.trash(drop.file, true);
+	// Into the trash the user chose (Obsidian's, the system's, or deleted), as Obsidian itself would.
+	await fileManager.trashFile(drop.file);
 	return linking.length;
 }
 

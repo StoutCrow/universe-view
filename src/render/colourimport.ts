@@ -55,7 +55,7 @@ export class ColourImportModal extends Modal {
 			const input = el("input", { attr: { type: "text", placeholder: "Skip (or type a realm or place)" } }, row);
 			input.value = this.picks[i]?.name ?? "";
 			const dot = el("span", { cls: "uv-cimport-dot" }, row);
-			const show = () => dot.style.setProperty("background", this.picks[i] ? entityColor(this.plugin, this.picks[i]!) : "transparent");
+			const show = () => dot.style.setProperty("background", this.picks[i] ? entityColor(this.plugin, this.picks[i]) : "transparent");
 			show();
 			new EntityInputSuggest(this.app, input, this.plugin, ["place", "culture"], (e) => {
 				this.picks[i] = e;

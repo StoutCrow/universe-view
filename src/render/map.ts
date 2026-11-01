@@ -37,7 +37,6 @@ import { areaDatesSheet, bordersFromSheet, growSheet, mapNoteSheet, moveMapSheet
 import { toolSheet } from "../ui/toolsheet";
 import { STAT_NAMES, realmStats, statValue, type StatKey } from "../index/realmstats";
 import { EntityPickerModal } from "../ui/suggest";
-import { TextPrompt } from "../ui/TextPrompt";
 import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
 import { battlesByWar, isBattle, victorOf } from "../index/wars";
@@ -337,7 +336,7 @@ export class MapRenderer {
 		};
 		return [
 			`UniverseView ${this.plugin.manifest.version}`,
-			`Device: ${Platform.isMobile ? "mobile" : "desktop"}${Platform.isIosApp ? " (iOS app)" : ""} · ${navigator.userAgent}`,
+			`Device: ${Platform.isMobile ? "mobile" : "desktop"}${Platform.isIosApp ? " (iOS app)" : Platform.isAndroidApp ? " (Android app)" : Platform.isMacOS ? " (macOS)" : Platform.isWin ? " (Windows)" : Platform.isLinux ? " (Linux)" : ""}`,
 			`Window ${innerWidth}×${innerHeight} · view ${rect(this.root.parentElement)} · map area ${rect(this.root)} · canvas ${rect(this.mapEl)}`,
 			`Map: ${this.options.map} · picture ${img ?? "none"} · recorded size ${JSON.stringify(m?.props["image-size"] ?? null)}`,
 			`Phone copy: ${img ? (phoneCopy(this.plugin, img)?.path ?? "none") : "-"}`,
@@ -566,7 +565,7 @@ export class MapRenderer {
 		this.shownImage = picture.layer ? picture.shown : undefined;
 		this.raster = undefined;
 		// Let the new image fade in over the old one, then drop the old one.
-		requestAnimationFrame(() => (next as L.ImageOverlay).getElement?.()?.removeClass("is-swapping"));
+		window.requestAnimationFrame(() => (next as L.ImageOverlay).getElement?.()?.removeClass("is-swapping"));
 		window.setTimeout(() => {
 			if (old && map.hasLayer(old)) map.removeLayer(old);
 		}, motionMs(this.plugin.settings, 400) + 50);
@@ -709,21 +708,9 @@ export class MapRenderer {
 		// touch's start is kept from Obsidian: Leaflet follows the finger with touchmove on the document,
 		// so stopping touchmove here would stop the map from panning, zooming or long-pressing at all.
 		if (!this.embedded) this.mapEl.addEventListener("touchstart", (evt) => evt.stopPropagation(), { passive: true });
-		// Territory names sit between the painted areas and the pins.
-		const labels = map.createPane("chronicle-territory-labels");
-		labels.style.zIndex = "450";
-		labels.style.pointerEvents = "none";
-		// The heat map glows above the map image and areas (Leaflet's overlay pane is 400) but under labels and pins.
-		const heat = map.createPane("chronicle-heat");
-		heat.style.zIndex = "420";
-		heat.style.pointerEvents = "none";
-		// Strategy look: realm borders over the areas, realm names over those, both under the pins.
-		const edges = map.createPane("uv-realm-edges");
-		edges.style.zIndex = "430";
-		edges.style.pointerEvents = "none";
-		const names = map.createPane("uv-realm-names");
-		names.style.zIndex = "440";
-		names.style.pointerEvents = "none";
+		// Panes of their own, stacked in styles-map.css: the heat map above the areas (Leaflet's overlay pane
+		// is 400), then realm borders, realm names and territory names, all under the pins.
+		for (const pane of ["chronicle-territory-labels", "chronicle-heat", "uv-realm-edges", "uv-realm-names"]) map.createPane(pane);
 		this.heatLayer = L.layerGroup().addTo(map);
 		this.territoryLayer = L.layerGroup().addTo(map);
 		this.strategyLayer = L.layerGroup().addTo(map);
@@ -984,7 +971,7 @@ export class MapRenderer {
 		const iconName = place.icon ?? (place.category ? this.categories.get(place.category)?.icon : undefined);
 		if (photo && !place.logo) {
 			html.addClass("is-photo");
-			html.style.setProperty("--dot", "38px");
+			html.setCssProps({ "--dot": "38px" });
 		}
 		if (logo) {
 			dot.addClass("has-logo");
@@ -1071,7 +1058,7 @@ export class MapRenderer {
 	/** Hides labels that would collide with a more important one. */
 	private scheduleDeclutter() {
 		cancelAnimationFrame(this.declutterFrame);
-		this.declutterFrame = requestAnimationFrame(() => this.declutter());
+		this.declutterFrame = window.requestAnimationFrame(() => this.declutter());
 	}
 
 	/**
@@ -1272,7 +1259,7 @@ export class MapRenderer {
 			for (const { t, n } of this.areasHere(e)) {
 				if (!this.shapeNow(t)) continue;
 				this.drawnAreas.push({ key: e.key, n, points: t.points });
-				const shownPts = roughenRing(t.points as P2[], rough, roughLen);
+				const shownPts = roughenRing(t.points, rough, roughLen);
 				const latlngs = (plain ? t.points : shownPts).map((p) => this.pointToLatLng(p));
 				const poly = L.polygon(latlngs, { className: "chronicle-territory", weight: 2, fillOpacity: 0.18, smoothFactor: 1.5 }).addTo(layer);
 				const path = poly.getElement() as HTMLElement | undefined;
@@ -1400,9 +1387,9 @@ export class MapRenderer {
 				el("span", { cls: "chronicle-territory-name", text: nameAt(e, this.options.at) }, label);
 				// The middle of all its lands, unless that falls in the sea between them: then the roomiest spot in one.
 				const parts = this.areaPolys.filter((x) => x.chain.includes(k));
-				const mid = this.fromLatLng(b.getCenter()) as P2;
+				const mid = this.fromLatLng(b.getCenter());
 				let at = b.getCenter();
-				if (parts.length && !parts.some((x) => inRing(mid, x.points as P2[]))) {
+				if (parts.length && !parts.some((x) => inRing(mid, x.points))) {
 					const best = parts.map((x) => x.spot ?? labelSpot(x.points as P2[])).sort((x, y) => y.room - x.room)[0];
 					if (best) at = this.pointToLatLng(best.p);
 				}
@@ -1572,14 +1559,14 @@ export class MapRenderer {
 			let best: (typeof lands)[number] | undefined;
 			let bestD = Infinity;
 			for (const a of lands) {
-				const d = nearestOnRing(mid, a.points as P2[]).d;
+				const d = nearestOnRing(mid, a.points).d;
 				if (d < bestD) [best, bestD] = [a, d];
 			}
 			if (!best) continue;
-			const res = mergeInto(best.points as P2[], [hole]);
+			const res = mergeInto(best.points, [hole]);
 			if (!res) continue;
 			await this.plugin.saveTerritory(best.key, this.options.map, best.n, res.ring);
-			best.points = res.ring as Pt[];
+			best.points = res.ring;
 			n++;
 		}
 		return n;
@@ -1589,7 +1576,7 @@ export class MapRenderer {
 	private async untangleArea(key: string, n: number) {
 		const area = this.drawnAreas.find((a) => a.key === key && a.n === n);
 		if (!area) return;
-		const fixed = untangle(area.points as P2[], 0.05);
+		const fixed = untangle(area.points, 0.05);
 		await this.plugin.saveTerritory(key, this.options.map, n, fixed);
 	}
 
@@ -1608,7 +1595,7 @@ export class MapRenderer {
 		const tree = this.realmTree ?? this.plugin.realms(this.options.at);
 		const areas: BorderArea[] = this.drawnAreas.map((a) => {
 			const node = tree.nodes.get(a.key);
-			return { key: a.key, n: a.n, points: a.points as P2[], name: idx.get(a.key)?.name ?? a.key, chain: node ? chainOf(tree, a.key) : [a.key], region: !node || node.nature === "region" };
+			return { key: a.key, n: a.n, points: a.points, name: idx.get(a.key)?.name ?? a.key, chain: node ? chainOf(tree, a.key) : [a.key], region: !node || node.nature === "region" };
 		});
 		const all = areas.flatMap((a) => a.points);
 		const box = all.length ? boxOf(all) : { x0: 0, y0: 0, x1: 1, y1: 1 };
@@ -1735,10 +1722,10 @@ export class MapRenderer {
 		let other = issue.other && this.drawnAreas.find((a) => a.key === issue.other!.key && a.n === issue.other!.n);
 		if (!mine || !other) return;
 		const reach = (issue.width ?? 4) * 1.25 + 1;
-		let { ring, moved } = snapToNeighbour(mine.points as P2[], other.points as P2[], reach);
+		let { ring, moved } = snapToNeighbour(mine.points, other.points, reach);
 		// Nothing of the one can move onto the other: try it the other way round.
 		if (!moved) {
-			const back = snapToNeighbour(other.points as P2[], mine.points as P2[], reach);
+			const back = snapToNeighbour(other.points, mine.points, reach);
 			if (back.moved) [mine, other, ring, moved] = [other, mine, back.ring, back.moved];
 		}
 		const name = this.plugin.index.get(mine.key)?.name ?? mine.key;
@@ -1748,7 +1735,7 @@ export class MapRenderer {
 		}
 		await this.plugin.saveTerritory(mine.key, this.options.map, mine.n, ring);
 		// The drawn copy follows at once, so several fixes in a row see each other's results.
-		mine.points = untangle(ring, 0.05) as Pt[];
+		mine.points = untangle(ring, 0.05);
 		if (quiet) return;
 		new Notice(`Closed the gap: ${moved} corner${moved === 1 ? "" : "s"} of ${name} now on the shared border. Undo puts them back.`);
 		window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600);
@@ -1886,7 +1873,7 @@ export class MapRenderer {
 					const mine = this.areasHere(e).map((a) => a.n);
 					if (mine.length) await this.deleteAreas(e.key, mine);
 				}
-				const [first, ...more] = area.rings.sort((a, b) => ringArea(b as P2[]) - ringArea(a as P2[]));
+				const [first, ...more] = area.rings.sort((a, b) => ringArea(b) - ringArea(a));
 				await this.plugin.saveTerritory(e.key, mapKey, null, first, more);
 				n++;
 			}
@@ -2146,7 +2133,7 @@ export class MapRenderer {
 	private coveredBy(points: [number, number][], key: string): boolean {
 		if (!points.length) return false;
 		const mid: P2 = [points.reduce((s, p) => s + p[0], 0) / points.length, points.reduce((s, p) => s + p[1], 0) / points.length];
-		return this.drawnAreas.some((a) => a.key === key && inRing(mid, a.points as P2[]));
+		return this.drawnAreas.some((a) => a.key === key && inRing(mid, a.points));
 	}
 
 	/** Shows each area as the title it belongs to at this zoom: whole, merged into its realm, or as an outline. */
@@ -2224,7 +2211,7 @@ export class MapRenderer {
 			// Sized like the other territory names, by how big the realm is on screen.
 			const across = this.screenSize(k);
 			m.el.dataset.across = String(Math.round(across));
-			m.el.style.fontSize = `${Math.max(10, Math.min(30, (across * 1.3) / Math.max(4, m.el.textContent!.length)))}px`;
+			m.el.style.fontSize = `${Math.max(10, Math.min(30, (across * 1.3) / Math.max(4, m.el.textContent.length)))}px`;
 		}
 		// The picked realm stays lit as the tiers change (and through redraws).
 		if (this.selectedRealm) {
@@ -2381,7 +2368,7 @@ export class MapRenderer {
 				// blurring (a blur filter redrawn on every zoom and pan was slow on big maps).
 				// All of the realm's border stretches in one line per stroke (not one per stretch), simplified:
 				// a soft band needn't follow every wiggle, and fewer lines and points redraw faster on zoom.
-				const soft = (cached.edges ?? shape.outline).map((line) => simplifyOpen(line as Pt[], mapSpan * 0.0008).map((p) => fromPlane(p as P2)));
+				const soft = (cached.edges ?? shape.outline).map((line) => simplifyOpen(line as Pt[], mapSpan * 0.0008).map((p) => fromPlane(p)));
 				for (let i = 0; i < 3; i++) {
 					const band = L.polyline(soft, { interactive: false, fill: false, className: `uv-realm-band depth-${depth} layer-${i}`, smoothFactor: 1.5 }).addTo(g);
 					const be = band.getElement() as SVGElement | undefined;
@@ -2396,7 +2383,7 @@ export class MapRenderer {
 			if (!tiers.whole.has(k) && !ownShows) continue;
 			let named = shape;
 			if (!tiers.whole.has(k)) {
-				const own = parts.filter((a) => a.owner === k).map((a) => (a.points as [number, number][]).map(toPlane));
+				const own = parts.filter((a) => a.owner === k).map((a) => (a.points).map(toPlane));
 				const ownSig = `own|${realmName.length}|${own.map(shapeHash).join(",")}`;
 				let ownCached = this.realmShapes.get(`${k}#own`);
 				if (!ownCached || ownCached.sig !== ownSig) {
@@ -2574,7 +2561,7 @@ export class MapRenderer {
 			// Measured over a long stretch and scaled down: Leaflet rounds screen points to whole pixels.
 			const roomPx = room > 0 ? (map.latLngToContainerPoint(this.pointToLatLng([room * 100, 0])).distanceTo(map.latLngToContainerPoint(this.pointToLatLng([0, 0]))) / 100) : 0;
 			const across0 = roomPx > 0 ? Math.min(w, roomPx * 2.6) : w;
-			const size = Math.max(9, Math.min(26, (across0 * 1.3) / Math.max(4, label.textContent!.length)));
+			const size = Math.max(9, Math.min(26, (across0 * 1.3) / Math.max(4, label.textContent.length)));
 			label.style.fontSize = `${size}px`;
 			label.toggleClass("is-tiny", w < 60);
 			// Fully shown from `limit` pixels across (the geometric mean of width and height), gone at half that.
@@ -2613,7 +2600,7 @@ export class MapRenderer {
 				if (kind === "river" && t.points.length > 1) {
 					// Water, not a line: curved, and widening from the source (first point) to the mouth (last),
 					// in map units so it broadens as you zoom in. A short stream stays narrow.
-					const course = smoothLine(t.points as P2[], 3);
+					const course = smoothLine(t.points, 3);
 					let len = 0;
 					for (let i = 1; i < course.length; i++) len += Math.hypot(course[i][0] - course[i - 1][0], course[i][1] - course[i - 1][1]);
 					const span = this.isImageMap && this.imageWidth ? Math.max(this.imageWidth, this.imageHeight) : 360;
@@ -2726,7 +2713,7 @@ export class MapRenderer {
 		} else km = d / 1000;
 		const modes = TRAVEL_KM_PER_DAY[kind] ?? TRAVEL_KM_PER_DAY.road;
 		if (!km || !Number.isFinite(km)) return undefined;
-		return modes.map(([how, speed]) => `${days(km! / speed)} ${how}`).join(" · ");
+		return modes.map(([how, speed]) => `${days(km / speed)} ${how}`).join(" · ");
 	}
 
 	// ---- Tools: paint, edit, measure ------------------------------------------------------------
@@ -2969,13 +2956,13 @@ export class MapRenderer {
 		if (a.shape !== undefined && b.shape !== undefined) {
 			// A corner shared by several lands lies on each of their borders, so the two points may have
 			// snapped to different ones: follow the shortest border that both lie on.
-			const pa = this.fromLatLng(a.ll) as Pt;
-			const pb = this.fromLatLng(b.ll) as Pt;
+			const pa = this.fromLatLng(a.ll);
+			const pb = this.fromLatLng(b.ll);
 			const eps = 1.5 * this.unitsPerPx(a.ll);
 			let best: Pt[] | null = null;
 			let bestLen = Infinity;
 			for (const t of targets) {
-				const ring = t.map((ll) => this.fromLatLng(ll) as Pt);
+				const ring = t.map((ll) => this.fromLatLng(ll));
 				const na = nearestOnRing(pa, ring);
 				const nb = nearestOnRing(pb, ring);
 				if (na.d > eps || nb.d > eps) continue;
@@ -2996,7 +2983,7 @@ export class MapRenderer {
 			const wl = this.waterAt(pa[0], pa[1]);
 			if (!wl || wl !== this.waterAt(pb[0], pb[1])) return [];
 			const toMask = ([x, y]: Pt): Pt => [(x - wl.ox) / wl.scale, (y - wl.oy) / wl.scale];
-			const path = traceMask(wl.mask, wl.w, wl.h, toMask(pa as Pt), toMask(pb as Pt), 1);
+			const path = traceMask(wl.mask, wl.w, wl.h, toMask(pa), toMask(pb), 1);
 			return path ? path.map(([x, y]) => this.pointToLatLng([x * wl.scale + wl.ox, y * wl.scale + wl.oy])) : [];
 		}
 		return [];
@@ -3049,7 +3036,7 @@ export class MapRenderer {
 		const fingers = new Set<number>();
 		let active: number | null = null;
 		const at = (evt: PointerEvent) => {
-			const pt = map.mouseEventToContainerPoint(evt as unknown as MouseEvent);
+			const pt = map.mouseEventToContainerPoint(evt);
 			return { pt, ll: map.containerPointToLatLng(pt) };
 		};
 		const onDown = (evt: PointerEvent) => {
@@ -3347,11 +3334,11 @@ export class MapRenderer {
 		const others = this.drawnAreas.filter((a) => !(a.key === ownerKey && a.n === n));
 		const k = this.unitsPerPx(map.getCenter());
 		let px = this.plugin.settings.simplifyPx ?? 3;
-		let res = simplifyShared(before, others.map((a) => a.points as Pt[]), px * k);
+		let res = simplifyShared(before, others.map((a) => a.points), px * k);
 		const preview = L.layerGroup().addTo(layer);
 		const count = el("span", { cls: "uv-simplify-count" });
 		const redraw = () => {
-			res = simplifyShared(before, others.map((a) => a.points as Pt[]), px * k);
+			res = simplifyShared(before, others.map((a) => a.points), px * k);
 			preview.clearLayers();
 			const shape = L.polygon(res.ring.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.2, interactive: false }).addTo(preview);
 			(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
@@ -3414,7 +3401,7 @@ export class MapRenderer {
 			dashed: true,
 			targets: this.snapTargets({ key: owner.key, n }),
 			done: (pts) => {
-				const shape = pts.map((ll) => this.fromLatLng(ll) as Pt);
+				const shape = pts.map((ll) => this.fromLatLng(ll));
 				// Pieces left apart smaller than this (slivers in the gaps between neighbours) are dropped.
 				const k = this.unitsPerPx(pts[0]);
 				const minPiece = Math.max((12 * k) ** 2, Math.abs(ringArea(shape)) * 0.02);
@@ -3500,7 +3487,7 @@ export class MapRenderer {
 		const apply = (path: L.LatLng[]) => {
 			// Map units per screen pixel where the stroke is (so the brush is the same size at any zoom).
 			const k = this.unitsPerPx(path[0]);
-			const shapes = brushShape(path.map((ll) => this.fromLatLng(ll) as Pt), size * k);
+			const shapes = brushShape(path.map((ll) => this.fromLatLng(ll)), size * k);
 			if (!shapes.length) return;
 			// Pieces apart smaller than half a dab of the brush are crumbs, not land.
 			const minPiece = (size * k) ** 2 * 0.5;
@@ -3689,9 +3676,9 @@ export class MapRenderer {
 				new Notice("Draw a line across the area: at least two points.");
 				return;
 			}
-			const cut = pts.map((ll) => this.fromLatLng(ll) as P2);
+			const cut = pts.map((ll) => this.fromLatLng(ll));
 			for (const a of areas) {
-				const pieces = splitRing(a.t.points as P2[], cut);
+				const pieces = splitRing(a.t.points, cut);
 				if (pieces) return choose(a.n, pieces);
 			}
 			new Notice(`The line has to cross ${owner.name}'s border twice: start outside it (or on its edge) and end outside it.`);
@@ -4135,7 +4122,7 @@ export class MapRenderer {
 			}
 			const minPiece = (12 * this.unitsPerPx(map.getCenter())) ** 2;
 			if (join && area) {
-				const res = mergeInto(area.t.points as Pt[], rings, stopAtAreas ? others : [], minPiece);
+				const res = mergeInto(area.t.points, rings, stopAtAreas ? others : [], minPiece);
 				if (!res) {
 					new Notice("Couldn't join the filled land to the area.");
 					return;
@@ -4147,13 +4134,13 @@ export class MapRenderer {
 			// Started from the top toolbar: filled land that overlaps one of its existing areas joins that area,
 			// rather than becoming a second area drawn over it (two outlines, one inside the other).
 			if (!area) {
-				const overlaps = (a: Pt[], b: Pt[]) => a.some((p) => inRing(p as P2, b as P2[])) || b.some((p) => inRing(p as P2, a as P2[]));
+				const overlaps = (a: Pt[], b: Pt[]) => a.some((p) => inRing(p, b)) || b.some((p) => inRing(p, a));
 				const mine = this.areasHere(owner).filter((x) => this.shapeNow(x.t));
-				const hit = mine.find((x) => rings.some((r) => overlaps(r, x.t.points as Pt[])));
+				const hit = mine.find((x) => rings.some((r) => overlaps(r, x.t.points)));
 				if (hit) {
 					const touching = rings.filter((r) => overlaps(r, hit.t.points as Pt[]));
 					const apart = rings.filter((r) => !touching.includes(r));
-					const res = mergeInto(hit.t.points as Pt[], touching, stopAtAreas ? this.wallsFor(owner.key, hit.n) : [], minPiece);
+					const res = mergeInto(hit.t.points, touching, stopAtAreas ? this.wallsFor(owner.key, hit.n) : [], minPiece);
 					if (!res) {
 						new Notice("Couldn't join the filled land to the area it overlaps.");
 						return;
@@ -4266,7 +4253,7 @@ export class MapRenderer {
 			(base.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 		}
 		const onClick = (evt: L.LeafletMouseEvent) => {
-			const at = this.fromLatLng(evt.latlng) as Pt;
+			const at = this.fromLatLng(evt.latlng);
 			if (at[0] < 0 || at[1] < 0 || at[0] >= this.imageWidth || at[1] >= this.imageHeight) return;
 			this.root.addClass("is-busy");
 			// Let the cursor change paint before the (synchronous) fill runs.
@@ -5597,14 +5584,6 @@ function simplifyOpenLine(pts: Pt[]): Pt[] {
 }
 
 /** Runs `f` once on the next animation frame, however often it's asked to before then. */
-function debounceFrame(f: () => void): () => void {
-	let frame = 0;
-	return () => {
-		cancelAnimationFrame(frame);
-		frame = requestAnimationFrame(f);
-	};
-}
-
 /** `cors` asks for a readable image (needed to read pixels); drawing alone doesn't need it. */
 function loadImage(url: string, cors = true): Promise<HTMLImageElement | null> {
 	return new Promise((resolve) => {

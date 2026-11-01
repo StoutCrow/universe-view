@@ -178,7 +178,7 @@ export class InspectorView extends ItemView {
 		if (this.tab === "realm") this.tab = "edit";
 		const hidden = new Set(this.plugin.settings.inspectorHiddenTabs ?? []);
 		const have = tabsFor(this.plugin, e).filter((t) => t === "about" || t === "edit" || !hidden.has(t));
-		if (!have.includes(this.tab as InspectorTab)) this.tab = "about";
+		if (!have.includes(this.tab)) this.tab = "about";
 		const tabList: [InspectorTab, string, string][] = have.map((id) => (id === "edit" ? [id, this.editLabel(e), "pencil"] : id === "about" ? [id, "About", TYPE_ICONS[e.type]] : [id, TAB_INFO[id][0], TAB_INFO[id][1]]));
 		for (const [id, label, ic] of tabList) {
 			const b = el("button", { cls: "chronicle-insp-tab" + (this.tab === id ? " is-active" : "") }, tabs);

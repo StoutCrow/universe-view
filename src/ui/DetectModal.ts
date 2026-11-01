@@ -1,3 +1,4 @@
+import { pluginEnabled } from "../internals";
 import { Modal, Notice, TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES, Entity, EntityType } from "../types";
@@ -124,9 +125,7 @@ export class DetectModal extends Modal {
 		}
 		this.placeTags = [...tagCounts.keys()].filter((t) => TAG_TYPES[t.toLowerCase()] === "place");
 		this.dateField = lifespanEvents > dateEvents ? "lifespan" : "date";
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const plugins = (this.app as any).plugins;
-		this.chartedRoots = !!plugins?.enabledPlugins?.has?.("charted-roots") || infos.some((n) => "father" in n.props || "mother" in n.props);
+		this.chartedRoots = pluginEnabled(this.app, "charted-roots") || infos.some((n) => "father" in n.props || "mother" in n.props);
 	}
 
 	private fieldFor(f: KinFinding): string {

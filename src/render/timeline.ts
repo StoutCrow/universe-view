@@ -529,7 +529,7 @@ export class TimelineRenderer {
 
 	private schedule() {
 		cancelAnimationFrame(this.frame);
-		this.frame = requestAnimationFrame(() => this.render());
+		this.frame = window.requestAnimationFrame(() => this.render());
 	}
 
 	private x(day: number): number {
@@ -875,7 +875,7 @@ export class TimelineRenderer {
 				this.root.querySelector(".chronicle-tl-drag-date")?.remove();
 				node.removeClass("is-dragging");
 				if (!moved || !delta) {
-					node.style.transform = "";
+					node.setCssStyles({ transform: "" });
 					return;
 				}
 				this.itemMoved = true;

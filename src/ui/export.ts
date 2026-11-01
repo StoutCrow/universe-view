@@ -18,7 +18,7 @@ const SVG_PROPS = [
  */
 function inlineStyles(src: Element, dst: Element, inHtml = false) {
 	const cs = getComputedStyle(src);
-	const html = inHtml || !(src instanceof SVGElement);
+	const html = inHtml || !(src.instanceOf(SVGElement));
 	let text = "";
 	if (html) {
 		for (let i = 0; i < cs.length; i++) {
@@ -46,7 +46,7 @@ function toDataUrl(url: string): Promise<string | null> {
 	if (url.startsWith("data:")) return Promise.resolve(url);
 	let p = dataUrls.get(url);
 	if (!p) {
-		if (dataUrls.size > 24) dataUrls.delete(dataUrls.keys().next().value!);
+		if (dataUrls.size > 24) dataUrls.delete(dataUrls.keys().next().value);
 		dataUrls.set(url, (p = readDataUrl(url)));
 		// A failed read is tried again next time.
 		void p.then((d) => d === null && dataUrls.delete(url));
@@ -78,7 +78,7 @@ async function embedImages(root: Element) {
 	root.querySelectorAll("img").forEach((img) => {
 		const src = img.getAttribute("src");
 		if (!src) return;
-		jobs.push(toDataUrl((img as HTMLImageElement).src || src).then((d) => (d ? img.setAttribute("src", d) : img.remove())));
+		jobs.push(toDataUrl((img).src || src).then((d) => (d ? img.setAttribute("src", d) : img.remove())));
 	});
 	root.querySelectorAll("image").forEach((im) => {
 		const href = im.getAttribute("href") ?? im.getAttribute("xlink:href");
@@ -145,9 +145,7 @@ async function snapshot(target: HTMLElement): Promise<{ svg: string; width: numb
 	const h = Math.ceil(r.height);
 	const clone = target.cloneNode(true) as HTMLElement;
 	inlineStyles(target, clone);
-	clone.style.margin = "0";
-	clone.style.position = "relative";
-	clone.style.inset = "auto";
+	clone.setCssStyles({ margin: "0", position: "relative", inset: "auto" });
 	clone.style.width = `${w}px`;
 	clone.style.height = `${h}px`;
 	clone.style.background = bg;
@@ -242,7 +240,7 @@ export async function exportView(plugin: ChroniclePlugin, target: HTMLElement, n
 		if (caption && format !== "decorated") snap = withCaption(snap, `${title} · ${caption}`);
 		const { svg, width, height } = format === "decorated" ? decorateMap(snap.svg, snap.width, snap.height, caption ? `${title} · ${caption}` : title) : snap;
 		if (format === "svg") {
-			const file = await saveToVault(plugin, name, "svg", new TextEncoder().encode(svg).buffer as ArrayBuffer);
+			const file = await saveToVault(plugin, name, "svg", new TextEncoder().encode(svg).buffer);
 			done(plugin, file);
 			return;
 		}
@@ -353,7 +351,6 @@ export async function printView(target: HTMLElement, name: string) {
 		const win = window.open("", "_blank", `width=${Math.min(1200, width + 40)},height=${Math.min(900, height + 40)}`);
 		if (!win) throw new Error("The print window was blocked.");
 		win.document.title = name;
-		win.document.body.style.margin = "0";
 		const holder = win.document.createElement("div");
 		// The picture, parsed as SVG and moved into the print window (not written in as HTML).
 		const parsed = new DOMParser().parseFromString(svg, "image/svg+xml").documentElement;
@@ -362,11 +359,11 @@ export async function printView(target: HTMLElement, name: string) {
 		if (s) {
 			s.setAttribute("width", "100%");
 			s.removeAttribute("height");
-			s.style.maxWidth = "100%";
 		}
 		win.document.body.appendChild(holder);
+		// The print window is a page of its own (not Obsidian's): its few styles go in its own stylesheet.
 		const style = win.document.createElement("style");
-		style.textContent = "@page { margin: 12mm; } svg { display: block; }";
+		style.textContent = "@page { margin: 12mm; } body { margin: 0; } svg { display: block; max-width: 100%; }";
 		win.document.head.appendChild(style);
 		window.setTimeout(() => win.print(), 300);
 	} catch (err) {

@@ -2,8 +2,16 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.1.1 — 2026-11-01
+Fixes for Obsidian's community directory review.
+- Needs Obsidian 1.7.2 or later (it uses Obsidian's own trash, which respects your deletion setting, and its way of revealing a view).
+- Tag colours use a constructed stylesheet instead of a style element; map layers are stacked in the stylesheet; styles are set through Obsidian's helpers.
+- No more `any` reaching into Obsidian's internals: the few internal parts used (other plugins, Templater, Dataview, the file explorer) are typed in one place.
+- Release files come with signed build provenance (GitHub artifact attestations).
+- Smaller tidy-ups: command names without the plugin's name, the settings heading *About*, unused code removed.
+
 ## 1.1.0 — 2026-11-01
-- **What's new**: after an update, a window shows what changed since the version you had, and the whole version history is one click away (the *What's new* command, or Settings → Look & cards → About UniverseView). Each version folds open; the newest is open. *Show what's new after an update* turns the window off.
+- **What's new**: after an update, a window shows what changed since the version you had, and the whole version history is one click away (the *What's new* command, or Settings → Look & cards → About). Each version folds open; the newest is open. *Show what's new after an update* turns the window off.
 - The changelog lists every version back to 0.7, the earlier ones pieced together from the chat history the plugin was built in.
 
 ## 1.0.0 — 2026-11-01

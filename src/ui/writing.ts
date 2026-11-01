@@ -471,7 +471,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 		});
 
 		// ---- Links, as chips
-		const names = (v: unknown): string[] => ([] as unknown[]).concat(v ?? []).map((x) => (x && typeof x === "object" ? linkTarget(Object.values(x as object).find((y) => typeof y === "string" && /\[\[/.test(y))) : linkTarget(x)) ?? "").filter(Boolean);
+		const names = (v: unknown): string[] => ([] as unknown[]).concat(v ?? []).map((x) => (x && typeof x === "object" ? linkTarget(Object.values(x).find((y) => typeof y === "string" && /\[\[/.test(y))) : linkTarget(x)) ?? "").filter(Boolean);
 		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box) => {
 			used.add(k);
 			const raw = fm[k];
@@ -723,7 +723,7 @@ export class LiveSuggestions {
 	constructor(private plugin: ChroniclePlugin) {
 		this.item = plugin.addStatusBarItem();
 		this.item.addClass("chronicle-suggest-status", "mod-clickable");
-		this.item.style.display = "none";
+		this.item.hide();
 		this.item.addEventListener("click", () => {
 			if (!this.file) return;
 			const file = this.file;
@@ -739,12 +739,12 @@ export class LiveSuggestions {
 		const file = this.plugin.app.workspace.getActiveFile();
 		this.file = file ?? undefined;
 		if (!file || !this.plugin.settings.liveSuggestions) {
-			this.item.style.display = "none";
+			this.item.hide();
 			return;
 		}
 		this.found = (await suggestionsFor(this.plugin, file)).filter((s) => !this.dismissed.has(file.path + "→" + s.target));
 		if (!this.found.length) {
-			this.item.style.display = "none";
+			this.item.hide();
 			return;
 		}
 		this.item.empty();
@@ -752,7 +752,7 @@ export class LiveSuggestions {
 		icon(ic, "sparkles");
 		el("span", { text: `${this.found.length} family link${this.found.length === 1 ? "" : "s"} to add` }, this.item);
 		this.item.setAttribute("aria-label", this.found.map((s) => `${s.target} as ${s.label}`).join("\n"));
-		this.item.style.display = "";
+		this.item.show();
 	}
 }
 

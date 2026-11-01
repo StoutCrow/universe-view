@@ -1,3 +1,4 @@
+import { pluginEnabled } from "../internals";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
@@ -66,7 +67,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		// Back where you were, once the page has its height again.
 		const to = this.scrolls.get(this.tab) ?? 0;
 		this.scroller().scrollTop = to;
-		requestAnimationFrame(() => (this.scroller().scrollTop = to));
+		window.requestAnimationFrame(() => (this.scroller().scrollTop = to));
 	}
 
 	/**
@@ -76,7 +77,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 	private organize() {
 		const box = this.containerEl;
 		const tabs: { id: string; label: string; icon: string; heads: string[] }[] = [
-			{ id: "appearance", label: "Look & cards", icon: "palette", heads: ["Appearance", "Views", "About UniverseView", "Fonts", "Inspector", "Icons", "Hover cards"] },
+			{ id: "appearance", label: "Look & cards", icon: "palette", heads: ["Appearance", "Views", "About", "Fonts", "Inspector", "Icons", "Hover cards"] },
 			{ id: "notes", label: "Notes", icon: "file-text", heads: ["Recognising notes", "New notes", "Folder notes", "Writing and families", "Relationships"] },
 			{ id: "time", label: "Time & calendars", icon: "calendar-days", heads: ["Timeline", "Calendars"] },
 			{ id: "maps", label: "Maps & realms", icon: "map", heads: ["Maps", "Map look", "Realms and tiers"] },
@@ -299,7 +300,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				s.useDataview = v;
 				await this.save();
 			}));
-		const fieldOptions = (): [string, string][] => (Object.keys(DEFAULT_FIELD_ALIASES) as string[]).map((k) => [k, `${k.replace(/([A-Z])/g, " $1").toLowerCase()} (${DEFAULT_FIELD_ALIASES[k as keyof typeof DEFAULT_FIELD_ALIASES].slice(0, 2).join(", ")}…)`]);
+		const fieldOptions = (): [string, string][] => (Object.keys(DEFAULT_FIELD_ALIASES)).map((k) => [k, `${k.replace(/([A-Z])/g, " $1").toLowerCase()} (${DEFAULT_FIELD_ALIASES[k as keyof typeof DEFAULT_FIELD_ALIASES].slice(0, 2).join(", ")}…)`]);
 		this.rows(containerEl, "Your own property names", "If your notes use other names (birthday instead of born, allegiance instead of cultures), add them here. They're read as well as the built-in ones.", [
 			{ key: "field", label: "Field", kind: "select", options: fieldOptions, width: "1.4fr" },
 			{ key: "names", label: "Your property names (comma-separated)", kind: "text", width: "2fr", placeholder: "birthday, date-of-birth" },
@@ -364,8 +365,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		// ---- Folder notes -------------------------------------------------------------------
 		const fnHead = new Setting(containerEl).setName("Folder notes").setHeading();
 		helpTip(fnHead.nameEl, "A folder note is a folder's own note, kept inside it under the same name: California/California.md. Clicking the folder opens it; Alt-click just folds the folder; Ctrl/Cmd-click a folder without one to make one. Right-click a note for Turn into folder note, or a folder for Create, Detach or Delete folder note.");
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		if ((this.app as any).plugins?.enabledPlugins?.has("folder-notes")) {
+		if (pluginEnabled(this.app, "folder-notes")) {
 			new Setting(containerEl)
 				.setName("The Folder notes plugin is on")
 				.setDesc("UniverseView does everything it does here, so its explorer behaviour stays off while that plugin is on. Turn Folder notes off under Community plugins to use these instead; your folder notes stay as they are.")
@@ -1031,7 +1031,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		tint("Women's tint", () => s.tintFemale, (v) => (s.tintFemale = v), "#d24f8a");
 
 		// About: the version, and every version's changes.
-		new Setting(containerEl).setName("About UniverseView").setHeading();
+		;
 		new Setting(containerEl)
 			.setName(`Version ${this.plugin.manifest.version}`)
 			.setDesc("What changed in every version, newest first (also the command What's new).")

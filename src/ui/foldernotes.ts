@@ -1,3 +1,4 @@
+import { expandFolder, pluginEnabled } from "../internals";
 import { Keymap, Menu, Notice, TAbstractFile, TFile, TFolder, debounce, normalizePath } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity, EntityType } from "../types";
@@ -32,9 +33,7 @@ export function isFolderNote(file: TAbstractFile | null | undefined): boolean {
 /** Folder-note behaviour in the explorer: off when the Folder notes plugin is doing it already. */
 export function folderNotesActive(plugin: ChroniclePlugin): boolean {
 	if (plugin.settings.folderNotes === false) return false;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const other = (plugin.app as any).plugins?.enabledPlugins as Set<string> | undefined;
-	return !other?.has("folder-notes");
+	return !pluginEnabled(plugin.app, "folder-notes");
 }
 
 /** Moves Note.md into a folder of its own (Note/Note.md) and returns it there. */
@@ -276,8 +275,7 @@ export function folderNotes(plugin: ChroniclePlugin) {
 		if (note) {
 			open(note, evt);
 			// Unfold it too, so what's inside shows with its note.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			for (const leaf of explorers()) (leaf.view as any).fileItems?.[folder.path]?.setCollapsed?.(false);
+			for (const leaf of explorers()) expandFolder(leaf.view, folder.path);
 		} else void createFolderNote(plugin, folder);
 	};
 	const onCrumb = (evt: MouseEvent) => {

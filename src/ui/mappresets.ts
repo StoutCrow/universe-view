@@ -2,7 +2,7 @@
 // styles, the border band, roughness, rivers), built in or saved from your own settings.
 const copy = <T,>(v: T): T => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
 import type { ChronicleSettings } from "../settings";
-import { DEFAULT_TIER_STYLES, type TerritoryEdge, type TerritoryPattern, type TierStyle } from "./tierstyles";
+import { DEFAULT_TIER_STYLES, type TierStyle } from "./tierstyles";
 
 /** Everything a preset sets. Anything left out keeps its built-in default. */
 export interface MapLook {
@@ -52,7 +52,7 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			roughBorders: "off",
 			riverWidth: 1.25,
 			riverColor: "#4f8fc4",
-			tierStyles: tiers((t) => ({ edge: "plain" as TerritoryEdge, pattern: "flat" as TerritoryPattern, line: t.tier >= 5 ? "dotted" : "solid", width: by(t.tier, [2, 3.5, 3, 2.2, 1.4, 1, 0.8, 1.2]) })),
+			tierStyles: tiers((t) => ({ edge: "plain", pattern: "flat", line: t.tier >= 5 ? "dotted" : "solid", width: by(t.tier, [2, 3.5, 3, 2.2, 1.4, 1, 0.8, 1.2]) })),
 		},
 	},
 	{
@@ -69,7 +69,7 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			roughBorders: "light",
 			riverWidth: 0.9,
 			riverColor: "#6f9fb8",
-			tierStyles: tiers((t) => ({ edge: (t.tier >= 1 && t.tier <= 3 ? "band" : "plain") as TerritoryEdge, pattern: (t.tier <= 2 ? "grain" : "flat") as TerritoryPattern, line: t.tier >= 4 ? "dashed" : "solid" })),
+			tierStyles: tiers((t) => ({ edge: (t.tier >= 1 && t.tier <= 3 ? "band" : "plain"), pattern: (t.tier <= 2 ? "grain" : "flat"), line: t.tier >= 4 ? "dashed" : "solid" })),
 		},
 	},
 	{
@@ -86,7 +86,7 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			roughBorders: "strong",
 			riverWidth: 0.8,
 			riverColor: "#7aa6bf",
-			tierStyles: tiers((t) => ({ edge: "plain" as TerritoryEdge, pattern: (t.tier >= 1 && t.tier <= 3 ? "hatch" : "flat") as TerritoryPattern, line: t.tier >= 4 ? "dotted" : t.tier === 3 ? "dashed" : "solid" })),
+			tierStyles: tiers((t) => ({ edge: "plain", pattern: (t.tier >= 1 && t.tier <= 3 ? "hatch" : "flat"), line: t.tier >= 4 ? "dotted" : t.tier === 3 ? "dashed" : "solid" })),
 		},
 	},
 	{
@@ -103,7 +103,7 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			roughBorders: "off",
 			riverWidth: 1,
 			riverColor: "#5aa2d8",
-			tierStyles: tiers((t) => ({ edge: "plain" as TerritoryEdge, pattern: "flat" as TerritoryPattern, line: t.tier >= 5 ? "dashed" : "solid" })),
+			tierStyles: tiers((t) => ({ edge: "plain", pattern: "flat", line: t.tier >= 5 ? "dashed" : "solid" })),
 		},
 	},
 	{
@@ -120,7 +120,7 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			roughBorders: "off",
 			riverWidth: 0.75,
 			riverColor: undefined,
-			tierStyles: tiers((t) => ({ edge: "plain" as TerritoryEdge, pattern: "flat" as TerritoryPattern, width: Math.max(0.8, t.width * 0.7) })),
+			tierStyles: tiers((t) => ({ edge: "plain", pattern: "flat", width: Math.max(0.8, t.width * 0.7) })),
 		},
 	},
 ];
@@ -140,5 +140,5 @@ export function applyLook(s: ChronicleSettings, look: MapLook) {
 /** Which preset the settings match now, if any. */
 export function matchingPreset(s: ChronicleSettings, presets: MapPreset[]): string | undefined {
 	const now = JSON.stringify(currentLook(s));
-	return presets.find((p) => JSON.stringify(currentLook({ ...s, ...Object.fromEntries(LOOK_KEYS.map((k) => [k, p.look[k]])) } as ChronicleSettings)) === now)?.id;
+	return presets.find((p) => JSON.stringify(currentLook({ ...s, ...Object.fromEntries(LOOK_KEYS.map((k) => [k, p.look[k]])) })) === now)?.id;
 }

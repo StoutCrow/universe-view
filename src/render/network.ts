@@ -189,7 +189,7 @@ export class NetworkRenderer {
 			const id = [a, b].sort().join("→") + kind;
 			if (seen.has(id)) return;
 			seen.add(id);
-			links.push({ source: a as unknown as Node, target: b as unknown as Node, kind, label, inactive: off });
+			links.push({ source: a, target: b, kind, label, inactive: off });
 		};
 		for (const e of allowed.values()) {
 			for (const p of e.parents) link(p.key, e.key, "parent");
@@ -402,7 +402,7 @@ export class NetworkRenderer {
 			line.setAttribute("x2", String(x));
 			line.setAttribute("y2", String(y));
 			this.layer.querySelectorAll(".is-link-target").forEach((x) => x.classList.remove("is-link-target"));
-			const over = (document.elementFromPoint(m.clientX, m.clientY) as Element | null)?.closest<SVGGElement>(".chronicle-net-node");
+			const over = (document.elementFromPoint(m.clientX, m.clientY))?.closest<SVGGElement>(".chronicle-net-node");
 			if (over && over !== n.g) over.classList.add("is-link-target");
 		};
 		const up = (u: PointerEvent) => {
@@ -411,7 +411,7 @@ export class NetworkRenderer {
 			line.remove();
 			this.root.removeClass("is-linking");
 			this.layer.querySelectorAll(".is-link-target").forEach((x) => x.classList.remove("is-link-target"));
-			const over = (document.elementFromPoint(u.clientX, u.clientY) as Element | null)?.closest<SVGGElement>(".chronicle-net-node");
+			const over = (document.elementFromPoint(u.clientX, u.clientY))?.closest<SVGGElement>(".chronicle-net-node");
 			const other = over && this.nodes.find((x) => x.key === over.getAttribute("data-key"));
 			if (!other || other.key === n.key) return;
 			const choices = linkChoices(this.plugin, n.entity, other.entity);
@@ -508,7 +508,7 @@ export class NetworkRenderer {
 			this.sim.stop();
 			for (let i = 0; i < Math.min(300, 30000 / Math.max(1, n)); i++) this.sim.tick();
 			this.tick();
-			requestAnimationFrame(() => this.fit());
+			window.requestAnimationFrame(() => this.fit());
 			this.fitted = true;
 			this.sim.alpha(0.05).restart();
 		}

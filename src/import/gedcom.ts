@@ -38,7 +38,7 @@ function parseTree(text: string): GNode[] {
 	const roots: GNode[] = [];
 	const stack: GNode[] = [];
 	for (const raw of text.split(/\r?\n/)) {
-		const line = raw.replace(/^﻿/, "").trim();
+		const line = raw.replace(/^\uFEFF/, "").trim();
 		if (!line) continue;
 		const m = line.match(/^(\d+)\s+(?:(@[^@]+@)\s+)?(\S+)(?:\s(.*))?$/);
 		if (!m) continue;

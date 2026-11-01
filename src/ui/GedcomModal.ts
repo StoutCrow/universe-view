@@ -25,7 +25,7 @@ export class GedcomModal extends Modal {
 		el("p", { cls: "setting-item-description", text: "Creates one note per person with birth, death, parents and partners. Existing notes with the same name are left untouched." }, contentEl);
 		new Setting(contentEl).setName("GEDCOM file").setDesc(".ged files exported from Ancestry, FamilySearch, Gramps, MyHeritage…").addButton((b) => {
 			const input = el("input", { attr: { type: "file", accept: ".ged,.gedcom,text/plain" } });
-			input.style.display = "none";
+			input.hide();
 			contentEl.appendChild(input);
 			b.setButtonText("Choose file…").onClick(() => input.click());
 			input.addEventListener("change", async () => {
@@ -129,9 +129,9 @@ export class GedcomModal extends Modal {
 					// Only one side stores the partnership; the index infers the reverse.
 					if (other < person.id) continue;
 					const entry: Record<string, unknown> = { person: `[[${names.get(other)}]]` };
-					if (fam!.married) entry.from = fam!.married;
-					if (fam!.divorced) entry.to = fam!.divorced === "unknown" ? undefined : fam!.divorced;
-					if (fam!.divorced) entry.kind = "divorced";
+					if (fam.married) entry.from = fam.married;
+					if (fam.divorced) entry.to = fam.divorced === "unknown" ? undefined : fam.divorced;
+					if (fam.divorced) entry.kind = "divorced";
 					partners.push(Object.keys(entry).length === 1 ? entry.person : JSON.parse(JSON.stringify(entry)));
 				}
 				if (partners.length) fm[f("partners")] = partners;

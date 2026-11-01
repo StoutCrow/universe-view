@@ -176,7 +176,7 @@ export class LineageRenderer {
 		// Redraws while zooming or panning don't replay the bars' fade-in.
 		this.root.addClass("is-settled");
 		cancelAnimationFrame(this.frame);
-		this.frame = requestAnimationFrame(() => this.draw());
+		this.frame = window.requestAnimationFrame(() => this.draw());
 	}
 
 	private bindEvents() {

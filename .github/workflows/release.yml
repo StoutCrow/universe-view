@@ -11,6 +11,9 @@ on:
 
 permissions:
   contents: write
+  # Signed build provenance for the release files (artifact attestations).
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -37,6 +40,14 @@ jobs:
           tag="${GITHUB_REF#refs/tags/}"
           version=$(node -p "require('./manifest.json').version")
           if [ "$tag" != "$version" ]; then echo "Tag $tag doesn't match manifest.json version $version"; exit 1; fi
+
+      - name: Attest the release files were built here
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            styles.css
+            manifest.json
 
       - name: Draft release
         env:

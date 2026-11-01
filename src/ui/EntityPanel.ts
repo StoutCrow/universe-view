@@ -312,7 +312,7 @@ function spanBar(p: ChroniclePlugin, root: HTMLElement, e: Entity) {
 	el("span", { text: e.end ? formatDate(e.end, cal) : today !== undefined ? "today" : "" }, row);
 	const bar = el("div", { cls: "chronicle-ep-span-bar" + (!e.end && today !== undefined ? " is-open" : "") }, box);
 	const fill = el("div", { cls: "chronicle-ep-span-fill" }, bar);
-	fill.style.width = "100%";
+	fill.setCssStyles({ width: "100%" });
 	const width = Math.max(1, end - start);
 	for (const x of p.index.events(e.key)) {
 		const d = x.start?.start;

@@ -57,7 +57,7 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Looks**: six themes, light and dark, and every view embeddable in a note.
 - **Fits your vault**: reads Charted Roots, tag-typed vaults, lifespans like `1262 - 1294 C.E.`, and your own property names. Everything it changes can be undone.
 
-What changed in each version is in the [changelog](CHANGELOG.md), and inside UniverseView: after an update a *What's new* window shows what changed since the version you had, and the command *What's new (version history)* (or Settings → Look & cards → About UniverseView) shows every version.
+What changed in each version is in the [changelog](CHANGELOG.md), and inside UniverseView: after an update a *What's new* window shows what changed since the version you had, and the command *What's new (version history)* (or Settings → Look & cards → About) shows every version.
 
 ## Installing
 

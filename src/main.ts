@@ -1,11 +1,12 @@
+import { metadataEvents, templater } from "./internals";
 import { UndoHistoryModal } from "./ui/undohistory";
 import type { DrawHow } from "./views/MapView";
 import { TodayView, VIEW_TODAY } from "./views/TodayView";
 import { Editor, FuzzySuggestModal, ItemView, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Hotkey, type Modifier } from "obsidian";
 
 // iPhones and iPads before iOS 15.4 have no structuredClone; everything UniverseView copies with it is plain data.
-if (typeof globalThis.structuredClone !== "function") {
-	(globalThis as { structuredClone?: <T>(v: T) => T }).structuredClone = <T>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
+if (typeof window.structuredClone !== "function") {
+	(window as { structuredClone?: <T>(v: T) => T }).structuredClone = <T>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
 }
 import { type ChronDate, type Entity, type EntityType } from "./types";
 import { ChronicleSettings, DEFAULT_SETTINGS, FieldName, buildFieldAliases } from "./settings";
@@ -199,10 +200,12 @@ export default class ChroniclePlugin extends Plugin {
 		this.registerEvent(this.app.vault.on("rename", () => this.index.requestRebuild()));
 		this.registerEvent(this.app.vault.on("delete", () => this.index.requestRebuild()));
 		// Dataview fires these on the metadata cache once its own index is ready or changes.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const mc = this.app.metadataCache as any;
+		const mc = metadataEvents(this.app);
 		this.registerEvent(mc.on("dataview:index-ready", () => this.index.requestRebuild()));
-		this.registerEvent(mc.on("dataview:metadata-change", (_type: string, file: TFile) => this.settings.useDataview && file instanceof TFile && this.index.requestUpdate(file)));
+		this.registerEvent(mc.on("dataview:metadata-change", (...args: unknown[]) => {
+			const file = args[1];
+			if (this.settings.useDataview && file instanceof TFile) this.index.requestUpdate(file);
+		}));
 
 		this.app.workspace.onLayoutReady(() => this.index.rebuild());
 	}
@@ -412,7 +415,7 @@ export default class ChroniclePlugin extends Plugin {
 		const observer = new MutationObserver((records) => {
 			for (const r of records) {
 				for (const node of Array.from(r.addedNodes)) {
-					if (!(node instanceof HTMLElement) || !node.classList.contains("modal-container")) continue;
+					if (!(node.instanceOf(HTMLElement)) || !node.classList.contains("modal-container")) continue;
 					const others = Array.from(document.body.querySelectorAll(":scope > .modal-container")).filter((c) => c !== node);
 					if (!others.length) continue;
 					// Themes may raise the container or the window inside it: beat both.
@@ -443,7 +446,7 @@ export default class ChroniclePlugin extends Plugin {
 		if (!tree) {
 			tree = realmTree(this.index, (c) => isHouse(this, c), at, tierWordsWith(this.settings.tierWords), { ...DEFAULT_REGION_WORDS, ...tierWords(this.settings.regionWords ?? "") });
 			// Playing through time asks for a tree a frame: keep the latest few, not every one.
-			if (this.realmCache.size >= 24) this.realmCache.delete(this.realmCache.keys().next().value!);
+			if (this.realmCache.size >= 24) this.realmCache.delete(this.realmCache.keys().next().value);
 			this.realmCache.set(id, tree);
 		}
 		return tree;
@@ -485,7 +488,8 @@ export default class ChroniclePlugin extends Plugin {
 	/** Opens a world's world note, creating it (filled in from the current settings) if there isn't one. */
 	async openWorldNote(folder: string) {
 		const existing = this.index.worlds.get(folder);
-		const file = existing ? (this.app.vault.getAbstractFileByPath(existing.path) as TFile) : await this.ensureWorldNote(folder);
+		const found = existing ? this.app.vault.getAbstractFileByPath(existing.path) : null;
+		const file = found instanceof TFile ? found : await this.ensureWorldNote(folder);
 		await this.app.workspace.getLeaf(false).openFile(file);
 		if (!existing) new Notice(`Made a world note for ${folder || this.app.vault.getName()}. Its settings now apply to every note in ${folder || "the vault"}.`);
 	}
@@ -753,7 +757,7 @@ export default class ChroniclePlugin extends Plugin {
 			new Notice("Open a UniverseView view first.");
 			return;
 		}
-		const state = v.getState() as Record<string, unknown>;
+		const state = v.getState();
 		new TextPrompt(this, "Name for this view", v.getDisplayText(), (name) => {
 			const list = this.settings.savedViews.filter((s) => s.name.toLowerCase() !== name.toLowerCase());
 			list.push({ name, type, state: structuredClone(state) });
@@ -929,9 +933,7 @@ export default class ChroniclePlugin extends Plugin {
 		const file = await vault.create(path, body);
 		if (body.includes("<%")) {
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const templater = (this.app as any).plugins?.plugins?.["templater-obsidian"]?.templater;
-				await templater?.overwrite_file_commands?.(file);
+				await templater(this.app)?.templater?.overwrite_file_commands?.(file);
 			} catch (err) {
 				console.warn("UniverseView: Templater could not process the template", err);
 			}
@@ -1005,7 +1007,7 @@ export default class ChroniclePlugin extends Plugin {
 			if (t && t !== type) delete front[k];
 		}
 		if (!type) return;
-		const agrees = kept.some((t) => tagType(t) === type) || typeKeys.some((k) => typeof front[k] === "string" && normalizeType(front[k] as string) === type);
+		const agrees = kept.some((t) => tagType(t) === type) || typeKeys.some((k) => typeof front[k] === "string" && normalizeType(front[k]) === type);
 		if (agrees) return;
 		const saved = this.settings.typeStyle;
 		this.settings.typeStyle = style;
@@ -1300,7 +1302,7 @@ export default class ChroniclePlugin extends Plugin {
 			const onMap = list.map((t, i) => ({ t, i })).filter(({ t }) => t.map === mapRef || (mapKey === WORLD_MAP && t.map === "world"));
 			const at = index === null || Array.isArray(index) ? -1 : onMap[index]?.i ?? -1;
 			// Other lands on this map (with no dates of their own), for closing the gaps a new border leaves.
-			const neighbours = what === "territory" && points ? this.index.all().filter((x) => x.key !== key).flatMap((x) => x.territories.filter((t) => (t.map === mapKey || t.map === "*") && !t.fromText && !t.toText && t.points.length >= 3).map((t) => t.points as [number, number][])) : [];
+			const neighbours = what === "territory" && points ? this.index.all().filter((x) => x.key !== key).flatMap((x) => x.territories.filter((t) => (t.map === mapKey || t.map === "*") && !t.fromText && !t.toText && t.points.length >= 3).map((t) => t.points)) : [];
 			const span = (() => {
 				let [a, b, c, d] = [Infinity, Infinity, -Infinity, -Infinity];
 				for (const r of neighbours) for (const [x, y] of r) [a, b, c, d] = [Math.min(a, x), Math.min(b, y), Math.max(c, x), Math.max(d, y)];
@@ -1572,14 +1574,14 @@ export default class ChroniclePlugin extends Plugin {
 		});
 		this.addCommand({
 			id: "undo",
-			name: "Undo last change made in UniverseView",
+			name: "Undo the last change it made",
 			icon: "undo-2",
 			...this.keys(["Mod", "Alt"], "Z"),
 			callback: () => void this.undo(),
 		});
 		this.addCommand({
 			id: "undo-history",
-			name: "Undo history (every change UniverseView made, to undo back to any point)",
+			name: "Undo history (every change it made, to undo back to any point)",
 			icon: "history",
 			...this.keys(["Mod", "Alt", "Shift"], "Z"),
 			callback: () => new UndoHistoryModal(this).open(),

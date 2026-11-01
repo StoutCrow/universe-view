@@ -181,7 +181,7 @@ export class FanChartRenderer extends SvgChart {
 		this.wire(centre, rootE.key);
 		const R = R0 + gens * ring;
 		this.bbox = { x: -R, y: -R, width: 2 * R, height: R + 10 };
-		if (!this.pz.touched) requestAnimationFrame(() => this.fit());
+		if (!this.pz.touched) window.requestAnimationFrame(() => this.fit());
 	}
 }
 
@@ -270,7 +270,7 @@ export class TimeTreeRenderer extends SvgChart {
 		});
 		this.bbox = { x: 0, y: 0, width: width + 260, height };
 		if (!this.pz.touched) {
-			requestAnimationFrame(() => {
+			window.requestAnimationFrame(() => {
 				const rect = this.svgEl.getBoundingClientRect();
 				this.pz.k = Math.min(1, (rect.width || width) / (width + 280));
 				this.pz.x = 10;

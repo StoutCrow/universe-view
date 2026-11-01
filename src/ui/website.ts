@@ -92,7 +92,7 @@ export async function buildWebsite(plugin: ChroniclePlugin, world: string | unde
 	const link = (key: string, name?: string) => {
 		const e = idx.get(key);
 		const p = e && pages.get(e.key);
-		return p ? `<a href="${p}">${esc(e!.name)}</a>` : esc(name ?? key.replace(/^\?/, ""));
+		return p ? `<a href="${p}">${esc(e.name)}</a>` : esc(name ?? key.replace(/^\?/, ""));
 	};
 	const when = (e: Entity) => formatSpan(e.start, e.end, plugin.calendars.get(e.calendar));
 	const searchIndex = JSON.stringify(entries.map((e) => ({ n: e.name, u: pages.get(e.key), c: entityColor(plugin, e), k: [e.category ?? e.type, when(e)].filter(Boolean).join(" · "), s: e.summary ?? "" })));

@@ -199,13 +199,13 @@ export class HoverCards {
 		this.ring = ring;
 		this.ringMove = place;
 		this.ringTarget = target;
-		target.addEventListener("mousemove", place as EventListener);
+		target.addEventListener("mousemove", place);
 		// Start filling on the next frame, so the transition runs from empty.
 		window.setTimeout(() => ring.addClass("is-filling"), 16);
 	}
 
 	private stopRing() {
-		if (this.ringTarget && this.ringMove) this.ringTarget.removeEventListener("mousemove", this.ringMove as EventListener);
+		if (this.ringTarget && this.ringMove) this.ringTarget.removeEventListener("mousemove", this.ringMove);
 		this.ring?.remove();
 		this.ring = undefined;
 		this.ringMove = undefined;

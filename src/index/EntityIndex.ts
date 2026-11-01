@@ -1,3 +1,4 @@
+import { dataviewApi, templateFolders } from "../internals";
 import { App, Events, TFile, debounce, getAllTags } from "obsidian";
 import type { ChronDate, Entity, EntityFilter, EntityType, Ref, Scene, Territory, TimedRef } from "../types";
 import { ChronicleSettings, FieldName, buildFieldAliases, parseMappingLines } from "../settings";
@@ -112,13 +113,7 @@ export class EntityIndex extends Events {
 
 	/** Template notes carry type tags and empty properties; they aren't people or places. */
 	isTemplate(path: string): boolean {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const app = this.app as any;
-		const folders = [
-			app.plugins?.plugins?.["templater-obsidian"]?.settings?.templates_folder,
-			app.internalPlugins?.plugins?.templates?.instance?.options?.folder,
-			...this.getSettings().ignoreFolders.split(/[\n,]/),
-		]
+		const folders = [...templateFolders(this.app), ...this.getSettings().ignoreFolders.split(/[\n,]/)]
 			.filter((f: unknown): f is string => typeof f === "string" && !!f.trim())
 			.map((f) => f.trim().replace(/^\/|\/$/g, ""));
 		if (folders.some((f) => path.startsWith(f + "/"))) return true;
@@ -155,7 +150,7 @@ export class EntityIndex extends Events {
 		const out: Scene[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (this.isTemplate(file.path)) continue;
-			const fm = this.app.metadataCache.getFileCache(file)?.frontmatter as Record<string, unknown> | undefined;
+			const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
 			if (!fm) continue;
 			const rawDate = SCENE_DATE_KEYS.map((k) => fm[k]).find((v) => v !== undefined && v !== null && v !== "");
 			if (rawDate === undefined) continue;
@@ -178,9 +173,7 @@ export class EntityIndex extends Events {
 
 	private dataview(): DataviewApi | null {
 		if (!this.getSettings().useDataview) return null;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const plugins = (this.app as any).plugins;
-		return plugins?.plugins?.dataview?.api ?? null;
+		return dataviewApi(this.app) as DataviewApi | null;
 	}
 
 	/**
@@ -191,7 +184,7 @@ export class EntityIndex extends Events {
 		const out = new Map<string, WorldSettings>();
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			const cache = this.app.metadataCache.getFileCache(file);
-			const fm = cache?.frontmatter as Record<string, unknown> | undefined;
+			const fm = cache?.frontmatter;
 			const typeRaw = String(fm?.type ?? fm?.cr_type ?? "").trim().toLowerCase();
 			const tagged = (cache ? getAllTags(cache) ?? [] : []).some((t) => /^#(world|universe|setting)$/i.test(t));
 			if (!fm || !(typeRaw === "world" || typeRaw === "universe" || tagged)) continue;

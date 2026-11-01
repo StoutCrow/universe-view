@@ -34,7 +34,7 @@ export function gedcomDate(d: ChronDate | undefined, cal: Calendar): string | un
 
 /** "Henry VIII" → "Henry VIII"; with `surname:`/`given:` properties → "Given /Surname/". */
 function gedcomName(p: Entity): string {
-	const str = (k: string) => (typeof p.props[k] === "string" ? (p.props[k] as string).trim() : undefined);
+	const str = (k: string) => (typeof p.props[k] === "string" ? (p.props[k]).trim() : undefined);
 	const surname = str("surname") ?? str("last_name") ?? str("last-name") ?? str("family_name");
 	const given = str("given") ?? str("given_name") ?? str("first_name") ?? str("first-name");
 	if (surname) return `${given ?? p.name.replace(new RegExp(`\\s*${surname}$`), "")} /${surname}/`.trim();

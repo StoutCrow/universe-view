@@ -1,3 +1,4 @@
+import { revealInExplorer } from "../internals";
 import { Notice, TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
@@ -110,8 +111,6 @@ export function identityHeader(p: ChroniclePlugin, parent: HTMLElement, e: Entit
 	});
 	act("folder-open", "Show in the file explorer", () => {
 		const f = p.app.vault.getAbstractFileByPath(e.path);
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const explorer = (p.app as any).internalPlugins?.getPluginById?.("file-explorer")?.instance;
-		if (f && explorer?.revealInFolder) explorer.revealInFolder(f);
+		if (f) revealInExplorer(p.app, f);
 	});
 }

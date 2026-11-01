@@ -41,6 +41,25 @@ N.setText = function (t: string) {
 E.setAttr = function (k: string, v: string) {
 	this.setAttribute(k, v);
 };
+// More of Obsidian's element helpers, as the plugin uses them in place of setting styles directly.
+N.instanceOf = function (type: abstract new (...args: never[]) => unknown) {
+	return this instanceof type;
+};
+E.hide = function () {
+	this.style.display = "none";
+};
+E.show = function () {
+	this.style.display = "";
+};
+E.toggle = function (show: boolean) {
+	this.style.display = show ? "" : "none";
+};
+E.setCssStyles = function (styles: Record<string, string>) {
+	Object.assign(this.style, styles);
+};
+E.setCssProps = function (props: Record<string, string>) {
+	for (const [k, v] of Object.entries(props)) this.style.setProperty(k, v);
+};
 function applyOpts(el: HTMLElement, o: any) {
 	if (!o) return;
 	if (typeof o === "string") return el.addClass(o);

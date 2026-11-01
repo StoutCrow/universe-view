@@ -186,7 +186,7 @@ export class FamilyTreeRenderer {
 		if (this.truncated) el("div", { cls: "uv-family-note", text: `The first ${this.nodes.length} people: fewer steps shows the rest of this family more closely.` }, this.root);
 		// Re-centre for a new person; on note edits keep wherever the user has panned to.
 		if (newRoot) this.pz.touched = false;
-		if (!this.pz.touched) requestAnimationFrame(() => this.initialView());
+		if (!this.pz.touched) window.requestAnimationFrame(() => this.initialView());
 	}
 
 	private drawnRoot?: string;

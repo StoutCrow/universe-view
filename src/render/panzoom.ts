@@ -73,19 +73,19 @@ export class PanZoom {
 			if (id !== undefined && rest) this.dragging = { id, sx: rest.x, sy: rest.y, ox: this.x, oy: this.y, moved: true };
 		};
 		const keep = (evt: TouchEvent) => evt.stopPropagation();
-		surface.addEventListener("pointerdown", onDownCapture as EventListener, true);
-		surface.addEventListener("pointermove", onMoveCapture as EventListener, true);
-		surface.addEventListener("pointerup", onUpCapture as EventListener, true);
-		surface.addEventListener("pointercancel", onUpCapture as EventListener, true);
+		surface.addEventListener("pointerdown", onDownCapture, true);
+		surface.addEventListener("pointermove", onMoveCapture, true);
+		surface.addEventListener("pointerup", onUpCapture, true);
+		surface.addEventListener("pointercancel", onUpCapture, true);
 		// Only the touch's start: Obsidian's swipe never begins without it, while anything following the
 		// finger with touchmove on the document still sees it.
-		if (!opts.requireModifier) surface.addEventListener("touchstart", keep as EventListener, { passive: true });
+		if (!opts.requireModifier) surface.addEventListener("touchstart", keep, { passive: true });
 		this.cleanup.push(() => {
-			surface.removeEventListener("pointerdown", onDownCapture as EventListener, true);
-			surface.removeEventListener("pointermove", onMoveCapture as EventListener, true);
-			surface.removeEventListener("pointerup", onUpCapture as EventListener, true);
-			surface.removeEventListener("pointercancel", onUpCapture as EventListener, true);
-			surface.removeEventListener("touchstart", keep as EventListener);
+			surface.removeEventListener("pointerdown", onDownCapture, true);
+			surface.removeEventListener("pointermove", onMoveCapture, true);
+			surface.removeEventListener("pointerup", onUpCapture, true);
+			surface.removeEventListener("pointercancel", onUpCapture, true);
+			surface.removeEventListener("touchstart", keep);
 		});
 		const onWheel = (evt: WheelEvent) => {
 			if (opts.requireModifier && !(evt.ctrlKey || evt.metaKey)) return;
@@ -127,17 +127,17 @@ export class PanZoom {
 				window.setTimeout(() => (this.justPanned = false), 0);
 			}
 		};
-		surface.addEventListener("wheel", onWheel as EventListener, { passive: false });
-		surface.addEventListener("pointerdown", onDown as EventListener);
-		surface.addEventListener("pointermove", onMove as EventListener);
-		surface.addEventListener("pointerup", onUp as EventListener);
-		surface.addEventListener("pointercancel", onUp as EventListener);
+		surface.addEventListener("wheel", onWheel, { passive: false });
+		surface.addEventListener("pointerdown", onDown);
+		surface.addEventListener("pointermove", onMove);
+		surface.addEventListener("pointerup", onUp);
+		surface.addEventListener("pointercancel", onUp);
 		this.cleanup.push(() => {
-			surface.removeEventListener("wheel", onWheel as EventListener);
-			surface.removeEventListener("pointerdown", onDown as EventListener);
-			surface.removeEventListener("pointermove", onMove as EventListener);
-			surface.removeEventListener("pointerup", onUp as EventListener);
-			surface.removeEventListener("pointercancel", onUp as EventListener);
+			surface.removeEventListener("wheel", onWheel);
+			surface.removeEventListener("pointerdown", onDown);
+			surface.removeEventListener("pointermove", onMove);
+			surface.removeEventListener("pointerup", onUp);
+			surface.removeEventListener("pointercancel", onUp);
 		});
 	}
 

@@ -175,7 +175,7 @@ export class TableView extends ChronicleView {
 	}
 
 	private columns(): Column[] {
-		return [...COLUMNS[this.state.type], ...this.state.extra.map((p) => ({ id: `extra:${p}`, label: p, kind: "text" as CellKind, prop: p }))];
+		return [...COLUMNS[this.state.type], ...this.state.extra.map((p) => ({ id: `extra:${p}`, label: p, kind: "text" as const, prop: p }))];
 	}
 
 	/** The property names a column reads, most preferred first. */

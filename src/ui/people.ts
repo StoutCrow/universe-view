@@ -225,7 +225,7 @@ export class SuccessionModal extends Modal {
 			// The latest recorded date for the group, if none was given.
 			const c = idx.get(this.culture)!;
 			day ??= Math.max(...idx.members(c.key).map((m) => m.link.from?.start ?? -Infinity), c.start?.start ?? -Infinity);
-			holder = Number.isFinite(day) ? holderAt(this.plugin, c.key, day!) : undefined;
+			holder = Number.isFinite(day) ? holderAt(this.plugin, c.key, day) : undefined;
 			if (!holder) {
 				el("div", { cls: "chronicle-dash-muted", text: `No one holds a top role (king, head, grand master…) in ${c.name} on that date. Give members a role and a \`from:\` date.` }, out);
 				return;
@@ -243,16 +243,16 @@ export class SuccessionModal extends Modal {
 			born: (k) => idx.get(k)?.start?.start,
 			died: (k) => idx.get(k)?.end?.end,
 			gender: graph.gender,
-		}, holder.key, day!, this.rule);
+		}, holder.key, day, this.rule);
 		const cal = this.plugin.calendars.get(holder.calendar);
-		el("div", { cls: "chronicle-kin-answer", text: `After ${holder.name}, on ${formatDate({ start: day!, end: day!, precision: "day", approx: false, calendar: cal.id, raw: "" }, cal)}:` }, out);
+		el("div", { cls: "chronicle-kin-answer", text: `After ${holder.name}, on ${formatDate({ start: day, end: day, precision: "day", approx: false, calendar: cal.id, raw: "" }, cal)}:` }, out);
 		if (!heirs.length) el("div", { cls: "chronicle-dash-muted", text: "No living relatives found in the family tree." }, out);
 		const list = el("ol", { cls: "chronicle-succession" }, out);
 		for (const h of heirs) {
 			const e = idx.get(h.key)!;
 			const li = el("li", {}, list);
 			li.style.setProperty("--depth", String(h.depth - 1));
-			const age = e.start ? Math.floor((day! - e.start.start) / YEAR) : undefined;
+			const age = e.start ? Math.floor((day - e.start.start) / YEAR) : undefined;
 			const rel = relationship(graph, holder.key, e.key)?.label;
 			personRow(this.plugin, li, e, [rel, age !== undefined ? `aged ${age}` : undefined].filter(Boolean).join(" · "), () => this.close());
 		}
