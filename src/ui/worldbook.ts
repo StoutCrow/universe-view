@@ -3,7 +3,7 @@ import type ChroniclePlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { renderFacts } from "../render/arc";
-import { entityColor } from "../render/common";
+import { clickNotice, entityColor } from "../render/common";
 
 const SECTIONS: [EntityType, string][] = [["culture", "Peoples and powers"], ["person", "People"], ["place", "Places"], ["event", "Events"]];
 
@@ -160,8 +160,7 @@ export async function exportWorldBook(plugin: ChroniclePlugin, world: string | u
 		if (existing instanceof TFile) await vault.modify(existing, html);
 		else await vault.create(path, html);
 		notice.hide();
-		const done = new Notice(`Saved ${path}. Click to open it in your browser, where you can also print it or save it as a PDF.`, 12000);
-		done.noticeEl.addEventListener("click", () => {
+		clickNotice(`Saved ${path}. Click to open it in your browser, where you can also print it or save it as a PDF.`, 12000, () => {
 			const app = plugin.app as unknown as { openWithDefaultApp?: (p: string) => void };
 			app.openWithDefaultApp?.(path);
 		});

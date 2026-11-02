@@ -86,7 +86,7 @@ export class DuplicatesModal extends Modal {
 					el("p", { text: `${drop.path} will be moved to the trash after its properties and text are added to ${keep.path}, and links to it are pointed at ${keep.name}.` }, confirm.contentEl);
 					new Setting(confirm.contentEl)
 						.addButton((x) => x.setButtonText("Cancel").onClick(() => confirm.close()))
-						.addButton((x) => x.setButtonText("Merge").setWarning().onClick(async () => {
+						.addButton((x) => x.setButtonText("Merge").setClass("mod-warning").onClick(async () => {
 							confirm.close();
 							const n = await mergeNotes(this.plugin, keep, drop);
 							new Notice(`Merged ${drop.name} into ${keep.name}${n ? `; updated links in ${n} notes` : ""}.`);
@@ -137,7 +137,7 @@ export class OrphansModal extends Modal {
 				el("p", { text: `${drop.name}'s properties and text are added to ${keep.name}, every link to ${drop.name} is pointed at ${keep.name}, and ${drop.path} goes to the trash. Text changes can't be undone from UniverseView, so check first.` }, confirm.contentEl);
 				new Setting(confirm.contentEl)
 					.addButton((x) => x.setButtonText("Cancel").onClick(() => confirm.close()))
-					.addButton((x) => x.setButtonText("Merge").setWarning().onClick(async () => {
+					.addButton((x) => x.setButtonText("Merge").setClass("mod-warning").onClick(async () => {
 						confirm.close();
 						const n = await mergeNotes(this.plugin, keep, drop);
 						new Notice(`Merged ${drop.name} into ${keep.name}${n ? `; updated links in ${n} notes` : ""}.`);

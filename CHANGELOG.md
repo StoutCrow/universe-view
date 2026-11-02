@@ -2,6 +2,10 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.1.3 — 2026-11-01
+- Notices you can click (a file just saved, a saved view's link) respond to a click on their message, without Obsidian's deprecated notice element.
+- The red Merge buttons in tidying use the warning style directly instead of a deprecated method.
+
 ## 1.1.2 — 2026-11-01
 More fixes from Obsidian's community directory review.
 - Deleting a note from the inspector, or a calendar in Settings, asks in an Obsidian dialog instead of the browser's.

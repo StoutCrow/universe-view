@@ -1,4 +1,5 @@
 import { Menu, Notice, TFile, normalizePath, requestUrl } from "obsidian";
+import { clickNotice } from "../render/common";
 import type ChroniclePlugin from "../main";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -260,8 +261,7 @@ export async function exportView(plugin: ChroniclePlugin, target: HTMLElement, n
 }
 
 function done(plugin: ChroniclePlugin, file: TFile) {
-	const n = new Notice(`Saved ${file.path}. Click to open it.`, 8000);
-	n.noticeEl.addEventListener("click", () => void plugin.app.workspace.getLeaf(true).openFile(file));
+	clickNotice(`Saved ${file.path}. Click to open it.`, 8000, () => void plugin.app.workspace.getLeaf(true).openFile(file));
 }
 
 export interface ExportExtras {

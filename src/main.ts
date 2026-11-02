@@ -33,7 +33,7 @@ import { styleTerritories } from "./ui/territorystyle";
 import { statusBar } from "./ui/statusbar";
 import { CauseChainModal } from "./ui/causes";
 import { WorldSettingsModal } from "./ui/WorldSettings";
-import { HOVER_SOURCE, TYPE_ICONS } from "./render/common";
+import { HOVER_SOURCE, TYPE_ICONS, clickNotice } from "./render/common";
 import { WORLD_MAP } from "./render/map";
 import { TimelineView, VIEW_TIMELINE } from "./views/TimelineView";
 import { FamilyTreeView, VIEW_FAMILY } from "./views/FamilyTreeView";
@@ -769,8 +769,7 @@ export default class ChroniclePlugin extends Plugin {
 			this.settings.savedViews = list.sort((a, b) => a.name.localeCompare(b.name));
 			void this.saveSettings().then(() => {
 				const link = `obsidian://universe-view?vault=${encodeURIComponent(this.app.vault.getName())}&view=${encodeURIComponent(name)}`;
-				const n = new Notice(`Saved “${name}”. Open it from the command “Open a saved view”, or click here to copy a link to put in a note.`, 10000);
-				n.noticeEl.addEventListener("click", () => {
+				clickNotice(`Saved “${name}”. Open it from the command “Open a saved view”, or click here to copy a link to put in a note.`, 10000, () => {
 					void navigator.clipboard?.writeText(`[${name}](${link})`);
 					new Notice("Copied a link to the view.");
 				});

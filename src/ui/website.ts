@@ -3,7 +3,7 @@ import type ChroniclePlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { renderFacts } from "../render/arc";
-import { entityColor } from "../render/common";
+import { clickNotice, entityColor } from "../render/common";
 import { relOne } from "../index/relkinds";
 import { pageName } from "../index/pagename";
 
@@ -232,8 +232,7 @@ export async function exportWebsite(plugin: ChroniclePlugin, world: string | und
 		}
 		notice.hide();
 		const pagesCount = files.filter((f) => f.path.endsWith(".html")).length;
-		const done = new Notice(`Saved a ${pagesCount}-page website in ${root}. Click to open it in your browser. To put it online, upload the folder to any static host.`, 12000);
-		done.noticeEl.addEventListener("click", () => {
+		clickNotice(`Saved a ${pagesCount}-page website in ${root}. Click to open it in your browser. To put it online, upload the folder to any static host.`, 12000, () => {
 			const app = plugin.app as unknown as { openWithDefaultApp?: (p: string) => void };
 			app.openWithDefaultApp?.(`${root}/index.html`);
 		});

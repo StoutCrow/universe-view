@@ -1,4 +1,4 @@
-import { Keymap, Menu, TFile, WorkspaceLeaf, setIcon } from "obsidian";
+import { Keymap, Menu, Notice, TFile, WorkspaceLeaf, setIcon } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity, EntityType } from "../types";
 
@@ -307,6 +307,11 @@ export interface EntityMenuOptions {
 	extra?: (menu: Menu) => void;
 	/** Removing things: always last, set apart, in red. */
 	danger?: (menu: Menu) => void;
+}
+
+/** A notice that does something when its message is clicked (open the file just saved, copy a link). */
+export function clickNotice(message: string, duration: number, onClick: () => void): Notice {
+	return new Notice(createFragment((f) => f.createDiv({ text: message }).addEventListener("click", onClick)), duration);
 }
 
 /** A menu entry in red, for removing things. */
