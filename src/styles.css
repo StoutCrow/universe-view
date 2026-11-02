@@ -1385,13 +1385,7 @@ g.is-dimmed .chronicle-net-link.is-lit {
 button.chronicle-ov-tile {
 	/* Not styled as a button. */
 	appearance: none;
-	display: inline;
 	margin: 0;
-	padding: 0;
-	border: none;
-	border-radius: 0;
-	background: none;
-	box-shadow: none;
 	width: auto;
 	height: auto;
 	min-width: 0;
@@ -1403,9 +1397,7 @@ button.chronicle-ov-tile {
 	letter-spacing: inherit;
 	line-height: inherit;
 	white-space: inherit;
-	cursor: inherit;
 	user-select: auto;
-	gap: normal;
 	align-items: normal;
 	justify-content: normal;
 	box-sizing: border-box;

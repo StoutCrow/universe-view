@@ -2,6 +2,9 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.2.1 — 2026-11-02
+- Stylesheet tidy-up for Obsidian's style review: no property declared twice in one rule. Nothing looks different.
+
 ## 1.2.0 — 2026-11-02
 - **Needs Obsidian 1.13 or later.** Settings use Obsidian's new settings pages: five pages (*Look & cards*, *Notes*, *Time & calendars*, *Maps & realms*, *Map tools*), and every setting is found by Obsidian's own settings search. A section's help is the ? beside its heading. Opening settings from a view's settings button shows that view's settings first.
 - The facts infobox in a note (`chronicle-facts`) shows again; it had collapsed to nothing.

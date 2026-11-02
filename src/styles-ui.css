@@ -1028,14 +1028,10 @@ button.chronicle-ov-tile:hover .chronicle-ov-tile-icon {
 button.chronicle-legend-row {
 	/* Not styled as a button. */
 	appearance: none;
-	display: inline;
 	margin: 0;
-	padding: 0;
 	border: none;
-	border-radius: 0;
 	background: none;
 	box-shadow: none;
-	width: auto;
 	height: auto;
 	min-width: 0;
 	min-height: 0;
@@ -1046,10 +1042,7 @@ button.chronicle-legend-row {
 	letter-spacing: inherit;
 	line-height: inherit;
 	white-space: inherit;
-	cursor: inherit;
 	user-select: auto;
-	gap: normal;
-	align-items: normal;
 	justify-content: normal;
 	box-sizing: border-box;
 	display: flex;
@@ -1120,12 +1113,7 @@ button.chronicle-legend-row:hover {
 button.chronicle-theme-card {
 	/* Not styled as a button. */
 	appearance: none;
-	display: inline;
 	margin: 0;
-	padding: 0;
-	border: none;
-	border-radius: 0;
-	background: none;
 	box-shadow: none;
 	width: auto;
 	height: auto;
@@ -1138,9 +1126,7 @@ button.chronicle-theme-card {
 	letter-spacing: inherit;
 	line-height: inherit;
 	white-space: inherit;
-	cursor: inherit;
 	user-select: auto;
-	gap: normal;
 	align-items: normal;
 	justify-content: normal;
 	box-sizing: border-box;
