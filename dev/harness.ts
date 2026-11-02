@@ -195,7 +195,7 @@ function showEmbeds(notePath: string) {
 	main.empty();
 	const page = main.createDiv("markdown-preview-view");
 	const text = contents.get(notePath) ?? "";
-	const blocks = [...text.matchAll(/```(UniverseView-[a-z]+)\n([\s\S]*?)```/g)];
+	const blocks = [...text.matchAll(/```(chronicle-[a-z]+)\n([\s\S]*?)```/g)];
 	page.createEl("h1", { text: notePath.split("/").pop()!.replace(/\.md$/, "") });
 	for (const [, name, source] of blocks) {
 		page.createEl("h4", { text: name, cls: "embed-label" });

@@ -25,6 +25,7 @@ export class UndoHistoryModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "uv-sheet", "uv-history");
 		this.titleEl.empty();
 		const head = el("div", { cls: "uv-sheet-head" }, this.titleEl);

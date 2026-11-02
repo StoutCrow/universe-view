@@ -168,6 +168,8 @@ export function setHelpDelay(ms: number) {
  */
 export function helpTip(parent: HTMLElement, text: string, delay?: number): HTMLElement {
 	const q = el("span", { cls: "chronicle-help", text: "?", attr: { tabindex: "0", role: "button" } }, parent);
+	// Kept on the mark too, for where the mark itself can't go (a settings section's heading).
+	q.dataset.help = text;
 	let pop: HTMLElement | undefined;
 	let timer = 0;
 	const show = () => {

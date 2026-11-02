@@ -36,7 +36,7 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Fog of war**: see the map, timeline or graph as one character knows it.
 - **Wars and battles**: a battle's `sides:` (who fought, on which side, who won) and its `war:`. Battles show on the map as crossed swords in the winner's colour, joined in order as their war's campaign, following the time slider; a war lists its battles and each side's wins in the inspector, and the Board has a *Wars* list.
 - **Undo history** (Ctrl+Alt+Shift+Z, or the clock button on any view): every change UniverseView made, newest first, with the notes it touched; undo one or go back to any point.
-- **Settings search**: one box finds a setting across every tab.
+- **Settings search**: every setting shows up in Obsidian's own settings search.
 - **Strategy map look** (the default; Look → Map style switches to Atlas): realms in solid colour from afar that thin out as you zoom in, one bold border round each realm with thinner ones for the lands inside, and realm names in spaced capitals curved across their land, with their arms when they have a logo. **Map modes**: colour the lands by realm, title, ruling house, culture or faith, or show the bare terrain.
 - **Border check** (Draw → Check borders): overlaps, thin gaps, lands sticking out of their realm, partly covered lands, crossed borders and slivers, each with *Show* and a fix (close the gap, reshape, delete), or *Fix all* at once.
 - **Map editing made for real maps**: click a territory for a panel of every tool; borders snap onto coasts, rivers and neighbours and follow them between corners; *Fill* works like a paint bucket over land or sea; *Expand* and *Brush* grow the same area; *Simplify* takes out needless corners while shared borders stay matched; and every save keeps borders sound (no spikes, loops or slivers between lands).
@@ -194,7 +194,7 @@ Settings → UniverseView → **Appearance**, or the command *Switch theme*. The
 
 You can also override the **accent and type colors** and choose the **motion** (Off, Snappy, Smooth, Relaxed, Bouncy; your system's reduced-motion setting is respected), **density**, **corner radius**, **frosted glass** and a **flat style**. Under *Views* are the timeline's row height and label size, the family tree's card size and gender tints — everything the Style Settings plugin used to offer, so it's no longer needed.
 
-Settings are in five tabs: *Look & cards*, *Notes*, *Time & calendars*, *Maps & realms* (map look, realm border band, rivers, roughen, territory styles) and *Map tools* (snapping, following coasts, keeping off other lands, brush size, Fill and Simplify defaults). The choices you make on a tool's banner are remembered there too.
+Settings are on five pages: *Look & cards*, *Notes*, *Time & calendars*, *Maps & realms* (map look, realm border band, rivers, roughen, territory styles) and *Map tools* (snapping, following coasts, keeping off other lands, brush size, Fill and Simplify defaults). The choices you make on a tool's banner are remembered there too.
 
 ## Hover cards
 

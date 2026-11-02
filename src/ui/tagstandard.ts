@@ -185,6 +185,7 @@ export class TagStandardModal extends Modal {
 
 	onOpen() {
 		const p = this.plugin;
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-std-modal");
 		this.titleEl.setText("Standardise land tags");
 		const { contentEl } = this;

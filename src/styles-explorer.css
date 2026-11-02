@@ -139,16 +139,18 @@
 /* ---- Folder notes ---- */
 .nav-folder-title.uv-has-folder-note .nav-folder-title-content,
 .view-header-breadcrumb.uv-has-folder-note {
-	text-decoration: underline;
-	text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
-	text-underline-offset: 3px;
+	/* A faint underline, drawn as a background line. */
+	background-image: linear-gradient(color-mix(in srgb, currentColor 40%, transparent), color-mix(in srgb, currentColor 40%, transparent));
+	background-size: 100% 1px;
+	background-position: 0 100%;
+	background-repeat: no-repeat;
 	cursor: pointer;
 }
 .nav-folder-title.uv-folder-note-active {
 	background-color: var(--nav-item-background-active, var(--background-modifier-hover));
 	color: var(--nav-item-color-active, var(--text-normal));
 }
-.uv-folder-note-hidden { display: none !important; }
+.uv-folder-note-hidden:not(#uv-strong) { display: none; }
 .nav-folder-title .uv-file-icons { order: 0; }
 .uv-setting-warn { border-left: 3px solid var(--color-orange); padding-left: 10px; }
 

@@ -59,6 +59,7 @@ export class CalendarEditorModal extends Modal {
 	}
 
 	private build() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-calendar-editor");
 		this.titleEl.setText(`Calendar: ${this.def.name}`);
 		const c = this.def;

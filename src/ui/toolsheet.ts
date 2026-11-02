@@ -40,6 +40,7 @@ export class ToolSheet extends Modal {
 
 	onOpen() {
 		const { contentEl, modalEl } = this;
+		this.containerEl.addClass("chronicle-scope-host");
 		modalEl.addClass("chronicle-scope", "uv-sheet");
 		this.titleEl.empty();
 		const head = el("div", { cls: "uv-sheet-head" }, this.titleEl);

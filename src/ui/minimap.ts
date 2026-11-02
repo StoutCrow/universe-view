@@ -51,13 +51,11 @@ export function miniMap(plugin: ChroniclePlugin, parent: HTMLElement, e: Entity)
 	svg.setAttribute("viewBox", `${x0} ${y0} ${w} ${h}`);
 	svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 	box.appendChild(svg);
-	const stroke = Math.max(w, h) / 160;
 	const path = (t: Territory, cls: string, colour: string) => {
 		const pl = document.createElementNS(SVG, "polygon");
 		pl.setAttribute("points", t.points.map(xy).map((p) => p.join(",")).join(" "));
 		pl.setAttribute("class", cls);
 		pl.style.setProperty("--c", colour);
-		pl.style.strokeWidth = String(stroke);
 		svg.appendChild(pl);
 	};
 	const colour = entityColor(plugin, e);

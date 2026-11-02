@@ -14,6 +14,7 @@ export class CauseChainModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Why did this happen?");
 		pickerSetting(this.plugin, this.contentEl, "Event", ["event"], this.key, (k) => {

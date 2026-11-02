@@ -43,6 +43,7 @@ export class ColourImportModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-cimport");
 		this.titleEl.setText("Import borders from the map's colours");
 		const { contentEl } = this;

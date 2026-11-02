@@ -67,6 +67,7 @@ export class KinshipModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("How are they related?");
 		pickerSetting(this.plugin, this.contentEl, "Person", ["person"], this.a, (k) => {
@@ -158,6 +159,7 @@ export class SuccessionModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Line of succession");
 		const idx = this.plugin.index;
@@ -281,6 +283,7 @@ export class NamesModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Name ideas");
 		new Setting(this.contentEl).setName("Names for").addDropdown((d) =>
@@ -355,6 +358,7 @@ export class KnowledgeModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Who knows what");
 		pickerSetting(this.plugin, this.contentEl, "Person", ["person", "culture"], this.person, (k) => {

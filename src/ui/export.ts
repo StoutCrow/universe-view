@@ -1,4 +1,4 @@
-import { Menu, Notice, TFile, normalizePath, requestUrl } from "obsidian";
+import { Menu, Notice, TFile, normalizePath, requestUrl, type App } from "obsidian";
 import { clickNotice } from "../render/common";
 import type ChroniclePlugin from "../main";
 
@@ -43,25 +43,53 @@ function inlineStyles(src: Element, dst: Element, inHtml = false) {
 /** Pictures already read, by address: a time-lapse embeds the same map picture in every frame. */
 const dataUrls = new Map<string, Promise<string | null>>();
 
-function toDataUrl(url: string): Promise<string | null> {
+function toDataUrl(app: App, url: string): Promise<string | null> {
 	if (url.startsWith("data:")) return Promise.resolve(url);
 	let p = dataUrls.get(url);
 	if (!p) {
 		if (dataUrls.size > 24) dataUrls.delete(dataUrls.keys().next().value as string);
-		dataUrls.set(url, (p = readDataUrl(url)));
+		dataUrls.set(url, (p = readDataUrl(app, url)));
 		// A failed read is tried again next time.
 		void p.then((d) => d === null && dataUrls.delete(url));
 	}
 	return p;
 }
 
-async function readDataUrl(url: string): Promise<string | null> {
+const IMAGE_TYPES: Record<string, string> = {
+	png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", avif: "image/avif", bmp: "image/bmp", svg: "image/svg+xml",
+};
+
+/** The vault file a resource address (app://…) points to. */
+function fileOfResource(app: App, url: string): TFile | undefined {
+	const bare = url.split("?")[0];
+	return app.vault.getFiles().find((f) => f.extension.toLowerCase() in IMAGE_TYPES && app.vault.getResourcePath(f).split("?")[0] === bare);
+}
+
+/** A picture made here (not a file), redrawn into a PNG. */
+async function drawnBlob(url: string): Promise<Blob | null> {
+	const img = createEl("img");
+	img.src = url;
+	await img.decode();
+	const c = createEl("canvas");
+	c.width = img.naturalWidth;
+	c.height = img.naturalHeight;
+	const ctx = c.getContext("2d");
+	if (!ctx || !c.width || !c.height) return null;
+	ctx.drawImage(img, 0, 0);
+	return await new Promise((resolve) => c.toBlob(resolve, "image/png"));
+}
+
+async function readDataUrl(app: App, url: string): Promise<string | null> {
 	try {
 		// Pictures from the web (the world map's tiles) through Obsidian's own requests; the vault's
-		// own pictures are local resources, read directly.
+		// own pictures read from the vault; anything else redrawn.
+		const file = /^https?:\/\//.test(url) ? undefined : fileOfResource(app, url);
 		const blob = /^https?:\/\//.test(url)
 			? await requestUrl({ url }).then((r) => new Blob([r.arrayBuffer], { type: r.headers["content-type"] ?? "image/png" }))
-			: await (await fetch(url)).blob();
+			: file
+				? new Blob([await app.vault.readBinary(file)], { type: IMAGE_TYPES[file.extension.toLowerCase()] })
+				: await drawnBlob(url);
+		if (!blob) return null;
 		return await new Promise((resolve) => {
 			const r = new FileReader();
 			r.onload = () => resolve(typeof r.result === "string" ? r.result : null);
@@ -74,17 +102,17 @@ async function readDataUrl(url: string): Promise<string | null> {
 }
 
 /** Pictures inside an SVG image can't load other files, so they're embedded. */
-async function embedImages(root: Element) {
+async function embedImages(app: App, root: Element) {
 	const jobs: Promise<void>[] = [];
 	root.querySelectorAll("img").forEach((img) => {
 		const src = img.getAttribute("src");
 		if (!src) return;
-		jobs.push(toDataUrl((img).src || src).then((d) => (d ? img.setAttribute("src", d) : img.remove())));
+		jobs.push(toDataUrl(app, (img).src || src).then((d) => (d ? img.setAttribute("src", d) : img.remove())));
 	});
 	root.querySelectorAll("image").forEach((im) => {
 		const href = im.getAttribute("href") ?? im.getAttribute("xlink:href");
 		if (!href) return;
-		jobs.push(toDataUrl(href).then((d) => (d ? im.setAttribute("href", d) : im.remove())));
+		jobs.push(toDataUrl(app, href).then((d) => (d ? im.setAttribute("href", d) : im.remove())));
 	});
 	await Promise.all(jobs);
 }
@@ -93,18 +121,18 @@ async function embedImages(root: Element) {
  * A stand-alone SVG of a view. Charts drawn in SVG (trees, graphs, the org chart) come out whole,
  * not just the part on screen; anything else is captured as it looks now.
  */
-export async function viewToSvg(target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
+export async function viewToSvg(app: App, target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
 	// Read styles with entrance animations finished (a half-faded card would export faded).
 	target.addClass("chronicle-exporting");
 	void target.offsetHeight;
 	try {
-		return await snapshot(target);
+		return await snapshot(app, target);
 	} finally {
 		target.removeClass("chronicle-exporting");
 	}
 }
 
-async function snapshot(target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
+async function snapshot(app: App, target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
 	const bg = getComputedStyle(document.body).getPropertyValue("--background-primary").trim() || "#ffffff";
 	const canvas = target.querySelector<SVGSVGElement>("svg.chronicle-canvas");
 	const layer = canvas?.querySelector(":scope > g:not(defs)") as SVGGElement | null;
@@ -137,7 +165,7 @@ async function snapshot(target: HTMLElement): Promise<{ svg: string; width: numb
 		for (const [k, v] of Object.entries({ x: box.x - pad, y: box.y - pad, width: w, height: h, fill: bg })) rect.setAttribute(k, String(v));
 		clone.insertBefore(rect, clone.firstChild);
 		clone.querySelectorAll("foreignObject > *").forEach((n) => n.setAttribute("xmlns", XHTML_NS));
-		await embedImages(clone);
+		await embedImages(app, clone);
 		return { svg: new XMLSerializer().serializeToString(clone), width: w, height: h };
 	}
 	// HTML views (timeline, map): a snapshot of what's on screen.
@@ -151,7 +179,7 @@ async function snapshot(target: HTMLElement): Promise<{ svg: string; width: numb
 	clone.style.height = `${h}px`;
 	clone.style.background = bg;
 	clone.setAttribute("xmlns", XHTML_NS);
-	await embedImages(clone);
+	await embedImages(app, clone);
 	const svg = document.createElementNS(SVG_NS, "svg");
 	svg.setAttribute("xmlns", SVG_NS);
 	svg.setAttribute("width", String(w));
@@ -236,7 +264,7 @@ export function withCaption(snap: { svg: string; width: number; height: number }
 export async function exportView(plugin: ChroniclePlugin, target: HTMLElement, name: string, format: "png" | "svg" | "copy" | "decorated", caption?: string) {
 	const notice = new Notice("Making the picture…", 0);
 	try {
-		let snap = await viewToSvg(target);
+		let snap = await viewToSvg(plugin.app, target);
 		const title = name.replace(/^Map:\s*/, "");
 		if (caption && format !== "decorated") snap = withCaption(snap, `${title} · ${caption}`);
 		const { svg, width, height } = format === "decorated" ? decorateMap(snap.svg, snap.width, snap.height, caption ? `${title} · ${caption}` : title) : snap;
@@ -278,7 +306,7 @@ export function exportMenu(plugin: ChroniclePlugin, target: HTMLElement, name: s
 	if (target.querySelector(".chronicle-map")) menu.addItem((i) => i.setTitle("Save as a decorated map (PNG)").setIcon("scroll").onClick(() => void exportView(plugin, target, name, "decorated", cap())));
 	menu.addItem((i) => i.setTitle("Save as SVG (sharp at any size)").setIcon("file-code").onClick(() => void exportView(plugin, target, name, "svg", cap())));
 	menu.addItem((i) => i.setTitle("Copy as image").setIcon("copy").onClick(() => void exportView(plugin, target, name, "copy", cap())));
-	menu.addItem((i) => i.setTitle("Print or save as PDF…").setIcon("printer").onClick(() => void printView(target, name)));
+	menu.addItem((i) => i.setTitle("Print or save as PDF…").setIcon("printer").onClick(() => void printView(plugin.app, target, name)));
 	if (extras.extra) {
 		menu.addSeparator();
 		extras.extra(menu);
@@ -304,7 +332,7 @@ export async function exportTimelapse(plugin: ChroniclePlugin, target: HTMLEleme
 		for (let i = 0; i < frames.length; i++) {
 			notice.setMessage(`Time-lapse: frame ${i + 1} of ${frames.length} (${frames[i].label})…`);
 			await frames[i].go();
-			const shot = withCaption(await viewToSvg(target), `${name.replace(/^Map:\s*/, "")} · ${frames[i].label}`);
+			const shot = withCaption(await viewToSvg(plugin.app, target), `${name.replace(/^Map:\s*/, "")} · ${frames[i].label}`);
 			const png = await svgToPng(shot.svg, shot.width, shot.height);
 			const num = String(i + 1).padStart(2, "0");
 			await vault.createBinary(normalizePath(`${folder}/${num} ${frames[i].label.replace(/[\\/:*?"<>|#^[\]]/g, "-")}.png`), await png.arrayBuffer());
@@ -345,13 +373,13 @@ export async function exportTimelapse(plugin: ChroniclePlugin, target: HTMLEleme
 /**
  * Opens the picture alone in a print window, where the system print dialog can save a PDF.
  */
-export async function printView(target: HTMLElement, name: string) {
+export async function printView(app: App, target: HTMLElement, name: string) {
 	try {
-		const { svg, width, height } = await viewToSvg(target);
+		const { svg, width, height } = await viewToSvg(app, target);
 		const win = window.open("", "_blank", `width=${Math.min(1200, width + 40)},height=${Math.min(900, height + 40)}`);
 		if (!win) throw new Error("The print window was blocked.");
 		win.document.title = name;
-		const holder = win.document.createElement("div");
+		const holder = createDiv();
 		// The picture, parsed as SVG and moved into the print window (not written in as HTML).
 		const parsed = new DOMParser().parseFromString(svg, "image/svg+xml").documentElement;
 		const s = parsed.nodeName.toLowerCase() === "svg" ? (win.document.importNode(parsed, true) as unknown as SVGSVGElement) : null;
@@ -362,7 +390,8 @@ export async function printView(target: HTMLElement, name: string) {
 		}
 		win.document.body.appendChild(holder);
 		// The print window is a page of its own (not Obsidian's): its few styles go in its own stylesheet.
-		const style = win.document.createElement("style");
+		// Made here and moved in with the picture.
+		const style = createEl("style");
 		style.textContent = "@page { margin: 12mm; } body { margin: 0; } svg { display: block; max-width: 100%; }";
 		win.document.head.appendChild(style);
 		window.setTimeout(() => win.print(), 300);

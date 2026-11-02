@@ -59,6 +59,7 @@ export class DuplicatesModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Possible duplicates");
 		this.render();
@@ -151,6 +152,7 @@ export class OrphansModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Loose ends");
 		const links = backlinks(this.plugin);
@@ -201,6 +203,7 @@ export class CleanupModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Tidy kinds and tags");
 		this.render();
@@ -337,6 +340,7 @@ export class CompletenessModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText(this.world ? `How complete is ${this.world}?` : "How complete is the world?");
 		renderCompleteness(this.plugin, this.contentEl, this.world, (e) => {
@@ -358,6 +362,7 @@ export class ContradictionsModal extends Modal {
 	}
 
 	async onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Text that disagrees with properties");
 		const status = el("div", { cls: "chronicle-dash-muted", text: "Reading notes…" }, this.contentEl);

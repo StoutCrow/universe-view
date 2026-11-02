@@ -1,5 +1,5 @@
 import { pluginEnabled } from "../internals";
-import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import type { CalendarDef } from "../types";
@@ -34,6 +34,27 @@ function resolveColor(key: string): string {
 	return "#" + m.slice(0, 3).map((n) => Math.round(+n).toString(16).padStart(2, "0")).join("");
 }
 
+/** The settings' pages, each holding the sections whose headings start as named here (anything else goes on the first). */
+const PAGES: { id: string; label: string; heads: string[] }[] = [
+	{ id: "appearance", label: "Look & cards", heads: ["Appearance", "Views", "About", "Fonts", "Inspector", "Icons", "Hover cards"] },
+	{ id: "notes", label: "Notes", heads: ["Recognising notes", "New notes", "Folder notes", "Writing and families", "Relationships"] },
+	{ id: "time", label: "Time & calendars", heads: ["Timeline", "Calendars"] },
+	{ id: "maps", label: "Maps & realms", heads: ["Maps", "Map look", "Realms and tiers"] },
+	{ id: "tools", label: "Map tools", heads: ["Drawing and snapping", "Fill", "Shaping borders"] },
+];
+
+/** A built row (or block), the blocks that go with it, and whether it has been shown yet. */
+interface Entry {
+	el: HTMLElement;
+	extras: HTMLElement[];
+	used?: boolean;
+}
+
+interface Section {
+	heading: string;
+	group: SettingDefinitionGroup;
+}
+
 export class ChronicleSettingTab extends PluginSettingTab {
 	constructor(app: App, private plugin: ChroniclePlugin) {
 		super(app, plugin);
@@ -44,151 +65,112 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		if (reindex) this.plugin.index.requestRebuild();
 	}
 
-	/** Which settings tab is showing (kept while the page redraws). */
-	private tab = "appearance";
+	/** The page opened from a view's settings button, shown first until the settings close. */
+	private pinned?: string;
 
-	/** How far down each tab was scrolled, so redrawing after a change never jumps back to the top. */
-	private scrolls = new Map<string, number>();
-
-	/** The element that scrolls: the settings page itself, or the modal around it. */
-	private scroller(): HTMLElement {
-		const own = this.containerEl;
-		return own.scrollHeight > own.clientHeight + 1 ? own : own.closest<HTMLElement>(".vertical-tab-content-container, .modal-content") ?? own;
-	}
-
-	display() {
-		// Opened from a view's settings button: start on that view's tab, at the top.
-		if (this.plugin.settingsTabRequest) {
-			this.tab = this.plugin.settingsTabRequest;
-			this.plugin.settingsTabRequest = undefined;
-			this.scrolls.delete(this.tab);
-		} else if (this.containerEl.childElementCount) this.scrolls.set(this.tab, this.scroller().scrollTop);
-		this.build();
-		this.organize();
-		// Back where you were, once the page has its height again.
-		const to = this.scrolls.get(this.tab) ?? 0;
-		this.scroller().scrollTop = to;
-		window.requestAnimationFrame(() => (this.scroller().scrollTop = to));
-	}
+	/** The rows built for the current definitions, each shown once (see show()). */
+	private entries: Entry[] = [];
 
 	/**
-	 * Sorts the page into tabs by section heading, so each tab is one topic instead of one long page.
-	 * Sections are matched by their heading's name; anything unknown lands in the first tab.
+	 * Obsidian's declarative settings: one page per topic, a group per section, an item per row (so
+	 * Obsidian's settings search finds every setting). The rows themselves are built as before and
+	 * moved into the rows Obsidian makes for them.
 	 */
-	private organize() {
-		const box = this.containerEl;
-		const tabs: { id: string; label: string; icon: string; heads: string[] }[] = [
-			{ id: "appearance", label: "Look & cards", icon: "palette", heads: ["Appearance", "Views", "About", "Fonts", "Inspector", "Icons", "Hover cards"] },
-			{ id: "notes", label: "Notes", icon: "file-text", heads: ["Recognising notes", "New notes", "Folder notes", "Writing and families", "Relationships"] },
-			{ id: "time", label: "Time & calendars", icon: "calendar-days", heads: ["Timeline", "Calendars"] },
-			{ id: "maps", label: "Maps & realms", icon: "map", heads: ["Maps", "Map look", "Realms and tiers"] },
-			{ id: "tools", label: "Map tools", icon: "pencil-ruler", heads: ["Drawing and snapping", "Fill", "Shaping borders"] },
-		];
-		if (!tabs.some((t) => t.id === this.tab)) this.tab = tabs[0].id;
-		const children = Array.from(box.children);
-		const bar = el("div", { cls: "chronicle-settings-tabs" });
-		const panels = new Map(tabs.map((t) => [t.id, el("div", { cls: "chronicle-settings-panel" })]));
-		let current = tabs[0].id;
-		for (const child of children) {
-			if (child.hasClass("setting-item-heading")) {
-				const name = (child.querySelector(".setting-item-name")?.textContent ?? "").replace(/\?$/, "").trim();
-				const t = tabs.find((x) => x.heads.some((h) => name.startsWith(h)));
-				if (t) current = t.id;
-			}
-			panels.get(current)!.appendChild(child);
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		if (this.plugin.settingsTabRequest) {
+			this.pinned = this.plugin.settingsTabRequest;
+			this.plugin.settingsTabRequest = undefined;
 		}
-		// Search across every tab: matching settings show with their section's heading, grouped by tab.
-		const top = el("div", { cls: "chronicle-settings-top" });
-		box.appendChild(top);
-		const search = el("div", { cls: "chronicle-settings-search search-input-container" }, top);
-		const input = el("input", { attr: { type: "search", placeholder: "Search all settings…", spellcheck: "false" } }, search);
-		top.appendChild(bar);
-		const none = el("div", { cls: "chronicle-settings-none" });
-		for (const t of tabs) {
-			const b = el("button", { cls: "chronicle-settings-tab" + (t.id === this.tab ? " is-active" : "") }, bar);
-			icon(el("span", {}, b), t.icon);
-			el("span", { text: t.label }, b);
-			const panel = panels.get(t.id)!;
-			panel.toggleClass("is-hidden", t.id !== this.tab);
-			panel.dataset.label = t.label;
-			box.appendChild(panel);
-			b.addEventListener("click", () => {
-				if (this.query) {
-					this.query = "";
-					input.value = "";
-					filter();
-				}
-				// Each tab keeps its own place.
-				this.scrolls.set(this.tab, this.scroller().scrollTop);
-				this.tab = t.id;
-				bar.querySelectorAll(".chronicle-settings-tab").forEach((x) => x.removeClass("is-active"));
-				b.addClass("is-active");
-				panels.forEach((p, id) => p.toggleClass("is-hidden", id !== t.id));
-				this.scroller().scrollTop = this.scrolls.get(t.id) ?? 0;
+		let built: { entries: Entry[]; sections: Section[] };
+		try {
+			built = this.collect();
+		} catch (err) {
+			console.error("UniverseView: couldn't build the settings", err);
+			return [];
+		}
+		this.entries = built.entries;
+		const pages = PAGES.map((p) => ({ ...p, groups: [] as SettingDefinitionGroup[] }));
+		for (const sec of built.sections) (pages.find((p) => p.heads.some((h) => sec.heading.startsWith(h))) ?? pages[0]).groups.push(sec.group);
+		const pinned = pages.find((p) => p.id === this.pinned);
+		return [
+			...(pinned?.groups ?? []),
+			...pages.filter((p) => p !== pinned).map((p): SettingDefinitionPage => ({ type: "page", name: p.label, desc: p.heads.join(", "), items: p.groups })),
+		];
+	}
+
+	hide() {
+		this.pinned = undefined;
+		super.hide();
+	}
+
+	/** Builds every row into a box off the page and sorts them into sections by heading. */
+	private collect(): { entries: Entry[]; sections: Section[] } {
+		const box = createDiv({ cls: "chronicle-settings" });
+		this.build(box);
+		const entries: Entry[] = [];
+		const sections: Section[] = [];
+		let items: SettingDefinition[] | undefined;
+		let last: Entry | undefined;
+		// A row's name or description, without its help mark.
+		const text = (e: Element | null | undefined) => {
+			if (!e) return "";
+			const copy = e.cloneNode(true) as HTMLElement;
+			copy.querySelectorAll(".chronicle-help").forEach((x) => x.remove());
+			return (copy.textContent ?? "").trim();
+		};
+		const section = (heading: string, help?: string) => {
+			items = [];
+			last = undefined;
+			sections.push({
+				heading,
+				group: { type: "group", heading: heading || undefined, cls: "chronicle-settings", items, extraButtons: help ? [(b) => b.setIcon("circle-help").setTooltip(help)] : undefined },
+			});
+		};
+		for (const child of Array.from(box.children) as HTMLElement[]) {
+			if (child.hasClass("setting-item-heading")) {
+				section(text(child.querySelector(".setting-item-name")), child.querySelector<HTMLElement>(".chronicle-help")?.dataset.help);
+				continue;
+			}
+			if (!items) section("");
+			// A row, or a block with a row of its own (a list editor); anything else belongs to the row above.
+			const row = child.hasClass("setting-item") ? child : child.querySelector<HTMLElement>(".setting-item");
+			if (!row && last) {
+				last.extras.push(child);
+				continue;
+			}
+			const i = entries.length;
+			last = { el: child, extras: [] };
+			entries.push(last);
+			items!.push({
+				name: text(row?.querySelector(".setting-item-name")),
+				desc: text(row?.querySelector(".setting-item-description")) || undefined,
+				searchable: !!row,
+				render: (setting) => this.show(i, setting),
 			});
 		}
-		box.appendChild(none);
-		// A setting matches on its name and description, at the start of a word (not inside a dropdown's choices).
-		const textOf = (k: HTMLElement) => {
-			const info = k.querySelector(".setting-item-info");
-			if (info) return info.textContent ?? "";
-			const copy = k.cloneNode(true) as HTMLElement;
-			copy.querySelectorAll("select, option, input").forEach((x) => x.remove());
-			return copy.textContent ?? "";
-		};
-		const filter = () => {
-			const q = this.query.trim().toLowerCase();
-			const re = new RegExp(`(^|[^\\p{L}\\p{N}])${q.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&")}`, "iu");
-			box.toggleClass("is-searching", !!q);
-			let any = false;
-			for (const [id, panel] of panels) {
-				const kids = Array.from(panel.children) as HTMLElement[];
-				if (!q) {
-					kids.forEach((k) => k.removeClass("is-filtered-out"));
-					panel.toggleClass("is-hidden", id !== this.tab);
-					continue;
-				}
-				// Split into sections at each heading; a heading that matches keeps its whole section.
-				let found = false;
-				let section: HTMLElement[] = [];
-				let head: HTMLElement | undefined;
-				const flush = () => {
-					const headHit = !!head && re.test(textOf(head));
-					let hit = false;
-					for (const k of section) {
-						const show = headHit || re.test(textOf(k));
-						k.toggleClass("is-filtered-out", !show);
-						hit ||= show;
-					}
-					head?.toggleClass("is-filtered-out", !hit && !headHit);
-					found ||= hit || headHit;
-					section = [];
-				};
-				for (const k of kids) {
-					if (k.hasClass("setting-item-heading")) {
-						flush();
-						head = k;
-					} else section.push(k);
-				}
-				flush();
-				panel.toggleClass("is-hidden", !found);
-				any ||= found;
-			}
-			none.setText(q && !any ? `No settings match “${this.query.trim()}”.` : "");
-		};
-		input.value = this.query;
-		input.addEventListener("input", () => {
-			this.query = input.value;
-			filter();
-		});
-		input.addEventListener("keydown", (evt) => {
-			if (evt.key === "Escape" && input.value) {
-				evt.stopPropagation();
-				input.value = this.query = "";
-				filter();
-			}
-		});
-		filter();
+		return { entries, sections };
+	}
+
+	/** Moves a built row into the row Obsidian made for it. */
+	private show(i: number, setting: Setting) {
+		// Every built row can be shown once: showing the page again builds them afresh.
+		if (!this.entries[i] || this.entries[i].used) this.entries = this.collect().entries;
+		const e = this.entries[i];
+		if (!e) return;
+		e.used = true;
+		const row = setting.settingEl;
+		row.empty();
+		if (e.el.hasClass("setting-item")) {
+			row.addClass(...Array.from(e.el.classList));
+			row.append(...Array.from(e.el.childNodes));
+		} else {
+			row.addClass("uv-setting-block");
+			row.append(e.el);
+		}
+		if (e.extras.length) {
+			row.addClass("uv-setting-with-extra");
+			row.append(...e.extras);
+		}
 	}
 
 	/** Map tools: how drawing, snapping, Fill and the border tools behave (each tool's banner changes these too). */
@@ -248,13 +230,8 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			}));
 	}
 
-	/** The settings search, kept while the page redraws after a change. */
-	private query = "";
-
-	private build() {
-		const { containerEl } = this;
-		containerEl.empty();
-		containerEl.addClass("chronicle-settings");
+	/** Every row, in order, under its section headings. */
+	private build(containerEl: HTMLElement) {
 		const s = this.plugin.settings;
 
 		this.appearance(containerEl);
@@ -321,7 +298,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 					.onChange(async (v) => {
 						s.typeStyle = v as typeof s.typeStyle;
 						await this.save(false);
-						this.display();
+						this.update();
 					}),
 			);
 		if (s.typeStyle === "tag") {
@@ -580,7 +557,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 					const p = CALENDAR_PRESETS.find((x) => x.id === preset) ?? CALENDAR_PRESETS[0];
 					s.calendars.push({ id: `calendar-${s.calendars.length + 1}`, name: "New calendar", ...p.make() });
 					await this.save();
-					this.display();
+					this.update();
 				}),
 			);
 
@@ -597,7 +574,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				s.tileUrl = DEFAULT_SETTINGS.tileUrl;
 				s.tileAttribution = DEFAULT_SETTINGS.tileAttribution;
 				await this.save(false);
-				this.display();
+				this.update();
 			}));
 		new Setting(containerEl).setName("Tile attribution").addText((t) => t.setValue(s.tileAttribution).onChange(async (v) => {
 			s.tileAttribution = v;
@@ -658,7 +635,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(placeKinds).addButton((b) => b.setButtonText("Reset to the built-in kinds").onClick(async () => {
 			s.mapCategories = DEFAULT_SETTINGS.mapCategories;
 			await this.save(false);
-			this.display();
+			this.update();
 		}));
 
 		// ---- How the map looks: names, pins, borders and fills ---------------------------------
@@ -694,7 +671,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				applyAppearance(s);
 				this.plugin.restyleTerritories?.();
 				new Notice(`Map look: ${p.name}`);
-				this.display();
+				this.update();
 			}))
 			.addExtraButton((b) => b.setIcon("trash-2").setTooltip("Delete this preset (your own only)").onClick(async () => {
 				const mine = s.mapPresets ?? [];
@@ -705,7 +682,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				}
 				mine.splice(i, 1);
 				await this.save(false);
-				this.display();
+				this.update();
 			}));
 		describe();
 		let newName = "";
@@ -726,7 +703,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				else mine.push(preset);
 				await this.save(false);
 				new Notice(`Saved the look as “${newName}”`);
-				this.display();
+				this.update();
 			}));
 		new Setting(containerEl).setName("Name size").setDesc("Place and territory names, as a multiple of their usual size.").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapLabelScale ?? 1).onChange(async (v) => {
 			s.mapLabelScale = v;
@@ -777,7 +754,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				s.riverColor = undefined;
 				await this.save(true);
 				applyAppearance(s);
-				this.display();
+				this.update();
 			}));
 		new Setting(containerEl).setName("Names of regions").setDesc("Show the names of geography (continents, sub-continents, regions) as well as realms.").addToggle((t) => t.setValue(s.regionLabels !== false).onChange(async (v) => {
 			s.regionLabels = v;
@@ -809,7 +786,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 					s.tierNames = Object.keys(p).length ? structuredClone(p) : undefined;
 					await this.save();
 					this.plugin.refreshMaps();
-					this.display();
+					this.update();
 				});
 			});
 		const nameBox = containerEl.createDiv({ cls: "uv-tier-names" });
@@ -832,7 +809,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				.addText((x) => {
 					x.setPlaceholder(builtOne).setValue(own?.one ?? "");
 					x.inputEl.setAttr("aria-label", `Tier ${t}, one`);
-					x.inputEl.addEventListener("change", () => void put("one", x.getValue()).then(() => this.display()));
+					x.inputEl.addEventListener("change", () => void put("one", x.getValue()).then(() => this.update()));
 				})
 				.addText((x) => {
 					x.setPlaceholder(own?.one ? pluralOf(own.one) : builtMany).setValue(own?.many ?? "");
@@ -876,7 +853,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			s.tierStyles = undefined;
 			await this.save(false);
 			this.plugin.restyleTerritories?.();
-			this.display();
+			this.update();
 		}));
 	}
 
@@ -1003,7 +980,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Reset").onClick(async () => {
 					put(undefined);
 					await save();
-					this.display();
+					this.update();
 				}));
 		size("Timeline row height", "Height of each row of events (pixels).", 20, 48, 1, 28, () => s.tlRowHeight, (v) => (s.tlRowHeight = v));
 		size("Timeline label size", "Size of the text on events (pixels).", 10, 18, 1, 12, () => s.tlFontSize, (v) => (s.tlFontSize = v));
@@ -1026,7 +1003,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Use the theme's").onClick(async () => {
 					put(undefined);
 					await save();
-					this.display();
+					this.update();
 				}));
 		tint("Men's tint", () => s.tintMale, (v) => (s.tintMale = v), "#3d7fd9");
 		tint("Women's tint", () => s.tintFemale, (v) => (s.tintFemale = v), "#d24f8a");
@@ -1175,7 +1152,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			s.fileStrength = undefined;
 			await save();
 			this.plugin.repaintFileIcons?.();
-			this.display();
+			this.update();
 		}));
 		new Setting(containerEl)
 			.setName("Note in the status bar")
@@ -1312,7 +1289,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 					CalendarEditorModal.inline(this.plugin, card, c, (next) => void (async (next) => {
 						s.calendars[index] = next;
 						await this.save();
-					})(next), () => this.display());
+					})(next), () => this.update());
 				} catch (err) {
 					console.error("UniverseView: couldn't open the calendar editor", err);
 					new Notice(`Couldn't open the calendar editor: ${err instanceof Error ? err.message : String(err)}`);
@@ -1321,12 +1298,12 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			.addButton((b) => b.setButtonText("Duplicate").onClick(async () => {
 				s.calendars.push({ ...structuredClone(c), id: `${c.id}-copy`, name: `${c.name} (copy)` });
 				await this.save();
-				this.display();
+				this.update();
 			}))
 			.addExtraButton((b) => b.setIcon("trash-2").setTooltip("Delete calendar").onClick(() => {
 				new ConfirmPrompt(this.plugin, `Delete the calendar “${c.name}”?`, "Notes using it fall back to the default.", "Delete", () => {
 					s.calendars.splice(index, 1);
-					void this.save().then(() => this.display());
+					void this.save().then(() => this.update());
 				}).open();
 			}));
 	}

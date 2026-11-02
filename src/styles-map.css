@@ -26,17 +26,17 @@
 .chronicle-territory.is-tier-outline:hover {
 	stroke-width: 6;
 }
-.chronicle-territory-label.is-tier-hidden,
-.chronicle-territory-label.is-crowded {
-	opacity: 0 !important;
+.chronicle-territory-label.is-tier-hidden:not(#uv-strong),
+.chronicle-territory-label.is-crowded:not(#uv-strong) {
+	opacity: 0;
 }
 .chronicle-territory-label.is-realm {
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
 }
-.chronicle-pin-label,
-.chronicle-territory-label {
-	transition: opacity var(--chronicle-label-fade, 150ms) ease !important;
+.chronicle-pin-label:not(#uv-strong),
+.chronicle-territory-label:not(#uv-strong) {
+	transition: opacity var(--chronicle-label-fade, 150ms) ease;
 }
 .chronicle-map-crumbs {
 	position: absolute;
@@ -55,7 +55,31 @@
 	font-size: var(--font-ui-smaller);
 }
 .chronicle-map-crumbs .chronicle-map-crumb {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	cursor: pointer;
 	padding: 2px 6px;
 	border-radius: var(--radius-s);
@@ -112,11 +136,12 @@
 .uv-terr-overlay.uv-pat-grain { fill: #000; filter: url(#uv-grain); }
 .uv-terr-overlay.is-tier-hidden { display: none; }
 .uv-terr-overlay.is-tier-merged { stroke: none; }
-.uv-split-line { stroke: var(--interactive-accent) !important; stroke-dasharray: 8 5; }
-.uv-split-target { fill-opacity: 0.08 !important; }
+.uv-split-line { stroke-dasharray: 8 5; }
+.uv-split-line:not(#uv-strong) { stroke: var(--interactive-accent); }
+.uv-split-target:not(#uv-strong) { fill-opacity: 0.08; }
 .uv-split-piece { cursor: pointer; stroke: var(--terr-color); fill: var(--terr-color); }
 .uv-split-piece.is-suggested { stroke-width: 3px; }
-.uv-split-piece:hover { fill-opacity: 0.5 !important; }
+.uv-split-piece:hover:not(#uv-strong) { fill-opacity: 0.5; }
 
 /* ---- Renamings and editing ---- */
 .uv-lin-rename line { stroke: var(--text-normal); stroke-width: 1.5; stroke-dasharray: 3 2; opacity: 0.6; }
@@ -130,7 +155,8 @@
 .uv-names-add svg { width: 13px; height: 13px; }
 
 /* ---- A realm picked on the map ---- */
-.chronicle-territory.is-picked { stroke-width: 3.5px !important; stroke-opacity: 1 !important; fill-opacity: 0.38 !important; filter: drop-shadow(0 0 6px var(--terr-color)); }
+.chronicle-territory.is-picked { filter: drop-shadow(0 0 6px var(--terr-color)); }
+.chronicle-territory.is-picked:not(#uv-strong) { stroke-width: 3.5px; stroke-opacity: 1; fill-opacity: 0.38; }
 .uv-map-picked { position: absolute; left: 56px; top: 12px; z-index: 1000; min-width: 200px; max-width: min(340px, calc(100% - 80px)); padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--background-primary) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--terr-color); box-shadow: var(--shadow-s); }
 .uv-map-picked-head { display: flex; align-items: center; gap: 6px; }
 .uv-map-picked-head strong { font-family: var(--chronicle-font-display, inherit); }
@@ -227,7 +253,8 @@
 .uv-borders-new-btn svg { width: 14px; height: 14px; color: var(--interactive-accent); }
 
 /* ---- Map tool banners: same look as the sheets, with a real switch ---- */
-.chronicle-map-banner { border-radius: 12px !important; box-shadow: var(--shadow-s); }
+.chronicle-map-banner { box-shadow: var(--shadow-s); }
+.chronicle-map-banner:not(#uv-strong) { border-radius: 12px; }
 .uv-banner-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: var(--font-ui-small); padding: 3px 10px 3px 4px; border-radius: 999px; color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }
 .uv-banner-switch input { position: absolute; opacity: 0; pointer-events: none; }
 .uv-banner-switch-track { position: relative; width: 30px; height: 17px; border-radius: 999px; background: color-mix(in srgb, currentColor 30%, transparent); transition: background 150ms ease; flex: none; }
@@ -276,9 +303,10 @@ body.is-mobile .uv-terr-tool { width: 62px; height: 54px; }
 body.is-mobile .has-terr-editor .leaflet-bottom { display: none; }
 body.is-mobile .uv-map-picked { bottom: calc(var(--uv-bottom-inset, 0px) + 12px); }
 body.is-mobile .uv-shade-legend { bottom: calc(var(--uv-bottom-inset, 0px) + 26px); }
-body.is-mobile .chronicle-map-hint { bottom: calc(var(--uv-bottom-inset, 0px) + 16px) !important; }
+body.is-mobile .chronicle-map-hint:not(#uv-strong) { bottom: calc(var(--uv-bottom-inset, 0px) + 16px); }
 /* A tool's banner: its words across the top, its buttons in a row under them. */
-body.is-mobile .chronicle-map-banner.has-actions { left: 8px !important; right: 8px !important; width: auto; max-width: none; margin: 0; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 8px 8px 8px 12px; font-size: var(--font-ui-smaller); }
+body.is-mobile .chronicle-map-banner.has-actions { width: auto; max-width: none; margin: 0; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 8px 8px 8px 12px; font-size: var(--font-ui-smaller); }
+body.is-mobile .chronicle-map-banner.has-actions:not(#uv-strong) { left: 8px; right: 8px; }
 body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 1 1 100%; }
 /* ---- Quick delete ---- */
 /* Delete sits apart at the far end, away from Edit. */
@@ -288,7 +316,9 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .chronicle-popup-actions .uv-popup-delete:hover { color: var(--color-red); background: color-mix(in srgb, var(--color-red) 12%, transparent); }
 .chronicle-popup-actions .uv-popup-delete svg { width: 14px; height: 14px; }
 /* While splitting, the two pieces are what you click: tools otherwise make territories ignore clicks. */
-.chronicle-map.is-tool .chronicle-territory.uv-split-piece { pointer-events: auto !important; cursor: pointer; }
+.chronicle-territory.is-faded-out:not(#uv-strong) { pointer-events: none; }
+.chronicle-map.is-tool .chronicle-territory.uv-split-piece { cursor: pointer; }
+.chronicle-map.is-tool .chronicle-territory.uv-split-piece:not(#uv-strong) { pointer-events: auto; }
 /* The territory editor sits along the bottom: the map's bottom controls (legend, scale) lift above it. */
 .has-terr-editor .leaflet-bottom { bottom: 112px; transition: bottom 150ms ease; }
 .uv-banner-segments { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, currentColor 14%, transparent); }
@@ -310,14 +340,14 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .chronicle-toolbar .chronicle-chip .chronicle-chip-count:empty { display: none; }
 
 /* ---- Export: the map as a picture, without the buttons and pop-ups around it ---- */
-.chronicle-exporting .leaflet-control-zoom,
-.chronicle-exporting .leaflet-control-attribution,
-.chronicle-exporting .leaflet-popup-pane,
-.chronicle-exporting .chronicle-map-crumbs,
-.chronicle-exporting .chronicle-map-banner,
-.chronicle-exporting .chronicle-map-hint,
-.chronicle-exporting .uv-terr-editor,
-.chronicle-exporting .uv-map-picked { display: none !important; }
+.chronicle-exporting .leaflet-control-zoom:not(#uv-strong),
+.chronicle-exporting .leaflet-control-attribution:not(#uv-strong),
+.chronicle-exporting .leaflet-popup-pane:not(#uv-strong),
+.chronicle-exporting .chronicle-map-crumbs:not(#uv-strong),
+.chronicle-exporting .chronicle-map-banner:not(#uv-strong),
+.chronicle-exporting .chronicle-map-hint:not(#uv-strong),
+.chronicle-exporting .uv-terr-editor:not(#uv-strong),
+.chronicle-exporting .uv-map-picked:not(#uv-strong) { display: none; }
 .chronicle-exporting .uv-battle.is-latest { animation: none; }
 
 /* ---- Border check panel ---- */
@@ -349,19 +379,21 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .chronicle-territory.uv-check-flash { animation: uv-check-flash 0.6s ease-in-out 3; }
 @keyframes uv-check-flash { 50% { stroke-width: 6px; fill-opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) { .uv-check-mark, .chronicle-territory.uv-check-flash { animation: none; } }
-.chronicle-exporting .uv-check-panel { display: none !important; }
+.chronicle-exporting .uv-check-panel:not(#uv-strong) { display: none; }
 
 /* ---- Strategy look: political colours, a border hierarchy, names across the land ---- */
 /* From afar (--uv-political 1) the colours are solid; close up (0) the drawn map shows through. */
 .chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft) {
-	fill-opacity: calc(0.1 + 0.62 * var(--uv-political, 0)) !important;
 	stroke: color-mix(in srgb, var(--terr-color) 55%, #000);
-	stroke-width: 0.8px !important;
-	stroke-opacity: calc(0.75 - 0.45 * var(--uv-political, 0)) !important;
 }
-.chronicle-map.uv-strategy .chronicle-territory.is-tier-merged { stroke-opacity: 0 !important; }
-.chronicle-map.uv-strategy .chronicle-territory.is-tier-outline { stroke-opacity: 0 !important; }
-.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):hover { fill-opacity: calc(0.2 + 0.55 * var(--uv-political, 0)) !important; }
+.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft):not(#uv-strong) {
+	fill-opacity: calc(0.1 + 0.62 * var(--uv-political, 0));
+	stroke-width: 0.8px;
+	stroke-opacity: calc(0.75 - 0.45 * var(--uv-political, 0));
+}
+.chronicle-map.uv-strategy .chronicle-territory.is-tier-merged:not(#uv-strong) { stroke-opacity: 0; }
+.chronicle-map.uv-strategy .chronicle-territory.is-tier-outline:not(#uv-strong) { stroke-opacity: 0; }
+.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):hover:not(#uv-strong) { fill-opacity: calc(0.2 + 0.55 * var(--uv-political, 0)); }
 .chronicle-map.uv-strategy .uv-terr-overlay { opacity: calc(1 - 0.4 * var(--uv-political, 0)); }
 /* One border round each realm: a dark line on a light halo, thickest for the top realm. */
 .uv-realm-edge { stroke: color-mix(in srgb, var(--terr-color) 35%, #120d08); stroke-linejoin: round; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(255, 248, 230, 0.75)); }
@@ -379,7 +411,7 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 /* In the strategy look the realm names replace the small area labels (geography keeps its own). */
 .chronicle-map.uv-strategy .chronicle-territory-label:not(.is-region) { display: none; }
 /* Terrain mode: no colour, just the borders over the drawn map. */
-.chronicle-map.uv-paint-terrain .chronicle-territory { fill-opacity: 0 !important; }
+.chronicle-map.uv-paint-terrain .chronicle-territory:not(#uv-strong) { fill-opacity: 0; }
 .chronicle-map.uv-paint-terrain .uv-realm-name text { fill: rgba(28, 20, 12, 0.7); }
 @media (prefers-reduced-motion: no-preference) { .uv-realm-name { transition: opacity 200ms ease; } }
 

@@ -144,6 +144,7 @@ export class ConvertModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Convert a date");
 		const cals = this.plugin.calendars.all();

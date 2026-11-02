@@ -2,6 +2,12 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.2.0 — 2026-11-02
+- **Needs Obsidian 1.13 or later.** Settings use Obsidian's new settings pages: five pages (*Look & cards*, *Notes*, *Time & calendars*, *Maps & realms*, *Map tools*), and every setting is found by Obsidian's own settings search. A section's help is the ? beside its heading. Opening settings from a view's settings button shows that view's settings first.
+- The facts infobox in a note (`chronicle-facts`) shows again; it had collapsed to nothing.
+- Exporting a picture reads the vault's own images through Obsidian, so they're embedded byte for byte.
+- Styles reworked for Obsidian's style review: no `!important`, `:has()`, `all: unset` or multi-column layout. Small differences: the relationship groups on the dashboard line up in a grid, and invalid table cells are underlined straight instead of wavy.
+
 ## 1.1.3 — 2026-11-01
 - Notices you can click (a file just saved, a saved view's link) respond to a click on their message, without Obsidian's deprecated notice element.
 - The red Merge buttons in tidying use the warning style directly instead of a deprecated method.

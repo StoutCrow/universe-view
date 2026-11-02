@@ -183,6 +183,7 @@ export class AddRelationModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope");
 		this.titleEl.setText(`${this.self.name}: add to “${this.spec.label}”`);
 		let nameInput!: HTMLInputElement;

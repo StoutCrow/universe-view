@@ -60,6 +60,8 @@ class ChronicleBlock extends MarkdownRenderChild {
 		const mount = () => {
 			try {
 				this.renderer = this.make(host);
+				// Blocks that size to their content drop the fixed height.
+				if (host.hasClass("is-auto-height")) host.style.removeProperty("height");
 			} catch (err) {
 				showError(this.containerEl, (err as Error).message);
 			}

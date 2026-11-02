@@ -20,7 +20,7 @@ body {
 	--chronicle-grid: var(--background-modifier-border);
 	--chronicle-font-display: var(--font-interface);
 	/* Motion: durations scale with the "Motion" setting (--chronicle-speed). */
-	--chronicle-speed: 1;
+	--chronicle-speed: var(--chronicle-user-speed, 1);
 	--chronicle-ease: cubic-bezier(0.22, 0.8, 0.24, 1);
 	--chronicle-fast: calc(120ms * var(--chronicle-speed));
 	--chronicle-med: calc(220ms * var(--chronicle-speed));
@@ -34,7 +34,7 @@ body.chronicle-flat {
 }
 @media (prefers-reduced-motion: reduce) {
 	body {
-		--chronicle-speed: 0.001 !important;
+		--chronicle-speed: 0.001;
 	}
 }
 
@@ -901,9 +901,8 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	isolation: isolate;
 }
 .chronicle-map-canvas {
-	/* !important: Leaflet writes position: relative inline when the map is created before the
-	   code block is attached to the page, which would collapse the map to zero height. */
-	position: absolute !important;
+	/* Also set on the element before Leaflet starts, so Leaflet leaves it (it makes an unpositioned box relative). */
+	position: absolute;
 	inset: 0;
 	background: var(--background-secondary);
 	font-family: var(--font-interface);
@@ -917,10 +916,6 @@ g.is-dimmed .chronicle-net-link.is-lit {
 }
 .chronicle-map-banner,
 .chronicle-map-hint {
-	position: absolute !important;
-	inset: auto !important;
-	top: 12px !important;
-	left: 50% !important;
 	transform: translateX(-50%);
 	z-index: 1000;
 	padding: 6px 14px;
@@ -932,6 +927,13 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	pointer-events: none;
 	white-space: nowrap;
 }
+.chronicle-map-banner:not(#uv-strong),
+.chronicle-map-hint:not(#uv-strong) {
+	position: absolute;
+	inset: auto;
+	top: 12px;
+	left: 50%;
+}
 .chronicle-map-hint {
 	background: var(--background-primary);
 	color: var(--text-muted);
@@ -939,8 +941,10 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	white-space: normal;
 	max-width: 80%;
 	text-align: center;
-	top: auto !important;
-	bottom: 24px !important;
+}
+.chronicle-map-hint:not(#uv-strong) {
+	top: auto;
+	bottom: 24px;
 }
 .chronicle-pin-wrap {
 	background: none;
@@ -1218,9 +1222,6 @@ g.is-dimmed .chronicle-net-link.is-lit {
 .chronicle-linklist:focus-within {
 	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
-.chronicle-linklist-chips {
-	display: contents;
-}
 .chronicle-linklist input[type="text"] {
 	flex: 1;
 	min-width: 90px;
@@ -1382,7 +1383,31 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	margin-bottom: 16px;
 }
 button.chronicle-ov-tile {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;

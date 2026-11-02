@@ -138,7 +138,31 @@
 	background: var(--background-modifier-hover);
 }
 .chronicle-segmented .chronicle-segment {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;

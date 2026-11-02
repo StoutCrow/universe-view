@@ -59,13 +59,12 @@ export class LinkList {
 	values: string[];
 	/** Called when a link is added or removed. */
 	onChange?: () => void;
-	private chips: HTMLElement;
+	private box: HTMLElement;
 	private input: HTMLInputElement;
 
 	constructor(parent: HTMLElement, private plugin: ChroniclePlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false) {
 		this.values = [...initial];
-		const box = el("div", { cls: "chronicle-linklist" }, parent);
-		this.chips = el("div", { cls: "chronicle-linklist-chips" }, box);
+		const box = (this.box = el("div", { cls: "chronicle-linklist" }, parent));
 		this.input = el("input", { attr: { type: "text", placeholder } }, box);
 		new EntityInputSuggest(plugin.app, this.input, plugin, types, (e) => {
 			this.add(e.name);
@@ -102,9 +101,11 @@ export class LinkList {
 	}
 
 	private render() {
-		this.chips.empty();
+		// The chips sit in the same row as the input, before it.
+		this.box.querySelectorAll(":scope > .chronicle-linkchip").forEach((c) => c.remove());
 		for (const v of this.values) {
-			const chip = el("span", { cls: "chronicle-linkchip" }, this.chips);
+			const chip = createSpan({ cls: "chronicle-linkchip" });
+			this.box.insertBefore(chip, this.input);
 			const known = !!this.plugin.index.findByName(v);
 			if (!known) chip.addClass("is-unresolved");
 			el("span", { text: v }, chip);

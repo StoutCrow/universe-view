@@ -684,10 +684,52 @@ export class Setting {
 
 export class PluginSettingTab {
 	containerEl = document.createElement("div");
+	settingItems: any[] = [];
 	constructor(public app: any, public plugin: any) {
 		this.containerEl.className = "vertical-tab-content";
 	}
-	display() {}
+	getSettingDefinitions(): any[] {
+		return [];
+	}
+	// Obsidian 1.13's declarative settings, roughly: pages as links, groups under headings, items rendered into rows.
+	display() {
+		this.update();
+	}
+	update() {
+		this.settingItems = this.getSettingDefinitions();
+		this.renderItems(this.settingItems);
+	}
+	refreshDomState() {}
+	hide() {}
+	private renderItems(items: any[], page?: string) {
+		const box = this.containerEl;
+		box.empty();
+		if (page) {
+			box.createEl("button", { text: "‹ Back", cls: "mock-settings-back" }).addEventListener("click", () => this.renderItems(this.settingItems));
+			box.createEl("h2", { text: page });
+		}
+		for (const it of items) {
+			if (it.type === "page") {
+				const s = new Setting(box).setName(it.name).setDesc(it.desc ?? "");
+				s.settingEl.addClass("mock-settings-page");
+				s.settingEl.addEventListener("click", () => this.renderItems(it.items ?? [], it.name));
+			} else if (it.type === "group" || it.type === "list") {
+				const g = box.createDiv({ cls: ["setting-group", ...(it.cls ? [it.cls] : [])] });
+				if (it.heading) {
+					const h = g.createDiv("setting-item setting-item-heading");
+					h.createDiv("setting-item-name").setText(it.heading);
+					for (const b of it.extraButtons ?? []) b(new ButtonComponent(h, true));
+				}
+				const list = g.createDiv("setting-items");
+				for (const x of it.items ?? []) this.renderOne(x, list);
+			} else this.renderOne(it, box);
+		}
+	}
+	private renderOne(def: any, parent: HTMLElement) {
+		const s = new Setting(parent).setName(def.name ?? "");
+		if (typeof def.desc === "string") s.setDesc(def.desc);
+		def.render?.(s, { listEl: parent });
+	}
 }
 
 // ---- Workspace -------------------------------------------------------------------------------------

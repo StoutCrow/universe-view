@@ -37,6 +37,7 @@ export class QuickAddModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-quickadd");
 		this.titleEl.setText("Quick add");
 		const p = this.plugin;
@@ -692,6 +693,7 @@ export class SuggestionsModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText(`Found in ${this.file.basename}'s text`);
 		if (!this.found.length) el("div", { cls: "chronicle-dash-muted", text: "No new family links found in the text." }, this.contentEl);
@@ -830,6 +832,7 @@ export class ContinuityModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		const idx = this.plugin.index;
 		const scene = idx.scenes.find((s) => s.path === this.path);
@@ -875,6 +878,7 @@ export class PromptsModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText("Story ideas from your world");
 		const list = el("div", {}, this.contentEl);

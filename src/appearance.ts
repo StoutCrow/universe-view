@@ -75,7 +75,7 @@ export function motionMs(settings: ChronicleSettings, base: number): number {
 
 const BODY_VARS = [
 	"--chronicle-user-accent", "--chronicle-user-event", "--chronicle-user-person", "--chronicle-user-culture", "--chronicle-user-place",
-	"--chronicle-speed", "--chronicle-ease", "--chronicle-density", "--chronicle-user-radius", "--uv-map-label-scale", "--uv-pin-scale",
+	"--chronicle-user-speed", "--chronicle-ease", "--chronicle-density", "--chronicle-user-radius", "--uv-map-label-scale", "--uv-pin-scale",
 	"--chronicle-tl-row-height", "--chronicle-tl-font-size", "--chronicle-card-width", "--chronicle-card-height", "--chronicle-male-tint", "--chronicle-female-tint", "--uv-river-color",
 ];
 
@@ -105,7 +105,7 @@ export function applyAppearance(s: ChronicleSettings) {
 	set("--chronicle-user-culture", s.colors.culture);
 	set("--chronicle-user-place", s.colors.place);
 	const m = MOTIONS.find((x) => x.id === s.motion) ?? MOTIONS[2];
-	set("--chronicle-speed", String(m.speed));
+	set("--chronicle-user-speed", String(m.speed));
 	set("--chronicle-ease", m.ease);
 	set("--chronicle-density", String(DENSITY[s.density] ?? 1));
 	set("--chronicle-user-radius", s.radius >= 0 ? `${s.radius}px` : undefined);

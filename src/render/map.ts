@@ -289,6 +289,8 @@ export class MapRenderer {
 	) {
 		this.root = el("div", { cls: "chronicle-map" + (embedded ? " is-embedded" : "") }, container);
 		this.mapEl = el("div", { cls: "chronicle-map-canvas" }, this.root);
+		// Leaflet makes its box position: relative unless it is already positioned (it may not be in the page yet).
+		this.mapEl.setCssStyles({ position: "absolute" });
 		this.resizeObs = new ResizeObserver(() => {
 			if (!this.map) return;
 			this.map.invalidateSize();
@@ -976,10 +978,14 @@ export class MapRenderer {
 		}
 		if (logo) {
 			dot.addClass("has-logo");
+			html.addClass("has-glyph");
 			el("img", { attr: { src: logo, alt: "", draggable: "false" } }, dot);
 		} else if (iconName) {
 			const g = el("span", { cls: "chronicle-pin-glyph" }, dot);
-			if (glyph(g, iconName)) dot.addClass("has-icon");
+			if (glyph(g, iconName)) {
+				dot.addClass("has-icon");
+				html.addClass("has-glyph");
+			}
 			else g.remove();
 		}
 		if (events.length) el("span", { cls: "chronicle-pin-count", text: String(events.length) }, html);
@@ -2572,9 +2578,10 @@ export class MapRenderer {
 			const path = l.getElement() as HTMLElement | undefined;
 			if (path) {
 				path.style.opacity = fade >= 1 ? "" : String(fade);
-				path.style.pointerEvents = fade < 0.2 ? "none" : "";
+				path.classList.toggle("is-faded-out", fade < 0.2);
 			}
-			label.style.opacity = fade >= 1 ? "" : String(Math.max(0, fade * 2 - 1));
+			if (fade >= 1) label.style.removeProperty("--uv-fade");
+			else label.style.setProperty("--uv-fade", String(Math.max(0, fade * 2 - 1)));
 		});
 	}
 
@@ -3370,6 +3377,7 @@ export class MapRenderer {
 			{ label: "Save", cta: true, run: () => void done() },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			this.slider(controls, "Strength", "How far off the line, in screen pixels, a corner may sit and still go", 1, 15, px, (v) => {
 				px = v;
 				this.plugin.settings.simplifyPx = v;
@@ -3568,6 +3576,7 @@ export class MapRenderer {
 			{ label: "Done", cta: true, run: done },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			const mode = el("button", { cls: "chronicle-banner-toggle", text: "Rub out", attr: { title: "Take land out of the area instead of adding it" } }, controls);
 			mode.addEventListener("click", (evt) => {
 				evt.stopPropagation();
@@ -3783,6 +3792,7 @@ export class MapRenderer {
 			{ label: "Finish", cta: true, run: finish },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			const kind = el("select", { cls: "chronicle-fill-select", attr: { "aria-label": "Kind of route" } }, controls);
 			for (const [v, t] of ROUTE_KINDS) kind.add(new Option(t, v));
 			kind.value = this.routeKind;
@@ -4182,6 +4192,7 @@ export class MapRenderer {
 			],
 			(b) => {
 				const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 				// Like a paint bucket: everything of the clicked kind of ground, or (as before) everything of the clicked colour.
 				const by = el("select", { cls: "chronicle-fill-select", attr: { title: "Fill all the land (or water) joined to the click, whatever is drawn on it; or only the clicked colour" } }, controls);
 				for (const [v, t] of [["ground", "Fill land / sea"], ["colour", "Fill same colour"]]) {
@@ -4778,6 +4789,7 @@ export class MapRenderer {
 			},
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			// What to draw, as buttons rather than a dropdown.
 			const seg = el("div", { cls: "uv-banner-segments" }, controls);
 			for (const [v, t, ic] of [["note", "Note", "sticky-note"], ["arrow", "Arrow", "move-up-right"], ["line", "Line", "spline"]] as const) {
@@ -4941,6 +4953,7 @@ export class MapRenderer {
 		});
 		this.showBanner(`How far from ${name}: rings at 1, 3, 7 and 14 days of travel in a straight line`, [{ label: "Done", cta: true, run: () => this.endMode() }], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			const sel = el("select", { cls: "chronicle-fill-select", attr: { "aria-label": "Way of travelling" } }, controls);
 			for (const [v, t] of [["foot", "On foot"], ["horse", "By horse"], ["wagon", "By wagon"], ["boat", "By river boat"], ["ship", "By ship"]]) sel.add(new Option(t, v));
 			sel.value = mode;
@@ -5081,6 +5094,7 @@ export class MapRenderer {
 			{ label: "Save", cta: true, run: save },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			const tol = el("label", { cls: "chronicle-fill-control", title: "How different a colour can be and still count as land" }, controls);
 			el("span", { text: "Tolerance" }, tol);
 			const range = el("input", { attr: { type: "range", min: "2", max: "60", step: "1" } }, tol);
@@ -5184,6 +5198,7 @@ export class MapRenderer {
 			{ label: "Save as areas…", cta: true, run: asAreas },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			this.slider(controls, "Tolerance", "How different a colour can be and still count as sea", 4, 60, opts.tolerance, (v) => {
 				opts.tolerance = v;
 				compute();
@@ -5306,6 +5321,7 @@ export class MapRenderer {
 			{ label: "Save as routes…", cta: true, run: save },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
 			const sel = el("select", { cls: "chronicle-fill-select", attr: { "aria-label": "What kind of route" } }, controls);
 			for (const [v, t] of ROUTE_KINDS) if (v !== "border") sel.add(new Option(t, v));
 			sel.value = kind;

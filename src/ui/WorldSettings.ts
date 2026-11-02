@@ -22,6 +22,7 @@ export class WorldSettingsModal extends Modal {
 		const idx = p.index;
 		const folder = this.folder;
 		const world = idx.worlds.get(folder);
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
 		this.titleEl.setText(`World settings: ${folder || this.app.vault.getName()}`);
 		const box = this.contentEl;

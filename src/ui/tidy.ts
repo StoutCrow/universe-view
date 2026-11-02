@@ -66,6 +66,7 @@ export class TidyModal extends Modal {
 	}
 
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-tidy");
 		this.titleEl.setText("Move notes into their folder notes");
 		const moves = tidyPlan(this.plugin, this.world);

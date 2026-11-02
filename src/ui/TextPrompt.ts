@@ -8,6 +8,7 @@ export class TextPrompt extends Modal {
 		super(plugin.app);
 	}
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope");
 		this.titleEl.setText(this.heading);
 		const input = el("input", { attr: { type: "text" } }, this.contentEl);
@@ -38,6 +39,7 @@ export class ConfirmPrompt extends Modal {
 		super(plugin.app);
 	}
 	onOpen() {
+		this.containerEl.addClass("chronicle-scope-host");
 		this.modalEl.addClass("chronicle-scope");
 		this.titleEl.setText(this.heading);
 		for (const para of this.message.split("\n\n")) el("p", { text: para }, this.contentEl);

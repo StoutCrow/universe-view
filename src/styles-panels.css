@@ -213,7 +213,31 @@
 	gap: 2px;
 }
 .chronicle-ep .chronicle-ep-crumb {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	cursor: pointer;
 	padding: 1px 7px;
 	border-radius: 999px;
@@ -347,7 +371,31 @@
 	height: 12px;
 }
 .chronicle-ep .chronicle-ep-section-action {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	margin-left: auto;
 	cursor: pointer;
 	padding: 0 6px;
@@ -366,7 +414,31 @@
 	gap: 4px;
 }
 .chronicle-ep .chronicle-ep-person {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	box-sizing: border-box;
 	display: inline-flex;
 	align-items: center;
@@ -511,7 +583,31 @@
 	border-top: 1px solid var(--background-modifier-border);
 }
 .chronicle-ep .chronicle-ep-action {
-	all: unset;
+	/* Not styled as a button. */
+	appearance: none;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	text-transform: inherit;
+	letter-spacing: inherit;
+	line-height: inherit;
+	white-space: inherit;
+	cursor: inherit;
+	user-select: auto;
+	gap: normal;
+	align-items: normal;
+	justify-content: normal;
 	box-sizing: border-box;
 	display: inline-flex;
 	align-items: center;
@@ -671,7 +767,9 @@
 /* Fades in over a moment; can't be clicked until it's fully there. */
 .chronicle-hovercard {
 	width: var(--chronicle-hc-width, 340px);
-	transition: opacity var(--chronicle-hc-fade, 220ms) ease, transform var(--chronicle-hc-fade, 220ms) ease !important;
+}
+.chronicle-hovercard:not(#uv-strong) {
+	transition: opacity var(--chronicle-hc-fade, 220ms) ease, transform var(--chronicle-hc-fade, 220ms) ease;
 }
 .chronicle-hovercard:not(.is-interactive):not(.is-pinned) {
 	pointer-events: none;
@@ -691,14 +789,16 @@
    see-through themes such as Transparent: a solid background and a dimmed backdrop, so the window
    behind doesn't show through and look as if it were in front. */
 .modal.chronicle-scope {
-	background-color: var(--background-primary) !important;
-	-webkit-backdrop-filter: none !important;
-	backdrop-filter: none !important;
 	box-shadow: var(--shadow-l), 0 0 0 1px var(--background-modifier-border);
 }
-.modal-container:has(> .modal.chronicle-scope) > .modal-bg {
-	opacity: 0.55 !important;
-	background-color: #000 !important;
+.modal.chronicle-scope:not(#uv-strong) {
+	background-color: var(--background-primary);
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+}
+/* The backdrop is drawn at Obsidian's own opacity (0.85), so this colour comes out as black at 0.55. */
+.modal-container.chronicle-scope-host > .modal-bg {
+	background-color: rgb(0 0 0 / 0.65);
 	-webkit-backdrop-filter: blur(2px);
 	backdrop-filter: blur(2px);
 }
@@ -710,9 +810,12 @@
 /* ---- Mini map in hover cards ---- */
 .uv-minimap { margin: 6px 0 2px; border-radius: 8px; background: var(--background-secondary); padding: 6px; position: relative; }
 .uv-minimap svg { width: 100%; height: 110px; display: block; }
-.uv-mm-context { fill: color-mix(in srgb, var(--c) 8%, transparent); stroke: color-mix(in srgb, var(--c) 45%, var(--text-faint)); stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; stroke-width: 1px !important; }
-.uv-mm-own { fill: color-mix(in srgb, var(--c) 38%, transparent); stroke: var(--c); vector-effect: non-scaling-stroke; stroke-width: 1.6px !important; }
-.uv-mm-vassal { fill: none; stroke: color-mix(in srgb, var(--c) 55%, var(--background-primary)); vector-effect: non-scaling-stroke; stroke-width: 0.8px !important; }
+.uv-mm-context { fill: color-mix(in srgb, var(--c) 8%, transparent); stroke: color-mix(in srgb, var(--c) 45%, var(--text-faint)); stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.uv-mm-context:not(#uv-strong) { stroke-width: 1px; }
+.uv-mm-own { fill: color-mix(in srgb, var(--c) 38%, transparent); stroke: var(--c); vector-effect: non-scaling-stroke; }
+.uv-mm-own:not(#uv-strong) { stroke-width: 1.6px; }
+.uv-mm-vassal { fill: none; stroke: color-mix(in srgb, var(--c) 55%, var(--background-primary)); vector-effect: non-scaling-stroke; }
+.uv-mm-vassal:not(#uv-strong) { stroke-width: 0.8px; }
 .uv-mm-dot { fill: var(--c); stroke: var(--background-primary); stroke-width: 1px; vector-effect: non-scaling-stroke; }
 .uv-minimap-caption { position: absolute; right: 10px; bottom: 6px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
@@ -778,7 +881,7 @@
 .uv-fold-chevron { margin-left: auto; display: inline-flex; color: var(--text-faint); transition: transform 150ms ease; }
 .uv-fold-chevron svg { width: 13px; height: 13px; }
 .uv-foldable.is-folded > .uv-fold-chevron, .uv-foldable.is-folded > * > .uv-fold-chevron { transform: rotate(-90deg); }
-.uv-foldable.is-folded > :not(.chronicle-insp-section-head):not(.chronicle-ep-section-head) { display: none !important; }
+.uv-foldable.is-folded > :not(.chronicle-insp-section-head):not(.chronicle-ep-section-head):not(#uv-strong) { display: none; }
 .uv-foldable.is-folded { padding-bottom: 8px; }
 .chronicle-insp-tab { border-radius: 999px; }
 .uv-insp-fact-value { overflow-wrap: anywhere; }

@@ -347,11 +347,13 @@ button.chronicle-dash-stat.is-active {
 	padding: 3px 0;
 }
 .chronicle-dash-rel-groups {
-	columns: 2 260px;
-	column-gap: 20px;
+	/* Up to two columns, each at least 260px. */
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(max(260px, calc((100% - 20px) / 2)), 1fr));
+	gap: 0 20px;
+	align-items: start;
 }
 .chronicle-dash-rel-group {
-	break-inside: avoid;
 	margin-bottom: 12px;
 }
 .chronicle-dash-rel-head {
@@ -977,8 +979,8 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	opacity: 0;
 	pointer-events: none;
 }
-.chronicle-pin-wrap.is-layer-hidden * {
-	pointer-events: none !important;
+.chronicle-pin-wrap.is-layer-hidden *:not(#uv-strong) {
+	pointer-events: none;
 }
 .chronicle-pin.pin-size-tiny .chronicle-pin-label,
 .chronicle-pin.pin-size-small .chronicle-pin-label {
@@ -1216,10 +1218,10 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 	justify-content: flex-end;
 	align-items: flex-start;
 }
-.chronicle-exporting,
-.chronicle-exporting * {
-	animation: none !important;
-	transition: none !important;
+.chronicle-exporting:not(#uv-strong),
+.chronicle-exporting *:not(#uv-strong) {
+	animation: none;
+	transition: none;
 }
 
 /* ---- Timeline: battles and the picked item's card ---- */
@@ -1276,7 +1278,7 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 .uv-net-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .uv-net-card-actions button { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; font-size: var(--font-ui-smaller); }
 .uv-net-card-actions svg { width: 12px; height: 12px; }
-.chronicle-exporting .uv-net-card { display: none !important; }
+.chronicle-exporting .uv-net-card:not(#uv-strong) { display: none; }
 
 /* Board linked: what you can pick shows it. */
 .chronicle-board.is-linked .chronicle-module-body [data-key] { cursor: crosshair; }
