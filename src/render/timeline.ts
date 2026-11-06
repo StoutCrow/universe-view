@@ -9,7 +9,8 @@ import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
 import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
-import { battlesOf, isBattle, occupationsByLand, sidesOf, warOf } from "../index/wars";
+import { battlesOf, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
+import { causePath, packRows, type Box } from "./timelinerows";
 import { KIND_LABELS, categoryColor, categoryOf, type ItemKind } from "./categories";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
@@ -40,12 +41,14 @@ export interface TimelineOptions {
 	occupations?: boolean;
 	/** Categories left off the timeline (see categoryOf): "battle", "kind:person"… */
 	hiddenCategories?: string[];
+	/** How tall the rows are, as a multiple of the row height in settings. */
+	rowZoom?: number;
 }
 
 
 export const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	filter: {},
-	group: "none",
+	group: "category",
 	lifespans: true,
 	lifeEvents: false,
 	cultures: true,
@@ -82,6 +85,8 @@ interface Placed {
 	x1: number;
 	x2: number;
 	labelInside: boolean;
+	/** Zoomed out past the layout, there's no room for its label beside the next thing in its row. */
+	noLabel?: boolean;
 	/** Points too close to tell apart at this zoom, shown as one marker with a count. */
 	cluster?: Item[];
 }
@@ -123,6 +128,10 @@ export class TimelineRenderer {
 	private drag: { x: number; start: number; moved: boolean; id: number } | null = null;
 	/** An event was just dragged to a new date (so the click that ends the drag doesn't open it). */
 	private itemMoved = false;
+	/** Each lane's rows, worked out once from the data, not the zoom. */
+	private rowsByLane = new Map<string, { rows: Map<string, number>; count: number }>();
+	private layoutScale = 1;
+	private pendingScroll?: number;
 
 	constructor(
 		private container: HTMLElement,
@@ -170,6 +179,8 @@ export class TimelineRenderer {
 	refresh() {
 		this.items = this.collectItems();
 		this.width = this.root.clientWidth || this.width;
+		this.rowsByLane.clear();
+		this.layoutScale = this.fitScale(fitRange(this.items));
 		// Ids carry their place in the list, which can shift: the card follows the same thing, updated.
 		if (this.selected) {
 			const base = this.selected.replace(/:\d+$/, "");
@@ -196,7 +207,7 @@ export class TimelineRenderer {
 		this.options.hiddenCategories = hidden;
 		const out = new Map<string, { id: string; label: string; count: number }>();
 		for (const it of items) {
-			const [id, label] = categoryOf(it.kind, it.entity.category);
+			const [id, label] = this.categoryIn(it);
 			const c = out.get(id) ?? { id, label, count: 0 };
 			c.count++;
 			out.set(id, c);
@@ -324,15 +335,21 @@ export class TimelineRenderer {
 			for (let i = out.length - 1; i >= 0; i--) if (!known.has(out[i].key)) out.splice(i, 1);
 		}
 		// Every category there is (hidden ones too), so each keeps the same colour however it's filtered.
-		this.catOrder = [...new Set(out.map((it) => categoryOf(it.kind, it.entity.category)[0]))].sort();
+		this.catOrder = [...new Set(out.map((it) => this.categoryIn(it)[0]))].sort();
 		// Categories turned off in the Categories menu.
 		const hidden = new Set(options.hiddenCategories ?? []);
-		if (hidden.size) for (let i = out.length - 1; i >= 0; i--) if (hidden.has(categoryOf(out[i].kind, out[i].entity.category)[0])) out.splice(i, 1);
+		if (hidden.size) for (let i = out.length - 1; i >= 0; i--) if (hidden.has(this.categoryIn(out[i])[0])) out.splice(i, 1);
 		// Organised by category, each takes its category's colour, so the kinds of event read at a glance.
-		if (options.group === "category") for (const it of out) it.color = this.colorOf(categoryOf(it.kind, it.entity.category)[0]);
+		if (options.group === "category") for (const it of out) it.color = this.colorOf(this.categoryIn(it)[0]);
 		// Index ids are per-kind, but life events produce two items per person.
 		out.forEach((it, i) => (it.id += ":" + i));
 		return out.sort((a, b) => a.start - b.start || b.importance - a.importance);
+	}
+
+	/** Filed by the note's own category, or for a battle or war with none, as what it plainly is. */
+	private categoryIn(it: Item): [string, string] {
+		const e = it.entity;
+		return categoryOf(it.kind, e.category ?? (isBattle(e) ? "battle" : namedAsWar(e) ? "war" : undefined));
 	}
 
 	private groupsOf(it: Item): [string, string][] {
@@ -341,7 +358,7 @@ export class TimelineRenderer {
 			case "none":
 				return [["", ""]];
 			case "category":
-				return [categoryOf(it.kind, e.category)];
+				return [this.categoryIn(it)];
 			case "realm": {
 				// The realm a title, its people and its events belong to: the highest title someone holds.
 				const tree = this.plugin.realms();
@@ -414,15 +431,19 @@ export class TimelineRenderer {
 				max = Math.max(max, it.end);
 			}
 		}
-		let span = max - min;
-		if (span < 60) span = 365;
-		const pad = span * 0.06;
-		const labelPad = Math.min(160, this.width * 0.3);
-		this.pxPerDay = Math.max(1e-6, (this.width - labelPad) / (span + pad * 2));
-		this.viewStart = min - pad;
+		const span = Math.max(max - min, 0) < 60 ? 365 : max - min;
+		this.pxPerDay = this.fitScale([min, max]);
+		this.viewStart = min - span * 0.06;
 		if (max - min < 60) this.viewStart = (min + max) / 2 - this.width / 2 / this.pxPerDay;
 		this.hasFitted = this.width > 0;
 		this.schedule();
+	}
+
+	/** The scale that frames a range of days. */
+	private fitScale([min, max]: [number, number]): number {
+		const span = !(max - min >= 60) ? 365 : max - min;
+		const labelPad = Math.min(160, this.width * 0.3);
+		return Math.max(1e-6, (this.width - labelPad) / (span * 1.12));
 	}
 
 	// ---- The picked item's card ---------------------------------------------------------------------
@@ -541,6 +562,16 @@ export class TimelineRenderer {
 		this.schedule();
 	}
 
+	/** Taller or shorter rows, keeping what's under the pointer where it is. */
+	zoomRows(factor: number, anchorY = this.bodyEl.clientHeight / 2) {
+		const before = this.options.rowZoom ?? 1;
+		const after = Math.min(3, Math.max(0.7, before * factor));
+		if (after === before) return;
+		this.options.rowZoom = after;
+		this.pendingScroll = (this.bodyEl.scrollTop + anchorY) * (after / before) - anchorY;
+		this.schedule();
+	}
+
 	private schedule() {
 		cancelAnimationFrame(this.frame);
 		this.frame = window.requestAnimationFrame(() => this.render());
@@ -567,7 +598,7 @@ export class TimelineRenderer {
 
 	private render() {
 		this.width = this.root.clientWidth || this.width;
-		const rowH = cssNumber(this.root, "--chronicle-tl-row-height", 28);
+		const rowH = cssNumber(this.root, "--chronicle-tl-row-height", 28) * (this.options.rowZoom ?? 1);
 		this.renderAxis();
 
 		const scrollTop = this.bodyEl.scrollTop;
@@ -614,7 +645,8 @@ export class TimelineRenderer {
 				else this.renderItem(track, p, rowH);
 			}
 		}
-		this.bodyEl.scrollTop = scrollTop;
+		this.bodyEl.scrollTop = this.pendingScroll ?? scrollTop;
+		this.pendingScroll = undefined;
 		this.renderCauses();
 	}
 
@@ -640,18 +672,16 @@ export class TimelineRenderer {
 		for (const [cause, effects] of idx.effectsOf) {
 			const a = nodes.get(cause);
 			if (!a) continue;
-			const ra = (a.querySelector(".chronicle-tl-bar, .chronicle-tl-dot") ?? a).getBoundingClientRect();
+			const box = (n: HTMLElement): Box => {
+				const r = (n.querySelector(".chronicle-tl-bar, .chronicle-tl-dot") ?? n).getBoundingClientRect();
+				return { left: r.left - base.left, right: r.right - base.left, top: r.top - base.top, bottom: r.bottom - base.top };
+			};
+			const from = box(a);
 			for (const effect of effects) {
 				const b = nodes.get(effect);
 				if (!b) continue;
-				const rb = (b.querySelector(".chronicle-tl-bar, .chronicle-tl-dot") ?? b).getBoundingClientRect();
-				const x1 = ra.right - base.left;
-				const y1 = ra.top + ra.height / 2 - base.top;
-				const x2 = rb.left - base.left - 2;
-				const y2 = rb.top + rb.height / 2 - base.top;
-				const bend = Math.max(24, Math.abs(x2 - x1) * 0.4);
 				const path = createSvg("path");
-				path.setAttribute("d", `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`);
+				path.setAttribute("d", causePath(from, box(b)));
 				path.setAttribute("class", "chronicle-tl-cause");
 				path.setAttribute("marker-end", "url(#chronicle-tl-cause-head)");
 				path.dataset.from = cause;
@@ -689,60 +719,52 @@ export class TimelineRenderer {
 		return sorted;
 	}
 
-	/** Greedy row packing using on-screen extents (labels included) so nothing overlaps. */
+	/**
+	 * Puts a lane's items in their rows at this zoom. The rows themselves are fixed (see packRows); only
+	 * when zoomed out past them can points crowd together, three or more becoming one marker with a
+	 * count, and labels give way to the next thing along.
+	 */
 	private pack(lane: Lane) {
-		const rowEnds: number[] = [];
-		const gap = 8;
-		// Points closer than a dot apart at this zoom (three or more) become one marker with a count,
-		// named for the most important of them; zooming in pulls them apart again.
 		const CLOSE = 14;
-		const clusters = new Map<Item, Item[]>();
-		const entries: Item[] = [];
-		let run: Item[] = [];
-		const flushRun = () => {
-			if (run.length >= 3) {
-				const top = [...run].sort((a, b) => b.importance - a.importance || a.start - b.start)[0];
-				const stand: Item = { ...top, id: `cluster:${top.id}`, label: `${top.label} +${run.length - 1}`, start: run[0].start, end: run[0].start, point: true };
-				clusters.set(stand, run);
-				entries.push(stand);
-			} else entries.push(...run);
-			run = [];
-		};
+		let fixed = this.rowsByLane.get(lane.id);
+		if (!fixed) {
+			fixed = packRows(lane.items.map((it) => ({ id: it.id, start: it.start, end: it.end, point: it.point, labelWidth: this.measure(it.label) + 14 })), this.layoutScale);
+			this.rowsByLane.set(lane.id, fixed);
+		}
+		lane.rows = fixed.count;
+		const byRow = new Map<number, Item[]>();
 		for (const it of lane.items) {
-			if (!it.point) {
-				entries.push(it);
-				continue;
-			}
-			if (run.length && this.x(it.start) - this.x(run[0].start) > CLOSE) flushRun();
-			run.push(it);
+			const row = fixed.rows.get(it.id) ?? 0;
+			byRow.set(row, [...(byRow.get(row) ?? []), it]);
 		}
-		flushRun();
-		entries.sort((a, b) => a.start - b.start);
-		for (const it of entries) {
-			const cluster = clusters.get(it);
-			const x1 = this.x(it.start);
-			const x2 = this.x(it.end);
-			const lw = this.measure(it.label) + 14;
-			let left: number;
-			let right: number;
-			let labelInside = false;
-			if (it.point) {
-				left = x1 - 7;
-				right = x1 + 10 + lw;
-			} else {
+		for (const [row, items] of byRow) {
+			const placed: Placed[] = [];
+			const put = (it: Item, cluster?: Item[]) => {
+				const x1 = this.x(it.start);
+				const x2 = this.x(it.end);
 				const w = Math.max(x2 - x1, 4);
-				labelInside = w >= lw + 6;
-				left = x1;
-				right = labelInside ? x1 + w : x1 + w + lw;
+				placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside: !it.point && w >= this.measure(it.label) + 20, cluster });
+			};
+			let run: Item[] = [];
+			const flushRun = () => {
+				if (run.length >= 3) {
+					const top = [...run].sort((a, b) => b.importance - a.importance || a.start - b.start)[0];
+					put({ ...top, id: `cluster:${top.id}`, label: `${top.label} +${run.length - 1}`, start: run[0].start, end: run[0].start, point: true }, run);
+				} else run.forEach((it) => put(it));
+				run = [];
+			};
+			for (const it of [...items].sort((a, b) => a.start - b.start)) {
+				if (run.length && (!it.point || this.x(it.start) - this.x(run[0].start) > CLOSE)) flushRun();
+				if (it.point) run.push(it);
+				else put(it);
 			}
-			let row = rowEnds.findIndex((end) => end + gap <= left);
-			if (row < 0) {
-				row = rowEnds.length;
-				rowEnds.push(right);
-			} else rowEnds[row] = right;
-			lane.placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside, cluster });
+			flushRun();
+			placed.forEach((p, i) => {
+				const next = placed[i + 1];
+				if (next && !p.labelInside && (p.item.point ? p.x1 + 10 : p.x2) + this.measure(p.item.label) + 14 > next.x1) p.noLabel = true;
+			});
+			lane.placed.push(...placed);
 		}
-		lane.rows = Math.max(1, rowEnds.length);
 	}
 
 	/** A cluster marker: its count, the names on hover, and a click that zooms in until they part (or lists them, if they share a day). */
@@ -802,14 +824,14 @@ export class TimelineRenderer {
 			node.style.left = `${p.x1 - 7}px`;
 			const dot = el("span", { cls: "chronicle-tl-dot" }, node);
 			if (battle) icon(dot, "swords");
-			el("span", { cls: "chronicle-tl-label", text: it.label }, node);
+			if (!p.noLabel) el("span", { cls: "chronicle-tl-label", text: it.label }, node);
 		} else {
 			node.addClass("is-span");
 			node.style.left = `${p.x1}px`;
 			const bar = el("span", { cls: "chronicle-tl-bar" }, node);
 			bar.style.width = `${p.x2 - p.x1}px`;
-			const label = el("span", { cls: "chronicle-tl-label", text: it.label }, p.labelInside ? bar : node);
-			if (p.labelInside) {
+			const label = p.noLabel ? undefined : el("span", { cls: "chronicle-tl-label", text: it.label }, p.labelInside ? bar : node);
+			if (p.labelInside && label) {
 				label.addClass("is-inside");
 				// Keep the label readable when the bar starts off-screen to the left.
 				if (p.x1 < 0) label.style.paddingLeft = `${Math.min(-p.x1 + 6, p.x2 - p.x1 - this.measure(it.label) - 12)}px`;
@@ -1055,6 +1077,12 @@ export class TimelineRenderer {
 		this.root.addEventListener(
 			"wheel",
 			(evt) => {
+				if (evt.altKey && !this.embedded) {
+					evt.preventDefault();
+					const box = this.bodyEl.getBoundingClientRect();
+					this.zoomRows(Math.exp(-(evt.deltaMode === 1 ? evt.deltaY * 16 : evt.deltaY) * 0.002), evt.clientY - box.top);
+					return;
+				}
 				const horizontal = Math.abs(evt.deltaX) > Math.abs(evt.deltaY) || evt.shiftKey;
 				// Plain wheel zooms unless the lanes need vertical scrolling; over the axis it always zooms.
 				const overAxis = (evt.target as HTMLElement).closest(".chronicle-tl-axis") !== null;

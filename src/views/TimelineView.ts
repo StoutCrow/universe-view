@@ -200,6 +200,8 @@ export class TimelineView extends ChronicleView {
 			const right = this.group();
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoom(1 / 1.5));
 			iconButton(right, "zoom-in", "Zoom in", () => this.renderer?.zoom(1.5));
+			iconButton(right, "chevrons-down-up", "Shorter rows (Alt + scroll)", () => this.renderer?.zoomRows(1 / 1.25));
+			iconButton(right, "chevrons-up-down", "Taller rows (Alt + scroll)", () => this.renderer?.zoomRows(1.25));
 			iconButton(right, "maximize", "Fit everything", () => this.renderer?.fit(true));
 			iconButton(right, "plus", "New event (or double-click the timeline)", () => this.plugin.createEntityPrompt({ type: "event", scope: o.filter.folder || undefined }), "mod-cta-icon");
 		});

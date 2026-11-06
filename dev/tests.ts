@@ -20,6 +20,7 @@ import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
 import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
+import { causePath, packRows } from "../src/render/timelinerows";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
@@ -1222,6 +1223,30 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(occ("[[L]], [[M]] by [[X]] (1240 – 1241)"), [["L", "X", true, true], ["M", "X", true, true]], "occupied: one line, several lands, with dates");
 	eq(occ(["[[L]] by [[X]]"]), [["L", "X", false, false]], "occupied: no dates, it lasts as long as the event");
 	eq(f.occupied.write(f.occupied.read(["[[L]] by [[X]] (1240 – 1241)"])), ["[[L]] by [[X]] (1240 – 1241)"], "occupied: survives editing");
+	// Timeline rows don't depend on the zoom, and nothing in a row overlaps at or above the scale they're packed at.
+	const tlItems = [
+		{ id: "war", start: 0, end: 1000, point: false, labelWidth: 40 },
+		{ id: "a", start: 100, end: 100, point: true, labelWidth: 60 },
+		{ id: "b", start: 120, end: 120, point: true, labelWidth: 60 },
+		{ id: "c", start: 1200, end: 1400, point: false, labelWidth: 40 },
+	];
+	const packed = packRows(tlItems, 0.5);
+	eq(packed.rows.get("war"), 0, "timeline: the long bar takes the first row");
+	eq(packed.rows.get("a") === packed.rows.get("b"), false, "timeline: points with labels in the way get their own rows");
+	eq(packed.rows.get("c"), 0, "timeline: a row is reused once it's free");
+	eq(packRows([...tlItems].reverse(), 0.5).rows.get("a"), packed.rows.get("a"), "timeline: rows don't depend on the order things arrive in");
+	// Arrows follow the dates.
+	const longWar = { left: 100, right: 500, top: 10, bottom: 30 };
+	const nums = (d: string) => (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+	const xs = (d: string) => nums(d).filter((_, i) => i % 2 === 0);
+	eq(nums(causePath(longWar, { left: 300, right: 340, top: 60, bottom: 80 })).slice(0, 2), [284 - 0, 30], "arrows: leave the bar when the effect begins, not at its end");
+	eq(Math.max(...xs(causePath(longWar, { left: 300, right: 340, top: 60, bottom: 80 }))) <= 298, true, "arrows: never go past the effect and double back");
+	eq(nums(causePath(longWar, { left: 300, right: 340, top: -40, bottom: -20 }))[1], 10, "arrows: leave from the top when the effect is above");
+	eq(nums(causePath(longWar, { left: 600, right: 640, top: 60, bottom: 80 })).slice(0, 2), [500, 20], "arrows: from the end once the cause is over");
+	const after = xs(causePath(longWar, { left: 510, right: 540, top: 60, bottom: 80 }));
+	eq(after.every((x, i) => i === 0 || x >= after[i - 1]), true, "arrows: a close effect doesn't overshoot");
+	eq(nums(causePath(longWar, { left: 110, right: 140, top: 60, bottom: 80 })).slice(0, 2), [100, 30], "arrows: an effect at the very start leaves from the bar's start");
+
 	// Smart reader: facts in the text, and not the facts of other people.
 	const places = ["Greyford", "London"], people = ["Alice Vane", "Aldric Vane", "Mira Thorne"];
 	const facts = (md: string, name = "Aldric Vane", type = "person", has: ReadField[] = []) => readNote(md, {

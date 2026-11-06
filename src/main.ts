@@ -369,6 +369,12 @@ export default class ChroniclePlugin extends Plugin {
 			this.settings.hubRibbon = true;
 			this.settings.ribbonViews = false;
 		}
+		// 2.1: the timeline sorts events by type unless you've chosen a grouping; "No grouping" was the old default.
+		if (!data.timelineByCategory) {
+			const saved = this.settings.viewStates?.[VIEW_TIMELINE]?.options as { group?: string } | undefined;
+			if (saved?.group === "none") saved.group = "category";
+			(this.settings as unknown as Record<string, unknown>).timelineByCategory = true;
+		}
 		// 0.26: no default shortcuts (Obsidian's guidelines); anyone already using the plugin keeps them.
 		if (this.settings.suggestedHotkeys === undefined) this.settings.suggestedHotkeys = Object.keys(data).length > 0;
 		// 0.18: realms merge into kingdoms sooner when zooming out; 420 px was the old default.
