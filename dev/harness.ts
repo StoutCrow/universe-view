@@ -1,5 +1,4 @@
 import { TidyModal, tidyPlan } from "../src/ui/tidy";
-import { QuickAddModal } from "../src/ui/writing";
 import { viewToSvg } from "../src/ui/export";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
@@ -176,7 +175,6 @@ workspace.requestSaveLayout = () => {};
 
 const plugin = new ChroniclePlugin(app, { id: "UniverseView", version: "dev" });
 (window as any).chronicle = plugin;
-(window as any).QuickAddModal = QuickAddModal;
 (window as any).TidyModal = TidyModal;
 (window as any).tidyPlan = tidyPlan;
 (window as any).chronicleTrace = trace;

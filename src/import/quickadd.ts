@@ -19,6 +19,12 @@ export interface QuickAdd {
 	tags: string[];
 	kind?: string;
 	summary?: string;
+	gender?: string;
+	occupation?: string;
+	birthPlace?: string;
+	/** The war an event was part of. */
+	war?: string;
+	importance?: string;
 	/** Parts that weren't understood (shown so the user can fix them). */
 	unknown: string[];
 }
@@ -123,6 +129,66 @@ export function parseQuickAdd(text: string, ctx: QuickAddContext): QuickAdd {
 	return out;
 }
 
+/** One thing the Quick creator asks. `key` is the fact it fills in. */
+export interface CreatorField {
+	key: keyof QuickAdd;
+	label: string;
+	input: "date" | "text" | "links" | "link" | "choice";
+	/** What a link can point at. */
+	types?: EntityType[];
+	options?: [string, string][];
+}
+
+const IMPORTANCE: [string, string][] = [["", "Normal"], ["5", "Key event"], ["4", "Major"], ["2", "Minor"], ["1", "Footnote"]];
+const GENDER: [string, string][] = [["", "Not set"], ["female", "Female"], ["male", "Male"], ["other", "Other"]];
+
+/** The important things to know when making each kind of note, most useful first. */
+export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
+	event: [
+		{ key: "date", label: "Date", input: "date" },
+		{ key: "end", label: "End", input: "date" },
+		{ key: "kind", label: "Kind", input: "text" },
+		{ key: "places", label: "Where", input: "links", types: ["place"] },
+		{ key: "participants", label: "Who", input: "links", types: ["person"] },
+		{ key: "cultures", label: "Groups", input: "links", types: ["culture"] },
+		{ key: "war", label: "Part of", input: "link", types: ["event"] },
+		{ key: "importance", label: "Importance", input: "choice", options: IMPORTANCE },
+		{ key: "summary", label: "Summary", input: "text" },
+	],
+	person: [
+		{ key: "date", label: "Born", input: "date" },
+		{ key: "end", label: "Died", input: "date" },
+		{ key: "gender", label: "Gender", input: "choice", options: GENDER },
+		{ key: "occupation", label: "Occupation", input: "text" },
+		{ key: "parents", label: "Parents", input: "links", types: ["person"] },
+		{ key: "cultures", label: "House and groups", input: "links", types: ["culture"] },
+		{ key: "birthPlace", label: "Born at", input: "link", types: ["place"] },
+		{ key: "summary", label: "Summary", input: "text" },
+	],
+	culture: [
+		{ key: "date", label: "Founded", input: "date" },
+		{ key: "end", label: "Dissolved", input: "date" },
+		{ key: "leaders", label: "Led by", input: "links", types: ["person"] },
+		{ key: "cultures", label: "Part of", input: "links", types: ["culture"] },
+		{ key: "places", label: "Seat", input: "links", types: ["place"] },
+		{ key: "summary", label: "Summary", input: "text" },
+	],
+	place: [
+		{ key: "kind", label: "Kind", input: "text" },
+		{ key: "places", label: "Located in", input: "link", types: ["place"] },
+		{ key: "cultures", label: "Held by", input: "links", types: ["culture"] },
+		{ key: "date", label: "Founded", input: "date" },
+		{ key: "end", label: "Abandoned", input: "date" },
+		{ key: "summary", label: "Summary", input: "text" },
+	],
+	map: [{ key: "summary", label: "Summary", input: "text" }],
+};
+
+/** A parsed line with what was set by hand in the form on top of it. */
+export function withFields(q: QuickAdd, fields: Partial<Record<keyof QuickAdd, string | string[]>>): QuickAdd {
+	return { ...q, ...fields } as QuickAdd;
+}
+
 /** The properties a parsed quick-add line becomes. */
 export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]`): Record<string, unknown> {
 	const fm: Record<string, unknown> = {};
@@ -135,10 +201,15 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.participants.length) fm.participants = list(q.participants);
 			if (q.places.length) fm.places = list(q.places);
 			if (q.cultures.length) fm.cultures = list(q.cultures);
+			if (q.war) fm.war = link(q.war);
+			if (q.importance) fm.importance = Number(q.importance);
 			break;
 		case "person":
 			if (q.date) fm.born = q.date;
 			if (q.end) fm.died = q.end;
+			if (q.gender) fm.gender = q.gender;
+			if (q.occupation) fm.occupation = q.occupation;
+			if (q.birthPlace) fm.birthplace = link(q.birthPlace);
 			if (q.parents.length) fm.parents = list(q.parents);
 			if (q.cultures.length) fm.cultures = list(q.cultures);
 			if (q.places.length) fm.places = list(q.places);
@@ -148,6 +219,7 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.end) fm.dissolved = q.end;
 			if (q.places.length) fm.places = list(q.places);
 			if (q.leaders.length) fm.leader = list(q.leaders);
+			if (q.cultures.length) fm["parent-cultures"] = list(q.cultures);
 			break;
 		case "place":
 			if (q.date) fm.founded = q.date;

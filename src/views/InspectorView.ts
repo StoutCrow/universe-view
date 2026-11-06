@@ -1,4 +1,5 @@
 import { ItemView, Menu, Notice, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { QuickCreator } from "../ui/QuickCreator";
 import type ChroniclePlugin from "../main";
 import { el, entityColor, helpTip, icon, TYPE_ICONS } from "../render/common";
 import type { Entity, EntityType } from "../types";
@@ -31,6 +32,8 @@ export class InspectorView extends ItemView {
 	private editor?: NoteEditor;
 	private bodyEl!: HTMLElement;
 	private headEl!: HTMLElement;
+	/** Making a new note here, rather than showing one. */
+	private creator?: QuickCreator;
 
 	constructor(leaf: WorkspaceLeaf, private plugin: ChroniclePlugin) {
 		super(leaf);
@@ -72,7 +75,7 @@ export class InspectorView extends ItemView {
 
 	/** A note was opened or picked elsewhere: follow it unless locked or mid-edit. */
 	follow(key: string) {
-		if (this.locked || key === this.key || !this.plugin.index.get(key)) return;
+		if (this.creator || this.locked || key === this.key || !this.plugin.index.get(key)) return;
 		// Edits in progress are saved first, then it follows: nothing is lost and nothing to answer.
 		void this.flushEdits().then(() => this.show(key));
 	}
@@ -109,6 +112,7 @@ export class InspectorView extends ItemView {
 
 	/** Shows a note, whatever was showing. */
 	show(key: string, quiet = false) {
+		this.creator = undefined;
 		this.key = key;
 		this.editor = undefined;
 		this.render();
@@ -117,7 +121,45 @@ export class InspectorView extends ItemView {
 
 	private redrawWaiting = false;
 
+	/** Opens the Quick creator in this panel, saving what's being edited first. */
+	startCreating(world?: string) {
+		void this.flushEdits().then(() => {
+			this.editor = undefined;
+			this.creator = new QuickCreator(this.plugin, {
+				world,
+				created: (path) => void this.showCreated(path),
+				close: () => {
+					this.creator = undefined;
+					this.render();
+				},
+			});
+			this.render();
+		});
+	}
+
+	/** On to the new note, ready to edit, as soon as the index has it. */
+	private async showCreated(path: string) {
+		const idx = this.plugin.index;
+		if (!idx.get(path)) {
+			await new Promise<void>((done) => {
+				const ref = idx.on("changed", () => {
+					if (!idx.get(path)) return;
+					idx.offref(ref);
+					done();
+				});
+				window.setTimeout(() => {
+					idx.offref(ref);
+					done();
+				}, 3000);
+			});
+		}
+		this.tab = "edit";
+		this.show(path);
+	}
+
 	private onIndexChanged() {
+		// The form holds what's been typed; it reads the index when it needs to.
+		if (this.creator) return;
 		// Redraw with the new data, but never under someone's typing: once they leave the field.
 		if (this.editor?.dirty() || this.typing()) {
 			if (!this.redrawWaiting) {
@@ -166,6 +208,17 @@ export class InspectorView extends ItemView {
 			this.app.workspace.requestSaveLayout();
 			this.render();
 		});
+		const add = el("button", { cls: "clickable-icon" + (this.creator ? " is-active" : ""), attr: { "aria-label": "Quick creator: make a new note here" } }, find);
+		icon(add, "plus");
+		add.addEventListener("click", () => {
+			if (!this.creator) return this.startCreating(this.plugin.index.defaultScope(this.key));
+			this.creator = undefined;
+			this.render();
+		});
+		if (this.creator) {
+			this.contentEl.removeClass("has-id");
+			return this.creator.mount(body);
+		}
 		if (!e) {
 			const empty = el("div", { cls: "chronicle-insp-empty" }, body);
 			icon(el("div", { cls: "chronicle-insp-empty-icon" }, empty), "panel-right");

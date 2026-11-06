@@ -1210,7 +1210,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Suggested shortcuts")
-			.setDesc("Ctrl/Cmd+Alt with a letter for the views and tools (T timeline, M map, Q quick add, I inspector, Z undo…). Off by default so they never clash with yours; you can also set any shortcut in Obsidian's Hotkeys settings. Applies after Obsidian restarts.")
+			.setDesc("Ctrl/Cmd+Alt with a letter for the views and tools (T timeline, M map, Q quick creator, I inspector, Z undo…). Off by default so they never clash with yours; you can also set any shortcut in Obsidian's Hotkeys settings. Applies after Obsidian restarts.")
 			.addToggle((t) => t.setValue(!!s.suggestedHotkeys).onChange(async (v) => {
 				s.suggestedHotkeys = v;
 				await this.save(false);

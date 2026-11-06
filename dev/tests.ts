@@ -21,6 +21,8 @@ import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSte
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { causePath, packRows } from "../src/render/timelinerows";
+import { standardTag, standardTagsFor } from "../src/index/tagrules";
+import { quickAddFrontmatter, withFields } from "../src/import/quickadd";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
@@ -1223,6 +1225,32 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(occ("[[L]], [[M]] by [[X]] (1240 – 1241)"), [["L", "X", true, true], ["M", "X", true, true]], "occupied: one line, several lands, with dates");
 	eq(occ(["[[L]] by [[X]]"]), [["L", "X", false, false]], "occupied: no dates, it lasts as long as the event");
 	eq(f.occupied.write(f.occupied.read(["[[L]] by [[X]] (1240 – 1241)"])), ["[[L]] by [[X]] (1240 – 1241)"], "occupied: survives editing");
+	// Tags follow the vault's standard.
+	const vaultTags = [
+		{ type: "event", tags: ["Event_War", "Event_Massive", "Nation_Elland"] },
+		{ type: "event", tags: ["#Event_Treaty", "Event_Massive"] },
+		{ type: "event", tags: ["Event_War", "Nation_Vael"] },
+		{ type: "person", tags: ["Character", "Character_Male"] },
+		{ type: "person", tags: ["Character", "Character_Female"] },
+		{ type: "person", tags: ["Character"] },
+	];
+	const known = vaultTags.flatMap((n) => n.tags);
+	eq(["event war", "EVENT-WAR", "#event_war"].map((t) => standardTag(t, known)), ["Event_War", "Event_War", "Event_War"], "tags: written the way the vault writes them");
+	eq(standardTag("old sea king", known), "Old_Sea_King", "tags: a new tag follows the vault's capitals and underscores");
+	eq(standardTag("my tag", ["lower", "case"]), "my_tag", "tags: a lowercase vault stays lowercase");
+	eq(standardTagsFor("event", ["war"], "war", vaultTags), ["Event_War"], "tags: an event of a kind gets that kind's tag");
+	eq(standardTagsFor("event", ["treaty"], "treaty", vaultTags), ["Event_Treaty"], "tags: a common tag with a value isn't given to what it isn't true of");
+	eq(standardTagsFor("event", ["Vael"], undefined, vaultTags), ["Nation_Vael"], "tags: a fact can name a tag");
+	eq(standardTagsFor("person", ["Elland"], undefined, vaultTags).includes("Nation_Elland"), true, "tags: a fact's tag can come from another kind of note");
+	eq(standardTagsFor("event", [], "siege", vaultTags).includes("Event_Siege"), true, "tags: a new kind follows the type's pattern");
+	eq(standardTagsFor("person", ["male"], undefined, vaultTags).sort(), ["Character", "Character_Male"], "tags: people get the shared tag and their gender's");
+	eq(standardTagsFor("event", ["war"], "war", []), [], "tags: an untagged vault gets nothing it doesn't use");
+	// The creator's form lands in the note's properties.
+	const typedLine = { name: "Ann", type: "person" as const, places: [], participants: [], cultures: [], parents: [], leaders: [], tags: [], unknown: [] };
+	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");
+	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Siege", type: "event" }, { date: "1200", war: "The War", importance: "5" })), { date: "1200", war: "[[The War]]", importance: 5 }, "creator: an event's form");
+	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Guild", type: "culture" }, { cultures: ["Crown"] })), { "parent-cultures": ["[[Crown]]"] }, "creator: a group's parent");
+
 	// Timeline rows don't depend on the zoom, and nothing in a row overlaps at or above the scale they're packed at.
 	const tlItems = [
 		{ id: "war", start: 0, end: 1000, point: false, labelWidth: 40 },

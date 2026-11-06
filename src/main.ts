@@ -54,7 +54,7 @@ import { FilesPanelView, VIEW_FILES, explorerButton } from "./views/FilesPanelVi
 import { EntityPickerModal } from "./ui/suggest";
 import { TextPrompt } from "./ui/TextPrompt";
 import { KinshipModal, KnowledgeModal, NamesModal, SuccessionModal } from "./ui/people";
-import { ContinuityModal, LiveSuggestions, PromptsModal, QuickAddModal, SuggestionsModal, inlineHelpers, suggestionsFor } from "./ui/writing";
+import { ContinuityModal, LiveSuggestions, PromptsModal, SuggestionsModal, inlineHelpers, suggestionsFor } from "./ui/writing";
 import { CleanupModal, CompletenessModal, ContradictionsModal, DuplicatesModal, OrphansModal } from "./ui/tidying";
 import { exportWorldBook } from "./ui/worldbook";
 import { exportWebsite } from "./ui/website";
@@ -809,6 +809,12 @@ export default class ChroniclePlugin extends Plugin {
 
 
 	/** Shows a note in the inspector panel (opening it in the right sidebar if needed). */
+	/** The Quick creator, in the inspector. */
+	async quickCreate(world?: string) {
+		await this.inspect();
+		(this.app.workspace.getLeavesOfType(VIEW_INSPECTOR)[0]?.view as InspectorView | undefined)?.startCreating(world);
+	}
+
 	async inspect(key?: string, tab?: "about" | "realm" | "edit") {
 		const ws = this.app.workspace;
 		let leaf = ws.getLeavesOfType(VIEW_INSPECTOR)[0];
@@ -1032,7 +1038,7 @@ export default class ChroniclePlugin extends Plugin {
 		return undefined;
 	}
 
-	async createEntityNote(name: string, folder: string, fm: Record<string, unknown>, type: EntityType): Promise<TFile> {
+	async createEntityNote(name: string, folder: string, fm: Record<string, unknown>, type: EntityType, open = true): Promise<TFile> {
 		const { vault } = this.app;
 		const dir = normalizePath(folder.trim() || "/");
 		if (dir !== "/" && !vault.getAbstractFileByPath(dir)) await vault.createFolder(dir);
@@ -1079,7 +1085,7 @@ export default class ChroniclePlugin extends Plugin {
 				}
 			}
 		});
-		await this.app.workspace.getLeaf(false).openFile(file);
+		if (open) await this.app.workspace.getLeaf(false).openFile(file);
 		return file;
 	}
 
@@ -1768,7 +1774,7 @@ export default class ChroniclePlugin extends Plugin {
 			const p = activePath();
 			return p?.includes("/") && this.index.topFolders().length > 1 ? p.split("/")[0] : undefined;
 		};
-		this.addCommand({ id: "quick-add", name: "Quick add (one line → a linked note)", icon: "zap", ...this.keys(["Mod", "Alt"], "Q"), callback: () => new QuickAddModal(this, activeWorld()).open() });
+		this.addCommand({ id: "quick-add", name: "Quick creator (a line or a form → a linked note)", icon: "zap", ...this.keys(["Mod", "Alt"], "Q"), callback: () => void this.quickCreate(activeWorld()) });
 		this.addCommand({
 			id: "quick-edit",
 			name: "Edit this note in the inspector",

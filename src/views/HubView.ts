@@ -113,7 +113,7 @@ export const HUB_SECTIONS: HubSection[] = [
 			{
 				id: "tools-write", name: "Write", icon: "pen-line", desc: "Add notes and find ideas.", draw: actions([
 					{ id: "new-note", name: "New note", icon: "file-plus" },
-					{ id: "quick-add", name: "Quick add", icon: "zap" },
+					{ id: "quick-add", name: "Quick creator", icon: "zap" },
 					{ id: "story-ideas", name: "Story ideas", icon: "lightbulb" },
 					{ id: "name-ideas", name: "Name ideas", icon: "pencil" },
 					{ id: "suggest-relationships", name: "Suggest relationships", icon: "link" },
