@@ -882,6 +882,33 @@ export default class ChroniclePlugin extends Plugin {
 		m.open();
 	}
 
+	/** Plays a war through on the map. */
+	async playWar(key: string) {
+		const leaf = await this.activateView(VIEW_MAP, {});
+		window.setTimeout(() => (leaf.view as MapView).playWar?.(key), 120);
+	}
+
+	/** Keeps ground a realm holds for a while, drawn apart from its borders. */
+	async saveFront(key: string, mapKey: string, points: [number, number][], from: string, to: string) {
+		const file = this.app.vault.getAbstractFileByPath(key);
+		if (!(file instanceof TFile)) return;
+		const map = mapKey === WORLD_MAP ? "world" : `[[${this.index.get(mapKey)?.name ?? mapKey}]]`;
+		await this.editFrontmatter(file, (front) => {
+			const list = Array.isArray(front["occupied-areas"]) ? (front["occupied-areas"] as unknown[]) : [];
+			front["occupied-areas"] = [...list, { map, points: writePoints(points), ...(from ? { from } : {}), ...(to ? { to } : {}) }];
+		}, "Occupied area");
+	}
+
+	async deleteFront(key: string, index: number) {
+		const file = this.app.vault.getAbstractFileByPath(key);
+		if (!(file instanceof TFile)) return;
+		await this.editFrontmatter(file, (front) => {
+			const list = Array.isArray(front["occupied-areas"]) ? (front["occupied-areas"] as unknown[]).filter((_, i) => i !== index) : [];
+			if (list.length) front["occupied-areas"] = list;
+			else delete front["occupied-areas"];
+		}, "Delete an occupied area");
+	}
+
 	async openMap(focus?: string) {
 		const leaf = await this.activateView(VIEW_MAP, {});
 		if (focus) window.setTimeout(() => (leaf.view as MapView).focus?.(focus), 60);

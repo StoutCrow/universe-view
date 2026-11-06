@@ -6,7 +6,9 @@ import { brushShape, cutFrom, mergeInto, pocketsBetween, tidyRing, untangle } fr
 import { ROUGHNESS, roughenRing } from "../index/rough";
 import { simplifyShared } from "../index/simplify";
 import { ribbon, smoothLine } from "../index/ribbon";
-import { landFill } from "./landfill";
+import { landFill, thinWater } from "./landfill";
+import { formatDay } from "../dates/parser";
+import { TextPrompt } from "../ui/TextPrompt";
 import type ChroniclePlugin from "../main";
 import type { Entity, PinSize, Territory } from "../types";
 import { CATEGORY_SCALE, PinColorBy, parseMapCategories } from "../settings";
@@ -39,7 +41,7 @@ import { STAT_NAMES, realmStats, statValue, type StatKey } from "../index/realms
 import { EntityPickerModal } from "../ui/suggest";
 import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
-import { battlesByWar, isBattle, sidesOf, victorOf } from "../index/wars";
+import { battlesByWar, isBattle, occupationsAt, sidesOf, victorOf } from "../index/wars";
 import { asText } from "../index/text";
 
 export const WORLD_MAP = "world";
@@ -468,6 +470,7 @@ export class MapRenderer {
 
 	private draw() {
 		this.drawTerritories();
+		this.drawOccupation();
 		this.drawRoutes();
 		this.drawMovements();
 		this.drawWars();
@@ -1228,6 +1231,64 @@ export class MapRenderer {
 		return out;
 	}
 
+	/**
+	 * Occupied lands at the time slider's date: the owner's colour stays, with the occupier's stripes
+	 * over it, and ground drawn as occupied (`occupied-areas:`) the same way. Only at a date: over
+	 * all of history, every occupation at once would say nothing.
+	 */
+	private drawOccupation() {
+		const layer = this.territoryLayer;
+		const at = this.options.at;
+		this.mapEl.querySelectorAll("#uv-terr-defs pattern[id^='uv-occ-']").forEach((p) => p.remove());
+		if (!this.map || !layer || at === undefined || !this.options.showTerritories) return;
+		const idx = this.plugin.index;
+		const patterns = new Map<string, string>();
+		const stripe = (poly: L.Polygon, by: Entity) => {
+			const path = poly.getElement() as SVGElement | undefined;
+			const svgEl = path?.ownerSVGElement;
+			if (!path || !svgEl) return;
+			ensureTerritoryDefs(svgEl);
+			let id = patterns.get(by.key);
+			if (!id) {
+				id = `uv-occ-${++this.terrSeq}`;
+				patterns.set(by.key, id);
+				const pattern = createSvg("pattern");
+				for (const [k, v] of Object.entries({ id, patternUnits: "userSpaceOnUse", width: "14", height: "14", patternTransform: "rotate(45)" })) pattern.setAttribute(k, v);
+				const line = createSvg("line");
+				for (const [k, v] of Object.entries({ x1: "0", y1: "0", x2: "0", y2: "14" })) line.setAttribute(k, v);
+				line.setCssStyles({ stroke: entityColor(this.plugin, by), strokeWidth: "7", strokeOpacity: "0.6" });
+				pattern.appendChild(line);
+				svgEl.querySelector("#uv-terr-defs")?.appendChild(pattern);
+			}
+			path.setCssStyles({ fill: `url(#${id})` });
+			path.style.setProperty("--terr-color", entityColor(this.plugin, by));
+		};
+		for (const o of occupationsAt(idx, at)) {
+			const by = idx.get(o.by.key);
+			if (!by) continue;
+			for (const a of this.areaPolys) {
+				if (a.owner !== o.land.key && !a.chain.includes(o.land.key)) continue;
+				stripe(L.polygon(a.points.map((p) => this.pointToLatLng(p)), { className: "uv-occupied", interactive: false, fillOpacity: 1, smoothFactor: 1.5 }).addTo(layer), by);
+			}
+		}
+		const here = this.isImageMap ? this.options.map : "world";
+		for (const e of idx.all()) {
+			(e.fronts ?? []).forEach((t, i) => {
+				if (t.map !== here && t.map !== "*") return;
+				if ((t.from && t.from.start > at) || (t.to && t.to.end < at)) return;
+				const poly = L.polygon(t.points.map((p) => this.pointToLatLng(p)), { className: "uv-occupied is-front", fillOpacity: 1, smoothFactor: 1.5 }).addTo(layer);
+				stripe(poly, e);
+				poly.bindTooltip(`Held by ${e.name}${t.fromText ? ` (${t.fromText}${t.toText ? ` – ${t.toText}` : ""})` : ""}`);
+				poly.on("contextmenu", (evt: L.LeafletMouseEvent) => {
+					L.DomEvent.stop(evt);
+					const menu = new Menu();
+					menu.addItem((it) => it.setTitle("Delete this occupied area").setIcon("trash-2").onClick(() => void this.plugin.deleteFront(e.key, i)));
+					menu.showAtMouseEvent(evt.originalEvent);
+				});
+			});
+		}
+	}
+
 	private drawTerritories() {
 		const layer = this.territoryLayer;
 		if (!this.map || !layer) return;
@@ -1969,7 +2030,8 @@ export class MapRenderer {
 		tool(shape, "pencil", "Reshape", "Drag its corners; shared corners move both borders", () => this.startEdit(e.key, n));
 		tool(shape, "spline", "Simplify", "Fewer corners where they make little difference; real detail such as a coast stays", () => this.startSimplify(e.key, n));
 		tool(shape, "lasso", "Expand", "Circle new land and it joins this same area", () => this.startExpand(e.key, n));
-		tool(shape, "brush", "Brush", "Paint land onto this same area, or rub it out", () => this.startBrush(e.key, n));
+		tool(shape, "brush", "Brush", "Paint land onto this same area, push a neighbour back, or rub it out", () => this.startBrush(e.key, n));
+			tool(shape, "flag", "Occupied", "Paint ground this land holds for a while, with dates; its real borders stay", () => this.startPaint(e.key, true));
 		tool(shape, "expand", "Grow", "Grow it out to its neighbours, filling the gaps between", () => growSheet(this.plugin, e, (px) => void this.closeGaps(e.key, n, px)));
 		tool(shape, "square-plus", "New area", "Paint another, separate area for it (an island, an exclave)", () => this.startPaint(e.key));
 		if (this.isImageMap) tool(shape, "paint-bucket", "Fill", "Fill land up to the picture's coasts, rivers and borders, joining this same area", () => void this.startFill(e.key, n));
@@ -2779,6 +2841,7 @@ export class MapRenderer {
 	}
 
 	endMode() {
+		this.modeDone = undefined;
 		for (const f of this.modeCleanup.splice(0)) f();
 		this.toolLayer?.clearLayers();
 		this.banner?.remove();
@@ -3244,8 +3307,57 @@ export class MapRenderer {
 		});
 	}
 
+	/** Finishes the current tool as its Done button would. */
+	private modeDone?: () => Promise<void>;
+	private painter?: HTMLElement;
+
+	/** A floating list of lands: pick one and paint, pick the next, with the last one saved on the way. */
+	togglePainter() {
+		if (this.painter) {
+			this.painter.remove();
+			this.painter = undefined;
+			return;
+		}
+		const box = (this.painter = el("div", { cls: "uv-painter" }, this.root));
+		L.DomEvent.disableClickPropagation(box);
+		L.DomEvent.disableScrollPropagation(box);
+		const head = el("div", { cls: "uv-painter-head" }, box);
+		el("span", { text: "Paint a land" }, head);
+		const close = el("button", { cls: "clickable-icon", attr: { "aria-label": "Close" } }, head);
+		icon(close, "x");
+		close.addEventListener("click", () => this.togglePainter());
+		const find = el("input", { attr: { type: "search", placeholder: "Find a land…", spellcheck: "false" } }, box);
+		const list = el("div", { cls: "uv-painter-list" }, box);
+		const draw = () => {
+			list.empty();
+			const q = find.value.trim().toLowerCase();
+			const lands = this.plugin.index.all().filter((e) => (e.type === "culture" || e.type === "place") && (q ? e.name.toLowerCase().includes(q) : this.areasHere(e).length));
+			for (const e of lands.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60)) {
+				const row = el("button", { cls: "uv-painter-row" }, list);
+				el("span", { cls: "uv-painter-dot" }, row).style.setProperty("--dot", entityColor(this.plugin, e));
+				el("span", { text: e.name }, row);
+				row.addEventListener("click", () => void this.paintLand(e, row));
+			}
+			if (!lands.length) el("div", { cls: "chronicle-dash-muted", text: q ? "No land by that name." : "Search for a land to start." }, list);
+		};
+		find.addEventListener("input", draw);
+		draw();
+	}
+
+	private async paintLand(e: Entity, row: HTMLElement) {
+		await this.modeDone?.();
+		this.painter?.querySelectorAll(".is-active").forEach((x) => x.removeClass("is-active"));
+		row.addClass("is-active");
+		// The stroke just saved has to reach the index before the next land's borders are read.
+		window.setTimeout(() => {
+			const area = this.areasHere(e)[0];
+			if (area) this.startBrush(e.key, area.n);
+			else this.startPaint(e.key);
+		}, 350);
+	}
+
 	/** Draw an area for a culture or place: tap corners, or drag round it freehand. */
-	startPaint(ownerKey: string) {
+	startPaint(ownerKey: string, front = false) {
 		const map = this.map;
 		const owner = this.plugin.index.get(ownerKey);
 		if (!map || !owner || !this.toolLayer) return;
@@ -3258,7 +3370,8 @@ export class MapRenderer {
 			done: (pts) => {
 				const points = pts.map((ll) => this.fromLatLng(ll));
 				this.endMode();
-				void this.plugin.saveTerritory(owner.key, this.options.map, null, points).then(() => new Notice(`Painted an area for ${owner.name}`));
+				if (front) this.askFrontDates(owner, points);
+				else void this.plugin.saveTerritory(owner.key, this.options.map, null, points).then(() => new Notice(`Painted an area for ${owner.name}`));
 				return true;
 			},
 		});
@@ -3274,7 +3387,7 @@ export class MapRenderer {
 		this.root.addClass("is-painting");
 		map.dragging.disable();
 		map.doubleClickZoom.disable();
-		this.showBanner(`New area for ${owner.name}: click corners, or drag round it · corners snap to neighbouring borders, coasts and rivers (hold Alt to stop), and the line between two follows them · Enter or double-click to finish · Backspace undoes`, [
+		this.showBanner(`${front ? "Occupied area" : "New area"} for ${owner.name}: click corners, or drag round it · corners snap to neighbouring borders, coasts and rivers (hold Alt to stop), and the line between two follows them · Enter or double-click to finish · Backspace undoes`, [
 			{ label: "Undo", run: lasso.undo },
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Finish", cta: true, run: lasso.finish },
@@ -3285,20 +3398,59 @@ export class MapRenderer {
 		this.prepareWater();
 	}
 
+	/** Asks when ground was held, and keeps it. */
+	private askFrontDates(owner: Entity, points: Pt[]) {
+		const cal = this.plugin.calendars.get(owner.calendar);
+		const start = this.options.at !== undefined ? formatDay(this.options.at, cal, "year") : "";
+		new TextPrompt(this.plugin, `When did ${owner.name} hold this? (from – to)`, start, (v) => {
+			const [from, to] = v.split(/\s+[–—-]\s*|\s*[–—-]\s+/).map((x) => x.trim());
+			void this.plugin.saveFront(owner.key, this.options.map, points.map(([x, y]) => [round(x, 1), round(y, 1)]), from ?? "", to ?? "").then(() => new Notice(`Occupied area saved for ${owner.name}. It shows at those dates on the time slider.`));
+		}).open();
+	}
+
 	/**
 	 * The areas a land's new ground stops at: every other land's, but not its own lieges' or its own
 	 * lands' (a duchy drawn whole, a barony inside a county), which overlap it by design.
 	 */
 	private wallsFor(ownerKey: string, n: number): Pt[][] {
+		return this.wallAreas(ownerKey, n).map((a) => a.points);
+	}
+
+	private wallAreas(ownerKey: string, n: number) {
 		const tree = this.realmTree;
 		const above = new Set(tree ? chainOf(tree, ownerKey) : [ownerKey]);
-		return this.drawnAreas
-			.filter((a) => {
-				if (a.key === ownerKey) return a.n !== n;
-				if (above.has(a.key)) return false;
-				return !(tree && chainOf(tree, a.key).includes(ownerKey));
-			})
-			.map((a) => a.points);
+		return this.drawnAreas.filter((a) => {
+			if (a.key === ownerKey) return a.n !== n;
+			if (above.has(a.key)) return false;
+			return !(tree && chainOf(tree, a.key).includes(ownerKey));
+		});
+	}
+
+	/** Strokes trimmed to the land in the map's picture: the sea stays clear, thin rivers don't count. */
+	private async onLand(shapes: Pt[][]): Promise<Pt[][]> {
+		if (!(await this.wetForCheck()) || !this.wet) return shapes;
+		const { mask, w, h, scale } = this.wet;
+		const painted = new Uint8Array(w * h);
+		for (const poly of shapes) rasterize(painted, w, h, poly.map(([x, y]) => [x / scale, y / scale] as Pt));
+		this.openSea ??= { map: this.options.map, thin: thinWater(mask, w, h) };
+		if (this.openSea.map !== this.options.map) this.openSea = { map: this.options.map, thin: thinWater(mask, w, h) };
+		const { thin } = this.openSea;
+		for (let i = 0; i < painted.length; i++) if (mask[i] && !thin[i]) painted[i] = 0;
+		const rings = traceOutlines(painted, w, h, 4).map((ring) => simplifyRing(ring, 0.9).map(([x, y]) => [round(x * scale, 1), round(y * scale, 1)] as Pt)).filter((r) => r.length >= 3);
+		return rings;
+	}
+	private openSea?: { map: string; thin: Uint8Array };
+
+	/** A banner switch for a yes-or-no setting of the brush. */
+	private brushSwitch(b: HTMLElement, label: string, title: string, on: boolean, change: (v: boolean) => void) {
+		const sw = el("label", { cls: "uv-banner-switch", attr: { "aria-label": title } }, b);
+		const box = el("input", { attr: { type: "checkbox" } }, sw);
+		box.checked = on;
+		el("span", { cls: "uv-banner-switch-text", text: label }, sw);
+		box.addEventListener("change", () => {
+			change(box.checked);
+			this.saveSoon();
+		});
 	}
 
 	/** Map units per screen pixel at a position, at the current zoom. */
@@ -3476,7 +3628,10 @@ export class MapRenderer {
 		const walls = this.wallsFor(owner.key, n);
 		let working = area.t.points as Pt[];
 		let extra: Pt[][] = [];
-		const history: { ring: Pt[]; extra: Pt[][] }[] = [];
+		const history: { ring: Pt[]; extra: Pt[][]; pushed: number }[] = [];
+		const neighbours = this.wallAreas(owner.key, n);
+		/** What's been brushed, to take off the neighbours when pushing. */
+		const pushed: Pt[][] = [];
 		let erase = false;
 		let size = s.brushSize ?? 22;
 		const shape = L.polygon([], { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(layer);
@@ -3500,10 +3655,12 @@ export class MapRenderer {
 			}
 			style();
 		};
-		const apply = (path: L.LatLng[]) => {
+		const apply = async (path: L.LatLng[]) => {
 			// Map units per screen pixel where the stroke is (so the brush is the same size at any zoom).
 			const k = this.unitsPerPx(path[0]);
-			const shapes = brushShape(path.map((ll) => this.fromLatLng(ll)), size * k);
+			let shapes = brushShape(path.map((ll) => this.fromLatLng(ll)), size * k);
+			if (!shapes.length) return;
+			if (!erase && s.coastLock !== false && this.isImageMap) shapes = await this.onLand(shapes);
 			if (!shapes.length) return;
 			// Pieces apart smaller than half a dab of the brush are crumbs, not land.
 			const minPiece = (size * k) ** 2 * 0.5;
@@ -3513,7 +3670,7 @@ export class MapRenderer {
 					new Notice("That would rub out the whole area. To remove it, use Delete.");
 					return;
 				}
-				history.push({ ring: working, extra });
+				history.push({ ring: working, extra, pushed: pushed.length });
 				const kept = extra.flatMap((piece) => {
 					const r = cutFrom(piece, shapes, minPiece);
 					return r ? [r.ring, ...r.detached] : [];
@@ -3522,9 +3679,10 @@ export class MapRenderer {
 				extra = [...kept, ...res.detached];
 			} else {
 				// Strokes join the area, and any pieces painted apart earlier that they now reach.
-				const res = mergeInto(working, [...shapes, ...extra], s.keepOffOthers === false ? [] : walls, minPiece);
+				const res = mergeInto(working, [...shapes, ...extra], s.pushBorders || s.keepOffOthers === false ? [] : walls, minPiece);
 				if (!res) return;
-				history.push({ ring: working, extra });
+				history.push({ ring: working, extra, pushed: pushed.length });
+				if (s.pushBorders) pushed.push(...shapes);
 				working = tidyRing(res.ring, working, k * 0.8);
 				extra = res.detached.map((d) => tidyRing(d, extra.flat(), k * 0.8));
 			}
@@ -3535,16 +3693,32 @@ export class MapRenderer {
 			if (!last) return;
 			working = last.ring;
 			extra = last.extra;
+			pushed.length = last.pushed;
 			redraw();
 		};
-		const done = () => {
+		const done = async () => {
 			if (!history.length) {
 				this.endMode();
 				return;
 			}
 			this.endMode();
-			void this.saveGrown(owner, n, working, extra, `Brushed ${owner.name}`);
+			const spans = (ring: Pt[]) => [Math.min(...ring.map((p) => p[0])), Math.min(...ring.map((p) => p[1])), Math.max(...ring.map((p) => p[0])), Math.max(...ring.map((p) => p[1]))];
+			const dabs = pushed.map(spans);
+			const touched = neighbours.filter((a) => {
+				const [ax, ay, bx, by] = spans(a.points);
+				return dabs.some(([cx, cy, dx, dy]) => cx <= bx && dx >= ax && cy <= by && dy >= ay);
+			});
+			// One undo for the whole push: this land, and every border it moved.
+			await this.plugin.undoGroup(`Brushed ${owner.name}`, async () => {
+				await this.saveGrown(owner, n, working, extra, `Brushed ${owner.name}`);
+				for (const a of touched) {
+					const res = cutFrom(a.points, pushed, 1);
+					if (!res || JSON.stringify(res.ring) === JSON.stringify(a.points)) continue;
+					await this.plugin.saveTerritory(a.key, this.options.map, a.n, res.ring.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt), res.detached.map((d) => d.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt)));
+				}
+			});
 		};
+		this.modeDone = done;
 		let panning = false;
 		const onKeyUp = (evt: KeyboardEvent) => {
 			if (evt.code !== "Space" || !panning) return;
@@ -3554,7 +3728,7 @@ export class MapRenderer {
 		};
 		this.beginMode("brush", (evt) => {
 			if (evt.key === "Escape") this.endMode();
-			else if (evt.key === "Enter") done();
+			else if (evt.key === "Enter") void done();
 			else if (evt.code === "Space") {
 				// Hold Space to move the map with the mouse.
 				evt.preventDefault();
@@ -3580,7 +3754,7 @@ export class MapRenderer {
 		this.showBanner(`Brushing ${owner.name}: paint over land to add it to this same area, or switch to Rub out to take land away · hold Space and drag to move the map · [ and ] change the size · Backspace undoes a stroke`, [
 			{ label: "Undo", run: undo },
 			{ label: "Cancel", run: () => this.endMode() },
-			{ label: "Done", cta: true, run: done },
+			{ label: "Done", cta: true, run: () => void done() },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
 			b.addClass("has-fill-controls");
@@ -3597,6 +3771,8 @@ export class MapRenderer {
 				style();
 			});
 			this.keepOffSwitch(b);
+			this.brushSwitch(b, "Push neighbours back", "Land brushed over leaves the neighbour, and both borders move", !!s.pushBorders, (v) => (s.pushBorders = v));
+			if (this.isImageMap) this.brushSwitch(b, "Stay on land", "Paint over the sea is trimmed to the coast", s.coastLock !== false, (v) => (s.coastLock = v));
 		});
 		redraw();
 		let path: L.LatLng[] | null = null;
@@ -3623,7 +3799,7 @@ export class MapRenderer {
 				const p = path;
 				path = null;
 				stroke.setLatLngs([]);
-				apply(p);
+				void apply(p);
 			},
 			cancel: () => {
 				path = null;

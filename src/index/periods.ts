@@ -1,6 +1,6 @@
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
-import type { HolderSpan, Ref, Side, Transfer } from "../types";
+import type { HolderSpan, Occupation, Ref, Side, Transfer } from "../types";
 import { asText } from "./text";
 
 type Resolve = (text: string) => Ref;
@@ -195,7 +195,43 @@ export function readSides(value: unknown, victor: unknown, defeated: unknown, re
 	return out.length ? out : undefined;
 }
 
-export const ROW_FORMATS: Record<string, RowFormat> = { holders, transfers, sides };
+/**
+ * Lands held for a while by someone else (`occupied:` on a war or battle), one line each. The land
+ * keeps its owner; without dates it lasts as long as the event:
+ *
+ *   occupied:
+ *     - "[[Elland]], [[Ilten]] by [[Mexico]] (1240 – 1241)"
+ */
+const occupied: RowFormat = {
+	read(value) {
+		return listOf(value).flatMap((item) => {
+			if (item && typeof item === "object") {
+				const o = item as Record<string, unknown>;
+				return [{ land: link(first(o, ["land", "place", "territory"])), by: link(first(o, ["by", "occupier", "held-by"])), from: asText(o.from), to: asText(o.to) }];
+			}
+			if (typeof item !== "string") return [];
+			const m = /^(.+?)\s+by\s+(.+?)(?:\s*\(([^)]+)\))?\s*$/.exec(item);
+			if (!m) return [];
+			const [from, to] = (m[3] ?? "").split(/\s+[–—-]\s*|\s*[–—-]\s+/);
+			return namesIn(m[1]).map((land) => ({ land, by: link(m[2]), from: from?.trim() ?? "", to: to?.trim() ?? "" }));
+		}).filter((r) => r.land && r.by);
+	},
+	write(rows) {
+		return rows.map((r) => {
+			const from = r.from?.trim(), to = r.to?.trim();
+			const when = from && to ? ` (${from} – ${to})` : from ? ` (${from} –)` : "";
+			return `${wiki(r.land)} by ${wiki(r.by ?? "")}${when}`;
+		});
+	},
+};
+
+export function readOccupied(value: unknown, resolve: Resolve, cal: Calendar): Occupation[] | undefined {
+	const date = (v: string) => (v ? parseDate(v, cal) ?? undefined : undefined);
+	const out = occupied.read(value).map((r) => ({ land: resolve(r.land), by: resolve(r.by), from: date(r.from), to: date(r.to) }));
+	return out.length ? out : undefined;
+}
+
+export const ROW_FORMATS: Record<string, RowFormat> = { holders, transfers, sides, occupied };
 
 /** The parties that won, if any are marked. */
 export function victorsOf(sides: Side[] | undefined): Side[] {

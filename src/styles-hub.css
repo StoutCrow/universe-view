@@ -331,6 +331,108 @@ button.chronicle-ov-tile .chronicle-ov-tile-icon {
 	animation: none;
 }
 
+/* ---- The inspector, in the dashboard's style: quiet cards, plain headings ---- */
+.chronicle-ep .chronicle-ep-section {
+	margin-top: 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	box-shadow: none;
+}
+.chronicle-ep .chronicle-ep-tile {
+	border: 1px solid var(--background-modifier-border);
+	background: transparent;
+	box-shadow: none;
+}
+.chronicle-ep-tile-icon {
+	color: var(--text-muted);
+}
+.chronicle-ep-facts {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: 4px 12px;
+	margin: 6px 0 0;
+	font-size: var(--font-ui-small);
+}
+.chronicle-ep-facts dt {
+	color: var(--text-muted);
+}
+.chronicle-ep-facts dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+/* ---- Occupied land: the occupier's stripes over the owner's colour ---- */
+.uv-occupied {
+	stroke: var(--terr-color);
+	stroke-width: 1.5;
+	stroke-dasharray: 4 3;
+	pointer-events: none;
+}
+.uv-occupied.is-front {
+	stroke-width: 2;
+	pointer-events: auto;
+}
+
+/* ---- The land painter ---- */
+.uv-painter {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	z-index: 1001;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	width: 220px;
+	max-height: calc(100% - 24px);
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	box-shadow: var(--shadow-s);
+}
+.uv-painter-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+}
+.uv-painter-list {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+}
+button.uv-painter-row {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
+	width: 100%;
+	height: 28px;
+	padding: 0 6px;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	box-shadow: none;
+	font-size: var(--font-ui-small);
+	font-weight: 400;
+	color: var(--text-normal);
+	cursor: pointer;
+}
+button.uv-painter-row:hover,
+button.uv-painter-row.is-active {
+	background: var(--background-modifier-hover);
+}
+.uv-painter-dot {
+	flex: none;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--dot);
+}
+
 /* ---- Customising a page's cards ---- */
 .uv-hub-pane [data-card],
 .is-arranging > [data-card] {

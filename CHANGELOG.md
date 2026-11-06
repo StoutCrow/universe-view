@@ -2,6 +2,15 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.8.0 — 2026-11-06
+- **Occupation**: `occupied: "[[Virginia]] by [[United States]] (1861 – 1865)"` on a war or battle. At those dates the land keeps its owner's colour with the occupier's stripes over it, and its borders and realm don't change.
+- **Occupied areas**: the map's Occupied tool paints part of a land held for a while, with dates, apart from real borders. Right-click one to delete it.
+- **Play a war**: *Play on the map* in the inspector runs the time slider through a war.
+- **Push neighbours back**: Brush can take land from a neighbour, moving both borders in one undo.
+- **Stay on land**: brushing on an image map keeps paint off the sea.
+- **Land painter**: the palette button on the map lists your lands: pick one and paint, pick the next.
+- **Inspector**: About now shows sides, battles, holders, names, lands changing hands, occupations, birthplaces and every other property written on the note, in the dashboard's style.
+
 ## 1.7.0 — 2026-11-06
 Shorter ways to write what used to take a block of properties, and the inspector now reads them all and saves the shortest.
 - **Sides**: `sides: "[[A]], [[B]] vs [[C]]"` on one line, or grouped by side (`The Crown (won): ["[[A]]", "[[B]]"]`), or `outcome:` once for everyone.

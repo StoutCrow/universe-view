@@ -180,6 +180,7 @@ export class TimeSlider {
 	private toggle: HTMLElement;
 	private playBtn: HTMLElement;
 	private timer = 0;
+	private until?: number;
 
 	constructor(
 		parent: HTMLElement,
@@ -294,18 +295,28 @@ export class TimeSlider {
 		this.label.setText(this.enabled && this.value !== undefined ? formatDay(this.value, cal, "year") : "All time");
 	}
 
+	/** Plays from one day to another, however wide the slider's range. */
+	playBetween(from: number, to: number) {
+		this.stop();
+		this.enabled = true;
+		this.value = from;
+		this.until = to;
+		this.play();
+	}
+
 	private play() {
 		if (!this.enabled) {
 			this.enabled = true;
 			this.value = this.range[0];
 		} else if (this.value === undefined || this.value >= this.range[1]) this.value = this.range[0];
 		icon(this.playBtn, "pause");
-		const step = (this.range[1] - this.range[0]) / 200;
+		const end = this.until ?? this.range[1];
+		const step = (end - (this.value ?? this.range[0])) / 200;
 		this.timer = window.setInterval(() => {
-			this.value = Math.min(this.range[1], (this.value ?? this.range[0]) + step);
+			this.value = Math.min(end, (this.value ?? this.range[0]) + step);
 			this.sync();
 			this.emit();
-			if (this.value >= this.range[1]) this.stop();
+			if (this.value >= end) this.stop();
 		}, 80);
 		this.sync();
 		this.emit();
@@ -314,6 +325,7 @@ export class TimeSlider {
 	stop() {
 		if (this.timer) window.clearInterval(this.timer);
 		this.timer = 0;
+		this.until = undefined;
 		icon(this.playBtn, "play");
 		setPressed(this.playBtn, false);
 	}

@@ -1,3 +1,4 @@
+import { warSpan } from "../index/wars";
 import { growSheet } from "../ui/territoryactions";
 /** What a territory tool started from elsewhere does. */
 export type DrawHow = "paint" | "split" | "edit" | "grow" | "borders";
@@ -70,6 +71,13 @@ export class MapView extends ChronicleView {
 		this.renderer.onOptionsChange = () => this.app.workspace.requestSaveLayout();
 		this.renderer.onModeChange = () => this.syncToolButtons();
 		this.onOpenExtra();
+	}
+
+	/** Plays a war through on the map, from its first day to its last. */
+	playWar(key: string) {
+		const e = this.plugin.index.get(key);
+		const span = e && warSpan(this.plugin.index, e);
+		if (span) this.slider?.playBetween(span[0], span[1]);
 	}
 
 	/** The calendar the slider and captions are in. */
@@ -502,6 +510,7 @@ export class MapView extends ChronicleView {
 			this.toolButtons.clear();
 			const image = o.map !== WORLD_MAP;
 			const pickPlace = (title: string, run: (key: string, name: string) => void) => new EntityPickerModal(this.plugin, ["place"], (p) => run(p.key, p.name), title).open();
+			iconButton(tools, "palette", "Land painter: pick a land, paint, pick the next", () => this.renderer?.togglePainter());
 			menuButton("pencil-ruler", "Draw: territories, routes, map notes", [
 				["paint", "paintbrush", "Paint a territory (click corners or drag)", () => this.paint("paint")],
 				image && ["fill", "paint-bucket", "Fill a territory from the image's coasts and borders", () => this.paint("fill")],

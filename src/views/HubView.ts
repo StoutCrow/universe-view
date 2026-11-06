@@ -425,6 +425,9 @@ export class HubView extends ItemView {
 	draw(...args: unknown[]) {
 		this.hosted()?.draw?.(...args);
 	}
+	playWar(...args: unknown[]) {
+		this.hosted()?.playWar?.(...args);
+	}
 	addModule(...args: unknown[]) {
 		this.hosted()?.addModule?.(...args);
 	}

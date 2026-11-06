@@ -42,6 +42,14 @@ export interface Transfer {
 	to?: Ref;
 }
 
+/** A land held for a while by someone else (`occupied:` on a war or battle): it keeps its owner. */
+export interface Occupation {
+	land: Ref;
+	by: Ref;
+	from?: ChronDate;
+	to?: ChronDate;
+}
+
 /** One party in a battle or war (`sides:`): who, on which side, and how it ended for them. */
 export interface Side {
 	party: Ref;
@@ -145,6 +153,10 @@ export interface Entity {
 	transfers?: Transfer[];
 	/** On a battle or war: who fought, on which side, and who won (`sides:`). */
 	sides?: Side[];
+	/** On a war or battle: lands occupied in it (`occupied:`). */
+	occupied?: Occupation[];
+	/** On a realm: ground it holds for a while, drawn apart from its borders (`occupied-areas:`). */
+	fronts?: Territory[];
 	/** An alliance's members (`alliance:`): naming it in `sides:` brings them all in. */
 	alliance?: Ref[];
 	/** On a battle: the war or campaign it was part of (`war:`). */

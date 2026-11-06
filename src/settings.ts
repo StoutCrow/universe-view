@@ -102,6 +102,9 @@ export interface ChronicleSettings {
 		counts?: boolean;
 		compact?: boolean;
 	};
+	/** Brushing: take land from neighbours, and keep paint off the sea. */
+	pushBorders?: boolean;
+	coastLock?: boolean;
 	/** How each view in the dashboard was left (its filters, layers, focus…), by view. */
 	viewStates?: Record<string, Record<string, unknown>>;
 	/** How each page's cards are arranged, by page. */

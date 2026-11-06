@@ -1,10 +1,14 @@
 import { TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
-import type { Entity, TimedRef } from "../types";
+import type { Entity, Side, TimedRef } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { chainOf, holdingsOf , tierLabel } from "../index/realms";
 import { relLabel, relTone } from "../index/relkinds";
 import { totalPopulation } from "../index/tidy";
+import { battlesOf, isWar, sidesOf, warSpan } from "../index/wars";
+import { asText } from "../index/text";
+import { buildFieldAliases } from "../settings";
+import { relKind } from "../index/relkinds";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { changeNoteIcon, noteIcons } from "./icons";
 import { TYPE_ICONS, TYPE_LABELS, bindHover, el, entityColor, glyph, helpTip, icon, openEntity, resourceUrl } from "../render/common";
@@ -198,7 +202,19 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 		list("Where", "map-pin", e.places.map((r) => ({ ...r })));
 		list("Caused by", "arrow-left", [...(idx.causesOf.get(e.key) ?? [])].map((k) => refOf(k, span(idx.get(k)))));
 		list("Led to", "arrow-right", [...(idx.effectsOf.get(e.key) ?? [])].map((k) => refOf(k, span(idx.get(k)))));
+		// Who fought, side by side, each with how it ended for them.
+		const camps = new Map<string, Side[]>();
+		for (const s of sidesOf(idx, e)) camps.set(s.side, [...(camps.get(s.side) ?? []), s]);
+		for (const [side, parties] of camps) list(side.length > 1 ? side : `Side ${side}`, "swords", parties.map((s) => ({ ...s.party, sub: s.outcome ? cap(s.outcome) : "" })));
+		if (e.war) list("Part of", "flag", [{ ...e.war }]);
+		if (isWar(idx, e)) list("Battles", "swords", battlesOf(idx, e).map((b) => refOf(b.key, span(b))));
+		list("Lands changing hands", "arrow-left-right", (e.transfers ?? []).map((t) => ({ ...t.land, sub: [t.from?.name, t.to?.name ?? "independent"].filter(Boolean).join(" → ") })));
+		list("Lands occupied", "flag", (e.occupied ?? []).map((o) => ({ ...o.land, sub: [`by ${o.by.name}`, formatSpan(o.from, o.to, cal)].filter(Boolean).join(" · ") })));
 	}
+	if (e.holders?.length) list("Holders over time", "crown", e.holders.map((h) => ({ ...h.ref, sub: formatSpan(h.from, h.to, cal) })));
+	// Occupied by someone, in any war.
+	const occupiers = idx.all("event").flatMap((x) => (x.occupied ?? []).filter((o) => o.land.key === e.key).map((o) => ({ ...o.by, sub: [x.name, formatSpan(o.from ?? x.start, o.to ?? x.end, cal)].filter(Boolean).join(" · ") })));
+	list("Occupied by", "flag", occupiers);
 	if (e.type === "place") {
 		// Geography, apart from rule: shown when it differs from the title it's ruled under.
 		if (e.locatedIn && e.locatedIn.key !== node?.under) {
@@ -212,6 +228,26 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	const rels: TimedRef[] = [...e.relations.filter((r) => !(node && shownKinds.has(r.kind ?? ""))), ...(e.relatedCultures ?? [])];
 	list("Relationships", "handshake", rels.map((r) => ({ ...r.ref, sub: [relLabel(r.kind), formatSpan(r.from, r.to, cal)].filter(Boolean).join(" · "), tone: relTone(r.kind) })), 16);
 	list("Knows about", "eye", e.knows.map((t) => ({ ...t.ref, sub: formatSpan(t.from, t.to, cal) })), 8);
+
+	// ---- The rest of what's written about it ----
+	const facts: [string, string][] = [];
+	if (e.names?.length) facts.push(["Names", e.names.map((n) => [n.name, formatSpan(n.from, n.to, cal)].filter(Boolean).join(" ")).join(", ")]);
+	if (e.birthPlace) facts.push(["Born at", e.birthPlace.name]);
+	if (e.deathPlace) facts.push(["Died at", e.deathPlace.name]);
+	if (e.terrain) facts.push(["Terrain", cap(e.terrain)]);
+	if (e.repeat) facts.push(["Repeats", cap(e.repeat)]);
+	facts.push(...otherProperties(p, e));
+	if (facts.length) {
+		const s = el("section", { cls: "chronicle-ep-section" }, root);
+		const h = el("div", { cls: "chronicle-ep-section-head" }, s);
+		icon(el("span", {}, h), "list");
+		el("span", { text: "Details" }, h);
+		const table = el("dl", { cls: "chronicle-ep-facts" }, s);
+		for (const [k, v] of facts) {
+			el("dt", { text: k }, table);
+			el("dd", { text: v }, table);
+		}
+	}
 
 	// ---- Events, on a little timeline ----
 	const dated = events.filter((x) => x.start).sort((a, b) => a.start!.start - b.start!.start);
@@ -251,6 +287,7 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 		const f = p.app.vault.getAbstractFileByPath(e.key);
 		if (f instanceof TFile) void p.app.workspace.getLeaf(false).openFile(f);
 	});
+	if (e.type === "event" && isWar(idx, e) && warSpan(idx, e)) act("play", "Play on the map", () => void p.playWar(e.key));
 	if (e.start || e.end) act("calendar-range", "Timeline", () => void p.openTimeline({ focus: e.key }));
 	if (e.type === "person") act("git-fork", "Family tree", () => void p.openFamilyTree(e.key));
 	if (node || e.type === "culture") act("crown", "Realms", () => void p.openRealms(e.key));
@@ -262,6 +299,24 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	});
 	act("settings", "Settings", () => p.openSettings(e.type === "place" || node ? "maps" : e.type === "event" ? "time" : "notes"));
 	if (opts.tab) act("pencil", "Edit", () => opts.tab!("edit"));
+}
+
+/** Properties that are shown elsewhere, or are for the plugin rather than the reader. */
+const NOT_FACTS = /^(tags?|aliases|cssclass(es)?|position|map-position|pos|xy|coordinates?|coords|latlng|lat-lng|custom_coordinates.*|coordinates_.*|territor(y|ies)|borders|routes?|roads|occupied-areas|occupied|sides|transfers|holders|names|image|logo|icon|color|colour|cr_type|type|map|maps|war|victor|defeated|outcome|importance|calendar|summary|description|kind|category|parent|parents|father|mother|children|spouse|partner|caused[-_]by|because-of|triggered-by|led[-_]to|leads-to|causes|consequences|resulted-in)$/i;
+
+/** What else the note's properties say, in plain words: nothing written is left out of sight. */
+function otherProperties(p: ChroniclePlugin, e: Entity): [string, string][] {
+	const f = p.app.vault.getAbstractFileByPath(e.key);
+	const front: Record<string, unknown> | undefined = f instanceof TFile ? p.app.metadataCache.getFileCache(f)?.frontmatter : undefined;
+	const known = new Set(Object.values(buildFieldAliases(p.settings.fieldAliases)).flat().map((k) => k.toLowerCase()));
+	const out: [string, string][] = [];
+	for (const [k, v] of Object.entries(front ?? {})) {
+		if (NOT_FACTS.test(k) || known.has(k.toLowerCase()) || relKind(k)) continue;
+		const values = (Array.isArray(v) ? v : [v]).filter((x) => x !== null && x !== "" && typeof x !== "object");
+		const text = values.map((x) => asText(x).replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, "$1")).join(", ");
+		if (text) out.push([cap(k.replace(/[-_]/g, " ")), text]);
+	}
+	return out;
 }
 
 /**

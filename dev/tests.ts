@@ -1,5 +1,5 @@
 import { findColourAreas } from "../src/render/colours";
-import { ROW_FORMATS, readHolders, readSides, readTransfers, victorsOf } from "../src/index/periods";
+import { ROW_FORMATS, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
 import { checkBorders } from "../src/index/bordercheck";
 import { boxOf, labelSpot, mainAxis, snapToNeighbour, unionOutline } from "../src/index/geometry";
 import { nameSize, realmShape } from "../src/render/strategy";
@@ -1214,6 +1214,10 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	const fakeIndex = { get: (k: string) => notes[k], all: () => [] } as never;
 	const battle = { key: "B", name: "Battle of the Bridge", type: "event", war: ref("War") } as never;
 	eq(sidesOf(fakeIndex, battle).map((s) => [s.party.name, s.side, s.outcome]), [["Athens", "A", undefined], ["Sparta", "A", undefined], ["Rome", "B", undefined]], "sides: a battle inherits its war's, and an alliance brings its members");
+	const occ = (v: unknown) => readOccupied(v, resolve as never, cal)!.map((o) => [o.land.name, o.by.name, !!o.from, !!o.to]);
+	eq(occ("[[L]], [[M]] by [[X]] (1240 – 1241)"), [["L", "X", true, true], ["M", "X", true, true]], "occupied: one line, several lands, with dates");
+	eq(occ(["[[L]] by [[X]]"]), [["L", "X", false, false]], "occupied: no dates, it lasts as long as the event");
+	eq(f.occupied.write(f.occupied.read(["[[L]] by [[X]] (1240 – 1241)"])), ["[[L]] by [[X]] (1240 – 1241)"], "occupied: survives editing");
 	const refs = readTimedRefs([{ alias: "cultures", value: ["[[House]] (king, 1220 – 1258)"] }], ((t: string) => ({ key: t, name: t })) as never, cal, ["cultures"], []);
 	eq([refs[0].ref.name, refs[0].role, !!refs[0].from, !!refs[0].to], ["House", "king", true, true], "dated links: role and dates on one line");
 }

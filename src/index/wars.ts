@@ -1,4 +1,4 @@
-import type { Entity, Side } from "../types";
+import type { Entity, Occupation, Side } from "../types";
 import type { EntityIndex } from "./EntityIndex";
 import { victorsOf } from "./periods";
 
@@ -62,6 +62,21 @@ function withMembers(idx: EntityIndex, sides: Side[]): Side[] {
 export function sidesOf(idx: EntityIndex, e: Entity): Side[] {
 	const inherited = !e.sides && isBattle(e) ? warOf(idx, e)?.sides?.map((s) => ({ ...s, outcome: undefined })) : undefined;
 	return withMembers(idx, e.sides ?? inherited ?? []);
+}
+
+/** The lands occupied on a day. An occupation without dates lasts as long as its war or battle. */
+export function occupationsAt(idx: EntityIndex, day: number): Occupation[] {
+	return idx.all("event").flatMap((e) => (e.occupied ?? []).filter((o) => {
+		const from = o.from?.start ?? e.start?.start;
+		const to = o.to?.end ?? e.end?.end ?? (o.from ? undefined : e.start?.end);
+		return from !== undefined && day >= from && (to === undefined || day <= to);
+	}));
+}
+
+/** The days a war ran, from its own dates and its battles'. */
+export function warSpan(idx: EntityIndex, war: Entity): [number, number] | undefined {
+	const days = [war, ...battlesOf(idx, war)].flatMap((e) => [e.start?.start, e.end?.end ?? e.start?.end]).filter((d): d is number => d !== undefined);
+	return days.length ? [Math.min(...days), Math.max(...days)] : undefined;
 }
 
 /** Who won: the war's own `sides:` when marked, else the side that won most of its battles. */

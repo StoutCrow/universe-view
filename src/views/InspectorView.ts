@@ -577,6 +577,7 @@ export class InspectorView extends ItemView {
 		// Wars and treaties: lands changing hands on this event's date.
 		if (e.type === "event") this.renderWar(body, e);
 		if (e.type === "event") this.renderRows(body, e, { title: "Lands changing hands", icon: "swords", field: "transfers", add: "Add a land", help: "Lands this event moved from one realm to another (a war, a treaty, a marriage). From the event's date the land answers to the new realm, and before it to the old one: the map, realm tree and colours follow the time slider. Leave To empty for a land that became independent. Written as `transfers:`.", cols: [{ key: "land", ph: "Land", link: ["place", "culture"] }, { key: "from", ph: "From realm", link: ["place", "culture"] }, { key: "to", ph: "To realm", link: ["place", "culture"] }] });
+		if (e.type === "event") this.renderRows(body, e, { title: "Lands occupied", icon: "flag", field: "occupied", add: "Add a land", help: "Lands held for a while by someone else: the land keeps its owner, with the occupier's stripes over it on the map at those dates. Leave the dates empty for as long as this event lasts. To show part of a land, paint it with Occupied in the map's territory panel. Written as `occupied:`, one line each.", cols: [{ key: "land", ph: "Land", link: ["place", "culture"] }, { key: "by", ph: "Held by", link: ["culture", "person"] }, { key: "from", ph: "From" }, { key: "to", ph: "To" }] });
 		if (node) {
 			const s = section(
 				node.nature === "region" ? "Region" : "Realm",

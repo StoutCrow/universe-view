@@ -6,7 +6,7 @@ import { CalendarRegistry, type Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import { relInverse } from "./relkinds";
 import { readNames } from "./renames";
-import { readHolders, readSides, readTransfers } from "./periods";
+import { readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
 import {
@@ -456,6 +456,8 @@ export class EntityIndex extends Events {
 		e.transfers = readTransfers(fm.transfers ?? fm["lands-changed"] ?? fm.cedes ?? fm.annexes, resolve);
 		e.names = readNames(fm.names ?? fm["former-names"] ?? fm.renamed ?? fm["names-over-time"], cal);
 		e.sides = readSides(fm.sides ?? fm.belligerents ?? fm.combatants, fm.victor ?? fm.victors ?? fm.winner, fm.defeated ?? fm.loser, resolve, fm.outcome ?? fm.result);
+		e.occupied = readOccupied(fm.occupied ?? fm.occupations, resolve, cal);
+		if (fm["occupied-areas"]) e.fronts = this.readTerritories(fm["occupied-areas"], file.path, 3, cal);
 		if (fm.alliance ?? fm.coalition) e.alliance = readRefs(fm.alliance ?? fm.coalition, resolve);
 		// The war a battle belongs to ("part-of" too, when it names an event: checked where it's used).
 		const warLink = [fm.war, fm.campaign, fm.conflict, fm["part-of"]].find((v) => typeof v === "string" && v.trim());
