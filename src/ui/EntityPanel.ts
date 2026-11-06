@@ -5,7 +5,7 @@ import { formatDate, formatSpan } from "../dates/parser";
 import { chainOf, holdingsOf , tierLabel } from "../index/realms";
 import { relLabel, relTone } from "../index/relkinds";
 import { totalPopulation } from "../index/tidy";
-import { battlesOf, isWar, sidesOf, warSpan } from "../index/wars";
+import { battlesOf, isWar, occupationsByLand, sidesOf, warSpan } from "../index/wars";
 import { asText } from "../index/text";
 import { buildFieldAliases } from "../settings";
 import { relKind } from "../index/relkinds";
@@ -213,7 +213,7 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	}
 	if (e.holders?.length) list("Holders over time", "crown", e.holders.map((h) => ({ ...h.ref, sub: formatSpan(h.from, h.to, cal) })));
 	// Occupied by someone, in any war.
-	const occupiers = idx.all("event").flatMap((x) => (x.occupied ?? []).filter((o) => o.land.key === e.key).map((o) => ({ ...o.by, sub: [x.name, formatSpan(o.from ?? x.start, o.to ?? x.end, cal)].filter(Boolean).join(" · ") })));
+	const occupiers = (occupationsByLand(idx).get(e.key) ?? []).map((o) => ({ ...o.by, sub: [o.event.name, formatSpan(o.from ?? o.event.start, o.to ?? o.event.end, cal)].filter(Boolean).join(" · ") }));
 	list("Occupied by", "flag", occupiers);
 	if (e.type === "place") {
 		// Geography, apart from rule: shown when it differs from the title it's ruled under.

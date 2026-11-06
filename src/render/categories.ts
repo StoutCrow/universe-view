@@ -1,6 +1,6 @@
 /** The timeline's categories: what each thing is filed under, and a colour for each. Pure, so it's testable. */
 
-export type ItemKind = "event" | "person" | "culture" | "place" | "birth" | "death" | "scene" | "rename" | "reign";
+export type ItemKind = "event" | "person" | "culture" | "place" | "birth" | "death" | "scene" | "rename" | "reign" | "occupation";
 
 export const KIND_LABELS: Record<ItemKind, string> = {
 	event: "Events",
@@ -12,6 +12,7 @@ export const KIND_LABELS: Record<ItemKind, string> = {
 	scene: "Story",
 	rename: "Renamings",
 	reign: "Holders of titles",
+	occupation: "Occupations",
 };
 
 /**

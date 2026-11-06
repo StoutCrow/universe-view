@@ -16,8 +16,8 @@ import { compareVersions, parseChangelog } from "../src/index/changelog";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "../src/ui/mappresets";
-import { occupationsAt, sidesOf } from "../src/index/wars";
-import { MAX_UNDO, addToStep, changesBetween, remember, renameInSteps, restoreFront } from "../src/index/undo";
+import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
+import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
@@ -1239,6 +1239,16 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	for (let i = 0; i <= MAX_UNDO; i++) remember(long, { ...step, at: i });
 	eq([long.length, long[0].at], [MAX_UNDO, 1], "undo: only the newest steps are kept");
 
+	// The history survives a restart, added properties included.
+	const saved = readHistory(writeHistory([{ label: "s", at: 5, notes: [{ path: "A.md", before: { a: 1, added: undefined } }] }]));
+	eq([saved[0].label, saved[0].at, "added" in saved[0].notes[0].before, saved[0].notes[0].before.a], ["s", 5, true, 1], "undo: a saved step still knows which properties it added");
+	const restored: Record<string, unknown> = { a: 2, added: "x" };
+	restoreFront(restored, saved[0].notes[0].before);
+	eq(restored, { a: 1 }, "undo: a saved step takes its added properties off again");
+	eq([readHistory("not json"), readHistory("{}"), readHistory('[{"label":1},{"label":"x","at":1,"notes":[{"path":3}]}]')], [[], [], []], "undo: an unreadable history file means no history");
+	const two = [{ label: "old", at: 1, notes: [{ path: "A.md", before: { big: "x".repeat(500) } }] }, { label: "new", at: 2, notes: [{ path: "B.md", before: { a: 1 } }] }];
+	eq(readHistory(writeHistory(two, 200)).map((s) => s.label), ["new"], "undo: when the file would be too big, the oldest steps go");
+
 	// Links worked out from other notes are cleared, so they can't outlive their source.
 	const child = { parents: [{ key: "W", name: "W", resolved: true }, { key: "A", name: "A", resolved: true, inferred: true }], parentCultures: [{ key: "C", name: "C", resolved: true, inferred: true }], map: { key: "M", name: "M", resolved: true, inferred: true } } as never as Parameters<typeof clearInferred>[0];
 	clearInferred(child);
@@ -1262,6 +1272,8 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	const occIndex = { all: () => wars } as never;
 	const occAt = (y: number) => occupationsAt(occIndex, inYear(y).start).length;
 	eq([occAt(1239), occAt(1240), occAt(1241), occAt(1243), occAt(1246)], [0, 1, 2, 1, 0], "occupied: dated ones keep their dates, undated ones last the war");
+	const byLand = occupationsByLand({ all: () => wars } as never);
+	eq([byLand.get("L")?.[0].by.name, byLand.get("L")?.[0].firstDay === inYear(1241).start, byLand.get("X")?.[0].firstDay === inYear(1240).start], ["X", true, true], "occupied: listed by land, with the days each ran");
 
 	const refs = readTimedRefs([{ alias: "cultures", value: ["[[House]] (king, 1220 – 1258)"] }], ((t: string) => ({ key: t, name: t })) as never, cal, ["cultures"], []);
 	eq([refs[0].ref.name, refs[0].role, !!refs[0].from, !!refs[0].to], ["House", "king", true, true], "dated links: role and dates on one line");

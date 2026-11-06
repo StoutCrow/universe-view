@@ -9,7 +9,7 @@ import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
 import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
-import { battlesOf, isBattle, sidesOf, warOf } from "../index/wars";
+import { battlesOf, isBattle, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { KIND_LABELS, categoryColor, categoryOf, type ItemKind } from "./categories";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
@@ -36,6 +36,8 @@ export interface TimelineOptions {
 	renames?: boolean;
 	/** Each holder's time holding a title (`holders:`), as spans. */
 	reigns?: boolean;
+	/** Lands held for a while by someone else (`occupied:`). */
+	occupations?: boolean;
 	/** Categories left off the timeline (see categoryOf): "battle", "kind:person"… */
 	hiddenCategories?: string[];
 }
@@ -284,6 +286,18 @@ export class TimelineRenderer {
 				add(who, "reign", a, Math.max(a, b), a === b, false, `${h.ref.name} holds ${e.name}: ${formatSpan(h.from, h.to, cal)}`, `${h.ref.name} · ${e.name}`);
 				out[out.length - 1].context = e.key;
 			});
+		}
+		// Occupations (`occupied:`): each land's time in someone else's hands, as a span in the land's lane.
+		if (options.occupations !== false) {
+			for (const [key, spans] of occupationsByLand(idx)) {
+				for (const o of spans) {
+					const land = idx.get(key) ?? o.event;
+					const a = o.firstDay;
+					const b = o.lastDay ?? plugin.openEndOf(land) ?? a;
+					if (a === undefined || b === undefined || !idx.matches(o.event, personFilter)) continue;
+					add(land, "occupation", a, Math.max(a, b), a === b, false, `${o.land.name} held by ${o.by.name}: ${formatSpan(o.from ?? o.event.start, o.to ?? o.event.end, cal)}, in ${o.event.name}`, `${o.land.name} held by ${o.by.name}`);
+				}
+			}
 		}
 		// Renamings (`names:`): "New Amsterdam becomes New York" on the day it happened.
 		for (const e of options.renames === false ? [] : idx.all()) {

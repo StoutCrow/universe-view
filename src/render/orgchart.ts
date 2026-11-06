@@ -1,6 +1,7 @@
 import type ChroniclePlugin from "../main";
 import type { ChronDate, Entity, TimedRef } from "../types";
 import { formatSpan } from "../dates/parser";
+import { occupationsAt } from "../index/wars";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import { activeAt } from "../index/EntityIndex";
 import { relInverse, relKind, relLabel, relSymmetric, relTone, type RelTone } from "../index/relkinds";
@@ -698,6 +699,10 @@ export class OrgChartRenderer {
 		if (o.category) sub.push(o.category.charAt(0).toUpperCase() + o.category.slice(1));
 		const span = formatSpan(o.start, o.end, cal);
 		if (span) sub.push(span);
+		// On a chosen date, whoever is occupying it says more than how long it lasted.
+		const at = this.options.at;
+		const occupier = at === undefined ? undefined : occupationsAt(idx, at).find((x) => x.land.key === o.key);
+		if (occupier) sub.splice(0, sub.length, `Occupied by ${occupier.by.name}`);
 		const subEl = svg("text", { x: tx, y: 51, class: "chronicle-org-sub" }, head);
 		subEl.textContent = clip(sub.join(" · "), 30);
 		const total = idx.members(o.key).filter((m) => idx.get(m.key)?.type === "person").length;

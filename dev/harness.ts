@@ -85,6 +85,12 @@ vault.getMarkdownFiles = () => [...files.values()].filter((f) => f.extension ===
 vault.getFiles = () => [...files.values()];
 vault.getAllLoadedFiles = () => [...folders.values(), ...files.values()];
 vault.getAbstractFileByPath = (p: string) => files.get(p) ?? folders.get(p) ?? null;
+// The plugin's own files, kept in the browser so they outlast a reload.
+vault.adapter = {
+	exists: async (p: string) => localStorage.getItem(`uv-file:${p}`) !== null,
+	read: async (p: string) => localStorage.getItem(`uv-file:${p}`) ?? "",
+	write: async (p: string, text: string) => localStorage.setItem(`uv-file:${p}`, text),
+};
 vault.read = async (f: TFile) => contents.get(f.path) ?? "";
 vault.cachedRead = vault.read;
 vault.getName = () => (window as any).VAULT_NAME ?? "Vault";

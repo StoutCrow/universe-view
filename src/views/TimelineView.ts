@@ -101,6 +101,7 @@ export class TimelineView extends ChronicleView {
 				["cultures", "Groups", "flag", "Realms, houses and other groups, from their founding to their end (or today)", false],
 				["places", "Places", "map-pin", "Provinces, towns and forts with a founding date, from then to their end (or today)", false],
 				["reigns", "Reigns", "crown", "Who held each title when (holders:), as bars", true],
+				["occupations", "Occupations", "swords", "Lands held for a while by someone else (occupied:), as bars", true],
 				["renames", "Renamings", "history", "When a land or group took a new name (names:)", true],
 				["causes", "Causes", "git-pull-request-arrow", "Arrows from events to what they led to", true],
 				["scenes", "Story", "book-open", "Chapters and scenes with a story-date: property, among the events", true],

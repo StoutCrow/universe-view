@@ -1,6 +1,7 @@
 import { Notice, TFile, type ViewStateResult } from "obsidian";
 import type { Entity } from "../types";
 import { chainOf, holdingsOf, tierLabel } from "../index/realms";
+import { occupationsByLand } from "../index/wars";
 import { GROUP_KINDS, groupKind, isHouse } from "../render/houses";
 import { bindHover, el, entityColor, helpTip, icon, iconButton, resourceUrl, showEntityMenu, TYPE_ICONS } from "../render/common";
 import { EntityPickerModal } from "../ui/suggest";
@@ -195,10 +196,12 @@ export class RealmsView extends ChronicleView {
 		};
 		if (s.tab === "realms") {
 			const kidsOf = (k: string) => tree.nodes.get(k)?.children.filter((c) => { const x = idx.get(c); return !!x && this.inScope(x); }) ?? [];
+			const occupied = occupationsByLand(idx);
 			const sub = (e: Entity) => {
 				const n = tree.nodes.get(e.key);
 				const tier = tierLabel(n);
-				return [tier, n?.holder?.name, n?.house?.name].filter(Boolean).join(" · ");
+				const by = [...new Set(occupied.get(e.key)?.map((o) => o.by.name))].join(", ");
+				return [tier, n?.holder?.name, n?.house?.name, by && `occupied by ${by}`].filter(Boolean).join(" · ");
 			};
 			const roots = tree.roots.filter((k) => { const e = idx.get(k); const n = tree.nodes.get(k); return !!e && this.inScope(e) && (!!n?.children.length || !!n?.holder); });
 			if (!roots.length) return empty("No realms yet", "A title goes under its liege by its `location:`, `nation:`, a tag like #Nation_X, or the folder note above it; `lord:`, `holder:` or `ruler:` says who holds it.");

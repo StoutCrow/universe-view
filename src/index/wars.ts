@@ -64,13 +64,37 @@ export function sidesOf(idx: EntityIndex, e: Entity): Side[] {
 	return withMembers(idx, e.sides ?? inherited ?? []);
 }
 
-/** The lands occupied on a day. An occupation without dates lasts as long as its war or battle. */
+/** The days an occupation ran. Without dates it lasts as long as its war or battle. */
+function occupationDays(o: Occupation, e: Entity): [number | undefined, number | undefined] {
+	return [o.from?.start ?? e.start?.start, o.to?.end ?? e.end?.end ?? (o.from ? undefined : e.start?.end)];
+}
+
+/** The lands occupied on a day. */
 export function occupationsAt(idx: EntityIndex, day: number): Occupation[] {
 	return idx.all("event").flatMap((e) => (e.occupied ?? []).filter((o) => {
-		const from = o.from?.start ?? e.start?.start;
-		const to = o.to?.end ?? e.end?.end ?? (o.from ? undefined : e.start?.end);
+		const [from, to] = occupationDays(o, e);
 		return from !== undefined && day >= from && (to === undefined || day <= to);
 	}));
+}
+
+export interface OccupationSpan extends Occupation {
+	/** The war or battle that says so. */
+	event: Entity;
+	firstDay?: number;
+	lastDay?: number;
+}
+
+/** Every occupation in the vault by the land's key, oldest first. */
+export function occupationsByLand(idx: EntityIndex): Map<string, OccupationSpan[]> {
+	const out = new Map<string, OccupationSpan[]>();
+	for (const event of idx.all("event")) {
+		for (const o of event.occupied ?? []) {
+			const [firstDay, lastDay] = occupationDays(o, event);
+			out.set(o.land.key, [...(out.get(o.land.key) ?? []), { ...o, event, firstDay, lastDay }]);
+		}
+	}
+	for (const list of out.values()) list.sort((a, b) => (a.firstDay ?? Infinity) - (b.firstDay ?? Infinity));
+	return out;
 }
 
 /** The days a war ran, from its own dates and its battles'. */

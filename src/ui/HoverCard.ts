@@ -1,6 +1,7 @@
 import { Keymap, TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity, Ref } from "../types";
+import { occupationsByLand } from "../index/wars";
 import { formatDate, formatSpan, yearsBetween } from "../dates/parser";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, ownershipLines, resourceUrl, svg } from "../render/common";
@@ -505,6 +506,7 @@ export class HoverCards {
 				add("Branches", [...(idx.childCulturesOf.get(e.key) ?? [])].map(ref));
 				add("Seat", e.places);
 				add("Part of", cultures);
+				add("Occupied by", occupationsByLand(idx).get(e.key)?.map((o) => o.by));
 				break;
 			}
 			case "place": {
@@ -518,6 +520,7 @@ export class HoverCards {
 				const pop = totalPopulation(idx, e.key);
 				if (pop) add("Population", `${pop.total.toLocaleString()}${pop.counted > 1 ? ` in ${pop.counted} places` : ""}`);
 				add("Held by", cultures);
+				add("Occupied by", occupationsByLand(idx).get(e.key)?.map((o) => o.by));
 				const subs = [...(idx.subPlacesOf.get(e.key) ?? [])].map(ref);
 				add("Contains", subs);
 				const born = idx.all("person").filter((x) => x.birthPlace?.key === e.key).map((x) => ref(x.key));

@@ -72,7 +72,7 @@ import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
 import type { EntityFilter } from "./types";
 import { asText } from "./index/text";
-import { addToStep, changesBetween, remember, renameInSteps, restoreFront, type UndoStep } from "./index/undo";
+import { addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory, type UndoStep } from "./index/undo";
 
 /** Every view, with its ribbon icon and default hotkey (Ctrl/Cmd + Alt + key; changeable in Settings → Hotkeys). */
 /** This build's version, written in by esbuild.config.mjs (absent in the test harness). */
@@ -113,6 +113,7 @@ export default class ChroniclePlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+		void this.loadHistory().catch((err) => console.error("UniverseView: couldn't read the undo history", err));
 		applyAppearance(this.settings);
 		setHelpDelay(this.settings.helpDelay ?? 350);
 		applyIconSettings(this);
@@ -218,6 +219,7 @@ export default class ChroniclePlugin extends Plugin {
 		this.registerEvent(this.app.vault.on("create", () => this.index.ready && this.index.requestRebuild()));
 		this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
 			renameInSteps([...this.history, ...(this.openStep ? [this.openStep] : [])], oldPath, file.path);
+			this.saveHistorySoon();
 			this.index.requestRebuild();
 		}));
 		this.registerEvent(this.app.vault.on("delete", () => this.index.requestRebuild()));
@@ -327,6 +329,7 @@ export default class ChroniclePlugin extends Plugin {
 	}
 
 	onunload() {
+		this.saveHistorySoon.run();
 		// Views are detached by Obsidian; only the body classes and variables need removing.
 		clearAppearance();
 		document.body.style.removeProperty("--uv-bottom-inset");
@@ -1148,6 +1151,21 @@ export default class ChroniclePlugin extends Plugin {
 
 	private history: UndoStep[] = [];
 	private openStep?: UndoStep;
+	/** The history is kept beside the plugin, on this device only: it isn't a setting, and Sync leaves it alone. */
+	private get historyPath() {
+		return `${this.manifest.dir}/undo-history.json`;
+	}
+	private saveHistorySoon = debounce(() => void this.app.vault.adapter.write(this.historyPath, writeHistory(this.history)).catch((err) => console.error("UniverseView: couldn't save the undo history", err)), 1500, true);
+
+	private async loadHistory() {
+		if (!(await this.app.vault.adapter.exists(this.historyPath))) return;
+		this.history = [...readHistory(await this.app.vault.adapter.read(this.historyPath)), ...this.history];
+	}
+
+	private historyChanged() {
+		this.app.workspace.trigger("chronicle:history-changed");
+		this.saveHistorySoon();
+	}
 
 	/** Every UniverseView edit to a note's properties goes through here, so it can be undone. */
 	async editFrontmatter(file: TFile, fn: (front: Record<string, unknown>) => void, label = "Edit") {
@@ -1159,7 +1177,7 @@ export default class ChroniclePlugin extends Plugin {
 			if (this.openStep) addToStep(this.openStep, file.path, changes);
 			else remember(this.history, { label, at: Date.now(), notes: [{ path: file.path, before: changes }] });
 		});
-		this.app.workspace.trigger("chronicle:history-changed");
+		this.historyChanged();
 	}
 
 	/** Runs several edits as one undo step. */
@@ -1171,7 +1189,7 @@ export default class ChroniclePlugin extends Plugin {
 		} finally {
 			this.openStep = undefined;
 			if (step.notes.length) remember(this.history, step);
-			this.app.workspace.trigger("chronicle:history-changed");
+			this.historyChanged();
 		}
 	}
 
@@ -1208,7 +1226,7 @@ export default class ChroniclePlugin extends Plugin {
 			}
 		}
 		new Notice(missed.length ? `Undid: ${step.label}, except in ${missed.join(", ")}. Those notes couldn't be changed.` : `Undid: ${step.label}`);
-		this.app.workspace.trigger("chronicle:history-changed");
+		this.historyChanged();
 	}
 
 	/** Adds `parent` to the parents list of the person note `childKey`. */

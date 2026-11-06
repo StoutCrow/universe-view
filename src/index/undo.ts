@@ -41,6 +41,44 @@ export function remember(history: UndoStep[], step: UndoStep) {
 	while (history.length > MAX_UNDO) history.shift();
 }
 
+/** The steps as text for the history file. JSON has no undefined, so properties a step added are listed by name. */
+export function writeHistory(steps: UndoStep[], maxChars = 2_000_000): string {
+	const stored = steps.map((s) => ({
+		...s,
+		notes: s.notes.map((n) => ({ path: n.path, before: n.before, added: Object.keys(n.before).filter((k) => n.before[k] === undefined) })),
+	}));
+	let text = JSON.stringify(stored);
+	// Borders can be long: the oldest steps go first.
+	while (text.length > maxChars && stored.length) {
+		stored.shift();
+		text = JSON.stringify(stored);
+	}
+	return text;
+}
+
+/** Steps from the history file; anything unreadable is left out. */
+export function readHistory(text: string): UndoStep[] {
+	let data: unknown;
+	try {
+		data = JSON.parse(text);
+	} catch {
+		return [];
+	}
+	if (!Array.isArray(data)) return [];
+	const out: UndoStep[] = [];
+	for (const s of data as { label?: unknown; at?: unknown; notes?: unknown }[]) {
+		if (typeof s?.label !== "string" || typeof s.at !== "number" || !Array.isArray(s.notes)) continue;
+		const notes = (s.notes as { path?: unknown; before?: unknown; added?: unknown }[]).flatMap((n) => {
+			if (typeof n?.path !== "string" || !n.before || typeof n.before !== "object") return [];
+			const before = { ...(n.before as Record<string, unknown>) };
+			for (const k of Array.isArray(n.added) ? n.added : []) if (typeof k === "string") before[k] = undefined;
+			return [{ path: n.path, before }];
+		});
+		if (notes.length) out.push({ label: s.label, at: s.at, notes });
+	}
+	return out.slice(-MAX_UNDO);
+}
+
 /** Keeps steps pointing at notes that were renamed or moved, alone or with their folder. */
 export function renameInSteps(steps: UndoStep[], from: string, to: string) {
 	for (const s of steps) {
