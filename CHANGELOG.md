@@ -2,6 +2,34 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.0.0 — 2026-11-06
+UniverseView is now one dashboard for your whole world. This brings together everything from 1.3 to 1.8, listed in full below.
+
+**The dashboard**
+- The star button opens UniverseView in a single tab: big tabs down the side, smaller tabs along the top. Every view and tool lives there, and the left sidebar holds only the star.
+- Links, right-click menus and commands open the view's tab in the dashboard. *Open in new tab* still gives a view its own tab.
+- Switch any module off under Settings → Modules. Drag the big tabs into order, and drag, resize or hide the cards on Home and Library.
+- Every view remembers its filters, layers and arrangement, and can go back to its defaults.
+- Tabs answer at once: pages open in the background, and views behind another tab wait until they're shown.
+
+**Files**
+- Files panel: the Library's tree in Obsidian's left sidebar, with colours by realm and tier, search, filters and counts. Obsidian's Files gets a button to open it.
+- Library has room: the tree and details resize, and its home shows problems, recent notes, saved views and how complete your world is.
+
+**War and maps**
+- Occupation: `occupied:` on a war or battle puts the occupier's stripes over a land at those dates, with no change to its borders or realm. The Occupied tool paints part of a land.
+- Play on the map runs the time slider through a war.
+- Land painter, Push (move a neighbour's border in the same undo) and Stay on land (keep paint off the sea).
+
+**Writing less**
+- One-line forms for sides, holders, names, lands changing hands and dated links. A battle with no `sides:` fights as its war, and `alliance:` stands for its members. Everything already written still works.
+- The inspector reads every form and saves the shortest. It used to drop one-line entries when you edited them.
+
+**Inspector and design**
+- About shows what the editor holds: sides, battles, holders, names, occupations and any other property on the note.
+- Flat cards, solid panels, sentence-case labels and quicker hover cards across every view. Themes keep their own shadows.
+- The *Frosted glass* setting is gone. The Atelier theme keeps its glass.
+
 ## 1.8.0 — 2026-11-06
 - **Occupation**: `occupied: "[[Virginia]] by [[United States]] (1861 – 1865)"` on a war or battle. At those dates the land keeps its owner's colour with the occupier's stripes over it, and its borders and realm don't change.
 - **Occupied areas**: the map's Occupied tool paints part of a land held for a while, with dates, apart from real borders. Right-click one to delete it.

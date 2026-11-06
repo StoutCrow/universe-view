@@ -8,6 +8,27 @@ Turn ordinary notes into **timelines, family trees, maps, calendars, organisatio
 
 Your notes stay plain Markdown: UniverseView only reads properties (frontmatter, and Dataview inline fields if you use Dataview), and writes back only when you edit through it.
 
+## New in 2.0
+
+**One home for your whole world.** The star button opens UniverseView in a single tab, with big tabs down the side (Home, People, Groups, Places, Time, Library, Tools, Settings) and smaller tabs along the top.
+
+- **Everything in one place**: every view lives in the dashboard, and links, right-click menus and commands open the right tab. *Open in new tab* still gives a view its own tab.
+- **Made your own**: switch any module off in Settings → Modules, drag the big tabs into order, and drag, resize or hide the cards on Home and Library. Every view remembers its filters, layers and arrangement, and one click puts it back to its defaults.
+- **Files panel**: the Library's tree in Obsidian's left sidebar, with colours by realm and tier, search, type filters and counts.
+- **War and occupation**: lands can be held for a while without changing their borders. The occupier's stripes show at those dates, and *Play on the map* runs the time slider through a war.
+- **Faster map painting**: the Land painter moves from land to land, Push moves a neighbour's border along with yours in one undo, and Stay on land keeps paint off the sea.
+- **Short forms**: one line where a block of properties used to go.
+
+  ```yaml
+  sides: "[[Union]], [[Kansas]] vs [[Confederacy]]"
+  transfers: "[[Texas]]: [[Mexico]] > [[United States]]"
+  occupied: "[[Virginia]] by [[United States]] (1861 – 1865)"
+  ```
+
+  A battle with no `sides:` fights as its war, and `alliance:` lets one note stand for all its members. The inspector reads every form and saves the shortest.
+- **A fuller inspector**: About shows what the editor holds, from sides and battles to holders, names, occupations and any other property on the note.
+- **A calmer look**: flat cards and solid panels, sentence-case labels, and tabs that answer at once. Themes keep their own character.
+
 ## Everything it does
 
 **See your world**
@@ -20,7 +41,8 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Map**: the real world or your own image maps. It has territories, routes, journeys with travel times, travel rings, borders from seats of power, coasts and roads traced from the image, a different map image per era, compare side by side, map notes, a heat map, grouped pins, and **realm tiers**: realms show whole from afar and split into their duchies and counties as you zoom in (or double-click them); a click picks one, with a trail back out, and pins and the legend coloured by realm, liege or house with who holds each.
 - **Calendar**: your world's calendar as months, a week, a year, or what's coming up, with a go-to-date box, keyboard moves and anniversaries. It has weekdays, festival days outside the weeks, leap years, any number of moons, seasons, holidays, repeating events, birthdays and story chapters, and a converter between calendars.
 - **Table**: any kind of note as a spreadsheet you edit in place.
-- **Dashboard, Board and Overview**: browse, check and arrange everything; boards hold any mix of views.
+- **The UniverseView dashboard**: every view and tool in one tab, with movable big tabs, modules you can switch off and pages you can rearrange.
+- **Library, Board and Overview**: browse, check and arrange everything; boards hold any mix of views.
 
 **Work on it**
 - **Realms and cultures** (Ctrl+Alt+K): every realm as a tree of its titles, every house with its cadet branches, and every other group (faiths, peoples, guilds), with each one's full panel beside the list.
@@ -34,7 +56,7 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Relationships**: allies, rivals, enemies, mentors, liege and vassals, trade partners… set up ready to fill in on new notes, with the other side shown automatically.
 - **World notes**: one note per world for its calendar, today's date, main map, travel speeds, succession rule and default relationships.
 - **Fog of war**: see the map, timeline or graph as one character knows it.
-- **Wars and battles**: a battle's `sides:` (who fought, on which side, who won) and its `war:`. Battles show on the map as crossed swords in the winner's colour, joined in order as their war's campaign, following the time slider; a war lists its battles and each side's wins in the inspector, and the Board has a *Wars* list.
+- **Wars and battles**: a battle's `sides:` (who fought, on which side, who won) and its `war:`. Battles show on the map as crossed swords in the winner's colour, joined in order as their war's campaign, following the time slider; a war lists its battles and each side's wins in the inspector, and the Board has a *Wars* list. A battle with no `sides:` takes its war's. `occupied:` marks lands held for a while, shown as the occupier's stripes without moving any border, and *Play on the map* runs the time slider through the war.
 - **Undo history** (Ctrl+Alt+Shift+Z, or the clock button on any view): every change UniverseView made, newest first, with the notes it touched; undo one or go back to any point.
 - **Settings search**: every setting shows up in Obsidian's own settings search.
 - **Strategy map look** (the default; Look → Map style switches to Atlas): realms in solid colour from afar that thin out as you zoom in, one bold border round each realm with thinner ones for the lands inside, and realm names in spaced capitals curved across their land, with their arms when they have a logo. **Map modes**: colour the lands by realm, title, ruling house, culture or faith, or show the bare terrain.
@@ -118,11 +140,11 @@ image: "[[vael-map.png]]"
 
 Only write each relationship once — UniverseView infers children, siblings, the other side of a partnership, members of a culture and events at a place.
 
-3. Click the **scroll** icon in the ribbon, or use the command palette (“UniverseView: Open timeline”, …).
+3. Click the **star** in the ribbon to open the dashboard, or use the command palette (“UniverseView: Open timeline”, …).
 
 ## Opening the views
 
-- **Left sidebar:** the 📚 *UniverseView overview* button is the main menu: a summary of your world with a tile for every view, quick “New …” buttons, key events, houses, people, places and recent edits. Each view also has its own sidebar button (turn these off in settings, or hide any one by right-clicking the sidebar).
+- **Left sidebar:** the star opens the dashboard, with every view behind its big tabs. Home has a summary of your world, quick “New …” buttons, key events, houses, people, places and recent edits. *Sidebar button for every view* in Settings gives each view its own button too.
 - **Shortcuts:** none are set for you, so they never clash with yours. Turn on *Suggested shortcuts* (Settings → UniverseView → Look & cards) for the ones below, or set your own in Settings → Hotkeys (search “UniverseView”). The shortcuts named elsewhere in this README are these suggested ones.
 
   | Ctrl+Alt (⌘⌥ on Mac) + | Opens |
@@ -155,7 +177,7 @@ Only write each relationship once — UniverseView infers children, siblings, th
 | **Connections** | Force-directed graph of people, cultures, places and events. Focus on one note and a number of steps, and scrub the **time slider** to see who was alive and allied when. |
 | **Culture lineage** | Groups as bars from founding to dissolution, each with its logo (or initial), dates and members, branches drawn from the moment they split. Groups still standing fade out at the current year, marked by a *Today* line. Hover one to bring out its whole line of descent. It moves like the timeline: the wheel zooms through time (or scrolls, when there are more groups than fit), dragging pans, and the dates stay at the top. |
 | **Realms and dynasties** | Three trees in one view. **Realms:** every title under its liege, each card with its holder (and the ruler above, when someone else), house and vassals. **Dynasties:** houses with their cadet branches (`branch-of:`), heads and members, and chips for the titles each holds; *Houses over time* opens the generational view. **Organisations:** a faction, guild or company as a tree of cards: sub-organisations (`parent-org:`, `branches:`, or groups listing it under `cultures:`) below it, and in each card its **logo** (click the logo area to pick an image; a monogram stands in until then), leaders (★, from roles like king, head, commander, or `leader:`/`ruler:` on the group's note) and members with their roles. **Relationships are drawn between the cards:** alliances (green), rivalries and wars (red, dashed), liege and vassal (purple arrows), trade (gold, dotted), and ties between the people on the cards (thin dotted lines). Each card also lists all its group ties as chips, including groups not on the chart. Hover a card or a line to bring out its ties; click a kind in the legend to hide it. Underneath, a timeline of when each group existed and who held which role (dashed bars are memberships without their own dates, drawn across the person's life). The time slider, or a click on the timeline's dates, shows the organisation as it stood on that day. Double-click a card to put it at the top. |
-| **Dashboard** | Every folder and note in a tree (with counts by type and problem markers). Pick a note to edit its basics in place (type, dates with live checking, kind, size and layer for places, importance, color, icon, summary) and to see every relationship in both directions with a small graph, plus plain links and backlinks and all its properties. Pick a folder for its settings (what its notes are, which calendar, leave it out) and a sortable table of its notes. With nothing picked: basic settings, problems and recent edits. Type and kind are written the way the note already marks them (a property, a tag like `#City`, or `cr_type`). Each relationship group has **+** to link another note (with role and dates for memberships) and an **×** on each row to unlink it, on whichever note the link is written. In a folder's table, tick notes to set their type, kind, map layer, pin size or calendar, or add a tag, all at once. |
+| **Library** | Every folder and note in a tree (with counts by type and problem markers). Pick a note to edit its basics in place (type, dates with live checking, kind, size and layer for places, importance, color, icon, summary) and to see every relationship in both directions with a small graph, plus plain links and backlinks and all its properties. Pick a folder for its settings (what its notes are, which calendar, leave it out) and a sortable table of its notes. With nothing picked: basic settings, problems and recent edits. Type and kind are written the way the note already marks them (a property, a tag like `#City`, or `cr_type`). Each relationship group has **+** to link another note (with role and dates for memberships) and an **×** on each row to unlink it, on whichever note the link is written. In a folder's table, tick notes to set their type, kind, map layer, pin size or calendar, or add a tag, all at once. |
 | **Map** | Real-world map (OpenStreetMap by default) or your own image maps. Pins show events per place, the time slider filters by date, and **Trace a journey** draws a person’s path through the places of their events. “Place an existing note” and “Move pins” write coordinates back into the note. |
 | **Calendar** | Your world's calendar as months, a year or what's coming up, with moons, seasons, holidays, birthdays and repeating events; see *Calendars* below. |
 | **Table** | A spreadsheet of one kind of note, edited in place. |
@@ -192,7 +214,7 @@ Settings → UniverseView → **Appearance**, or the command *Switch theme*. The
 | **Scholar** | History and research: crisp paper white, navy and burgundy, fine rules |
 | **Atelier** | Novels and story planning: frosted glass, soft gradients, pastels |
 
-You can also override the **accent and type colors** and choose the **motion** (Off, Snappy, Smooth, Relaxed, Bouncy; your system's reduced-motion setting is respected), **density**, **corner radius**, **frosted glass** and a **flat style**. Under *Views* are the timeline's row height and label size, the family tree's card size and gender tints — everything the Style Settings plugin used to offer, so it's no longer needed.
+You can also override the **accent and type colors** and choose the **motion** (Off, Snappy, Smooth, Relaxed, Bouncy; your system's reduced-motion setting is respected), **density**, **corner radius** and a **flat style**. Under *Views* are the timeline's row height and label size, the family tree's card size and gender tints — everything the Style Settings plugin used to offer, so it's no longer needed.
 
 Settings are on five pages: *Look & cards*, *Notes*, *Time & calendars*, *Maps & realms* (map look, realm border band, rivers, roughen, territory styles) and *Map tools* (snapping, following coasts, keeping off other lands, brush size, Fill and Simplify defaults). The choices you make on a tool's banner are remembered there too.
 
@@ -211,6 +233,8 @@ Rest the pointer on anything in a UniverseView view (timeline items, tree cards,
   ```
 - **Fill a territory** (*Draw → Fill*, or *Fill* on a territory's panel; image maps only): by default it fills like a paint bucket by ground (see *Fill land / sea* below). Choose *Fill same colour* to spread over similar colours instead, stopping at coasts, rivers, the border lines drawn in your map image, and other territories. Filled land that overlaps one of the note's areas joins that area. Each click adds another area (islands become extra areas of the same note). *Tolerance* sets how different a colour may be and still count; *Close small/wide gaps* seals dotted or broken border lines; icons and labels inside the area are included. The outline is traced, smoothed and snapped onto neighbouring territories so borders line up. Backspace undoes the last click.
 - **Expand and Brush** (a territory's tools, under *Shape*): *Expand* — circle new land (click points or drag round it) and it joins the **same** area, its outline grown to take it in. *Brush* — paint over land to add it to the same area, or switch to *Rub out* to take land away; Undo takes back a stroke, *Size* (or `[` `]`) sets the brush, and Space+drag moves the map. Either way the corners the area already had stay exactly where they were, so shared borders stay shared, and with *Keep off other lands* (on by default) new ground stops at the neighbours' borders. *New area* paints a separate area instead (an island, an exclave).
+- **Land painter** (the palette button on the toolbar): lists your lands; pick one and paint, then pick the next. On the brush, *Push* takes ground from a neighbour and moves both borders in one undo, and *Stay on land* keeps paint off the sea on image maps.
+- **Occupied areas** (*Occupied* on a territory's panel): paint part of a land held for a while, with its dates. It shows as stripes at those dates and leaves real borders alone; right-click one to delete it. For a whole land, use `occupied:` on the war or battle.
 - **Fill land / sea** (the Fill tool's first choice, like a paint bucket): click land and all the land joined to it fills, whatever is drawn on it — hills, forests, names, shading — up to the coast, rivers and other territories. Click the sea or a lake and the water fills instead. *Cross rivers* carries on over rivers to the land beyond; *Close small gaps* stops it leaking through a faint stretch of river or a hairline between two lands. *Fill same colour* is the old fill, by the picture's colours.
 - **Simplify** (a territory's tools, under *Shape*): fewer corners where they barely change the border, so it's quicker to edit; real detail such as a jagged coast stays. *Strength* sets how far off the line (on screen) a corner may sit and still go, with the corner count previewed before you save. Corners shared with a neighbour go from its border too, so borders stay matched; where a neighbour has corners of its own along the edge, those stay. Pairs well with *Roughen borders*.
 - **Territory panel shortcuts:** with a territory's panel open and no tool running, one key starts a tool — R Reshape, S Simplify, E Expand, B Brush, G Grow, F Fill, X Split, T Route, C Check, D Dates (each button's tip shows its key); Esc closes the panel.
