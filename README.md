@@ -74,6 +74,7 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Data checks that fix**: create missing notes, place a place on its map, or make a missing map note in one click; Inspect for the rest.
 - **Quick add preview**: with several lines, untick one to leave it out, click its kind to change it, and see how each links (to notes you have, to others in the batch, or to new names).
 - **Writing tools**: story continuity checks, who knows what, lines of succession, name and story ideas, ages and dates inside your text.
+- **Smart reader** (Tools → Check, or the command): reads your notes' text for what their properties don't say yet: birth and death dates and places, occupations, when events happened and places were founded, and other people's dates ("[[Alice]] (b. 1200)", which goes on Alice's note). Each fact shows its sentence, you can edit it, and nothing is written until you press Add. Dates are read in the note's own calendar.
 - **Tidying**: duplicates (with merge), loose ends (including notes that share a name), moving notes into the folder notes they belong in, Living/Dead moves on a death date, tags updated when a note is renamed, tag clean-up, how complete a world is, text that contradicts the properties, and data checks.
 - **Export**: PNG or SVG pictures, decorated maps, a world book, a whole website, and GEDCOM. GEDCOM import too.
 - **Looks**: six themes, light and dark, and every view embeddable in a note.
@@ -91,6 +92,8 @@ UniverseView isn't in Obsidian's community plugin list yet. Until it is:
 It works on desktop and on phones and tablets. Very large map pictures (over 4,096 px across) are shown on phones from a smaller copy the desktop app saves in `UniverseView/Map copies/`, so open such a map once on a computer.
 
 ## Quick start
+
+The dashboard opens by itself after installing. In a vault with nothing for it yet, Home offers to read your notes, add a small sample world (the Tudors), or start from scratch. To set a note up by hand:
 
 1. Give a note a `type` property: `event`, `person`, `culture`, `place` or `map`
    (synonyms like `character`, `faction`, `nation`, `city` work too, as do tags like `#person` or folder rules).

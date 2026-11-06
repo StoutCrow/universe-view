@@ -135,6 +135,7 @@ export const HUB_SECTIONS: HubSection[] = [
 					{ id: "completeness", name: "How complete is the world?", icon: "gauge" },
 					{ id: "loose-ends", name: "Loose ends", icon: "unlink" },
 					{ id: "find-duplicates", name: "Find duplicates", icon: "copy" },
+					{ id: "smart-reader", name: "Smart reader", icon: "scan-text" },
 					{ id: "contradictions", name: "Text that disagrees", icon: "file-warning" },
 					{ id: "check-continuity", name: "Story continuity", icon: "book-open-check" },
 					{ id: "report-skipped-notes", name: "Skipped notes", icon: "file-x" },

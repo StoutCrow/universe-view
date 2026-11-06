@@ -20,6 +20,7 @@ import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
 import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
+import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
 import { inRing, ringArea, splitRing } from "../src/index/geometry";
@@ -1221,6 +1222,30 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(occ("[[L]], [[M]] by [[X]] (1240 – 1241)"), [["L", "X", true, true], ["M", "X", true, true]], "occupied: one line, several lands, with dates");
 	eq(occ(["[[L]] by [[X]]"]), [["L", "X", false, false]], "occupied: no dates, it lasts as long as the event");
 	eq(f.occupied.write(f.occupied.read(["[[L]] by [[X]] (1240 – 1241)"])), ["[[L]] by [[X]] (1240 – 1241)"], "occupied: survives editing");
+	// Smart reader: facts in the text, and not the facts of other people.
+	const places = ["Greyford", "London"], people = ["Alice Vane", "Aldric Vane", "Mira Thorne"];
+	const facts = (md: string, name = "Aldric Vane", type = "person", has: ReadField[] = []) => readNote(md, {
+		name, type,
+		has: (f, about) => !about && has.includes(f),
+		isDate: (t) => !!parseDate(t, cal),
+		place: (n) => places.find((p) => p === n),
+		person: (n) => people.find((p) => p === n || p.startsWith(n)),
+	}).map((f) => [f.about ?? "", f.field, f.value]);
+	eq(sentencesOf("Born c. 1240 in 1262 C.E. near St. John. He lived."), ["Born c. 1240 in 1262 C.E. near St. John.", "He lived."], "reader: abbreviations don't end a sentence");
+	eq(cleanBody("---\nborn: 1\n---\n# Head\n**Bold** [[A|b]] text\n```\ncode\n```\n- item\n"), ["Bold [[A]] text", "item"], "reader: only prose is read");
+	eq(facts("Aldric Vane was born in 1240 at [[Greyford]] and died in 1301 in London."), [["", "born", "1240"], ["", "birthPlace", "[[Greyford]]"], ["", "died", "1301"], ["", "deathPlace", "[[London]]"]], "reader: birth and death, dates and places");
+	eq(facts("Aldric Vane (1240 – 1301) was a blacksmith."), [["", "born", "1240"], ["", "died", "1301"], ["", "occupation", "blacksmith"]], "reader: dates in brackets at the opening, and a trade");
+	eq(facts("He worked as a ship's carpenter in Greyford."), [["", "occupation", "ship's carpenter"]], "reader: worked as anything");
+	eq(facts("She became the most famous court physician of her age."), [["", "occupation", "physician"]], "reader: a trade after some describing words");
+	eq(facts("His father was born in 1200. Her son died in 1250. His father was a blacksmith."), [], "reader: family members' lives aren't the note's");
+	eq(facts("[[Alice Vane]] (b. 1200) married him. [[Mira Thorne]] was born in 1210."), [["Alice Vane", "born", "1200"], ["Mira Thorne", "born", "1210"]], "reader: another person's dates go on their note");
+	eq(facts("He was born in 1240.", "Aldric Vane", "person", ["born"]), [], "reader: what the note already has isn't suggested");
+	eq(facts("Greyford was born in fire in 1240. Nobody knows when it fell."), [], "reader: a sentence about something unknown says nothing");
+	eq(facts("He was a good man. She was the best of friends. He was a friend of the general."), [], "reader: was a… needs a real trade, and to be theirs");
+	eq(facts("The battle was fought on 14 May 1243 near Greyford.", "Battle of Greyford", "event"), [["", "date", "14 May 1243"]], "reader: when an event happened");
+	eq(facts("Greyford was founded in 1102 by settlers.", "Greyford", "place"), [["", "founded", "1102"]], "reader: when a place began");
+	eq(facts("Aldric was born in 1240, and died in 1301."), [["", "born", "1240"], ["", "died", "1301"]], "reader: a first name alone is the note");
+
 	// Undo puts back what a step changed, and nothing else.
 	const changes = changesBetween({ a: 1, b: [1], gone: "x" }, { a: 2, b: [1], added: true });
 	eq(changes, { a: 1, gone: "x", added: undefined }, "undo: a step holds only what changed, as it was");

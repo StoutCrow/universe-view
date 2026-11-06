@@ -67,6 +67,7 @@ import type { ModuleKind } from "./settings";
 import { CreateEntityModal, CreatePrefill } from "./ui/CreateEntityModal";
 import { ValidateModal } from "./ui/ValidateModal";
 import { DetectModal } from "./ui/DetectModal";
+import { SmartReaderModal } from "./ui/SmartReader";
 import { GedcomModal } from "./ui/GedcomModal";
 import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
@@ -1698,6 +1699,17 @@ export default class ChroniclePlugin extends Plugin {
 			icon: "wand-2",
 			...this.keys(["Mod", "Alt"], "D"),
 			callback: () => new DetectModal(this).open(),
+		});
+		this.addCommand({ id: "smart-reader", name: "Smart reader: find facts in your notes' text", icon: "scan-text", callback: () => new SmartReaderModal(this).open() });
+		this.addCommand({
+			id: "smart-reader-note",
+			name: "Smart reader: this note",
+			icon: "scan-text",
+			checkCallback: (checking) => {
+				const e = this.index.get(this.app.workspace.getActiveFile()?.path);
+				if (e && !checking) new SmartReaderModal(this, e).open();
+				return !!e;
+			},
 		});
 		this.addCommand({ id: "import-gedcom", name: "Import GEDCOM family tree", icon: "import", callback: () => new GedcomModal(this).open() });
 		this.addCommand({

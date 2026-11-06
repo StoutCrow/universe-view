@@ -268,42 +268,44 @@ export class DetectModal extends Modal {
 	}
 
 	private async apply() {
-		const fm = this.app.fileManager;
+		const { plugin } = this;
 		let changed = 0;
-		for (const row of this.typeRows) {
-			if (!row.checked || !row.chosen) continue;
-			const type = row.chosen;
-			await fm.processFrontMatter(row.file, (front: Record<string, unknown>) => {
-				if (this.style === "tag") {
-					const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
-					const tag = this.tagForRow(row);
-					if (!tags.includes(tag)) front.tags = [tag, ...tags];
-				} else if (this.style === "cr_type") {
-					front.cr_type = type === "culture" ? "organization" : type;
-					front.name ??= row.file.basename;
-				} else {
-					front[this.plugin.fieldName("type")] = type;
-				}
-				if (type === "event" && row.guess.suggestions.date && !front[this.dateField]) front[this.dateField] = row.guess.suggestions.date;
-			});
-			changed++;
-		}
-		for (const row of this.kinRows) {
-			if (!row.checked) continue;
-			const link = `[[${row.finding.target}]]`;
-			await fm.processFrontMatter(row.person.file, (front: Record<string, unknown>) => {
-				const single = row.field === "father" || row.field === "mother";
-				const current = front[row.field];
-				if (single) {
-					if (!current) front[row.field] = link;
-					return;
-				}
-				const list = ([] as unknown[]).concat(current ?? []).filter((v) => v !== null && v !== "");
-				if (!list.some((v) => String(v).toLowerCase() === link.toLowerCase())) list.push(link);
-				front[row.field] = list;
-			});
-			changed++;
-		}
+		await plugin.undoGroup("Detect types & relationships", async () => {
+			for (const row of this.typeRows) {
+				if (!row.checked || !row.chosen) continue;
+				const type = row.chosen;
+				await plugin.editFrontmatter(row.file, (front) => {
+					if (this.style === "tag") {
+						const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
+						const tag = this.tagForRow(row);
+						if (!tags.includes(tag)) front.tags = [tag, ...tags];
+					} else if (this.style === "cr_type") {
+						front.cr_type = type === "culture" ? "organization" : type;
+						front.name ??= row.file.basename;
+					} else {
+						front[this.plugin.fieldName("type")] = type;
+					}
+					if (type === "event" && row.guess.suggestions.date && !front[this.dateField]) front[this.dateField] = row.guess.suggestions.date;
+				});
+				changed++;
+			}
+			for (const row of this.kinRows) {
+				if (!row.checked) continue;
+				const link = `[[${row.finding.target}]]`;
+				await plugin.editFrontmatter(row.person.file, (front) => {
+					const single = row.field === "father" || row.field === "mother";
+					const current = front[row.field];
+					if (single) {
+						if (!current) front[row.field] = link;
+						return;
+					}
+					const list = ([] as unknown[]).concat(current ?? []).filter((v) => v !== null && v !== "");
+					if (!list.some((v) => String(v).toLowerCase() === link.toLowerCase())) list.push(link);
+					front[row.field] = list;
+				});
+				changed++;
+			}
+		});
 		new Notice(`UniverseView updated ${changed} note${changed === 1 ? "" : "s"}.`);
 		this.close();
 	}
