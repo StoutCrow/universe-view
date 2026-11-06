@@ -92,6 +92,10 @@ export interface ChronicleSettings {
 	hubRibbon?: boolean;
 	/** Modules switched off in the dashboard. */
 	modulesOff: string[];
+	/** Width of the Library's file tree, in pixels. */
+	libraryTree?: number;
+	/** The files panel has been put in the sidebar once; closing it after that is respected. */
+	filesPanelAdded?: boolean;
 	/** Width of the dashboard's sidebar, in pixels. */
 	hubRail?: number;
 	tileUrl: string;

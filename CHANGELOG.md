@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.4.0 — 2026-11-06
+- **Files panel**: the Library's tree in Obsidian's left sidebar, beside Files, at full height. Search, filter by type, counts and problems at a glance; click a note to open it, and the panel follows whatever note is open. Switch it off under Settings → Modules.
+- **Library has room**: drag the tree wider, and hide the summary or the details from the toolbar. With details hidden, clicking a note opens it. The summary is one slim line, and the theme and motion menus moved out of its toolbar (they're in Settings).
+- File trees work from the keyboard: arrows move, right and left open and close folders, Enter opens.
+
 ## 1.3.2 — 2026-11-06
 - Calmer dashboard: a plain star, neutral selected tabs, flat tool cards with quiet icons, sentence-case headings. Overview in the dashboard drops the tiles that repeated its tabs.
 - No more lifting on hover or blur behind dialogs.

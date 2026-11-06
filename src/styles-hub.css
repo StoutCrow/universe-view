@@ -319,6 +319,32 @@ button.chronicle-ov-tile .chronicle-ov-tile-icon {
 	color: var(--text-muted);
 }
 
+/* Pages here are ready before they're shown: no fade-in. */
+.uv-hub-pane .chronicle-view-body > *,
+.uv-files-view .chronicle-view-body > * {
+	animation: none;
+}
+
+/* ---- The files panel in Obsidian's sidebar ---- */
+.uv-files-view .chronicle-toolbar {
+	flex-wrap: wrap;
+	gap: 2px;
+	padding: 4px 6px;
+}
+.uv-files {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	padding: 4px 6px 0;
+}
+.uv-files .chronicle-search {
+	width: 100%;
+}
+.uv-files .chronicle-dash-list {
+	padding: 4px 0 12px;
+}
+
 /* ---- Phones: the big tabs run along the top ---- */
 body.is-mobile .uv-hub {
 	grid-template-columns: minmax(0, 1fr);

@@ -21,44 +21,39 @@ button.chronicle-dash-stat {
 	align-items: center;
 	gap: 9px;
 	height: auto;
-	padding: 7px 14px 7px 8px;
-	border-radius: calc(var(--chronicle-radius) + 2px);
-	background: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	box-shadow: var(--chronicle-shadow);
+	padding: 3px 10px;
+	border-radius: var(--radius-s);
+	background: transparent;
+	border: 1px solid transparent;
+	box-shadow: none;
 	color: var(--text-normal);
 	cursor: pointer;
 }
 button.chronicle-dash-stat:hover {
-	border-color: color-mix(in srgb, var(--stat-color) 60%, transparent);
+	background: var(--background-modifier-hover);
 }
 button.chronicle-dash-stat.is-active {
-	border-color: var(--stat-color);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--stat-color) 30%, transparent);
+	background: var(--background-modifier-hover);
+	box-shadow: none;
 }
 .chronicle-dash-stat-icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 30px;
-	height: 30px;
-	border-radius: 50%;
 	color: var(--stat-color);
-	background: color-mix(in srgb, var(--stat-color) 15%, transparent);
 }
 .chronicle-dash-stat-icon svg {
-	width: 16px;
-	height: 16px;
+	width: 14px;
+	height: 14px;
 }
 .chronicle-dash-stat-text {
 	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	line-height: 1.15;
+	align-items: baseline;
+	gap: 5px;
 }
 .chronicle-dash-stat-value {
-	font-size: 1.15em;
-	font-weight: 700;
+	font-size: var(--font-ui-small);
+	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	font-family: var(--chronicle-font-display);
 }
@@ -70,13 +65,30 @@ button.chronicle-dash-stat.is-active {
 	flex: 1;
 	min-height: 0;
 	display: grid;
-	grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
-	gap: 12px;
+	grid-template-columns: var(--uv-tree-w, 340px) 12px minmax(0, 1fr);
+}
+.chronicle-dash-main.is-tree-only {
+	grid-template-columns: minmax(0, 1fr);
+}
+.chronicle-dash-main.is-tree-only > .chronicle-dash-grip,
+.chronicle-dash-main.is-tree-only > .chronicle-dash-detail {
+	display: none;
+}
+.chronicle-dash-grip {
+	cursor: col-resize;
+	touch-action: none;
+}
+.chronicle-dash-grip:hover {
+	background: linear-gradient(var(--background-modifier-border-hover), var(--background-modifier-border-hover)) center / 2px 100% no-repeat;
 }
 @container (max-width: 760px) {
-	.chronicle-dash-main {
+	.chronicle-dash-main:not(.is-tree-only) {
 		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: minmax(160px, 38%) minmax(0, 1fr);
+		gap: 12px;
+	}
+	.chronicle-dash-grip {
+		display: none;
 	}
 }
 .chronicle-dash-tree {
@@ -110,9 +122,6 @@ button.chronicle-dash-stat.is-active {
 	font-size: var(--font-ui-small);
 	cursor: pointer;
 	user-select: none;
-	animation: chronicle-fade var(--chronicle-fast) var(--chronicle-ease) backwards;
-	animation-delay: calc(var(--i, 0) * 6ms * var(--chronicle-speed));
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
 }
 .chronicle-dash-row.is-file {
 	padding-left: calc(26px + var(--depth, 0) * 14px);
@@ -121,9 +130,8 @@ button.chronicle-dash-stat.is-active {
 	background: var(--background-modifier-hover);
 }
 .chronicle-dash-row.is-selected {
-	background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+	background: var(--background-modifier-hover);
 	color: var(--text-normal);
-	box-shadow: inset 3px 0 0 var(--interactive-accent);
 }
 .chronicle-dash-row.is-plain {
 	color: var(--text-muted);
@@ -177,7 +185,6 @@ button.chronicle-dash-stat.is-active {
 	text-align: center;
 	font-variant-numeric: tabular-nums;
 	color: var(--dot-color);
-	background: color-mix(in srgb, var(--dot-color) 16%, transparent);
 }
 .chronicle-dash-legend-row .chronicle-dash-count {
 	min-width: 10px;

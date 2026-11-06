@@ -7,6 +7,7 @@ import type { ChronicleView } from "./base";
 import { CalendarView, VIEW_CALENDAR } from "./CalendarView";
 import { DashboardView, VIEW_DASHBOARD } from "./DashboardView";
 import { ExplorerView, VIEW_EXPLORER } from "./ExplorerView";
+import { VIEW_FILES } from "./FilesPanelView";
 import { FamilyTreeView, VIEW_FAMILY } from "./FamilyTreeView";
 import { HousesView, VIEW_HOUSES } from "./HousesView";
 import { LineageView, VIEW_LINEAGE } from "./LineageView";
@@ -39,6 +40,8 @@ interface HubModule {
 	view?: (leaf: WorkspaceLeaf, plugin: ChroniclePlugin) => ChronicleView;
 	/** A page drawn straight into the dashboard. */
 	draw?: (host: HTMLElement, hub: HubView) => void;
+	/** Lives in Obsidian's sidebar, not on a tab here. */
+	sidebar?: boolean;
 	/** Always there: can't be switched off. */
 	fixed?: boolean;
 }
@@ -101,6 +104,7 @@ export const HUB_SECTIONS: HubSection[] = [
 		id: "library", name: "Library", icon: "folder-tree", modules: [
 			{ id: VIEW_EXPLORER, name: "Browse", icon: "panels-top-left", desc: "Every folder and note, with details to edit.", view: (l, p) => new ExplorerView(l, p) },
 			{ id: VIEW_TABLE, name: "Table", icon: "table", desc: "Notes as a sortable, editable table.", view: (l, p) => new TableView(l, p) },
+			{ id: VIEW_FILES, name: "Files panel", icon: "folder-tree", desc: "The file tree in Obsidian's sidebar, beside Files.", sidebar: true },
 		],
 	},
 	{
@@ -287,7 +291,7 @@ export class HubView extends ItemView {
 	}
 
 	private visible(s: HubSection): HubModule[] {
-		return s.modules.filter((m) => m.fixed || this.plugin.moduleOn(m.id));
+		return s.modules.filter((m) => !m.sidebar && (m.fixed || this.plugin.moduleOn(m.id)));
 	}
 
 	private activePane() {

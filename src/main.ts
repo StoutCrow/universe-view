@@ -50,6 +50,7 @@ import { HousesView, VIEW_HOUSES } from "./views/HousesView";
 import { RealmsView, VIEW_REALMS } from "./views/RealmsView";
 import { InspectorView, VIEW_INSPECTOR } from "./views/InspectorView";
 import { HubView, LOGO_ICON, LOGO_SVG, VIEW_HUB } from "./views/HubView";
+import { FilesPanelView, VIEW_FILES } from "./views/FilesPanelView";
 import { EntityPickerModal } from "./ui/suggest";
 import { TextPrompt } from "./ui/TextPrompt";
 import { KinshipModal, KnowledgeModal, NamesModal, SuccessionModal } from "./ui/people";
@@ -120,6 +121,7 @@ export default class ChroniclePlugin extends Plugin {
 
 		addIcon(LOGO_ICON, LOGO_SVG);
 		this.registerView(VIEW_HUB, (leaf) => new HubView(leaf, this));
+		this.registerView(VIEW_FILES, (leaf) => new FilesPanelView(leaf, this));
 		this.registerView(VIEW_TIMELINE, (leaf) => new TimelineView(leaf, this));
 		this.registerView(VIEW_FAMILY, (leaf) => new FamilyTreeView(leaf, this));
 		this.registerView(VIEW_NETWORK, (leaf) => new NetworkView(leaf, this));
@@ -178,6 +180,13 @@ export default class ChroniclePlugin extends Plugin {
 			button.toggle(this.moduleOn(v.type));
 		}
 		this.registerCommands();
+		// The files panel joins the sidebar once; after that, closing it is respected.
+		this.app.workspace.onLayoutReady(() => {
+			if (this.settings.filesPanelAdded || !this.moduleOn(VIEW_FILES)) return;
+			this.settings.filesPanelAdded = true;
+			void this.saveSettings();
+			void this.openFilesPanel(false);
+		});
 		this.safely("Right-click menus", () => this.registerFileMenu(), undefined);
 		this.safely("Link hover cards", () => this.registerLinkHover(), undefined);
 		// `age: Aldric Vane @ SE 20` and friends, filled in when reading a note.
@@ -744,7 +753,22 @@ export default class ChroniclePlugin extends Plugin {
 		const off = this.settings.modulesOff.filter((x) => x !== id);
 		this.settings.modulesOff = on ? off : [...off, id];
 		this.ribbonButtons.get(id)?.toggle(on);
+		if (id === VIEW_FILES) {
+			if (on) await this.openFilesPanel();
+			else this.app.workspace.detachLeavesOfType(VIEW_FILES);
+		}
 		await this.saveSettings();
+	}
+
+	/** Opens the file tree in the left sidebar, beside Obsidian's own. */
+	async openFilesPanel(reveal = true) {
+		const { workspace } = this.app;
+		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(VIEW_FILES)[0] ?? null;
+		if (!leaf) {
+			leaf = workspace.getLeftLeaf(false);
+			await leaf?.setViewState({ type: VIEW_FILES });
+		}
+		if (leaf && reveal) await workspace.revealLeaf(leaf);
 	}
 
 	/** The settings tab to show next time UniverseView's settings open. */
@@ -1472,6 +1496,7 @@ export default class ChroniclePlugin extends Plugin {
 				},
 			});
 		}
+		this.addCommand({ id: "open-files-panel", name: "Open files panel", icon: "folder-tree", callback: () => void this.openFilesPanel() });
 		this.addCommand({
 			id: "quick-menu",
 			name: "Show menu of views and actions",

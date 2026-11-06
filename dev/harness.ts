@@ -160,6 +160,8 @@ workspace.getMostRecentLeaf = () => leaf;
 workspace.getActiveViewOfType = (type: any) => (leaf.view instanceof type ? leaf.view : null);
 // One pane in the harness: the inspector opens in it like any other view.
 workspace.getRightLeaf = () => leaf;
+workspace.getLeftLeaf = () => null;
+workspace.detachLeavesOfType = () => {};
 workspace.revealLeaf = async () => {};
 workspace.setActiveLeaf = () => {};
 workspace.onLayoutReady = (cb: () => void) => cb();
@@ -223,6 +225,7 @@ function showEmbeds(notePath: string) {
 function boot() {
 	plugin.onload().then(() => {
 		navButton("UniverseView", "universe-view", () => void showView("chronicle-hub"));
+		navButton("Files panel", "folder-tree", () => void showView("chronicle-files"));
 		navButton("Overview", "library", () => void showView("chronicle-overview"));
 		navButton("Board", "layout-dashboard", () => void showView("chronicle-dashboard"));
 		navButton("Timeline", "calendar-range", () => void showView("chronicle-timeline"));

@@ -1,10 +1,9 @@
 import { Keymap, Menu, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
 import { ENTITY_TYPES, PIN_SIZES, type ChronDate, type Entity, type EntityType } from "../types";
-import { buildFieldAliases, findMapping, setMapping, type FieldName, type MotionId, type PinColorBy, type ThemeId } from "../settings";
+import { buildFieldAliases, findMapping, setMapping, type FieldName, type PinColorBy } from "../settings";
 import { formatDate, formatSpan } from "../dates/parser";
 import { validate } from "../index/validate";
-import { MOTIONS, THEMES } from "../appearance";
-import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, showEntityMenu, svg, toggleChip, typeColorVar } from "../render/common";
+import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, setPressed, showEntityMenu, svg, toggleChip, typeColorVar } from "../render/common";
 import { subOrgs } from "../render/orgchart";
 import { placeStyleFields, placeKinds, LAYER_NAMES, kindDefaults } from "../ui/PlaceStyleModal";
 import { TextPrompt } from "../ui/TextPrompt";
@@ -21,27 +20,15 @@ import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/
 import { relInverse } from "../index/relkinds";
 import { ChronicleView } from "./base";
 import { asText } from "../index/text";
+import { FileTree, folderViews, plural, type TreeState } from "../ui/filetree";
 
 export const VIEW_EXPLORER = "chronicle-explorer";
 
-interface ExplorerState {
-	/** A note's path, or a folder's path when `isFolder`. */
-	selected?: string;
-	isFolder?: boolean;
-	expanded: string[];
-	onlyChronicle: boolean;
-	search: string;
-	typeFilter?: EntityType;
-}
-
-interface FolderNode {
-	path: string;
-	name: string;
-	folders: Map<string, FolderNode>;
-	files: TFile[];
-	counts: Partial<Record<EntityType, number>>;
-	total: number;
-	issues: number;
+interface ExplorerState extends TreeState {
+	/** Summary strip hidden. */
+	hideStats?: boolean;
+	/** Details hidden: the tree has the whole width, and clicking a note opens it. */
+	hideDetail?: boolean;
 }
 
 interface RelItem {
@@ -77,7 +64,8 @@ export class ExplorerView extends ChronicleView {
 	private state: ExplorerState = { expanded: [], onlyChronicle: true, search: "" };
 	private statsEl!: HTMLElement;
 	private treeEl!: HTMLElement;
-	private listEl!: HTMLElement;
+	private tree!: FileTree;
+	private mainEl!: HTMLElement;
 	private detailEl!: HTMLElement;
 	private searchInput?: HTMLInputElement;
 	private sortBy: { col: string; dir: 1 | -1 } = { col: "name", dir: 1 };
@@ -98,9 +86,9 @@ export class ExplorerView extends ChronicleView {
 	}
 
 	async setState(state: unknown, result: ViewStateResult) {
-		const s = state as { explorer?: Partial<ExplorerState>; select?: string } | undefined;
+		const s = state as { explorer?: Partial<ExplorerState>; select?: string; isFolder?: boolean } | undefined;
 		if (s?.explorer) this.state = { ...this.state, ...s.explorer };
-		if (s?.select) this.select(s.select, false, false);
+		if (s?.select) this.select(s.select, !!s.isFolder, false);
 		if (this.isBuilt) this.renderAll();
 		await super.setState(state, result);
 	}
@@ -110,16 +98,25 @@ export class ExplorerView extends ChronicleView {
 		this.fillToolbar();
 		const root = el("div", { cls: "chronicle-dash" }, this.body);
 		this.statsEl = el("div", { cls: "chronicle-dash-stats" }, root);
-		const main = el("div", { cls: "chronicle-dash-main" }, root);
+		const main = (this.mainEl = el("div", { cls: "chronicle-dash-main" }, root));
 		this.treeEl = el("div", { cls: "chronicle-dash-tree" }, main);
 		const head = el("div", { cls: "chronicle-dash-tree-head" }, this.treeEl);
 		this.searchInput = this.searchBox(head, this.state.search, "Find a note or folder…", (v) => {
 			this.state.search = v;
-			this.renderTree();
+			this.tree.render();
 			this.save();
 		});
-		this.listEl = el("div", { cls: "chronicle-dash-list", attr: { role: "tree" } }, this.treeEl);
+		const list = el("div", { cls: "chronicle-dash-list" }, this.treeEl);
+		this.tree = new FileTree(this.plugin, list, () => this.state, {
+			changed: () => this.save(),
+			select: (path, isFolder, evt) => {
+				if (this.state.hideDetail && !isFolder) openEntity(this.plugin, path, evt);
+				this.select(path, isFolder);
+			},
+		});
+		this.dragTree(el("div", { cls: "chronicle-dash-grip", attr: { role: "separator", "aria-label": "Resize the file tree" } }, main));
 		this.detailEl = el("div", { cls: "chronicle-dash-detail" }, main);
+		this.applyLayout();
 		if (this.state.expanded.length === 0) this.state.expanded = this.plugin.index.topFolders();
 		this.renderAll();
 		// Catch up after edits made while the dashboard was in a background tab.
@@ -133,6 +130,44 @@ export class ExplorerView extends ChronicleView {
 	}
 
 	private undoBtn?: HTMLElement;
+
+	private applyLayout() {
+		this.statsEl.toggle(!this.state.hideStats);
+		this.mainEl.toggleClass("is-tree-only", !!this.state.hideDetail);
+		const width = this.plugin.settings.libraryTree;
+		if (width) this.mainEl.setCssProps({ "--uv-tree-w": `${width}px` });
+	}
+
+	private saveTreeWidth = debounce((width: number) => {
+		this.plugin.settings.libraryTree = width;
+		void this.plugin.saveSettings();
+	}, 400, true);
+
+	private dragTree(grip: HTMLElement) {
+		grip.addEventListener("pointerdown", (down) => {
+			down.preventDefault();
+			grip.setPointerCapture(down.pointerId);
+			const box = this.mainEl.getBoundingClientRect();
+			const move = (e: PointerEvent) => {
+				const width = Math.round(Math.max(200, Math.min(box.width * 0.7, e.clientX - box.left)));
+				this.mainEl.setCssProps({ "--uv-tree-w": `${width}px` });
+				this.saveTreeWidth(width);
+			};
+			const up = () => {
+				grip.removeEventListener("pointermove", move);
+				grip.removeEventListener("pointerup", up);
+			};
+			grip.addEventListener("pointermove", move);
+			grip.addEventListener("pointerup", up);
+		});
+	}
+
+	private toggleLayout(part: "hideStats" | "hideDetail") {
+		this.state[part] = !this.state[part];
+		this.applyLayout();
+		this.fillToolbar();
+		this.save();
+	}
 
 	private syncUndo() {
 		const label = this.plugin.undoLabel;
@@ -149,7 +184,7 @@ export class ExplorerView extends ChronicleView {
 	private renderAll() {
 		if (!this.statsEl) return;
 		this.renderStats();
-		this.renderTree();
+		this.tree.render();
 		this.renderDetail();
 	}
 
@@ -188,41 +223,21 @@ export class ExplorerView extends ChronicleView {
 			const left = this.group();
 			toggleChip(left, "UniverseView notes only", "filter", this.state.onlyChronicle, (v) => {
 				this.state.onlyChronicle = v;
-				this.renderTree();
+				this.tree.render();
 				this.save();
 			});
-			iconButton(left, "chevrons-down-up", "Collapse all folders", () => {
-				this.state.expanded = [];
-				this.renderTree();
-				this.save();
-			});
-			iconButton(left, "chevrons-up-down", "Expand all folders", () => {
-				const all = new Set<string>();
-				for (const f of this.app.vault.getMarkdownFiles()) {
-					const parts = f.path.split("/").slice(0, -1);
-					for (let i = 1; i <= parts.length; i++) all.add(parts.slice(0, i).join("/"));
-				}
-				this.state.expanded = [...all];
-				this.renderTree();
-				this.save();
-			});
+			iconButton(left, "chevrons-down-up", "Collapse all folders", () => this.tree.collapseAll());
+			iconButton(left, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());
+			setPressed(iconButton(left, "bar-chart-3", "Show the summary", () => this.toggleLayout("hideStats")), !this.state.hideStats);
+			setPressed(iconButton(left, "panel-right", "Show details beside the tree", () => this.toggleLayout("hideDetail")), !this.state.hideDetail);
 			iconButton(left, "home", "Dashboard home (quick settings, problems)", () => {
 				this.state.selected = undefined;
-				this.renderTree();
+				this.tree.render();
 				this.renderDetail();
 				this.save();
 			});
 			this.spacer();
 			const right = this.group();
-			const s = this.plugin.settings;
-			const theme = el("select", { cls: "dropdown chronicle-select", attr: { "aria-label": "Theme", title: "Theme" } }, right);
-			for (const t of THEMES) theme.add(new Option(`Theme: ${t.name}`, t.id));
-			theme.value = s.theme;
-			theme.addEventListener("change", () => void this.setSetting(() => (s.theme = theme.value as ThemeId)));
-			const motion = el("select", { cls: "dropdown chronicle-select", attr: { "aria-label": "Motion", title: "Motion" } }, right);
-			for (const m of MOTIONS) motion.add(new Option(`Motion: ${m.name}`, m.id));
-			motion.value = s.motion;
-			motion.addEventListener("change", () => void this.setSetting(() => (s.motion = motion.value as MotionId)));
 			this.undoBtn = iconButton(right, "undo-2", "Undo", () => void this.plugin.undo());
 			this.syncUndo();
 			iconButton(right, "settings", "All UniverseView settings", () => this.plugin.openSettings());
@@ -277,166 +292,18 @@ export class ExplorerView extends ChronicleView {
 	private setTypeFilter(t: EntityType | undefined) {
 		this.state.typeFilter = t;
 		this.renderStats();
-		this.renderTree();
+		this.tree.render();
 		this.save();
-	}
-
-	// ---- Tree --------------------------------------------------------------------------------------
-
-	private buildTree(): FolderNode {
-		const idx = this.plugin.index;
-		const q = this.state.search.trim().toLowerCase();
-		const root: FolderNode = { path: "", name: this.app.vault.getName?.() ?? "Vault", folders: new Map(), files: [], counts: {}, total: 0, issues: 0 };
-		for (const f of this.app.vault.getMarkdownFiles()) {
-			const e = idx.get(f.path);
-			if (this.state.onlyChronicle && !e) continue;
-			if (this.state.typeFilter && e?.type !== this.state.typeFilter) continue;
-			if (q && !f.path.toLowerCase().includes(q) && !(e?.category ?? "").includes(q)) continue;
-			const parts = f.path.split("/").slice(0, -1);
-			let node = root;
-			const bump = (n: FolderNode) => {
-				n.total++;
-				if (e) n.counts[e.type] = (n.counts[e.type] ?? 0) + 1;
-				if (e?.issues.length) n.issues++;
-			};
-			bump(root);
-			parts.forEach((name, i) => {
-				const path = parts.slice(0, i + 1).join("/");
-				let next = node.folders.get(name);
-				if (!next) node.folders.set(name, (next = { path, name, folders: new Map(), files: [], counts: {}, total: 0, issues: 0 }));
-				node = next;
-				bump(node);
-			});
-			node.files.push(f);
-		}
-		return root;
-	}
-
-	private renderTree() {
-		const list = this.listEl;
-		if (!list) return;
-		const scroll = list.scrollTop;
-		list.empty();
-		const tree = this.buildTree();
-		const expanded = new Set(this.state.expanded);
-		const searching = !!this.state.search.trim() || !!this.state.typeFilter;
-		if (!tree.total) {
-			el("div", { cls: "chronicle-dash-empty", text: this.state.search ? "Nothing matches." : "No notes here yet." }, list);
-			return;
-		}
-		const idx = this.plugin.index;
-		let i = 0;
-		const folderRow = (n: FolderNode, depth: number) => {
-			const open = searching || expanded.has(n.path);
-			const row = el("div", { cls: "chronicle-dash-row is-folder" + (this.state.isFolder && this.state.selected === n.path ? " is-selected" : ""), attr: { role: "treeitem", "aria-expanded": String(open) } }, list);
-			row.style.setProperty("--depth", String(depth));
-			row.style.setProperty("--i", String(Math.min(i++, 30)));
-			const chev = el("span", { cls: "chronicle-dash-chev" + (open ? " is-open" : "") }, row);
-			icon(chev, "chevron-right");
-			const ic = el("span", { cls: "chronicle-dash-row-icon" }, row);
-			icon(ic, open ? "folder-open" : "folder");
-			el("span", { cls: "chronicle-dash-row-name", text: n.name }, row);
-			const counts = el("span", { cls: "chronicle-dash-counts" }, row);
-			for (const t of ENTITY_TYPES) {
-				const c = n.counts[t];
-				if (!c) continue;
-				const dot = el("span", { cls: "chronicle-dash-count", text: String(c), attr: { title: plural(TYPE_LABELS[t].toLowerCase(), c) } }, counts);
-				dot.style.setProperty("--dot-color", typeColorVar(t));
-			}
-			if (n.issues) el("span", { cls: "chronicle-dash-issue", text: "!", attr: { title: plural("note with problems", n.issues) } }, counts);
-			chev.addEventListener("click", (evt) => {
-				evt.stopPropagation();
-				this.toggleFolder(n.path);
-			});
-			row.addEventListener("click", () => {
-				this.select(n.path, true);
-				if (!open) this.toggleFolder(n.path);
-			});
-			row.addEventListener("dblclick", () => this.toggleFolder(n.path));
-			row.addEventListener("contextmenu", (evt) => {
-				evt.preventDefault();
-				this.folderMenu(n.path, evt);
-			});
-			if (open) children(n, depth + 1);
-		};
-		const fileRow = (f: TFile, depth: number) => {
-			const e = idx.get(f.path);
-			const row = el("div", { cls: "chronicle-dash-row is-file" + (!this.state.isFolder && this.state.selected === f.path ? " is-selected" : "") + (e ? "" : " is-plain"), attr: { role: "treeitem" } }, list);
-			row.style.setProperty("--depth", String(depth));
-			row.style.setProperty("--i", String(Math.min(i++, 30)));
-			if (e) row.style.setProperty("--row-color", entityColor(this.plugin, e));
-			const ic = el("span", { cls: "chronicle-dash-row-icon" }, row);
-			icon(ic, e ? TYPE_ICONS[e.type] : "file-text");
-			el("span", { cls: "chronicle-dash-row-name", text: f.basename }, row);
-			const meta = el("span", { cls: "chronicle-dash-row-meta" }, row);
-			if (e?.category) meta.setText(e.category);
-			if (e?.issues.length) el("span", { cls: "chronicle-dash-issue", text: "!", attr: { title: e.issues.join("\n") } }, row);
-			row.addEventListener("click", (evt) => {
-				if (Keymap.isModEvent(evt)) openEntity(this.plugin, f.path, evt);
-				else this.select(f.path, false);
-			});
-			row.addEventListener("dblclick", (evt) => openEntity(this.plugin, f.path, evt));
-			row.addEventListener("contextmenu", (evt) => {
-				evt.preventDefault();
-				if (e) showEntityMenu(this.plugin, f.path, evt);
-				else {
-					const menu = new Menu();
-					menu.addItem((it) => it.setTitle("Open").setIcon("file").onClick(() => openEntity(this.plugin, f.path)));
-					menu.showAtMouseEvent(evt);
-				}
-			});
-			if (e) this.plugin.hoverCards?.attach(row, e.key);
-		};
-		const children = (n: FolderNode, depth: number) => {
-			[...n.folders.values()].sort((a, b) => a.name.localeCompare(b.name)).forEach((c) => folderRow(c, depth));
-			n.files.sort((a, b) => a.basename.localeCompare(b.basename)).forEach((f) => fileRow(f, depth));
-		};
-		children(tree, 0);
-		list.scrollTop = scroll;
-	}
-
-	private toggleFolder(path: string) {
-		const set = new Set(this.state.expanded);
-		if (set.has(path)) set.delete(path);
-		else set.add(path);
-		this.state.expanded = [...set];
-		this.renderTree();
-		this.save();
-	}
-
-	private folderMenu(path: string, evt: MouseEvent) {
-		const menu = new Menu();
-		menu.addItem((i) => i.setTitle("Folder settings and notes").setIcon("folder-cog").onClick(() => this.select(path, true)));
-		menu.addSeparator();
-		for (const [view, label, iconName, state] of this.folderViews(path)) menu.addItem((i) => i.setTitle(label).setIcon(iconName).onClick(() => void this.plugin.activateView(view, state)));
-		menu.addSeparator();
-		menu.addItem((i) => i.setTitle("New note here…").setIcon("plus").onClick(() => this.plugin.createEntityPrompt({ scope: path.split("/")[0] })));
-		menu.showAtMouseEvent(evt);
-	}
-
-	private folderViews(path: string): [string, string, string, Record<string, unknown>][] {
-		return [
-			["chronicle-timeline", "Timeline of this folder", "calendar-range", { options: { filter: { folder: path } } }],
-			["chronicle-map", "Map of this folder", "map", { options: { folder: path } }],
-			["chronicle-network", "Connections in this folder", "waypoints", { options: { filter: { folder: path } } }],
-			["chronicle-orgchart", "Organisation chart of this folder", "network", { options: { folder: path, root: undefined } }],
-			["chronicle-lineage", "Culture lineage of this folder", "git-branch", { options: { folder: path } }],
-		];
 	}
 
 	/** Picks a note or folder; `reveal` opens the folders above it in the tree. */
 	select(path: string, isFolder: boolean, render = true) {
-		this.state.selected = path;
-		this.state.isFolder = isFolder;
-		const parts = path.split("/");
-		const set = new Set(this.state.expanded);
-		for (let i = 1; i < (isFolder ? parts.length : parts.length); i++) set.add(parts.slice(0, i).join("/"));
-		this.state.expanded = [...set];
+		this.tree.pick(path, isFolder);
 		if (!render) return;
-		this.renderTree();
+		this.tree.render();
 		this.renderDetail();
 		this.save();
-		this.listEl.querySelector(".is-selected")?.scrollIntoView({ block: "nearest" });
+		this.tree.scrollToPicked();
 	}
 
 	// ---- Detail pane -------------------------------------------------------------------------------
@@ -956,7 +823,7 @@ export class ExplorerView extends ChronicleView {
 		el("span", { cls: "chronicle-dash-badge", text: `${plural("note", files.length)} · ${entities.length} in UniverseView` }, title);
 		el("div", { cls: "chronicle-dash-path", text: path }, head);
 		const actions = el("div", { cls: "chronicle-dash-actions" }, head);
-		for (const [view, label, iconName, state] of this.folderViews(path)) {
+		for (const [view, label, iconName, state] of folderViews(path)) {
 			const b = el("button", {}, actions);
 			const i2 = el("span", { cls: "chronicle-dash-btn-icon" }, b);
 			icon(i2, iconName);
@@ -1129,13 +996,6 @@ export class ExplorerView extends ChronicleView {
 		};
 		draw();
 	}
-}
-
-function plural(word: string, n: number): string {
-	if (n === 1) return `1 ${word}`;
-	const last = word.split(" ").pop()!;
-	const many = last === "person" ? "people" : /[^aeiou]y$/.test(last) ? last.slice(0, -1) + "ies" : last + "s";
-	return `${n.toLocaleString()} ${word.slice(0, word.length - last.length)}${many}`;
 }
 
 function kindHint(t: EntityType): string {
