@@ -20,7 +20,7 @@ import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/
 import { relInverse } from "../index/relkinds";
 import { ChronicleView } from "./base";
 import { asText } from "../index/text";
-import { FileTree, folderViews, plural, type TreeState } from "../ui/filetree";
+import { FileTree, TREE_OPTIONS_CHANGED, folderViews, plural, treeOptionsMenu, type TreeState } from "../ui/filetree";
 
 export const VIEW_EXPLORER = "chronicle-explorer";
 
@@ -127,6 +127,7 @@ export class ExplorerView extends ChronicleView {
 			}
 		}));
 		this.registerEvent(this.app.workspace.on("chronicle:history-changed" as "quit", () => this.syncUndo()));
+		this.registerEvent(this.app.workspace.on(TREE_OPTIONS_CHANGED as "quit", () => this.tree.render()));
 	}
 
 	private undoBtn?: HTMLElement;
@@ -226,6 +227,7 @@ export class ExplorerView extends ChronicleView {
 				this.tree.render();
 				this.save();
 			});
+			iconButton(left, "sliders-horizontal", "How the tree looks", (evt) => treeOptionsMenu(this.plugin, evt));
 			iconButton(left, "chevrons-down-up", "Collapse all folders", () => this.tree.collapseAll());
 			iconButton(left, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());
 			setPressed(iconButton(left, "bar-chart-3", "Show the summary", () => this.toggleLayout("hideStats")), !this.state.hideStats);

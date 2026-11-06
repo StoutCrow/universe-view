@@ -1,10 +1,31 @@
-import { TFile, debounce, type ViewStateResult } from "obsidian";
+import { TFile, debounce, setIcon, type ViewStateResult } from "obsidian";
+import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import { TYPE_ICONS, TYPE_LABELS, el, iconButton, openEntity, setPressed } from "../render/common";
-import { FileTree, type TreeState } from "../ui/filetree";
+import { FileTree, TREE_OPTIONS_CHANGED, treeOptionsMenu, type TreeState } from "../ui/filetree";
 import { ChronicleView } from "./base";
 
 export const VIEW_FILES = "chronicle-files";
+
+/** A button in the toolbar of Obsidian's file explorer that opens the files panel. */
+export function explorerButton(plugin: ChroniclePlugin) {
+	const sync = () => {
+		for (const leaf of plugin.app.workspace.getLeavesOfType("file-explorer")) {
+			const bar = leaf.view.containerEl.querySelector(".nav-buttons-container");
+			const have = bar?.querySelector(".uv-open-files");
+			if (!plugin.moduleOn(VIEW_FILES)) have?.remove();
+			else if (bar && !have) {
+				const b = el("div", { cls: "clickable-icon nav-action-button uv-open-files", attr: { "aria-label": "Open UniverseView files" } }, bar as HTMLElement);
+				setIcon(b, "folder-tree");
+				b.addEventListener("click", () => void plugin.openFilesPanel());
+			}
+		}
+	};
+	plugin.app.workspace.onLayoutReady(sync);
+	plugin.registerEvent(plugin.app.workspace.on("layout-change", sync));
+	plugin.register(() => document.querySelectorAll(".uv-open-files").forEach((b) => b.remove()));
+	return sync;
+}
 
 /** The Library's tree as a sidebar panel, beside Obsidian's own file explorer. */
 export class FilesPanelView extends ChronicleView {
@@ -53,6 +74,7 @@ export class FilesPanelView extends ChronicleView {
 			},
 		});
 		this.refresh();
+		this.registerEvent(this.app.workspace.on(TREE_OPTIONS_CHANGED as "quit", () => this.tree.render()));
 		// The panel follows the open note, however it was opened.
 		this.registerEvent(this.app.workspace.on("file-open", (f: TFile | null) => {
 			if (!f || f.path === this.state.selected) return;
@@ -86,9 +108,14 @@ export class FilesPanelView extends ChronicleView {
 			this.app.workspace.requestSaveLayout();
 		});
 		setPressed(only, this.state.onlyChronicle);
+		iconButton(tools, "sliders-horizontal", "How the tree looks", (evt) => treeOptionsMenu(this.plugin, evt));
 		iconButton(tools, "chevrons-down-up", "Collapse all folders", () => this.tree.collapseAll());
 		iconButton(tools, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());
 		iconButton(tools, "plus", "New note", () => this.plugin.createEntityPrompt({}));
+		iconButton(tools, "folder", "Show Obsidian's Files", () => {
+			const files = this.app.workspace.getLeavesOfType("file-explorer")[0];
+			if (files) void this.app.workspace.revealLeaf(files);
+		});
 	}
 
 	// Index rebuilds come in bursts while typing: redraw once they settle, and only when the panel can be seen.

@@ -123,6 +123,15 @@ button.chronicle-dash-stat.is-active {
 	cursor: pointer;
 	user-select: none;
 }
+.chronicle-dash-list.is-compact .chronicle-dash-row {
+	min-height: 22px;
+	padding-top: 0;
+	padding-bottom: 0;
+}
+.chronicle-dash-row .uv-file-icons {
+	margin: 0;
+	flex: none;
+}
 .chronicle-dash-row.is-file {
 	padding-left: calc(26px + var(--depth, 0) * 14px);
 }
@@ -131,7 +140,6 @@ button.chronicle-dash-stat.is-active {
 }
 .chronicle-dash-row.is-selected {
 	background: var(--background-modifier-hover);
-	color: var(--text-normal);
 }
 .chronicle-dash-row.is-plain {
 	color: var(--text-muted);
@@ -157,20 +165,26 @@ button.chronicle-dash-stat.is-active {
 	color: var(--row-color, var(--text-muted));
 }
 .chronicle-dash-row-name {
-	flex: 1;
+	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+/* Gives way before the name does. */
 .chronicle-dash-row-meta {
+	flex: 0 10000 auto;
+	min-width: 0;
+	overflow: hidden;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-weight: normal;
 }
 .chronicle-dash-counts {
 	display: flex;
+	flex: none;
 	gap: 3px;
 	font-weight: normal;
 }

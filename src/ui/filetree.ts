@@ -1,7 +1,9 @@
 import { Keymap, Menu, TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES, type EntityType } from "../types";
-import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
+import type { ChronicleSettings } from "../settings";
+import { TYPE_ICONS, TYPE_LABELS, el, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
+import { fileIconBox, tintRow } from "./icons";
 
 /** What a tree shows and what's picked in it, kept by the view that hosts it. */
 export interface TreeState {
@@ -33,6 +35,39 @@ interface FolderNode {
 	issues: number;
 }
 
+type TreeOptions = Required<NonNullable<ChronicleSettings["fileTree"]>>;
+
+function treeOptions(plugin: ChroniclePlugin): TreeOptions {
+	return { colors: "both", folderNotes: true, kinds: true, counts: true, compact: false, ...plugin.settings.fileTree };
+}
+
+/** The event open trees redraw on when their options change. */
+export const TREE_OPTIONS_CHANGED = "chronicle:tree-options";
+
+/** How the file trees look, one click from either tree. */
+export function treeOptionsMenu(plugin: ChroniclePlugin, evt: MouseEvent) {
+	const o = treeOptions(plugin);
+	const set = (change: Partial<TreeOptions>) => {
+		plugin.settings.fileTree = { ...o, ...change };
+		void plugin.saveSettings();
+		plugin.app.workspace.trigger(TREE_OPTIONS_CHANGED);
+	};
+	const menu = new Menu();
+	const styles: [TreeOptions["colors"], string][] = [["both", "Colour names and bars"], ["text", "Colour names only"], ["bar", "Colour bars only"], ["none", "No colours"]];
+	for (const [colors, title] of styles) menu.addItem((i) => i.setTitle(title).setChecked(o.colors === colors).onClick(() => set({ colors })));
+	menu.addSeparator();
+	const flags: [keyof TreeOptions, string, boolean][] = [
+		["folderNotes", "Show folder notes as their folder", o.folderNotes],
+		["kinds", "Show kinds (county, fort…)", o.kinds],
+		["counts", "Show counts on folders", o.counts],
+		["compact", "Compact rows", o.compact],
+	];
+	for (const [key, title, on] of flags) menu.addItem((i) => i.setTitle(title).setChecked(on).onClick(() => set({ [key]: !on })));
+	menu.addSeparator();
+	menu.addItem((i) => i.setTitle("Colour strength by tier…").setIcon("palette").onClick(() => plugin.openSettings("appearance")));
+	menu.showAtMouseEvent(evt);
+}
+
 export function plural(word: string, n: number): string {
 	if (n === 1) return `1 ${word}`;
 	const last = word.split(" ").pop()!;
@@ -53,6 +88,8 @@ export function folderViews(path: string): [string, string, string, Record<strin
 
 /** Every folder and note, with counts by type, problems marked, search and keyboard control. */
 export class FileTree {
+	private options!: TreeOptions;
+
 	constructor(private plugin: ChroniclePlugin, private list: HTMLElement, private state: () => TreeState, private hooks: TreeHooks) {
 		list.setAttribute("role", "tree");
 		list.addEventListener("keydown", (evt) => this.onKey(evt));
@@ -98,15 +135,18 @@ export class FileTree {
 			el("div", { cls: "chronicle-dash-empty", text: s.search ? "Nothing matches." : "No notes here yet." }, list);
 			return;
 		}
+		const o = (this.options = treeOptions(this.plugin));
+		list.toggleClass("is-compact", o.compact);
 		const expanded = new Set(s.expanded);
 		const searching = !!s.search.trim() || !!s.typeFilter;
-		const children = (n: FolderNode, depth: number) => {
+		const children = (n: FolderNode, depth: number, own?: TFile) => {
 			for (const c of [...n.folders.values()].sort((a, b) => a.name.localeCompare(b.name))) {
 				const open = searching || expanded.has(c.path);
-				this.folderRow(c, depth, open);
-				if (open) children(c, depth + 1);
+				const note = o.folderNotes ? c.files.find((f) => f.basename === c.name) : undefined;
+				this.folderRow(c, depth, open, note);
+				if (open) children(c, depth + 1, note);
 			}
-			for (const f of n.files.sort((a, b) => a.basename.localeCompare(b.basename))) this.fileRow(f, depth);
+			for (const f of n.files.sort((a, b) => a.basename.localeCompare(b.basename))) if (f !== own) this.fileRow(f, depth);
 		};
 		children(tree, 0);
 		list.scrollTop = scroll;
@@ -118,21 +158,33 @@ export class FileTree {
 	private row(path: string, cls: string, depth: number, selected: boolean, open?: boolean) {
 		const attr: Record<string, string> = { role: "treeitem", tabindex: "-1", "aria-selected": String(selected) };
 		if (open !== undefined) attr["aria-expanded"] = String(open);
-		const row = el("div", { cls: `chronicle-dash-row ${cls}` + (selected ? " is-selected" : ""), attr }, this.list);
+		const row = el("div", { cls: `chronicle-dash-row ${cls}` + (selected ? " is-selected is-active" : ""), attr }, this.list);
 		row.dataset.path = path;
 		row.style.setProperty("--depth", String(depth));
 		return row;
 	}
 
-	private folderRow(n: FolderNode, depth: number, open: boolean) {
+	/** The note's look on a row: its icons and colour. */
+	private dress(row: HTMLElement, path: string, plain: string) {
+		const box = this.plugin.settings.fileIcons !== false ? fileIconBox(this.plugin, path) : undefined;
+		if (box) row.appendChild(box);
+		else icon(el("span", { cls: "chronicle-dash-row-icon" }, row), plain);
+		tintRow(this.plugin, row, path, this.options.colors);
+	}
+
+	private folderRow(n: FolderNode, depth: number, open: boolean, note?: TFile) {
 		const s = this.state();
-		const row = this.row(n.path, "is-folder", depth, !!s.isFolder && s.selected === n.path, open);
+		const picked = note ? !s.isFolder && s.selected === note.path : !!s.isFolder && s.selected === n.path;
+		const row = this.row(n.path, "is-folder", depth, picked, open);
+		if (note) row.dataset.note = note.path;
 		const chev = el("span", { cls: "chronicle-dash-chev" + (open ? " is-open" : "") }, row);
 		icon(chev, "chevron-right");
-		icon(el("span", { cls: "chronicle-dash-row-icon" }, row), open ? "folder-open" : "folder");
+		this.dress(row, note?.path ?? n.path, open ? "folder-open" : "folder");
 		el("span", { cls: "chronicle-dash-row-name", text: n.name }, row);
+		const entity = note ? this.plugin.index.get(note.path) : undefined;
+		if (this.options.kinds && entity?.category) el("span", { cls: "chronicle-dash-row-meta", text: entity.category }, row);
 		const counts = el("span", { cls: "chronicle-dash-counts" }, row);
-		for (const t of ENTITY_TYPES) {
+		if (this.options.counts) for (const t of ENTITY_TYPES) {
 			const c = n.counts[t];
 			if (!c) continue;
 			const dot = el("span", { cls: "chronicle-dash-count", text: String(c), attr: { title: plural(TYPE_LABELS[t].toLowerCase(), c) } }, counts);
@@ -144,24 +196,31 @@ export class FileTree {
 			this.toggle(n.path);
 		});
 		row.addEventListener("click", (evt) => {
+			// A folder note opens with its folder; the arrow is what closes it.
+			if (note) {
+				if (Keymap.isModEvent(evt)) openEntity(this.plugin, note.path, evt);
+				else this.hooks.select(note.path, false, evt);
+				if (!open) this.toggle(n.path);
+				return;
+			}
 			this.hooks.select(n.path, true, evt);
 			if (!open || this.hooks.foldOnClick) this.toggle(n.path);
 		});
 		row.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
-			this.folderMenu(n.path, evt);
+			if (entity) showEntityMenu(this.plugin, entity.key, evt);
+			else this.folderMenu(n.path, evt);
 		});
+		if (entity) this.plugin.hoverCards?.attach(row, entity.key);
 	}
 
 	private fileRow(f: TFile, depth: number) {
 		const s = this.state();
 		const e = this.plugin.index.get(f.path);
 		const row = this.row(f.path, "is-file" + (e ? "" : " is-plain"), depth, !s.isFolder && s.selected === f.path);
-		if (e) row.style.setProperty("--row-color", entityColor(this.plugin, e));
-		icon(el("span", { cls: "chronicle-dash-row-icon" }, row), e ? TYPE_ICONS[e.type] : "file-text");
+		this.dress(row, f.path, e ? TYPE_ICONS[e.type] : "file-text");
 		el("span", { cls: "chronicle-dash-row-name", text: f.basename }, row);
-		const meta = el("span", { cls: "chronicle-dash-row-meta" }, row);
-		if (e?.category) meta.setText(e.category);
+		if (this.options.kinds && e?.category) el("span", { cls: "chronicle-dash-row-meta", text: e.category }, row);
 		if (e?.issues.length) el("span", { cls: "chronicle-dash-issue", text: "!", attr: { title: e.issues.join("\n") } }, row);
 		row.addEventListener("click", (evt) => {
 			if (Keymap.isModEvent(evt)) openEntity(this.plugin, f.path, evt);
@@ -244,7 +303,7 @@ export class FileTree {
 		else if (evt.key === "ArrowUp") rows[at - 1]?.focus();
 		else if (evt.key === "ArrowRight" && folder && !open) this.toggle(path);
 		else if (evt.key === "ArrowLeft" && folder && open) this.toggle(path);
-		else if (evt.key === "Enter") this.hooks.select(path, folder, evt);
+		else if (evt.key === "Enter") this.hooks.select(row.dataset.note ?? path, folder && !row.dataset.note, evt);
 		else return;
 		evt.preventDefault();
 	}

@@ -50,7 +50,7 @@ import { HousesView, VIEW_HOUSES } from "./views/HousesView";
 import { RealmsView, VIEW_REALMS } from "./views/RealmsView";
 import { InspectorView, VIEW_INSPECTOR } from "./views/InspectorView";
 import { HubView, LOGO_ICON, LOGO_SVG, VIEW_HUB } from "./views/HubView";
-import { FilesPanelView, VIEW_FILES } from "./views/FilesPanelView";
+import { FilesPanelView, VIEW_FILES, explorerButton } from "./views/FilesPanelView";
 import { EntityPickerModal } from "./ui/suggest";
 import { TextPrompt } from "./ui/TextPrompt";
 import { KinshipModal, KnowledgeModal, NamesModal, SuccessionModal } from "./ui/people";
@@ -180,6 +180,7 @@ export default class ChroniclePlugin extends Plugin {
 			button.toggle(this.moduleOn(v.type));
 		}
 		this.registerCommands();
+		this.syncExplorerButton = this.safely("Files button", () => explorerButton(this), noop);
 		// The files panel joins the sidebar once; after that, closing it is respected.
 		this.app.workspace.onLayoutReady(() => {
 			if (this.settings.filesPanelAdded || !this.moduleOn(VIEW_FILES)) return;
@@ -742,6 +743,7 @@ export default class ChroniclePlugin extends Plugin {
 
 	settingTab?: ChronicleSettingTab;
 	private ribbonButtons = new Map<string, HTMLElement>();
+	private syncExplorerButton?: () => void;
 
 	/** Whether a module of the dashboard is switched on. */
 	moduleOn(id: string): boolean {
@@ -756,6 +758,7 @@ export default class ChroniclePlugin extends Plugin {
 		if (id === VIEW_FILES) {
 			if (on) await this.openFilesPanel();
 			else this.app.workspace.detachLeavesOfType(VIEW_FILES);
+			this.syncExplorerButton?.();
 		}
 		await this.saveSettings();
 	}

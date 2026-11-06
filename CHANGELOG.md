@@ -2,6 +2,12 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.4.1 — 2026-11-06
+- The file trees take your file colours: names and bars by realm and tier, with the same strengths as Obsidian's Files, and each note's icons.
+- A folder and its folder note are one row, as in Files. Click it to open the note; the arrow folds it.
+- **How the tree looks** (the sliders button): colour names, bars, both or neither; folder notes as folders; kinds; counts; compact rows.
+- Obsidian's Files gets a button to open the files panel, and the panel one to go back.
+
 ## 1.4.0 — 2026-11-06
 - **Files panel**: the Library's tree in Obsidian's left sidebar, beside Files, at full height. Search, filter by type, counts and problems at a glance; click a note to open it, and the panel follows whatever note is open. Switch it off under Settings → Modules.
 - **Library has room**: drag the tree wider, and hide the summary or the details from the toolbar. With details hidden, clicking a note opens it. The summary is one slim line, and the theme and motion menus moved out of its toolbar (they're in Settings).

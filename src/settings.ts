@@ -92,6 +92,15 @@ export interface ChronicleSettings {
 	hubRibbon?: boolean;
 	/** Modules switched off in the dashboard. */
 	modulesOff: string[];
+	/** How the file trees (the Library's, the files panel) look. */
+	fileTree?: {
+		colors?: "both" | "text" | "bar" | "none";
+		/** A folder and its folder note show as one row. */
+		folderNotes?: boolean;
+		kinds?: boolean;
+		counts?: boolean;
+		compact?: boolean;
+	};
 	/** Width of the Library's file tree, in pixels. */
 	libraryTree?: number;
 	/** The files panel has been put in the sidebar once; closing it after that is respected. */

@@ -72,6 +72,31 @@ export function fileColor(plugin: ChroniclePlugin, path: string): { color: strin
 	return undefined;
 }
 
+/** Colours a file row by its note's realm and tier. */
+export function tintRow(plugin: ChroniclePlugin, row: HTMLElement, path: string, style: "text" | "bar" | "both" | "none") {
+	const c = style === "none" ? undefined : fileColor(plugin, path);
+	row.toggleClass("uv-file-tinted", !!c);
+	row.toggleClass("uv-tint-text", !!c && style !== "bar");
+	row.toggleClass("uv-tint-bar", !!c && style !== "text");
+	if (c) {
+		row.style.setProperty("--uv-file-color", c.color);
+		row.style.setProperty("--uv-file-strength", `${Math.max(0, Math.min(100, c.strength))}%`);
+	} else {
+		row.style.removeProperty("--uv-file-color");
+		row.style.removeProperty("--uv-file-strength");
+	}
+}
+
+/** A note's icons (its type's and its kind's) for a file row; undefined when it has none. */
+export function fileIconBox(plugin: ChroniclePlugin, path: string): HTMLElement | undefined {
+	const { type, kind } = noteIcons(plugin, path);
+	if (!type && !kind) return undefined;
+	const box = el("span", { cls: "uv-file-icons", attr: { "data-sig": `${type ?? ""}|${kind ?? ""}` } });
+	if (type) icon(el("span", { cls: "uv-file-icon is-type" }, box), type);
+	if (kind) glyph(el("span", { cls: "uv-file-icon is-kind" }, box), kind);
+	return box;
+}
+
 /**
  * Icons in the file explorer and search: beside each UniverseView note, its type's icon and its
  * kind's. Redrawn as folders open and results come in, and when notes change.
@@ -102,30 +127,15 @@ export function decorateFileLists(plugin: ChroniclePlugin) {
 		}
 	};
 	// Colours by realm and tier (Settings → Look & cards → File explorer colours).
-	const tint = (title: HTMLElement, path: string) => {
-		const c = plugin.settings.fileColors === false ? undefined : fileColor(plugin, path);
-		const style = plugin.settings.fileColorStyle ?? "both";
-		title.toggleClass("uv-file-tinted", !!c);
-		title.toggleClass("uv-tint-text", !!c && style !== "bar");
-		title.toggleClass("uv-tint-bar", !!c && style !== "text");
-		if (c) {
-			title.style.setProperty("--uv-file-color", c.color);
-			title.style.setProperty("--uv-file-strength", `${Math.max(0, Math.min(100, c.strength))}%`);
-		} else {
-			title.style.removeProperty("--uv-file-color");
-			title.style.removeProperty("--uv-file-strength");
-		}
-	};
+	const tint = (title: HTMLElement, path: string) => tintRow(plugin, title, path, plugin.settings.fileColors === false ? "none" : plugin.settings.fileColorStyle ?? "both");
 	const put = (title: HTMLElement, path: string) => {
 		const { type, kind } = noteIcons(plugin, path);
 		const sig = `${type ?? ""}|${kind ?? ""}`;
 		const have = title.querySelector<HTMLElement>(":scope > .uv-file-icons");
 		if (have?.dataset.sig === sig) return;
 		have?.remove();
-		if (!type && !kind) return;
-		const box = el("span", { cls: "uv-file-icons", attr: { "data-sig": sig } });
-		if (type) icon(el("span", { cls: "uv-file-icon is-type" }, box), type);
-		if (kind) glyph(el("span", { cls: "uv-file-icon is-kind" }, box), kind);
+		const box = fileIconBox(plugin, path);
+		if (!box) return;
 		// After a folder's fold arrow, before the name.
 		const arrow = title.querySelector(":scope > .nav-folder-collapse-indicator, :scope > .collapse-icon");
 		if (arrow) arrow.after(box);
