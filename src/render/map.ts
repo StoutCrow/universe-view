@@ -39,7 +39,7 @@ import { STAT_NAMES, realmStats, statValue, type StatKey } from "../index/realms
 import { EntityPickerModal } from "../ui/suggest";
 import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
-import { battlesByWar, isBattle, victorOf } from "../index/wars";
+import { battlesByWar, isBattle, sidesOf, victorOf } from "../index/wars";
 import { asText } from "../index/text";
 
 export const WORLD_MAP = "world";
@@ -4537,7 +4537,7 @@ export class MapRenderer {
 			d.style.setProperty("--battle-color", colourOf(won));
 			icon(d, "swords");
 			const marker = L.marker(ll, { icon: L.divIcon({ html: d, className: "uv-battle-wrap", iconSize: [22, 22], iconAnchor: [-4, 26] }), keyboard: false, zIndexOffset: 400 }).addTo(layer);
-			const sides = (b.sides ?? []).map((s) => `${s.party.name}${s.outcome ? ` (${s.outcome})` : ""}`).join(" vs ");
+			const sides = sidesOf(this.plugin.index, b).map((s) => `${s.party.name}${s.outcome ? ` (${s.outcome})` : ""}`).join(" vs ");
 			const war = b.war ? idx.get(b.war.key) : undefined;
 			const tip = [b.name, b.start ? formatSpan(b.start, b.end, cal(b)) : "", sides, war && war.type === "event" ? `Part of ${war.name}` : ""].filter(Boolean);
 			const tipEl = el("div", { cls: "uv-battle-tip" });

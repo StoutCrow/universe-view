@@ -9,7 +9,7 @@ import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
 import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
-import { battlesOf, isBattle, warOf } from "../index/wars";
+import { battlesOf, isBattle, sidesOf, warOf } from "../index/wars";
 import { KIND_LABELS, categoryColor, categoryOf, type ItemKind } from "./categories";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
@@ -345,7 +345,7 @@ export class TimelineRenderer {
 				// Its own title, what it (or its house) holds, its groups, where an event happened, and for
 				// battles and wars each side that fought and the lands that changed hands.
 				const groups = e.cultures.map((c) => c.ref.key);
-				const sides = (e.sides ?? []).map((s) => s.party.key);
+				const sides = sidesOf(this.plugin.index, e).map((s) => s.party.key);
 				const lands = (e.transfers ?? []).flatMap((t) => [t.land.key, t.from?.key, t.to?.key]).filter((k): k is string => !!k);
 				const keys = [e.key, ...holdingsOf(tree, e.key), ...groups, ...groups.flatMap((g) => holdingsOf(tree, g)), ...(e.type === "event" ? e.places.map((p) => p.key) : []), ...sides, ...sides.flatMap((s) => holdingsOf(tree, s)), ...lands];
 				const found = new Map<string, string>();
@@ -455,7 +455,7 @@ export class TimelineRenderer {
 			["People", e.participants.map((r) => ({ key: r.key, name: r.name }))],
 			["Where", e.places.map((r) => ({ key: r.key, name: r.name }))],
 			["Groups", e.cultures.map((c) => ({ key: c.ref.key, name: c.ref.name }))],
-			["Sides", (e.sides ?? []).map((s) => ({ key: s.party.key, name: `${s.party.name}${s.outcome ? ` (${s.outcome})` : ""}` }))],
+			["Sides", sidesOf(idx, e).map((s) => ({ key: s.party.key, name: `${s.party.name}${s.outcome ? ` (${s.outcome})` : ""}` }))],
 		];
 		const war = warOf(idx, e);
 		if (war) rows.push(["War", [{ key: war.key, name: war.name }]]);

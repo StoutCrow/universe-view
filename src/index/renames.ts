@@ -1,6 +1,43 @@
 import type { Entity, NameSpan } from "../types";
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
+import { asText } from "./text";
+
+const isNameMap = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v) && !("name" in v);
+
+/** `names:` as rows of text for the editor, whichever way it's written. */
+export function nameRows(value: unknown): Record<string, string>[] {
+	if (isNameMap(value)) return Object.entries(value).map(([from, name]) => ({ name: asText(name), from, to: "" }));
+	return ([] as unknown[]).concat(value ?? []).flatMap((item) => {
+		if (item && typeof item === "object") {
+			const o = item as Record<string, unknown>;
+			return [{ name: asText(o.name), from: asText(o.from ?? o.since ?? o.start), to: asText(o.to ?? o.until ?? o.end) }];
+		}
+		const s = asText(item).replace(/^\[\[|\]\]$/g, "").trim();
+		const span = /^(.+?)\s*\(([^)]+)\)\s*$/.exec(s);
+		if (span) {
+			const [from, to] = span[2].split(/\s+[–—-]\s*|\s*[–—-]\s+/);
+			return [{ name: span[1], from: from?.trim() ?? "", to: to?.trim() ?? "" }];
+		}
+		const word = /^(.+?)\s*[:,]?\s+(from|since|until|to)\s+(.+)$/i.exec(s);
+		if (word) return [/^(from|since)$/i.test(word[2]) ? { name: word[1], from: word[3], to: "" } : { name: word[1], from: "", to: word[3] }];
+		return s ? [{ name: s, from: "", to: "" }] : [];
+	});
+}
+
+/** Rows back to `names:`, in the shortest form they fit. */
+export function writeNames(rows: Record<string, string>[]): unknown {
+	const froms = rows.map((r) => r.from?.trim());
+	if (rows.length > 1 && froms.every(Boolean) && new Set(froms).size === rows.length && rows.every((r) => !r.to?.trim())) {
+		return Object.fromEntries(rows.map((r) => [r.from.trim(), r.name.trim()]));
+	}
+	return rows.map((r) => {
+		const name = r.name.trim(), from = r.from?.trim(), to = r.to?.trim();
+		if (from && to) return `${name} (${from} – ${to})`;
+		if (from) return `${name}: from ${from}`;
+		return to ? `${name} until ${to}` : name;
+	});
+}
 
 /**
  * Names over time, from `names:` (or `former-names:`, `renamed:`):
@@ -11,12 +48,22 @@ import { parseDate, parseSpan } from "../dates/parser";
  *     - name: New York
  *       from: 1664
  *
- * or one line each: "New Amsterdam (1625 – 1663)", "New York: from 1664".
+ * or one line each: "New Amsterdam (1625 – 1663)", "New York: from 1664"; or, each until the next:
+ *
+ *   names:
+ *     1625: New Amsterdam
+ *     1664: New York
  */
 export function readNames(value: unknown, cal: Calendar): NameSpan[] | undefined {
 	if (value === undefined || value === null || value === "") return undefined;
 	const out: NameSpan[] = [];
 	const date = (v: unknown) => (v === undefined || v === null || v === "" ? undefined : parseDate(v, cal) ?? undefined);
+	if (isNameMap(value)) {
+		for (const [from, name] of Object.entries(value)) if (typeof name === "string" && name.trim()) out.push({ name: name.trim(), from: date(from) });
+		out.sort((a, b) => (a.from?.start ?? -Infinity) - (b.from?.start ?? -Infinity));
+		out.forEach((n, i) => (n.to = out[i + 1]?.from));
+		return out.length ? out : undefined;
+	}
 	for (const item of Array.isArray(value) ? value : [value]) {
 		if (item && typeof item === "object") {
 			const o = item as Record<string, unknown>;

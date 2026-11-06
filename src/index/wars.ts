@@ -1,4 +1,4 @@
-import type { Entity } from "../types";
+import type { Entity, Side } from "../types";
 import type { EntityIndex } from "./EntityIndex";
 import { victorsOf } from "./periods";
 
@@ -53,6 +53,17 @@ export function battlesOf(idx: EntityIndex, war: Entity): Entity[] {
 		.sort((a, b) => (a.start?.start ?? Infinity) - (b.start?.start ?? Infinity));
 }
 
+/** An alliance named as a party stands for its members. */
+function withMembers(idx: EntityIndex, sides: Side[]): Side[] {
+	return sides.flatMap((s) => idx.get(s.party.key)?.alliance?.map((party) => ({ ...s, party })) ?? [s]);
+}
+
+/** Who fought: its own `sides:`, or for a battle with none, its war's, without saying who won it. */
+export function sidesOf(idx: EntityIndex, e: Entity): Side[] {
+	const inherited = !e.sides && isBattle(e) ? warOf(idx, e)?.sides?.map((s) => ({ ...s, outcome: undefined })) : undefined;
+	return withMembers(idx, e.sides ?? inherited ?? []);
+}
+
 /** Who won: the war's own `sides:` when marked, else the side that won most of its battles. */
 export function victorOf(idx: EntityIndex, e: Entity): Entity | undefined {
 	const own = victorsOf(e.sides)[0];
@@ -68,7 +79,7 @@ export function victorOf(idx: EntityIndex, e: Entity): Entity | undefined {
 export function warTally(idx: EntityIndex, war: Entity): { party: Entity; won: number; lost: number }[] {
 	const rows = new Map<string, { party: Entity; won: number; lost: number }>();
 	for (const b of battlesOf(idx, war)) {
-		for (const s of b.sides ?? []) {
+		for (const s of withMembers(idx, b.sides ?? [])) {
 			const p = idx.get(s.party.key);
 			if (!p) continue;
 			const r = rows.get(p.key) ?? { party: p, won: 0, lost: 0 };

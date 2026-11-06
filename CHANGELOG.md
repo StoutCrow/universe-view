@@ -2,6 +2,16 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.7.0 — 2026-11-06
+Shorter ways to write what used to take a block of properties, and the inspector now reads them all and saves the shortest.
+- **Sides**: `sides: "[[A]], [[B]] vs [[C]]"` on one line, or grouped by side (`The Crown (won): ["[[A]]", "[[B]]"]`), or `outcome:` once for everyone.
+- **Battles fight as their war**: a battle with no `sides:` shows its war's parties. List them only where it differs.
+- **Alliances**: `alliance: ["[[A]]", "[[B]]"]` on a note, then name that note as one party.
+- **Holders and names**: `1220 C.E.: "[[William]]"`, each until the next.
+- **Lands changing hands**: `"[[Land]]: [[Old realm]] > [[New realm]]"`, several lands to a line.
+- **Any dated link** (cultures, memberships): `"[[House]] (king, 1220 – 1258)"`.
+- The inspector used to drop one-line entries when you edited them; it keeps them now. Everything already written still works.
+
 ## 1.6.0 — 2026-11-06
 - **Links stay in the dashboard**: right-click menus, links and commands that open the map, a family tree or any other view now bring you to its tab in UniverseView, opening the dashboard if it's closed. *Open in new tab* still opens its own tab.
 - **Views remember**: every view keeps its filters, layers, focus and arrangement for next time, even after the dashboard closes. The arrow at the top right puts a view back to its defaults; *Reset all views* is under Settings → Modules.

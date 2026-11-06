@@ -2,7 +2,7 @@ import { PIN_SIZES } from "../types";
 import type { ChronDate, EntityType, PinSize, Ref, TimedRef } from "../types";
 import type { FieldName } from "../settings";
 import type { Calendar } from "../dates/calendars";
-import { parseDate } from "../dates/parser";
+import { parseDate, parseSpan } from "../dates/parser";
 import { asText } from "./text";
 
 const TYPE_SYNONYMS: Record<EntityType, string[]> = {
@@ -237,6 +237,18 @@ export function readTimedRefs(
 						role: typeof role === "string" ? role : undefined,
 					});
 				}
+			} else if (typeof v === "string" && /^\s*\[\[[^\]]+\]\]\s*\(.+\)\s*$/.test(v)) {
+				// One line: "[[House Whitmore]] (king, 1220 – 1258)", role and dates either way round.
+				const [, target, inside] = /^\s*(\[\[[^\]]+\]\])\s*\((.+)\)\s*$/.exec(v) ?? [];
+				const ref = resolve(linkTexts(target)[0] ?? "");
+				const id = ref.key + "|" + (aliasKind ?? "");
+				if (!ref.name || seen.has(id)) continue;
+				seen.add(id);
+				const parts = inside.split(",").map((x) => x.trim());
+				const span = parts.find((x) => /\d/.test(x));
+				const dates = span ? parseSpan(span, cal) : undefined;
+				if (span && !dates) issues.push(`Could not read dates "${span}"`);
+				out.push({ ref, kind: aliasKind, from: dates?.start, to: dates?.end, role: parts.find((x) => !/\d/.test(x)) });
 			} else {
 				for (const t of linkTexts(v)) {
 					const ref = resolve(t);

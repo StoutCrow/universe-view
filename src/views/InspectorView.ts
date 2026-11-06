@@ -12,8 +12,9 @@ import { TAB_INFO, linksTab, mapTab, noteTab, tabsFor, timelineTab, type Inspect
 import { readChoice, restandardise, standardFields } from "../ui/tagstandard";
 import { identityHeader } from "../ui/identity";
 import { battlesOf, isBattle, isWar, victorOf, warOf, warTally } from "../index/wars";
+import { ROW_FORMATS } from "../index/periods";
+import { nameRows, writeNames } from "../index/renames";
 import { formatDay } from "../dates/parser";
-import { asText } from "../index/text";
 import { ConfirmPrompt } from "../ui/TextPrompt";
 
 export const VIEW_INSPECTOR = "chronicle-inspector";
@@ -332,17 +333,17 @@ export class InspectorView extends ItemView {
 		icon(el("span", {}, h), o.icon);
 		el("span", { text: o.title }, h);
 		helpTip(h, o.help);
-		const plain = (v: unknown) => (v === undefined || v === null ? "" : asText(v).replace(/^\[\[|\]\]$/g, "").split("|")[0]);
-		const raw = this.app.metadataCache.getFileCache(file)?.frontmatter?.[o.field] as unknown;
-		const rows: Record<string, string>[] = ([] as unknown[]).concat(raw ?? []).filter((x) => x && typeof x === "object").map((x) => Object.fromEntries(o.cols.map((c) => [c.key, plain((x as Record<string, unknown>)[c.key])])));
+		const front: Record<string, unknown> | undefined = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		const format = ROW_FORMATS[o.field];
+		const rows = format.read(front?.[o.field], front);
 		const list = el("div", { cls: "uv-names" }, s);
 		const save = () =>
 			void p.editFrontmatter(file, (fm) => {
-				const clean = rows
-					.filter((r) => r[o.cols[0].key]?.trim())
-					.map((r) => Object.fromEntries(o.cols.filter((c) => r[c.key]?.trim()).map((c) => [c.key, c.link ? `[[${r[c.key].trim()}]]` : r[c.key].trim()])));
-				if (clean.length) fm[o.field] = clean;
+				const clean = rows.filter((r) => r[o.cols[0].key]?.trim());
+				if (clean.length) fm[o.field] = format.write(clean);
 				else delete fm[o.field];
+				// Each side now says how it ended.
+				if (o.field === "sides") delete fm.outcome;
 			}, `${e.name}: ${o.title.toLowerCase()}`);
 		const draw = () => {
 			list.empty();
@@ -393,6 +394,8 @@ export class InspectorView extends ItemView {
 		const war = !battle && isWar(idx, e);
 		if (!battle && !war && !e.sides?.length) return;
 		this.renderRows(body, e, { title: "Sides", icon: "swords", field: "sides", add: "Add a party", help: "Who fought, on which side, and how it ended for them. Parties with the same side fought together (A and B, or names like the Crown and the Rebels). Outcome: won, lost or draw. The map colours a battle's crossed swords by the winner; a war's winner is its own, or whoever won most of its battles. Written as `sides:` (or the short `victor:` and `defeated:`).", cols: [{ key: "party", ph: "Who", link: ["culture", "person", "place"] }, { key: "side", ph: "Side (A, B…)" }, { key: "outcome", ph: "Won, lost…" }] });
+		const parent = battle && !e.sides ? warOf(idx, e) : undefined;
+		if (parent?.sides) el("p", { cls: "chronicle-dash-muted", text: `Fought by the sides of ${parent.name}. Add parties only where this battle differs.` }, body);
 		const file = this.app.vault.getAbstractFileByPath(e.key);
 		if (!(file instanceof TFile)) return;
 		const s = el("section", { cls: "chronicle-insp-section" }, body);
@@ -462,18 +465,12 @@ export class InspectorView extends ItemView {
 		el("span", { text: "Names over time" }, h);
 		helpTip(h, "Earlier or later names, each with when it applied. The map shows the name for the time slider's date, and the timeline and lineage show each renaming. Leave a date empty for open-ended. Written as `names:`.");
 		const raw = (this.app.metadataCache.getFileCache(file)?.frontmatter?.names ?? []) as unknown;
-		const rows: { name: string; from: string; to: string }[] = ([] as unknown[]).concat(raw ?? []).map((x) => {
-			if (x && typeof x === "object") {
-				const o = x as Record<string, unknown>;
-				return { name: asText(o.name ?? ""), from: o.from === undefined ? "" : asText(o.from), to: o.to === undefined ? "" : asText(o.to) };
-			}
-			return { name: asText(x ?? ""), from: "", to: "" };
-		});
+		const rows = nameRows(raw);
 		const list = el("div", { cls: "uv-names" }, s);
 		const save = () =>
 			void p.editFrontmatter(file, (fm) => {
-				const clean = rows.filter((r) => r.name.trim()).map((r) => ({ name: r.name.trim(), ...(r.from.trim() ? { from: r.from.trim() } : {}), ...(r.to.trim() ? { to: r.to.trim() } : {}) }));
-				if (clean.length) fm.names = clean;
+				const clean = rows.filter((r) => r.name.trim());
+				if (clean.length) fm.names = writeNames(clean);
 				else delete fm.names;
 			}, `${e.name}: names over time`);
 		const draw = () => {

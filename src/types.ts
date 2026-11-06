@@ -145,6 +145,8 @@ export interface Entity {
 	transfers?: Transfer[];
 	/** On a battle or war: who fought, on which side, and who won (`sides:`). */
 	sides?: Side[];
+	/** An alliance's members (`alliance:`): naming it in `sides:` brings them all in. */
+	alliance?: Ref[];
 	/** On a battle: the war or campaign it was part of (`war:`). */
 	war?: Ref;
 	/** Roads, rivers and sea lanes drawn on maps (2+ points). */

@@ -1,5 +1,5 @@
 import { findColourAreas } from "../src/render/colours";
-import { readSides, victorsOf } from "../src/index/periods";
+import { ROW_FORMATS, readHolders, readSides, readTransfers, victorsOf } from "../src/index/periods";
 import { checkBorders } from "../src/index/bordercheck";
 import { boxOf, labelSpot, mainAxis, snapToNeighbour, unionOutline } from "../src/index/geometry";
 import { nameSize, realmShape } from "../src/render/strategy";
@@ -16,7 +16,8 @@ import { compareVersions, parseChangelog } from "../src/index/changelog";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "../src/ui/mappresets";
-import { nameAt, readNames, renamings } from "../src/index/renames";
+import { sidesOf } from "../src/index/wars";
+import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
 import { inRing, ringArea, splitRing } from "../src/index/geometry";
 /* Unit tests for the pure parts (dates, calendars, GEDCOM). Run with `npm test`. */
@@ -34,7 +35,7 @@ import { shownAs, visibleTiers } from "../src/render/tiers";
 import { fitRange } from "../src/render/layout";
 import { buildGedcom, gedcomDate } from "../src/import/gedcom-export";
 import { spacedLabels } from "../src/dates/calendars";
-import { linkTarget } from "../src/index/reader";
+import { linkTarget, readTimedRefs } from "../src/index/reader";
 import { days, parseScale, planJourney, terrainFactor } from "../src/render/travel";
 import { totalPopulation } from "../src/index/tidy";
 import { kinTerm, relationship } from "../src/index/kinship";
@@ -1189,6 +1190,32 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(sides.map((s) => [s.party.name, s.side, s.outcome]), [["House Whitmore", "A", "won"], ["United States", "B", "lost"], ["Mexico", "A", "won"]], "sides: rows, the short string form, and victor: all read");
 	eq(victorsOf(sides).map((s) => s.party.name), ["House Whitmore", "Mexico"], "sides: the winners are the parties marked won");
 	eq(readSides(undefined, undefined, undefined, resolve as never), undefined, "sides: none written, none read");
+	const line = (v: unknown, o?: string) => readSides(v, undefined, undefined, resolve as never, o)!.map((s) => [s.party.name, s.side, s.outcome]);
+	eq(line("[[A]], [[B]] vs [[C]]"), [["A", "A", undefined], ["B", "A", undefined], ["C", "B", undefined]], "sides: one line, split at vs");
+	eq(line({ "Crown (Won)": ["[[A]]", "[[B]]"], Rebels: "[[C]]" }, "Draw"), [["A", "Crown", "won"], ["B", "Crown", "won"], ["C", "Rebels", "draw"]], "sides: by side, an outcome per side or for all");
+	const f = ROW_FORMATS;
+	eq(f.sides.write(f.sides.read(["[[A]] (X, won)", "[[B]] (X, won)", { party: "[[C]]", side: "Y" }])), { "X (won)": ["[[A]]", "[[B]]"], Y: ["[[C]]"] }, "sides: any form saves grouped");
+	const cal = reg.get("gregorian");
+	const held = readHolders({ "1220": "[[A]]", "1258": "[[B]]" }, resolve as never, cal)!;
+	eq([held[0].ref.name, !!held[0].to, held[1].to], ["A", true, undefined], "holders: the short map, each until the next");
+	eq(f.holders.write(f.holders.read(["[[A]] (1220 – 1258)", { holder: "[[B]]", from: "1258" }])), ["[[A]] (1220 – 1258)", "[[B]] (1258 –)"], "holders: dates kept when they don't chain");
+	eq(f.holders.write(f.holders.read({ "1220": "[[A]]", "1258": "[[B]]" })), { "1220": "[[A]]", "1258": "[[B]]" }, "holders: the short map survives editing");
+	eq(readTransfers("[[L]], [[M]]: [[F]] > [[T]]", resolve as never)!.map((t) => [t.land.name, t.from?.name, t.to?.name]), [["L", "F", "T"], ["M", "F", "T"]], "transfers: one line, several lands");
+	eq(f.transfers.write(f.transfers.read([{ land: "[[L]]", to: "[[T]]" }])), ["[[L]] > [[T]]"], "transfers: rows save as one line");
+	eq(writeNames(nameRows({ "1625": "New Amsterdam", "1664": "New York" })), { "1625": "New Amsterdam", "1664": "New York" }, "names: the short map survives editing");
+	eq(nameRows(["New York (1664 – 1897)", "Old York until 1600"]), [{ name: "New York", from: "1664", to: "1897" }, { name: "Old York", from: "", to: "1600" }], "names: one-line forms read as rows");
+	eq(readNames({ "1625": "New Amsterdam", "1664": "New York" }, cal)!.map((n) => [n.name, !!n.to]), [["New Amsterdam", true], ["New York", false]], "names: the short map, each until the next");
+	// A battle with no sides fights as its war, without its result; an alliance stands for its members.
+	const ref = (name: string) => ({ key: name, name, resolved: true });
+	const notes: Record<string, unknown> = {
+		War: { key: "War", name: "The Great War", type: "event", sides: [{ party: ref("League"), side: "A", outcome: "won" }, { party: ref("Rome"), side: "B", outcome: "lost" }] },
+		League: { key: "League", name: "League", type: "culture", alliance: [ref("Athens"), ref("Sparta")] },
+	};
+	const fakeIndex = { get: (k: string) => notes[k], all: () => [] } as never;
+	const battle = { key: "B", name: "Battle of the Bridge", type: "event", war: ref("War") } as never;
+	eq(sidesOf(fakeIndex, battle).map((s) => [s.party.name, s.side, s.outcome]), [["Athens", "A", undefined], ["Sparta", "A", undefined], ["Rome", "B", undefined]], "sides: a battle inherits its war's, and an alliance brings its members");
+	const refs = readTimedRefs([{ alias: "cultures", value: ["[[House]] (king, 1220 – 1258)"] }], ((t: string) => ({ key: t, name: t })) as never, cal, ["cultures"], []);
+	eq([refs[0].ref.name, refs[0].role, !!refs[0].from, !!refs[0].to], ["House", "king", true, true], "dated links: role and dates on one line");
 }
 {
 	const sq = (x: number, y: number, s: number): [number, number][] => [[x, y], [x + s, y], [x + s, y + s], [x, y + s]];

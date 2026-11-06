@@ -455,7 +455,8 @@ export class EntityIndex extends Events {
 		e.holders = readHolders(fm.holders ?? fm["title-holders"] ?? fm.succession, resolve, cal);
 		e.transfers = readTransfers(fm.transfers ?? fm["lands-changed"] ?? fm.cedes ?? fm.annexes, resolve);
 		e.names = readNames(fm.names ?? fm["former-names"] ?? fm.renamed ?? fm["names-over-time"], cal);
-		e.sides = readSides(fm.sides ?? fm.belligerents ?? fm.combatants, fm.victor ?? fm.victors ?? fm.winner, fm.defeated ?? fm.loser, resolve);
+		e.sides = readSides(fm.sides ?? fm.belligerents ?? fm.combatants, fm.victor ?? fm.victors ?? fm.winner, fm.defeated ?? fm.loser, resolve, fm.outcome ?? fm.result);
+		if (fm.alliance ?? fm.coalition) e.alliance = readRefs(fm.alliance ?? fm.coalition, resolve);
 		// The war a battle belongs to ("part-of" too, when it names an event: checked where it's used).
 		const warLink = [fm.war, fm.campaign, fm.conflict, fm["part-of"]].find((v) => typeof v === "string" && v.trim());
 		e.war = typeof warLink === "string" ? resolve(warLink.replace(/^\[\[|\]\]$/g, "").split("|")[0].trim()) : undefined;
