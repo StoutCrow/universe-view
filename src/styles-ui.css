@@ -895,6 +895,64 @@ button.chronicle-ov-tile:hover::after {
 	overflow: hidden;
 	transition: width var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease), margin var(--chronicle-fast) var(--chronicle-ease);
 }
+/* Each category's shape, on dots and bars alike. */
+.uv-shape-arrow .chronicle-tl-dot,
+.uv-shape-diamond .chronicle-tl-dot,
+.uv-shape-chevron .chronicle-tl-dot,
+.uv-shape-hatch .chronicle-tl-dot,
+.uv-shape-square .chronicle-tl-dot,
+.uv-shape-hexagon .chronicle-tl-dot,
+.uv-shape-triangle .chronicle-tl-dot,
+.uv-shape-star .chronicle-tl-dot {
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+}
+.uv-shape-arrow .chronicle-tl-dot { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.uv-shape-diamond .chronicle-tl-dot { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.uv-shape-chevron .chronicle-tl-dot { clip-path: polygon(0 0, 60% 0, 100% 50%, 60% 100%, 0 100%, 40% 50%); }
+.uv-shape-hexagon .chronicle-tl-dot { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.uv-shape-triangle .chronicle-tl-dot { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.uv-shape-star .chronicle-tl-dot { clip-path: polygon(50% 0, 62% 35%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 35%); }
+.uv-shape-hatch .chronicle-tl-dot,
+.uv-shape-hatch .chronicle-tl-bar {
+	background: repeating-linear-gradient(45deg, var(--item-color) 0 2px, color-mix(in srgb, var(--item-color) 22%, var(--background-primary)) 2px 6px);
+}
+.chronicle-tl-item.uv-shape-hatch .chronicle-tl-bar,
+.chronicle-tl-item.uv-shape-square .chronicle-tl-bar { border-radius: 2px; }
+.chronicle-tl-item.uv-shape-arrow .chronicle-tl-bar,
+.chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar,
+.chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar,
+.chronicle-tl-item.uv-shape-triangle .chronicle-tl-bar,
+.chronicle-tl-item.uv-shape-star .chronicle-tl-bar {
+	border-radius: 0;
+	background: color-mix(in srgb, var(--item-color) 32%, var(--background-primary));
+}
+.chronicle-tl-item.uv-shape-arrow .chronicle-tl-bar { clip-path: polygon(0 0, max(0px, calc(100% - 10px)) 0, 100% 50%, max(0px, calc(100% - 10px)) 100%, 0 100%); }
+.chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar { clip-path: polygon(0 0, max(0px, calc(100% - 10px)) 0, 100% 50%, max(0px, calc(100% - 10px)) 100%, 0 100%, 10px 50%); padding-left: 10px; }
+.chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar { clip-path: polygon(10px 0, max(10px, calc(100% - 10px)) 0, 100% 50%, max(10px, calc(100% - 10px)) 100%, 10px 100%, 0 50%); padding-left: 6px; }
+.chronicle-tl-item.uv-shape-triangle .chronicle-tl-bar { clip-path: polygon(10px 0, 100% 0, max(10px, calc(100% - 10px)) 100%, 0 100%); padding-left: 6px; }
+.chronicle-tl-item.uv-shape-star .chronicle-tl-bar { clip-path: polygon(0 0, 100% 0, max(0px, calc(100% - 8px)) 50%, 100% 100%, 0 100%, 8px 50%); padding-left: 8px; }
+.uv-tl-key {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 2px 10px;
+	margin-left: 4px;
+	padding-left: 8px;
+	border-left: 1px solid var(--background-modifier-border);
+	font-weight: normal;
+	color: var(--text-muted);
+}
+.uv-tl-key-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+.uv-tl-key-item .chronicle-tl-dot {
+	width: 10px;
+	height: 10px;
+	margin-left: 0;
+}
 .chronicle-tl-lane-label.is-movable {
 	cursor: grab;
 	touch-action: none;

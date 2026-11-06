@@ -3,7 +3,8 @@ import type ChroniclePlugin from "../main";
 import { buildFieldAliases } from "../settings";
 import type { Entity, EntityFilter } from "../types";
 import { Calendar, yearTicks } from "../dates/calendars";
-import { formatDate, formatDay, formatSpan } from "../dates/parser";
+import { formatDate, formatDay, formatSpan, parseSpan } from "../dates/parser";
+import { asText } from "../index/text";
 import { rangeOf } from "../index/EntityIndex";
 import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
@@ -12,7 +13,7 @@ import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, op
 import { battlesOf, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { causePath, packRows, type Box } from "./timelinerows";
 import { dragToReorder } from "../ui/cardlayout";
-import { KIND_LABELS, categoryColor, categoryOf, type ItemKind } from "./categories";
+import { KIND_LABELS, NATIONS_LANE, categoryColor, categoryOf, laneFor, shapeFor, type ItemKind, type ItemShape } from "./categories";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
 
@@ -301,6 +302,21 @@ export class TimelineRenderer {
 				out[out.length - 1].context = e.key;
 			});
 		}
+		// Reigns written on the ruler (`reign: 1258 - 1291`), each heir following the last on the same title.
+		if (options.reigns !== false) {
+			const tree = plugin.realms();
+			for (const p of idx.all("person")) {
+				const written = p.props.reign ?? p.props.reigned;
+				if (written === undefined || written === null || written === "" || !idx.matches(p, personFilter)) continue;
+				const span = parseSpan(written, plugin.calendars.get(p.calendar));
+				const a = span.start?.start;
+				if (a === undefined) continue;
+				const b = span.end?.end ?? p.end?.end ?? plugin.openEndOf(p) ?? a;
+				const title = holdingsOf(tree, p.key).map((k) => idx.get(k)).sort((x, y) => (tree.nodes.get(x?.key ?? "")?.rank ?? 9) - (tree.nodes.get(y?.key ?? "")?.rank ?? 9))[0];
+				add(p, "reign", a, Math.max(a, b), a === b, !!span.start?.approx, `${p.name} reigns${title ? ` over ${title.name}` : ""}: ${asText(written)}`, title ? `${p.name} · ${title.name}` : p.name);
+				if (title) out[out.length - 1].context = title.key;
+			}
+		}
 		// Occupations (`occupied:`): each land's time in someone else's hands, as a span in the land's lane.
 		if (options.occupations !== false) {
 			for (const [key, spans] of occupationsByLand(idx)) {
@@ -355,13 +371,21 @@ export class TimelineRenderer {
 		return categoryOf(it.kind, e.category ?? (isBattle(e) ? "battle" : namedAsWar(e) ? "war" : undefined));
 	}
 
+	private warOf(it: Item): "war" | "battle" | undefined {
+		return it.kind !== "event" ? undefined : isBattle(it.entity) ? "battle" : namedAsWar(it.entity) ? "war" : undefined;
+	}
+
+	private shapeIn(it: Item): ItemShape {
+		return shapeFor(it.kind, this.categoryIn(it)[0], this.warOf(it), this.catOrder);
+	}
+
 	private groupsOf(it: Item): [string, string][] {
 		const e = it.entity;
 		switch (this.options.group) {
 			case "none":
 				return [["", ""]];
 			case "category":
-				return [this.categoryIn(it)];
+				return [laneFor(it.kind, this.categoryIn(it), !!this.warOf(it))];
 			case "realm": {
 				// The realm a title, its people and its events belong to: the highest title someone holds.
 				const tree = this.plugin.realms();
@@ -631,7 +655,7 @@ export class TimelineRenderer {
 				// By category, each lane's name carries its category's colour.
 				if (this.options.group === "category") {
 					head.addClass("is-category");
-					head.style.setProperty("--uv-cat-color", this.colorOf(lane.id));
+					head.style.setProperty("--uv-cat-color", lane.id === NATIONS_LANE[0] ? "var(--text-muted)" : this.colorOf(lane.id));
 				}
 				const ent = this.plugin.index.get(lane.id);
 				const name = el("span", { cls: "chronicle-tl-lane-name", text: lane.label }, head);
@@ -641,6 +665,7 @@ export class TimelineRenderer {
 					bindHover(this.plugin, name, ent.key, this.hoverParent);
 				}
 				el("span", { cls: "chronicle-tl-lane-count", text: String(lane.items.length) }, head);
+				this.shapeKey(head, lane);
 			}
 			const track = el("div", { cls: "chronicle-tl-track" }, laneEl);
 			track.style.height = `${lane.rows * rowH + 8}px`;
@@ -653,6 +678,20 @@ export class TimelineRenderer {
 		this.bodyEl.scrollTop = this.pendingScroll ?? scrollTop;
 		this.pendingScroll = undefined;
 		this.renderCauses();
+	}
+
+	/** Which shape is which, when a lane holds several. */
+	private shapeKey(head: HTMLElement, lane: Lane) {
+		const seen = new Map<ItemShape, Item>();
+		for (const it of lane.items) if (!seen.has(this.shapeIn(it))) seen.set(this.shapeIn(it), it);
+		if (seen.size < 2) return;
+		const key = el("span", { cls: "uv-tl-key" }, head);
+		for (const [shape, it] of seen) {
+			const entry = el("span", { cls: `uv-tl-key-item uv-shape-${shape}` }, key);
+			entry.style.setProperty("--item-color", it.color);
+			el("span", { cls: "chronicle-tl-dot" }, entry);
+			el("span", { text: this.categoryIn(it)[1] }, entry);
+		}
 	}
 
 	/** A lane moves by dragging its name, or from the menu on it, and stays where it's put. */
@@ -753,7 +792,7 @@ export class TimelineRenderer {
 		}
 		// By category: the events' own categories first (busiest on top), "other events" after them, then
 		// lifespans, groups and the rest. Otherwise lanes go in order of their first date.
-		const rank = (l: Lane) => (l.id.startsWith("kind:") ? 2 : l.id === "~event" ? 1 : 0);
+		const rank = (l: Lane) => (l.id === NATIONS_LANE[0] ? -1 : l.id.startsWith("kind:") ? 2 : l.id === "~event" ? 1 : 0);
 		const sorted = [...lanes.values()].sort((a, b) => {
 			if (a.id === "~") return 1;
 			if (b.id === "~") return -1;
@@ -854,7 +893,7 @@ export class TimelineRenderer {
 
 	private renderItem(track: HTMLElement, p: Placed, rowH: number) {
 		const it = p.item;
-		const node = el("div", { cls: `chronicle-tl-item kind-${it.kind}` }, track);
+		const node = el("div", { cls: `chronicle-tl-item kind-${it.kind} uv-shape-${this.shapeIn(it)}` }, track);
 		node.dataset.key = it.key;
 		node.style.setProperty("--item-color", it.color);
 		node.style.top = `${p.row * rowH + 4}px`;

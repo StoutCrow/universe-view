@@ -6,7 +6,7 @@ import { CalendarRegistry, type Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import { relInverse } from "./relkinds";
 import { readNames } from "./renames";
-import { readHolders, readOccupied, readSides, readTransfers } from "./periods";
+import { holdersProperty, readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
 import { clearInferred, noteSignature } from "./derived";
@@ -458,7 +458,7 @@ export class EntityIndex extends Events {
 		e.knownBy = readTimedRefs(["known-by", "known_by", "knownby"].flatMap((k) => (fm[k] === undefined || fm[k] === null || fm[k] === "" ? [] : [{ alias: k, value: fm[k] }])), resolve, cal, ["known-by", "known_by", "knownby"], issues);
 		e.territories = this.readTerritories(fm.territory ?? fm.territories ?? fm.borders, file.path, 3, cal);
 		e.routes = this.readTerritories(fm.routes ?? fm.route ?? fm.roads, file.path, 2, cal);
-		e.holders = readHolders(fm.holders ?? fm["title-holders"] ?? fm.succession, resolve, cal);
+		e.holders = readHolders(holdersProperty(fm), resolve, cal);
 		e.transfers = readTransfers(fm.transfers ?? fm["lands-changed"] ?? fm.cedes ?? fm.annexes, resolve);
 		e.names = readNames(fm.names ?? fm["former-names"] ?? fm.renamed ?? fm["names-over-time"], cal);
 		e.sides = readSides(fm.sides ?? fm.belligerents ?? fm.combatants, fm.victor ?? fm.victors ?? fm.winner, fm.defeated ?? fm.loser, resolve, fm.outcome ?? fm.result);

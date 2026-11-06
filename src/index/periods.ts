@@ -231,6 +231,16 @@ export function readOccupied(value: unknown, resolve: Resolve, cal: Calendar): O
 	return out.length ? out : undefined;
 }
 
+/**
+ * Who held a title, from a note's properties. `succession:` can list them, but plain text there is the
+ * rule of inheritance (`succession: male-preference`), not a person.
+ */
+export function holdersProperty(fm: Record<string, unknown>): unknown {
+	const listed = fm.holders ?? fm["title-holders"];
+	if (listed !== undefined) return listed;
+	return typeof fm.succession === "string" && !fm.succession.includes("[[") ? undefined : fm.succession;
+}
+
 export const ROW_FORMATS: Record<string, RowFormat> = { holders, transfers, sides, occupied };
 
 /** The parties that won, if any are marked. */
