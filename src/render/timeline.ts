@@ -9,11 +9,13 @@ import { rangeOf } from "../index/EntityIndex";
 import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
-import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svg, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
+import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
 import { battlesOf, eventCategories, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { causePath, packRows, type Box } from "./timelinerows";
 import { dragToReorder } from "../ui/cardlayout";
-import { KIND_LABELS, categoryColor, categoryOf, markPath, shapeFor, type ItemKind, type ItemShape } from "./categories";
+import { KIND_LABELS, categoryColor, categoryOf, shapeFor, type ItemKind, type ItemShape } from "./categories";
+import { historyOf, writtenReigns, type HistoryKind, type HistoryMark } from "./history";
+import { markIcon, markKey } from "./markkey";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
 
@@ -82,19 +84,9 @@ interface Item {
 	/** A reign's title (the item itself is the holder): the realm lane it belongs in. */
 	context?: string;
 	/** On a nation's bar: what happened to it, as marks along it. */
-	marks?: Mark[];
+	marks?: HistoryMark[];
 }
 
-/** Something that happened to a nation, drawn on its bar. */
-interface Mark {
-	day: number;
-	shape: ItemShape;
-	color: string;
-	text: string;
-	category: string;
-	/** The note it opens. */
-	key: string;
-}
 
 interface Placed {
 	item: Item;
@@ -319,20 +311,10 @@ export class TimelineRenderer {
 		}
 		// Reigns written on the ruler (`reign: 1258 - 1291`), each heir following the last on the same title.
 		if (options.reigns !== false) {
-			const tree = plugin.realms();
-			for (const p of idx.all("person")) {
-				const written = p.props.reign ?? p.props.reigned;
-				if (written === undefined || written === null || written === "" || !idx.matches(p, personFilter)) continue;
-				const span = parseSpan(written, plugin.calendars.get(p.calendar));
-				const a = span.start?.start;
-				if (a === undefined) continue;
-				const b = span.end?.end ?? p.end?.end ?? plugin.openEndOf(p) ?? a;
-				// What they ruled: their own title, else the greatest their house holds.
-				const held = holdingsOf(tree, p.key);
-				const titles = held.length ? held : p.cultures.flatMap((c) => holdingsOf(tree, c.ref.key));
-				const title = titles.map((k) => idx.get(k)).sort((x, y) => (tree.nodes.get(x?.key ?? "")?.rank ?? 9) - (tree.nodes.get(y?.key ?? "")?.rank ?? 9))[0];
-				add(p, "reign", a, Math.max(a, b), a === b, !!span.start?.approx, `${p.name} reigns${title ? ` over ${title.name}` : ""}: ${asText(written)}`, title ? `${p.name} · ${title.name}` : p.name);
-				if (title) out[out.length - 1].context = title.key;
+			for (const r of writtenReigns(plugin)) {
+				if (!idx.matches(r.who, personFilter)) continue;
+				add(r.who, "reign", r.from, r.to, r.from === r.to, r.approx, r.text, r.label);
+				if (r.title) out[out.length - 1].context = r.title.key;
 			}
 		}
 		// Occupations (`occupied:`): each land's time in someone else's hands, as a span in the land's lane.
@@ -392,30 +374,22 @@ export class TimelineRenderer {
 	}
 
 	/**
-	 * A nation's history goes on its bar, as on the lineage: its wars and other events, its renamings,
-	 * who inherited it and who occupied it. What has no bar here keeps a place of its own.
+	 * A nation's history goes on its bar, the same marks as the lineage, within what's switched on here.
+	 * What has no bar here keeps a place of its own.
 	 */
 	private attachMarks(out: Item[]) {
+		const { options, plugin } = this;
 		const bars = new Map(out.filter((it) => (it.kind === "culture" || it.kind === "place") && !it.point).map((it) => [it.key, it]));
-		const mark = (bar: Item, it: Item, day: number) => {
-			(bar.marks ??= []).push({ day, shape: this.shapeIn(it), color: this.colorOf(this.categoryIn(it)[0]), text: `${it.label} · ${it.dateText}`, category: this.categoryIn(it)[1], key: it.key });
-		};
+		const hidden = new Set(options.hiddenCategories ?? []);
+		const shown = new Set(out.filter((it) => it.kind === "event").map((it) => it.key));
+		const on: Record<HistoryKind, boolean> = { event: true, rename: options.renames !== false, reign: options.reigns !== false, occupation: options.occupations !== false };
+		for (const bar of bars.values()) {
+			bar.marks = historyOf(plugin, bar.entity, [bar.start, bar.end]).filter((m) => on[m.kind] && !hidden.has(m.categoryId) && (m.kind !== "event" || shown.has(m.key)));
+		}
 		for (let i = out.length - 1; i >= 0; i--) {
 			const it = out[i];
 			const host = it.kind === "reign" ? it.context : it.kind === "rename" || it.kind === "occupation" ? it.key : undefined;
-			const bar = host ? bars.get(host) : undefined;
-			if (!bar) continue;
-			mark(bar, it, it.start);
-			out.splice(i, 1);
-		}
-		for (const it of out) {
-			if (it.kind !== "event") continue;
-			const e = it.entity;
-			const hosts = new Set([...sidesOf(this.plugin.index, e).map((s) => s.party.key), ...e.cultures.map((c) => c.ref.key), ...e.places.map((p) => p.key)]);
-			for (const k of hosts) {
-				const bar = bars.get(k);
-				if (bar && it.start >= bar.start && it.start <= bar.end) mark(bar, it, it.start);
-			}
+			if (host && bars.has(host)) out.splice(i, 1);
 		}
 	}
 
@@ -628,6 +602,19 @@ export class TimelineRenderer {
 		}, 50);
 	}
 
+	/** What's in view, for the lineage to pick up. */
+	get range(): { start: number; scale: number } {
+		return { start: this.viewStart, scale: this.pxPerDay };
+	}
+
+	/** Shows the same years as the lineage was. */
+	showRange(r: { start: number; scale: number }) {
+		this.userMoved = true;
+		this.viewStart = r.start;
+		this.pxPerDay = r.scale;
+		this.schedule();
+	}
+
 	zoom(factor: number, anchorX = this.width / 2) {
 		this.userMoved = true;
 		const day = this.viewStart + anchorX / this.pxPerDay;
@@ -713,12 +700,12 @@ export class TimelineRenderer {
 					bindHover(this.plugin, name, ent.key, this.hoverParent);
 				}
 				el("span", { cls: "chronicle-tl-lane-count", text: String(lane.items.length) }, head);
-				this.shapeKey(head, lane);
+				markKey(head, lane.items.flatMap((it) => it.marks ?? []));
 			}
 			// With no lane to label, the key has a line of its own.
 			else {
 				const row = el("div", { cls: "uv-tl-key-row" }, laneEl);
-				this.shapeKey(row, lane);
+				markKey(row, lane.items.flatMap((it) => it.marks ?? []));
 				if (!row.hasChildNodes()) row.remove();
 			}
 			const track = el("div", { cls: "chronicle-tl-track" }, laneEl);
@@ -734,31 +721,11 @@ export class TimelineRenderer {
 		this.renderCauses();
 	}
 
-	/** Which shape is which, for the marks on a lane's bars. */
-	private shapeKey(head: HTMLElement, lane: Lane) {
-		const seen = new Map<ItemShape, Mark>();
-		for (const it of lane.items) for (const m of it.marks ?? []) if (!seen.has(m.shape)) seen.set(m.shape, m);
-		if (!seen.size) return;
-		const key = el("span", { cls: "uv-tl-key" }, head);
-		for (const [shape, m] of seen) {
-			const entry = el("span", { cls: "uv-tl-key-item" }, key);
-			this.markIcon(entry, shape, m.color);
-			el("span", { text: m.category }, entry);
-		}
-	}
-
-	private markIcon(parent: Element, shape: ItemShape, color: string): SVGElement {
-		const box = svg("svg", { class: "uv-tl-mark", width: 14, height: 14, viewBox: "0 0 14 14" }, parent);
-		box.style.setProperty("--mark-color", color);
-		svg("path", { d: markPath(shape, 7, 7) }, box);
-		return box;
-	}
-
 	/** One mark on a bar: its name on hover, and a click opens it. */
-	private renderMark(node: HTMLElement, m: Mark, barLeft: number) {
+	private renderMark(node: HTMLElement, m: HistoryMark, barLeft: number) {
 		const x = this.x(m.day);
 		if (x < -20 || x > this.width + 20) return;
-		const box = this.markIcon(node, m.shape, m.color);
+		const box = markIcon(node, m);
 		box.classList.add("is-on-bar");
 		box.style.left = `${x - barLeft - 7}px`;
 		box.setAttribute("aria-label", m.text);

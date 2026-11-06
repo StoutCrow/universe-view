@@ -56,6 +56,7 @@ export class TimelineView extends ChronicleView {
 		this.rebuildToolbar(() => {
 			const o = this.options;
 			const left = this.group();
+			this.modeSwitch(left, VIEW_TIMELINE);
 			this.searchBox(left, o.filter.search ?? "", "Filter events…", (v) => {
 				o.filter.search = v || undefined;
 				this.update();
@@ -205,6 +206,14 @@ export class TimelineView extends ChronicleView {
 			iconButton(right, "maximize", "Fit everything", () => this.renderer?.fit(true));
 			iconButton(right, "plus", "New event (or double-click the timeline)", () => this.plugin.createEntityPrompt({ type: "event", scope: o.filter.folder || undefined }), "mod-cta-icon");
 		});
+	}
+
+	protected timeRange() {
+		return this.renderer?.range;
+	}
+
+	showTimeRange(r: { start: number; scale: number }) {
+		this.renderer?.showRange(r);
 	}
 
 	focus(key: string) {

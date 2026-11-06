@@ -107,6 +107,33 @@ export abstract class ChronicleView extends ItemView {
 		return "appearance";
 	}
 
+	/** The years in view, for the other mode of the timeline to pick up. */
+	protected timeRange(): { start: number; scale: number } | undefined {
+		return undefined;
+	}
+
+	/**
+	 * The timeline's two modes: events in lanes, or nations as bars with their lines of descent. Going
+	 * from one to the other keeps the same years in view.
+	 */
+	protected modeSwitch(parent: HTMLElement, current: string) {
+		const modes: [string, string, string][] = [["chronicle-timeline", "Events", "calendar-range"], ["chronicle-lineage", "Lineage", "git-branch"]];
+		if (!modes.every(([id]) => this.plugin.moduleOn(id))) return;
+		const box = el("div", { cls: "chronicle-segmented", attr: { role: "group", "aria-label": "Timeline mode" } }, parent);
+		for (const [id, label, ic] of modes) {
+			const b = el("button", { cls: "chronicle-segment" + (id === current ? " is-active" : ""), attr: { "aria-pressed": String(id === current) } }, box);
+			icon(el("span", { cls: "chronicle-chip-icon" }, b), ic);
+			el("span", { text: label }, b);
+			if (id === current) continue;
+			b.addEventListener("click", () => {
+				const range = this.timeRange();
+				void this.plugin.activateView(id, {}).then((leaf) => {
+					if (range) (leaf.view as unknown as { showTimeRange?: (r: { start: number; scale: number }) => void }).showTimeRange?.(range);
+				});
+			});
+		}
+	}
+
 	/** Views that can be saved as a picture get an export button at the end of the toolbar. */
 	protected exportable = false;
 

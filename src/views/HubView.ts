@@ -45,6 +45,8 @@ interface HubModule {
 	sidebar?: boolean;
 	/** Always there: can't be switched off. */
 	fixed?: boolean;
+	/** A mode of another module: no tab of its own while that one's on. */
+	modeOf?: string;
 }
 
 interface HubSection {
@@ -86,7 +88,6 @@ export const HUB_SECTIONS: HubSection[] = [
 		id: "groups", name: "Groups", icon: "crown", modules: [
 			{ id: VIEW_REALMS, name: "Realms", icon: "crown", desc: "Realms and cultures, tier by tier.", view: (l, p) => new RealmsView(l, p) },
 			{ id: VIEW_ORG, name: "Organisation", icon: "network", desc: "Who leads and serves, over time.", view: (l, p) => new OrgChartView(l, p) },
-			{ id: VIEW_LINEAGE, name: "Lineage", icon: "git-branch", desc: "How groups rise, split and fall.", view: (l, p) => new LineageView(l, p) },
 			{ id: VIEW_HOUSES, name: "Houses", icon: "castle", desc: "Houses as bands over the generations.", view: (l, p) => new HousesView(l, p) },
 		],
 	},
@@ -98,6 +99,7 @@ export const HUB_SECTIONS: HubSection[] = [
 	{
 		id: "time", name: "Time", icon: "calendar-range", modules: [
 			{ id: VIEW_TIMELINE, name: "Timeline", icon: "calendar-range", desc: "Every dated event and lifespan, zoomable.", view: (l, p) => new TimelineView(l, p) },
+			{ id: VIEW_LINEAGE, name: "Lineage", icon: "git-branch", desc: "How groups rise, split and fall: the timeline's second mode.", view: (l, p) => new LineageView(l, p), modeOf: VIEW_TIMELINE },
 			{ id: VIEW_CALENDAR, name: "Calendar", icon: "calendar-days", desc: "Months and years in your world's calendar.", view: (l, p) => new CalendarView(l, p) },
 		],
 	},
@@ -386,8 +388,8 @@ export class HubView extends ItemView {
 		const current = mods.find((m) => m.id === wanted) ?? mods[0];
 		this.barEl.empty();
 		const tabs = el("div", { cls: "uv-hub-tabs", attr: { role: "tablist" } }, this.barEl);
-		for (const m of mods) {
-			const on = m === current;
+		for (const m of mods.filter((x) => !x.modeOf || !mods.some((y) => y.id === x.modeOf))) {
+			const on = m === current || current.modeOf === m.id;
 			const b = el("button", { cls: "uv-hub-tab" + (on ? " is-active" : ""), attr: { role: "tab", "aria-selected": String(on) } }, tabs);
 			icon(el("span", { cls: "uv-hub-tab-icon" }, b), m.icon);
 			el("span", { text: m.name }, b);
@@ -426,6 +428,9 @@ export class HubView extends ItemView {
 	}
 	draw(...args: unknown[]) {
 		this.hosted()?.draw?.(...args);
+	}
+	showTimeRange(...args: unknown[]) {
+		this.hosted()?.showTimeRange?.(...args);
 	}
 	playWar(...args: unknown[]) {
 		this.hosted()?.playWar?.(...args);

@@ -21,6 +21,7 @@ import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSte
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { markPath, shapeFor } from "../src/render/categories";
+import { historyOf } from "../src/render/history";
 import { causePath, packRows } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { quickAddFrontmatter, withFields } from "../src/import/quickadd";
@@ -1251,6 +1252,26 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(holdersProperty({ succession: ["[[A]]"] }), ["[[A]]"], "holders: succession can still list them");
 	eq(holdersProperty({ succession: "[[A]] (1200 – 1210)" }), "[[A]] (1200 – 1210)", "holders: one linked line counts");
 	eq(holdersProperty({ holders: ["[[B]]"], succession: "agnatic" }), ["[[B]]"], "holders: holders: wins");
+
+	// One history for both views: everything that happened to a nation, in its shape.
+	{
+		const y = (n: number) => parseDate(String(n), cal)!;
+		const r = (key: string) => ({ key, name: key, resolved: true });
+		const base = { calendar: "gregorian", cultures: [], places: [], relations: [], parents: [], props: {}, tags: [] };
+		const nation = { ...base, key: "Vael", name: "Vael", type: "culture", start: y(1000), names: [{ name: "Old Vael", to: y(1100) }, { name: "Vael", from: y(1100) }], holders: [{ ref: r("Ann"), from: y(1200) }] };
+		const war = { ...base, key: "War", name: "The War", type: "event", start: y(1250), end: y(1260), sides: [{ party: r("Vael"), side: "A" }], occupied: [{ land: r("Vael"), by: r("Rome"), from: y(1255), to: y(1256) }] };
+		const treaty = { ...base, key: "Pact", name: "Pact", type: "event", category: "treaty", start: y(900), cultures: [{ ref: r("Vael") }] };
+		const king = { ...base, key: "Bo", name: "Bo", type: "person", start: y(1270), props: { reign: "1300 - 1310" }, cultures: [{ ref: r("Vael") }] };
+		const notes = [nation, war, treaty, king];
+		const fakeIdx = { version: 1, all: (t?: string) => notes.filter((n) => !t || n.type === t), get: (k: string) => notes.find((n) => n.key === k) };
+		const tree = { nodes: new Map([["Vael", { key: "Vael", holder: r("Bo"), children: [], rank: 2 }]]), roots: ["Vael"], holdings: new Map([["Bo", ["Vael"]]]) };
+		const plugin = { index: fakeIdx, realms: () => tree, calendars: { get: () => cal }, openEndOf: () => undefined } as never;
+		const marks = historyOf(plugin, nation as never, [y(1000).start, y(1400).end]);
+		eq(marks.map((m) => [m.kind, m.shape]), [["rename", "diamond"], ["reign", "chevron"], ["event", "arrow"], ["occupation", "hatch"]].concat(marks.some((m) => m.key === "Bo") ? [["reign", "chevron"]] : []), "history: renamings, holders, wars and occupations, oldest first");
+		eq(marks.some((m) => m.key === "Pact"), false, "history: an event outside the nation's dates isn't on its bar");
+		eq(historyOf(plugin, nation as never).some((m) => m.key === "Pact"), true, "history: without limits, every event is listed");
+		eq(marks.every((m, i) => i === 0 || m.day >= marks[i - 1].day), true, "history: in date order");
+	}
 
 	// Shapes tell a nation's history apart.
 	const cats = ["coronation", "kind:person", "treaty", "~event"];

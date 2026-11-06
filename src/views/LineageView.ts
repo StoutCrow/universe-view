@@ -61,6 +61,7 @@ export class LineageView extends ChronicleView {
 		const o = this.options;
 		this.rebuildToolbar(() => {
 			const left = this.group();
+			this.modeSwitch(left, VIEW_LINEAGE);
 			this.scopePicker(left, o.folder, (v) => {
 				o.folder = v;
 				this.update();
@@ -93,6 +94,14 @@ export class LineageView extends ChronicleView {
 			iconButton(right, "maximize", "Fit", () => this.renderer?.fit());
 			iconButton(right, "plus", "New group", () => this.plugin.createEntityPrompt({ type: "culture", groupKind: o.kind === "realm" || o.kind === "house" ? o.kind : undefined, scope: o.folder || undefined }), "mod-cta-icon");
 		});
+	}
+
+	protected timeRange() {
+		return this.renderer?.range;
+	}
+
+	showTimeRange(r: { start: number; scale: number }) {
+		this.renderer?.showRange(r);
 	}
 
 	protected onIndexChanged() {

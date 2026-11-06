@@ -2,9 +2,9 @@ import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import type { Calendar } from "../dates/calendars";
 import { formatDay, formatSpan } from "../dates/parser";
-import { renamings } from "../index/renames";
-import { eventCategories, isBattle, namedAsWar } from "../index/wars";
-import { markPath, shapeFor } from "./categories";
+import { categoryColor, markPath } from "./categories";
+import { historyOf, type HistoryMark } from "./history";
+import { markKey } from "./markkey";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import { bindHover, cultureColor, el, emptyState, glyph, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
 import { GROUP_KINDS, groupKind, type GroupKind } from "./houses";
@@ -32,7 +32,6 @@ const LEFT = 20;
 const AXIS = 38;
 const LANE = 30;
 const KIND_ORDER: GroupKind[] = ["realm", "house", "faith", "culture", "organisation", "group"];
-const LEADER_KINDS = new Set(["leader", "ruler", "head", "founder"]);
 
 /** What's drawn, worked out once per change of notes or options (the view's zoom and scroll redraw from it). */
 interface Prepared {
@@ -63,6 +62,8 @@ export class LineageRenderer {
 	private scroller: HTMLElement;
 	private side: HTMLElement;
 	private legend: HTMLElement;
+	private keyEl: HTMLElement;
+	private keyShown = "";
 	private undated: HTMLElement;
 	private svgEl: SVGSVGElement;
 	private layer: SVGGElement;
@@ -91,6 +92,7 @@ export class LineageRenderer {
 		this.chart = el("div", { cls: "uv-lin-chart" }, this.root);
 		this.side = el("div", { cls: "uv-lin-side" }, this.root);
 		this.legend = el("div", { cls: "uv-lin-legend" }, this.chart);
+		this.keyEl = el("div", { cls: "uv-lin-key" }, this.chart);
 		this.scroller = el("div", { cls: "uv-lin-scroll" }, this.chart);
 		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.scroller);
 		this.layer = svg("g", {}, this.svgEl);
@@ -127,6 +129,19 @@ export class LineageRenderer {
 		this.userMoved = false;
 		this.fitView();
 		this.draw();
+	}
+
+	/** What's in view, for the timeline to pick up. */
+	get range(): { start: number; scale: number } {
+		return { start: this.viewStart, scale: this.pxPerDay };
+	}
+
+	/** Shows the same years as the timeline was. */
+	showRange(r: { start: number; scale: number }) {
+		this.userMoved = true;
+		this.viewStart = r.start;
+		this.pxPerDay = r.scale;
+		this.schedule();
 	}
 
 	zoomBy(f: number) {
@@ -391,6 +406,7 @@ export class LineageRenderer {
 		const { lanes, yOfKey, laneTops, height, min, ongoingEnd, today, cal, kindOf, byLane } = prep;
 		const width = this.width;
 		const x = (d: number) => (d - this.viewStart) * this.pxPerDay;
+		const shown: HistoryMark[] = [];
 		this.svgEl.setAttribute("width", String(width));
 		this.svgEl.setAttribute("height", String(height));
 		this.svgEl.style.height = `${height}px`;
@@ -464,28 +480,6 @@ export class LineageRenderer {
 				fo.appendChild(holder);
 				if (!glyph(holder, c.icon ?? GROUP_KINDS[kind].icon)) icon(holder, GROUP_KINDS[kind].icon);
 			}
-			// Changes of leader, and holders over time (`holders:`): a tick where each took over.
-			if (this.options.leaders !== false) {
-				const ticksAt: { day: number; text: string }[] = [
-					...c.relations.filter((r) => LEADER_KINDS.has(r.kind ?? "") && r.from).map((r) => ({ day: r.from!.start, text: `${r.ref.name} leads from ${formatSpan(r.from, undefined, cal)}` })),
-					...(c.holders ?? []).filter((h) => h.from).map((h) => ({ day: h.from!.start, text: `${h.ref.name} holds it from ${formatSpan(h.from, undefined, cal)}` })),
-				];
-				for (const t of ticksAt) {
-					const lx = x(t.day);
-					if (lx <= x(a) + BAR || lx >= x(a) + w - 2) continue;
-					const heir = svg("path", { d: markPath("chevron", lx, yy + 1, 4.5), class: "uv-lin-event" }, g);
-					svg("title", {}, heir).textContent = t.text;
-				}
-			}
-			// Renamings (`names:`): a mark where it took a new name, with the name beside it.
-			for (const r of renamings(c)) {
-				const rx = x(r.day);
-				if (rx <= x(a) + BAR || rx >= x(a) + w - 2) continue;
-				const mark = svg("g", { class: "uv-lin-rename" }, g);
-				svg("path", { d: markPath("diamond", rx, yy + 1, 4.5), class: "uv-lin-event" }, mark);
-				svg("text", { x: rx + 6, y: yy - 3, class: "uv-lin-rename-label" }, mark).textContent = r.name;
-				svg("title", {}, mark).textContent = `${r.before ? `${r.before} becomes ` : ""}${r.name}, ${formatDay(r.day, cal, "year")}`;
-			}
 			const members = idx.members(c.key).length;
 			const spanText = formatSpan(c.start, c.end, cal) + (openEnd !== undefined ? " – now" : "");
 			// The name sits inside the bar where it fits (kept in view as you pan), else just after it.
@@ -497,20 +491,19 @@ export class LineageRenderer {
 			svg("tspan", { class: "chronicle-lineage-name" }, label).textContent = c.name;
 			const meta = [byLane ? "" : GROUP_KINDS[kind].label, spanText, members ? `${members} ${members === 1 ? "member" : "members"}` : ""].filter(Boolean).join(" · ");
 			if (meta) svg("tspan", { class: "chronicle-lineage-meta", dx: 8 }, label).textContent = meta;
-			// Its events, as marks along the bar.
-			if (this.options.events !== false) {
-				const cats = eventCategories(idx);
-				for (const ev of idx.events(c.key)) {
-					if (!ev.start || ev.start.start < a || ev.start.start > b) continue;
-					const ex = x(ev.start.start);
-					const shape = shapeFor("event", ev.category ?? "~event", isBattle(ev) ? "battle" : namedAsWar(ev) ? "war" : undefined, cats);
-					const mark = svg("path", { d: markPath(shape, ex, yy + 1, 4.5), class: "uv-lin-event" }, g);
-					svg("title", {}, mark).textContent = `${ev.name} · ${formatSpan(ev.start, ev.end, p.calendars.get(ev.calendar))}`;
-					mark.addEventListener("click", (evt) => {
-						evt.stopPropagation();
-						if (!this.justPanned) openEntity(p, ev.key, evt);
-					});
-				}
+			// Its history along the bar: the same marks as on the timeline.
+			const history = historyOf(p, c, [a, b]).filter((m) => (m.kind === "event" ? this.options.events !== false : m.kind === "reign" ? this.options.leaders !== false : true));
+			shown.push(...history);
+			for (const m of history) {
+				const mx = x(m.day);
+				const mark = svg("path", { d: markPath(m.shape, mx, yy + 1, 4.5), class: "uv-lin-event" }, g);
+				mark.style.setProperty("--mark-color", categoryColor(m.categoryId));
+				svg("title", {}, mark).textContent = m.text;
+				if (m.name) svg("text", { x: mx + 6, y: yy - 3, class: "uv-lin-rename-label" }, g).textContent = m.name;
+				mark.addEventListener("click", (evt) => {
+					evt.stopPropagation();
+					if (!this.justPanned) openEntity(p, m.key, evt);
+				});
 			}
 			g.addEventListener("click", (evt) => {
 				if (this.justPanned) return;
@@ -549,6 +542,13 @@ export class LineageRenderer {
 		for (const tk of spacedLabels(ticks)) svg("text", { x: tk.x, y: AXIS - 14, "text-anchor": "middle", class: "chronicle-lineage-tick" }, axis).textContent = tk.label;
 		if (today !== undefined && x(today) >= 0 && x(today) <= width) svg("text", { x: x(today) + 4, y: AXIS - 14, class: "chronicle-lineage-today-label" }, axis).textContent = "Today";
 		void min;
+		// The key, redrawn only when what's on the bars changes.
+		const keyNow = [...new Set(shown.map((m) => m.shape))].sort().join();
+		if (keyNow !== this.keyShown) {
+			this.keyShown = keyNow;
+			this.keyEl.empty();
+			markKey(this.keyEl, shown);
+		}
 	}
 
 	/** Each kind of group with how many there are: click one to show only those, again for all. */
