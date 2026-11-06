@@ -2,6 +2,7 @@ import { Menu, type ViewStateResult } from "obsidian";
 import { DEFAULT_TIMELINE_OPTIONS, TimelineGroup, TimelineOptions, TimelineRenderer } from "../render/timeline";
 import { dropdown, el, icon, iconButton } from "../render/common";
 import { EntityPickerModal } from "../ui/suggest";
+import type { TimeRange } from "../render/timelinerows";
 import { ChronicleView } from "./base";
 
 export const VIEW_TIMELINE = "chronicle-timeline";
@@ -10,6 +11,7 @@ export class TimelineView extends ChronicleView {
 	protected exportable = true;
 	private options: TimelineOptions = { ...structuredClone(DEFAULT_TIMELINE_OPTIONS), lifeEvents: this.plugin.settings.showLifeEvents };
 	private renderer?: TimelineRenderer;
+	private startRange?: TimeRange;
 
 	getViewType() {
 		return VIEW_TIMELINE;
@@ -24,11 +26,11 @@ export class TimelineView extends ChronicleView {
 	getState(): Record<string, unknown> {
 		const { focus, ...rest } = this.options;
 		void focus;
-		return { options: rest };
+		return { options: rest, ...this.savedRange() };
 	}
 
 	async setState(state: unknown, result: ViewStateResult) {
-		const s = state as { options?: Partial<TimelineOptions> } | undefined;
+		const s = state as { options?: Partial<TimelineOptions>; range?: TimeRange } | undefined;
 		if (s?.options) {
 			this.options = { ...structuredClone(DEFAULT_TIMELINE_OPTIONS), ...this.options, ...s.options, filter: { ...(s.options.filter ?? {}) } };
 			if (this.isBuilt) {
@@ -37,6 +39,7 @@ export class TimelineView extends ChronicleView {
 				this.renderer!.refresh();
 			}
 		}
+		if (s?.range) this.showTimeRange(s.range);
 		await super.setState(state, result);
 	}
 
@@ -44,6 +47,7 @@ export class TimelineView extends ChronicleView {
 		this.options.filter.folder ??= this.defaultScope();
 		this.fillToolbar();
 		this.renderer = new TimelineRenderer(this.body, this.plugin, this.options, false, this.hoverHost);
+		if (this.startRange) this.renderer.showRange(this.startRange);
 	}
 
 	private update(save = true) {
@@ -208,12 +212,19 @@ export class TimelineView extends ChronicleView {
 		});
 	}
 
-	protected timeRange() {
+	timeRange() {
 		return this.renderer?.range;
 	}
 
-	showTimeRange(r: { start: number; scale: number }) {
-		this.renderer?.showRange(r);
+	showTimeRange(r: TimeRange) {
+		if (this.renderer) this.renderer.showRange(r);
+		else this.startRange = r;
+	}
+
+	/** Where it was left, kept with the view once it's been moved. */
+	private savedRange() {
+		const r = this.renderer?.moved ? this.renderer.range : this.startRange;
+		return r ? { range: { center: r.center, scale: r.scale } } : {};
 	}
 
 	focus(key: string) {

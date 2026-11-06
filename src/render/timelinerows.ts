@@ -30,6 +30,37 @@ export function packRows(entries: RowEntry[], scale: number): { rows: Map<string
 	return { rows, count: Math.max(1, rowEnds.length) };
 }
 
+/** Where each row sits: nations get the lineage's taller rows, with room above the bar for its marks. */
+export function rowLayout(count: number, tall: Set<number>, rowH: number, tallH: number): { top: number[]; height: number[]; total: number } {
+	const top: number[] = [];
+	const height: number[] = [];
+	let y = 0;
+	for (let i = 0; i < count; i++) {
+		top.push(y);
+		height.push(tall.has(i) ? Math.max(rowH, tallH) : rowH);
+		y += height[i];
+	}
+	return { top, height, total: y };
+}
+
+/** Which level each mark sits on, so marks too close to read stack up instead of overlapping. `xs` in order. */
+export function stackLevels(xs: number[], gap = 11): number[] {
+	const ends: number[] = [];
+	return xs.map((x) => {
+		let level = ends.findIndex((end) => x - end >= gap);
+		if (level < 0) level = ends.length;
+		ends[level] = x;
+		return level;
+	});
+}
+
+/** What's in view on the timeline, in either mode: the middle day, the zoom, and the nation it's centred on. */
+export interface TimeRange {
+	center: number;
+	scale: number;
+	key?: string;
+}
+
 export interface Box {
 	left: number;
 	right: number;

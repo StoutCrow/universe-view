@@ -2,6 +2,7 @@ import type { ViewStateResult } from "obsidian";
 import { LineageOptions, LineageRenderer } from "../render/lineage";
 import { dropdown, iconButton, toggleChip } from "../render/common";
 import { GROUP_KINDS, type GroupKind } from "../render/houses";
+import type { TimeRange } from "../render/timelinerows";
 import { ChronicleView } from "./base";
 
 export const VIEW_LINEAGE = "chronicle-lineage";
@@ -10,6 +11,7 @@ export class LineageView extends ChronicleView {
 	protected exportable = true;
 	private options: LineageOptions = {};
 	private renderer?: LineageRenderer;
+	private startRange?: TimeRange;
 
 	getViewType() {
 		return VIEW_LINEAGE;
@@ -22,11 +24,11 @@ export class LineageView extends ChronicleView {
 	}
 
 	getState(): Record<string, unknown> {
-		return { options: this.options };
+		return { options: this.options, ...this.savedRange() };
 	}
 
 	async setState(state: unknown, result: ViewStateResult) {
-		const s = state as { options?: LineageOptions } | undefined;
+		const s = state as { options?: LineageOptions; range?: TimeRange } | undefined;
 		if (s?.options) {
 			this.options = { ...this.options, ...s.options };
 			if (this.isBuilt) {
@@ -34,6 +36,7 @@ export class LineageView extends ChronicleView {
 				this.update(false);
 			}
 		}
+		if (s?.range) this.showTimeRange(s.range);
 		await super.setState(state, result);
 	}
 
@@ -41,6 +44,7 @@ export class LineageView extends ChronicleView {
 		this.options.folder ??= this.defaultScope();
 		this.fillToolbar();
 		this.renderer = new LineageRenderer(this.body, this.plugin, this.options, false, this.hoverHost);
+		if (this.startRange) this.renderer.showRange(this.startRange);
 		// Picking a group or a kind in the chart: keep the toolbar and the saved state in step.
 		this.renderer.onOptionsChange = () => {
 			this.fillToolbar();
@@ -96,12 +100,19 @@ export class LineageView extends ChronicleView {
 		});
 	}
 
-	protected timeRange() {
+	timeRange() {
 		return this.renderer?.range;
 	}
 
-	showTimeRange(r: { start: number; scale: number }) {
-		this.renderer?.showRange(r);
+	showTimeRange(r: TimeRange) {
+		if (this.renderer) this.renderer.showRange(r);
+		else this.startRange = r;
+	}
+
+	/** Where it was left, kept with the view once it's been moved. */
+	private savedRange() {
+		const r = this.renderer?.moved ? this.renderer.range : this.startRange;
+		return r ? { range: { center: r.center, scale: r.scale } } : {};
 	}
 
 	protected onIndexChanged() {

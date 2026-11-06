@@ -3,6 +3,7 @@ import { ItemView, Menu, WorkspaceLeaf, debounce } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { EntityType } from "../types";
 import { formatDay } from "../dates/parser";
+import type { TimeRange } from "../render/timelinerows";
 import { rangeOf } from "../index/EntityIndex";
 import { dropdown, el, icon, iconButton, setPressed } from "../render/common";
 import { exportMenu, type ExportExtras } from "../ui/export";
@@ -108,9 +109,12 @@ export abstract class ChronicleView extends ItemView {
 	}
 
 	/** The years in view, for the other mode of the timeline to pick up. */
-	protected timeRange(): { start: number; scale: number } | undefined {
+	timeRange(): TimeRange | undefined {
 		return undefined;
 	}
+
+	/** Shows the years the other mode was showing. */
+	showTimeRange(_range: TimeRange) {}
 
 	/**
 	 * The timeline's two modes: events in lanes, or nations as bars with their lines of descent. Going
@@ -128,7 +132,7 @@ export abstract class ChronicleView extends ItemView {
 			b.addEventListener("click", () => {
 				const range = this.timeRange();
 				void this.plugin.activateView(id, {}).then((leaf) => {
-					if (range) (leaf.view as unknown as { showTimeRange?: (r: { start: number; scale: number }) => void }).showTimeRange?.(range);
+					if (range) (leaf.view as unknown as { showTimeRange?: (r: TimeRange) => void }).showTimeRange?.(range);
 				});
 			});
 		}

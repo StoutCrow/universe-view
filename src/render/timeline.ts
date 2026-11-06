@@ -8,9 +8,10 @@ import { rangeOf } from "../index/EntityIndex";
 import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
-import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
+import { bindHover, cssNumber, el, emptyState, entityColor, glyph, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
+import { GROUP_KINDS, groupKind } from "./houses";
 import { battlesOf, eventCategories, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
-import { causePath, packRows, type Box } from "./timelinerows";
+import { causePath, packRows, rowLayout, stackLevels, type Box, type TimeRange } from "./timelinerows";
 import { dragToReorder } from "../ui/cardlayout";
 import { KIND_LABELS, categoryColor, categoryOf, shapeFor, type ItemKind, type ItemShape } from "./categories";
 import { historyOf, writtenReigns, type HistoryKind, type HistoryMark } from "./history";
@@ -82,6 +83,8 @@ interface Item {
 	open?: boolean;
 	/** A reign's title (the item itself is the holder): the realm lane it belongs in. */
 	context?: string;
+	/** A nation's dates and members, beside its name. */
+	meta?: string;
 	/** On a nation's bar: what happened to it, as marks along it. */
 	marks?: HistoryMark[];
 }
@@ -140,6 +143,9 @@ export class TimelineRenderer {
 	private rowsByLane = new Map<string, { rows: Map<string, number>; count: number }>();
 	private layoutScale = 1;
 	private pendingScroll?: number;
+	/** Where to look once the view has its width and rows. */
+	private pendingCenter?: number;
+	private pendingKey?: string;
 
 	constructor(
 		private container: HTMLElement,
@@ -284,6 +290,8 @@ export class TimelineRenderer {
 				const to = openTo(c);
 				add(c, "culture", r[0], to ?? r[1], to === undefined && r[0] === r[1], !!(c.start?.approx || c.end?.approx), formatSpan(c.start, c.end, cal) + (to !== undefined ? " – now" : ""));
 				markOpen(c, to);
+				const members = idx.members(c.key).length;
+				out[out.length - 1].meta = [out[out.length - 1].dateText, members ? `${members} ${members === 1 ? "member" : "members"}` : ""].filter(Boolean).join(" · ");
 			}
 		}
 		if (options.places) {
@@ -358,7 +366,7 @@ export class TimelineRenderer {
 		const hidden = new Set(options.hiddenCategories ?? []);
 		if (hidden.size) for (let i = out.length - 1; i >= 0; i--) if (hidden.has(this.categoryIn(out[i])[0])) out.splice(i, 1);
 		// Organised by category, each takes its category's colour, so the kinds of event read at a glance.
-		if (options.group === "category") for (const it of out) it.color = this.colorOf(this.categoryIn(it)[0]);
+		if (options.group === "category") for (const it of out) if (it.kind !== "culture") it.color = this.colorOf(this.categoryIn(it)[0]);
 		this.eventCats = eventCategories(idx);
 		this.attachMarks(out);
 		// Index ids are per-kind, but life events produce two items per person.
@@ -601,16 +609,31 @@ export class TimelineRenderer {
 		}, 50);
 	}
 
-	/** What's in view, for the lineage to pick up. */
-	get range(): { start: number; scale: number } {
-		return { start: this.viewStart, scale: this.pxPerDay };
+	/** Whether the view has been moved from its fitted place. */
+	get moved(): boolean {
+		return this.userMoved;
 	}
 
-	/** Shows the same years as the lineage was. */
-	showRange(r: { start: number; scale: number }) {
+	/** What's in view, for the lineage to pick up. */
+	get range(): TimeRange {
+		const box = this.bodyEl.getBoundingClientRect();
+		const middle = box.top + box.height / 2;
+		let key: string | undefined;
+		let nearest = Infinity;
+		this.lanesEl.querySelectorAll<HTMLElement>(".chronicle-tl-item.is-nation").forEach((n) => {
+			const r = n.getBoundingClientRect();
+			const off = Math.abs(r.top + r.height / 2 - middle);
+			if (off < nearest) [nearest, key] = [off, n.dataset.key];
+		});
+		return { center: this.viewStart + this.width / 2 / this.pxPerDay, scale: this.pxPerDay, key };
+	}
+
+	/** Shows the same years, at the same zoom, around the same nation. */
+	showRange(r: TimeRange) {
 		this.userMoved = true;
-		this.viewStart = r.start;
 		this.pxPerDay = r.scale;
+		this.pendingCenter = r.center;
+		this.pendingKey = r.key;
 		this.schedule();
 	}
 
@@ -659,6 +682,10 @@ export class TimelineRenderer {
 
 	private render() {
 		this.width = this.root.clientWidth || this.width;
+		if (this.pendingCenter !== undefined && this.root.clientWidth) {
+			this.viewStart = this.pendingCenter - this.width / 2 / this.pxPerDay;
+			this.pendingCenter = undefined;
+		}
 		const rowH = cssNumber(this.root, "--chronicle-tl-row-height", 28) * (this.options.rowZoom ?? 1);
 		this.renderAxis();
 
@@ -708,25 +735,63 @@ export class TimelineRenderer {
 				if (!row.hasChildNodes()) row.remove();
 			}
 			const track = el("div", { cls: "chronicle-tl-track" }, laneEl);
-			track.style.height = `${lane.rows * rowH + 8}px`;
+			// Rows holding a nation are as tall as the lineage's, with room above the bar for its marks.
+			const zoom = this.options.rowZoom ?? 1;
+			const rows = rowLayout(lane.rows, new Set(lane.placed.filter((p) => p.item.kind === "culture" && !p.item.point).map((p) => p.row)), rowH, 40 * zoom);
+			track.style.height = `${rows.total + 8}px`;
+			const slot = (row: number) => (rows.height[row] > rowH ? { top: rows.top[row] + 11 * zoom, height: rows.height[row] - 14 * zoom } : { top: rows.top[row] + 4, height: rows.height[row] - 6 });
 			for (const p of lane.placed) {
 				if (p.x2 < -margin || p.x1 > this.width + margin) continue;
-				if (p.cluster) this.renderCluster(track, p, rowH, p.cluster);
-				else this.renderItem(track, p, rowH);
+				if (p.cluster) this.renderCluster(track, p, slot(p.row), p.cluster);
+				else this.renderItem(track, p, slot(p.row));
 			}
 		}
 		this.bodyEl.scrollTop = this.pendingScroll ?? scrollTop;
 		this.pendingScroll = undefined;
+		const spot = this.pendingKey ? this.lanesEl.querySelector<HTMLElement>(`.chronicle-tl-item.is-nation[data-key="${CSS.escape(this.pendingKey)}"]`) : null;
+		if (spot && this.bodyEl.clientHeight) {
+			const box = this.bodyEl.getBoundingClientRect();
+			const r = spot.getBoundingClientRect();
+			this.bodyEl.scrollTop += r.top + r.height / 2 - (box.top + box.height / 2);
+			this.pendingKey = undefined;
+		}
 		this.renderCauses();
 	}
 
+	/** A nation looks as it does on the lineage: its badge at the start, kept in view, with its name and dates. */
+	private dressNation(bar: HTMLElement, label: HTMLElement | undefined, p: Placed) {
+		const e = p.item.entity;
+		const off = p.labelInside ? Math.max(0, Math.min(-p.x1, p.x2 - p.x1 - this.insideWidth(p.item))) : 0;
+		const badge = el("span", { cls: "uv-nation-badge" }, bar);
+		badge.style.left = `${off + 2}px`;
+		const logo = resourceUrl(this.plugin, e.logo ?? e.image);
+		const kindIcon = GROUP_KINDS[groupKind(this.plugin, e)].icon;
+		if (logo) el("img", { attr: { src: logo, alt: "" } }, badge);
+		else if (!glyph(badge, e.icon ?? kindIcon)) icon(badge, kindIcon);
+		if (!label) return;
+		el("span", { cls: "uv-nation-name", text: p.item.label }, label);
+		if (p.item.meta) el("span", { cls: "uv-nation-meta", text: p.item.meta }, label);
+		if (p.labelInside) label.style.paddingLeft = `${off + 30}px`;
+	}
+
+	/** The room in a bar for its label to sit inside it: for a nation, as on the lineage, its badge and name. */
+	private insideWidth(it: Item): number {
+		return it.meta ? this.measure(it.label) + 46 : this.labelWidth(it) + 6;
+	}
+
+	/** Room a label needs: a nation's holds its badge, name and dates. */
+	private labelWidth(it: Item): number {
+		return this.measure(it.label) + 14 + (it.meta ? this.measure(it.meta) * 0.85 + 46 : 0);
+	}
+
 	/** One mark on a bar: its name on hover, and a click opens it. */
-	private renderMark(node: HTMLElement, m: HistoryMark, barLeft: number) {
+	private renderMark(node: HTMLElement, m: HistoryMark, barLeft: number, level: number) {
 		const x = this.x(m.day);
 		if (x < -20 || x > this.width + 20) return;
 		const box = markIcon(node, m);
 		box.classList.add("is-on-bar");
 		box.style.left = `${x - barLeft - 7}px`;
+		box.style.top = `${-7 - level * 11}px`;
 		box.setAttribute("aria-label", m.text);
 		box.setAttribute("data-tooltip-position", "top");
 		box.addEventListener("pointerdown", (evt) => evt.stopPropagation());
@@ -858,7 +923,7 @@ export class TimelineRenderer {
 		const CLOSE = 14;
 		let fixed = this.rowsByLane.get(lane.id);
 		if (!fixed) {
-			fixed = packRows(lane.items.map((it) => ({ id: it.id, start: it.start, end: it.end, point: it.point, labelWidth: this.measure(it.label) + 14 })), this.layoutScale);
+			fixed = packRows(lane.items.map((it) => ({ id: it.id, start: it.start, end: it.end, point: it.point, labelWidth: this.labelWidth(it) })), this.layoutScale);
 			this.rowsByLane.set(lane.id, fixed);
 		}
 		lane.rows = fixed.count;
@@ -873,7 +938,7 @@ export class TimelineRenderer {
 				const x1 = this.x(it.start);
 				const x2 = this.x(it.end);
 				const w = Math.max(x2 - x1, 4);
-				placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside: !it.point && w >= this.measure(it.label) + 20, cluster });
+				placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside: !it.point && Math.min(x2, this.width) - Math.max(x1, 0) >= this.insideWidth(it), cluster });
 			};
 			let run: Item[] = [];
 			const flushRun = () => {
@@ -891,20 +956,20 @@ export class TimelineRenderer {
 			flushRun();
 			placed.forEach((p, i) => {
 				const next = placed[i + 1];
-				if (next && !p.labelInside && (p.item.point ? p.x1 + 10 : p.x2) + this.measure(p.item.label) + 14 > next.x1) p.noLabel = true;
+				if (next && !p.labelInside && (p.item.point ? p.x1 + 10 : p.x2) + this.labelWidth(p.item) > next.x1) p.noLabel = true;
 			});
 			lane.placed.push(...placed);
 		}
 	}
 
 	/** A cluster marker: its count, the names on hover, and a click that zooms in until they part (or lists them, if they share a day). */
-	private renderCluster(track: HTMLElement, p: Placed, rowH: number, members: Item[]) {
+	private renderCluster(track: HTMLElement, p: Placed, at: { top: number; height: number }, members: Item[]) {
 		const it = p.item;
 		const node = el("div", { cls: `chronicle-tl-item is-point is-cluster kind-${it.kind}` }, track);
 		node.dataset.key = it.key;
 		node.style.setProperty("--item-color", it.color);
-		node.style.top = `${p.row * rowH + 4}px`;
-		node.style.height = `${rowH - 6}px`;
+		node.style.top = `${at.top}px`;
+		node.style.height = `${at.height}px`;
 		node.style.left = `${p.x1 - 9}px`;
 		if (members.some((m) => m.id === this.selected)) node.addClass("is-selected");
 		el("span", { cls: "chronicle-tl-dot uv-tl-cluster-dot", text: String(members.length) }, node);
@@ -933,13 +998,13 @@ export class TimelineRenderer {
 		});
 	}
 
-	private renderItem(track: HTMLElement, p: Placed, rowH: number) {
+	private renderItem(track: HTMLElement, p: Placed, at: { top: number; height: number }) {
 		const it = p.item;
 		const node = el("div", { cls: `chronicle-tl-item kind-${it.kind} uv-shape-${this.shapeIn(it)}` }, track);
 		node.dataset.key = it.key;
 		node.style.setProperty("--item-color", it.color);
-		node.style.top = `${p.row * rowH + 4}px`;
-		node.style.height = `${rowH - 6}px`;
+		node.style.top = `${at.top}px`;
+		node.style.height = `${at.height}px`;
 		if (it.approx) node.addClass("is-approx");
 		if (it.open) node.addClass("is-open-ended");
 		if (it.importance >= 4) node.addClass("is-important");
@@ -960,12 +1025,17 @@ export class TimelineRenderer {
 			node.style.left = `${p.x1}px`;
 			const bar = el("span", { cls: "chronicle-tl-bar" }, node);
 			bar.style.width = `${p.x2 - p.x1}px`;
-			for (const m of it.marks ?? []) this.renderMark(node, m, p.x1);
-			const label = p.noLabel ? undefined : el("span", { cls: "chronicle-tl-label", text: it.label }, p.labelInside ? bar : node);
+			const marks = it.marks ?? [];
+			const levels = stackLevels(marks.map((m) => this.x(m.day)));
+			marks.forEach((m, i) => this.renderMark(node, m, p.x1, levels[i]));
+			const nation = it.kind === "culture";
+			if (nation) node.addClass("is-nation");
+			const label = p.noLabel ? undefined : el("span", { cls: "chronicle-tl-label" + (nation ? " uv-nation-label" : ""), text: nation ? "" : it.label }, p.labelInside ? bar : node);
+			if (nation) this.dressNation(bar, label, p);
 			if (p.labelInside && label) {
 				label.addClass("is-inside");
 				// Keep the label readable when the bar starts off-screen to the left.
-				if (p.x1 < 0) label.style.paddingLeft = `${Math.min(-p.x1 + 6, p.x2 - p.x1 - this.measure(it.label) - 12)}px`;
+				if (p.x1 < 0 && !nation) label.style.paddingLeft = `${Math.min(-p.x1 + 6, p.x2 - p.x1 - this.measure(it.label) - 12)}px`;
 			}
 		}
 		node.addEventListener("click", (evt) => {

@@ -22,7 +22,7 @@ import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { markPath, shapeFor } from "../src/render/categories";
 import { historyOf } from "../src/render/history";
-import { causePath, packRows } from "../src/render/timelinerows";
+import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { quickAddFrontmatter, withFields } from "../src/import/quickadd";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
@@ -1325,6 +1325,12 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(packed.rows.get("a") === packed.rows.get("b"), false, "timeline: points with labels in the way get their own rows");
 	eq(packed.rows.get("c"), 0, "timeline: a row is reused once it's free");
 	eq(packRows([...tlItems].reverse(), 0.5).rows.get("a"), packed.rows.get("a"), "timeline: rows don't depend on the order things arrive in");
+	// Nations get taller rows; marks too close to read stack up.
+	eq(rowLayout(3, new Set([1]), 28, 40), { top: [0, 28, 68], height: [28, 40, 28], total: 96 }, "rows: a nation's row is as tall as the lineage's");
+	eq(rowLayout(1, new Set([0]), 50, 40).height, [50], "rows: taller rows stay taller");
+	eq(stackLevels([0, 5, 8, 30, 33, 100]), [0, 1, 2, 0, 1, 0], "marks: close ones stack, and the next clear one starts again");
+	eq(stackLevels([0, 11, 22]), [0, 0, 0], "marks: ones with room stay level");
+	eq(stackLevels([]), [], "marks: none to stack");
 	// Arrows follow the dates.
 	const longWar = { left: 100, right: 500, top: 10, bottom: 30 };
 	const nums = (d: string) => (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);

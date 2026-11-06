@@ -5,6 +5,7 @@ import { formatSpan } from "../dates/parser";
 import { categoryColor, markPath } from "./categories";
 import { historyOf, type HistoryMark } from "./history";
 import { markKey } from "./markkey";
+import { stackLevels, type TimeRange } from "./timelinerows";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import { bindHover, cultureColor, el, emptyState, glyph, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
 import { GROUP_KINDS, groupKind, type GroupKind } from "./houses";
@@ -64,6 +65,9 @@ export class LineageRenderer {
 	private legend: HTMLElement;
 	private keyEl: HTMLElement;
 	private keyShown = "";
+	/** Where to look once the view has its width and rows. */
+	private pendingCenter?: number;
+	private pendingKey?: string;
 	private undated: HTMLElement;
 	private svgEl: SVGSVGElement;
 	private layer: SVGGElement;
@@ -131,16 +135,28 @@ export class LineageRenderer {
 		this.draw();
 	}
 
-	/** What's in view, for the timeline to pick up. */
-	get range(): { start: number; scale: number } {
-		return { start: this.viewStart, scale: this.pxPerDay };
+	/** Whether the view has been moved from its fitted place. */
+	get moved(): boolean {
+		return this.userMoved;
 	}
 
-	/** Shows the same years as the timeline was. */
-	showRange(r: { start: number; scale: number }) {
+	/** What's in view, for the timeline to pick up. */
+	get range(): TimeRange {
+		const middle = this.scroller.scrollTop + this.scroller.clientHeight / 2;
+		let key: string | undefined;
+		let nearest = Infinity;
+		for (const [k, y] of this.prep?.yOfKey ?? []) {
+			if (Math.abs(y + BAR / 2 - middle) < nearest) [nearest, key] = [Math.abs(y + BAR / 2 - middle), k];
+		}
+		return { center: this.viewStart + this.width / 2 / this.pxPerDay, scale: this.pxPerDay, key };
+	}
+
+	/** Shows the same years, at the same zoom, around the same nation. */
+	showRange(r: TimeRange) {
 		this.userMoved = true;
-		this.viewStart = r.start;
 		this.pxPerDay = r.scale;
+		this.pendingCenter = r.center;
+		this.pendingKey = r.key;
 		this.schedule();
 	}
 
@@ -405,6 +421,15 @@ export class LineageRenderer {
 		const idx = p.index;
 		const { lanes, yOfKey, laneTops, height, min, ongoingEnd, today, cal, kindOf, byLane } = prep;
 		const width = this.width;
+		if (this.pendingCenter !== undefined && this.chart.clientWidth) {
+			this.viewStart = this.pendingCenter - width / 2 / this.pxPerDay;
+			this.pendingCenter = undefined;
+		}
+		const spot = this.pendingKey ? yOfKey.get(this.pendingKey) : undefined;
+		if (spot !== undefined && this.scroller.clientHeight) {
+			this.scroller.scrollTop = spot + BAR / 2 - this.scroller.clientHeight / 2;
+			this.pendingKey = undefined;
+		}
 		const x = (d: number) => (d - this.viewStart) * this.pxPerDay;
 		const shown: HistoryMark[] = [];
 		this.svgEl.setAttribute("width", String(width));
@@ -494,17 +519,19 @@ export class LineageRenderer {
 			// Its history along the bar: the same marks as on the timeline.
 			const history = historyOf(p, c, [a, b]).filter((m) => (m.kind === "event" ? this.options.events !== false : m.kind === "reign" ? this.options.leaders !== false : true));
 			shown.push(...history);
-			for (const m of history) {
+			const levels = stackLevels(history.map((m) => x(m.day)));
+			history.forEach((m, i) => {
 				const mx = x(m.day);
-				const mark = svg("path", { d: markPath(m.shape, mx, yy + 1, 4.5), class: "uv-lin-event" }, g);
+				const my = yy + 1 - levels[i] * 11;
+				const mark = svg("path", { d: markPath(m.shape, mx, my, 4.5), class: "uv-lin-event" }, g);
 				mark.style.setProperty("--mark-color", categoryColor(m.categoryId));
 				svg("title", {}, mark).textContent = m.text;
-				if (m.name) svg("text", { x: mx + 6, y: yy - 3, class: "uv-lin-rename-label" }, g).textContent = m.name;
+				if (m.name) svg("text", { x: mx + 6, y: my - 4, class: "uv-lin-rename-label" }, g).textContent = m.name;
 				mark.addEventListener("click", (evt) => {
 					evt.stopPropagation();
 					if (!this.justPanned) openEntity(p, m.key, evt);
 				});
-			}
+			});
 			g.addEventListener("click", (evt) => {
 				if (this.justPanned) return;
 				// Click picks it for the side panel; Ctrl/Cmd-click, or a second click, opens the note.

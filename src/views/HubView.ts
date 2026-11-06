@@ -506,7 +506,11 @@ export class HubView extends ItemView {
 		// The page being left is kept as it stands.
 		const leaving = [...this.panes.values()].find((p) => p.el.hasClass("is-active"));
 		if (leaving?.module !== m) this.remember(leaving?.view);
+		// Between a view's modes, however it's reached, the same years stay in view.
+		const sameView = leaving && leaving.module !== m && (m.modeOf === leaving.module.id || leaving.module.modeOf === m.id);
+		const range = sameView ? leaving.view?.timeRange() : undefined;
 		const shown = this.ensure(m);
+		if (range) void shown.ready?.then(() => shown.view?.showTimeRange(range));
 		for (const [id, p] of this.panes) {
 			p.el.toggleClass("is-active", id === m.id);
 			p.view?.setWaiting(id !== m.id);
