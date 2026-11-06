@@ -58,6 +58,11 @@ export abstract class ChronicleView extends ItemView {
 		this.containerEl.remove();
 	}
 
+	/** Built, so its state can be read. */
+	get isReady(): boolean {
+		return this.built;
+	}
+
 	protected get isBuilt(): boolean {
 		return this.built;
 	}

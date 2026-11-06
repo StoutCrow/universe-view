@@ -2,6 +2,10 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.6.0 — 2026-11-06
+- **Links stay in the dashboard**: right-click menus, links and commands that open the map, a family tree or any other view now bring you to its tab in UniverseView, opening the dashboard if it's closed. *Open in new tab* still opens its own tab.
+- **Views remember**: every view keeps its filters, layers, focus and arrangement for next time, even after the dashboard closes. The arrow at the top right puts a view back to its defaults; *Reset all views* is under Settings → Modules.
+
 ## 1.5.2 — 2026-11-06
 - Cards move like the big tabs: drag one by its title at any time. Its corner, shown on hover, resizes it, and right-clicking its title hides it, restores its size, or resets the page. The grid button is still there for columns and hidden cards.
 

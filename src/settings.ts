@@ -102,6 +102,8 @@ export interface ChronicleSettings {
 		counts?: boolean;
 		compact?: boolean;
 	};
+	/** How each view in the dashboard was left (its filters, layers, focus…), by view. */
+	viewStates?: Record<string, Record<string, unknown>>;
 	/** How each page's cards are arranged, by page. */
 	cardLayouts?: Record<string, CardPrefs>;
 	/** The dashboard's big tabs: their order, and those hidden. */

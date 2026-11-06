@@ -803,6 +803,7 @@ export class WorkspaceLeaf {
 		this.app.workspace.trigger("file-open", file);
 	}
 	updateHeader() {}
+	async loadIfDeferred() {}
 }
 
 export const MarkdownRenderer = {

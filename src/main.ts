@@ -49,7 +49,7 @@ import { TableView, VIEW_TABLE } from "./views/TableView";
 import { HousesView, VIEW_HOUSES } from "./views/HousesView";
 import { RealmsView, VIEW_REALMS } from "./views/RealmsView";
 import { InspectorView, VIEW_INSPECTOR } from "./views/InspectorView";
-import { HubView, LOGO_ICON, LOGO_SVG, VIEW_HUB } from "./views/HubView";
+import { HubView, LOGO_ICON, LOGO_SVG, VIEW_HUB, hostedInHub } from "./views/HubView";
 import { FilesPanelView, VIEW_FILES, explorerButton } from "./views/FilesPanelView";
 import { EntityPickerModal } from "./ui/suggest";
 import { TextPrompt } from "./ui/TextPrompt";
@@ -576,11 +576,17 @@ export default class ChroniclePlugin extends Plugin {
 	/** Opens a view: reusing an open one, or in a new tab / split beside the current one. */
 	async activateView(type: string, state: Record<string, unknown> = {}, where: false | "tab" | "split" = false): Promise<WorkspaceLeaf> {
 		const { workspace } = this.app;
-		// From inside the dashboard, a view opens on its tab there.
-		const hub = where ? null : workspace.getActiveViewOfType(HubView);
-		if (hub?.hosts(type)) {
-			await hub.openModule(type, state);
-			return hub.leaf;
+		// Views live in the dashboard: links, menus and commands open them on their tab there.
+		if (!where && hostedInHub(this, type)) {
+			let hub = workspace.getLeavesOfType(VIEW_HUB)[0];
+			if (!hub) {
+				hub = workspace.getLeaf("tab");
+				await hub.setViewState({ type: VIEW_HUB, active: true });
+			}
+			await hub.loadIfDeferred();
+			await workspace.revealLeaf(hub);
+			await (hub.view as HubView).openModule(type, state);
+			return hub;
 		}
 		let leaf = where ? null : workspace.getLeavesOfType(type)[0];
 		if (!leaf) leaf = workspace.getLeaf(where === "split" ? "split" : "tab");

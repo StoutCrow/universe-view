@@ -172,6 +172,11 @@ export const HUB_SECTIONS: HubSection[] = [
 	},
 ];
 
+/** Whether a view lives on a tab of the dashboard. */
+export function hostedInHub(plugin: ChroniclePlugin, type: string): boolean {
+	return plugin.moduleOn(type) && HUB_SECTIONS.some((s) => s.modules.some((m) => m.id === type && m.view));
+}
+
 /** The whole of UniverseView in one tab: big tabs down the side, smaller tabs along the top. */
 export class HubView extends ItemView {
 	private section = HUB_SECTIONS[0].id;
@@ -231,14 +236,56 @@ export class HubView extends ItemView {
 		this.registerEvent(this.plugin.index.on("changed", () => this.redrawPages()));
 		this.refresh();
 		this.preload();
+		// Not every change a view makes announces itself, so the open one is looked at now and then.
+		this.registerInterval(window.setInterval(() => this.remember(this.activePane()?.view), 5000));
 	}
 
 	async onClose() {
 		this.closed = true;
-		for (const p of this.panes.values()) await p.view?.unmount();
+		for (const p of this.panes.values()) {
+			this.remember(p.view);
+			await p.view?.unmount();
+		}
 		this.panes.clear();
 		const tab = this.plugin.settingTab;
 		if (tab) tab.hubRedraw = undefined;
+	}
+
+	/** Keeps how a view was left, for the next time it opens. */
+	private remember(view?: ChronicleView) {
+		if (!view?.isReady) return;
+		const s = this.plugin.settings;
+		const type = view.getViewType();
+		const state = view.getState();
+		if (JSON.stringify(state) === JSON.stringify(s.viewStates?.[type])) return;
+		s.viewStates = { ...s.viewStates, [type]: state };
+		void this.plugin.saveSettings();
+	}
+
+	/** Closes a view's page, so it opens afresh. */
+	private async dropPane(id: string) {
+		const p = this.panes.get(id);
+		if (!p) return;
+		this.panes.delete(id);
+		await p.ready;
+		await p.view?.unmount();
+		p.el.remove();
+	}
+
+	/** Puts one view back as it came. */
+	async resetView(id: string) {
+		await this.dropPane(id);
+		if (this.plugin.settings.viewStates) delete this.plugin.settings.viewStates[id];
+		await this.plugin.saveSettings();
+		this.refresh();
+	}
+
+	/** Puts every view back as it came. */
+	async resetViews() {
+		for (const [id, p] of [...this.panes]) if (p.module.view) await this.dropPane(id);
+		this.plugin.settings.viewStates = undefined;
+		await this.plugin.saveSettings();
+		this.refresh();
 	}
 
 	/** Opens the other pages quietly, one at a time when nothing else is going on, so tabs are ready when clicked. */
@@ -345,16 +392,14 @@ export class HubView extends ItemView {
 			b.addEventListener("click", () => this.go(section.id, m.id));
 		}
 		if (current.view) {
+			const reset = el("button", { cls: "clickable-icon uv-hub-out", attr: { "aria-label": `Put ${current.name} back to its defaults` } }, this.barEl);
+			icon(reset, "rotate-ccw");
+			reset.addEventListener("click", () => void this.resetView(current.id));
 			const out = el("button", { cls: "clickable-icon uv-hub-out", attr: { "aria-label": "Open in its own tab" } }, this.barEl);
 			icon(out, "external-link");
 			out.addEventListener("click", () => void this.plugin.activateView(current.id, {}, "tab"));
 		}
 		this.show(current);
-	}
-
-	/** Whether a view can open here, on its own small tab. */
-	hosts(type: string): boolean {
-		return this.plugin.moduleOn(type) && HUB_SECTIONS.some((s) => s.modules.some((m) => m.id === type && m.view));
 	}
 
 	/** Opens a view on its tab here, as a link from another view asks. */
@@ -448,6 +493,9 @@ export class HubView extends ItemView {
 	}
 
 	private show(m: HubModule) {
+		// The page being left is kept as it stands.
+		const leaving = [...this.panes.values()].find((p) => p.el.hasClass("is-active"));
+		if (leaving?.module !== m) this.remember(leaving?.view);
 		const shown = this.ensure(m);
 		for (const [id, p] of this.panes) {
 			p.el.toggleClass("is-active", id === m.id);
@@ -470,6 +518,8 @@ export class HubView extends ItemView {
 				host.empty();
 				pane.view = m.view(this.leaf, this.plugin);
 				await pane.view.mount(host);
+				const saved = this.plugin.settings.viewStates?.[m.id];
+				if (saved) await pane.view.setState(saved, { history: false });
 				pane.view.setWaiting(!host.hasClass("is-active"));
 			} else this.drawPage(host, m);
 		}).catch((err) => {
@@ -512,6 +562,7 @@ export class HubView extends ItemView {
 		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves this dashboard, the ribbon and the command list. Your notes aren't touched." }, host);
 		el("h3", { cls: "uv-hub-group", text: "Layout" }, host);
 		new Setting(host).setName("Big tabs").setDesc("Drag them to move them, or right-click one to move, hide or show tabs.").addButton((b) => b.setButtonText("Reset tabs").onClick(() => void this.resetTabs()));
+		new Setting(host).setName("Views").setDesc("Each view keeps its filters, layers and focus for next time. The arrow at the top right resets the one you're on; this resets them all.").addButton((b) => b.setButtonText("Reset all views").onClick(() => void this.resetViews()));
 		new Setting(host).setName("Cards").setDesc("Every page's card layout goes back as it came. Customise a page from its toolbar.").addButton((b) => b.setButtonText("Reset all cards").onClick(() => {
 			this.plugin.settings.cardLayouts = undefined;
 			void this.plugin.saveSettings().then(() => this.plugin.index.requestRebuild());
