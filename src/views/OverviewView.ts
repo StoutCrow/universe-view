@@ -2,12 +2,13 @@ import { Keymap, Menu, Platform, ViewStateResult } from "obsidian";
 import type { Entity, EntityType } from "../types";
 import { rangeOf } from "../index/EntityIndex";
 import { validate } from "../index/validate";
-import { TYPE_ICONS, el, icon } from "../render/common";
+import { TYPE_ICONS, el, icon, iconButton, setPressed } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { LIST_INFO, ListKind, kinCount, listRows, renderList } from "../render/panels";
 import { VIEW_DASHBOARD } from "./DashboardView";
 import { ValidateModal } from "../ui/ValidateModal";
 import { DetectModal } from "../ui/DetectModal";
+import { CardLayout } from "../ui/cardlayout";
 import { ChronicleView } from "./base";
 import { VIEW_TIMELINE } from "./TimelineView";
 import { VIEW_FAMILY } from "./FamilyTreeView";
@@ -24,6 +25,7 @@ export class OverviewView extends ChronicleView {
 	/** Top-level folder (one world) to summarise; empty for the whole vault. */
 	private world?: string;
 	private page?: HTMLElement;
+	private layout = new CardLayout(this.plugin, () => this.fillToolbar());
 
 	getViewType() {
 		return VIEW_OVERVIEW;
@@ -53,6 +55,7 @@ export class OverviewView extends ChronicleView {
 
 	protected build() {
 		this.world ??= this.defaultScope();
+		this.register(() => this.layout.destroy());
 		this.fillToolbar();
 		this.page = el("div", { cls: "chronicle-overview" }, this.body);
 		this.render();
@@ -72,6 +75,7 @@ export class OverviewView extends ChronicleView {
 				this.app.workspace.requestSaveLayout();
 				this.render();
 			});
+			setPressed(iconButton(left, "layout-grid", "Customise this page: hide, move and resize its cards", () => this.layout.toggle()), this.layout.editing);
 		});
 	}
 
@@ -149,7 +153,7 @@ export class OverviewView extends ChronicleView {
 			});
 		};
 		const mapState = { options: { folder: this.world ?? "", ...(of("map")[0] && !of("place").some((x) => x.coords) ? { map: of("map")[0].key } : {}) } };
-		tile("chronicle-explorer", "panels-top-left", "Dashboard", "Every folder and note with its relationships, basics to edit, and folder settings.", `${p.app.vault.getMarkdownFiles().length} notes`, "H", {});
+		tile("chronicle-explorer", "panels-top-left", "Library", "Every folder and note with its relationships, basics to edit, and folder settings.", `${p.app.vault.getMarkdownFiles().length} notes`, "H", {});
 		tile(VIEW_DASHBOARD, "layout-dashboard", "Board", "Your own dashboard: arrange timelines, maps, trees and lists side by side.", `${p.settings.boards.length || 1} board${p.settings.boards.length > 1 ? "s" : ""}`, "B", { scope: this.world ?? "" });
 		tile(VIEW_TIMELINE, "calendar-range", "Timeline", "Every dated event, lifespan and era, zoomable from millennia to days.", `${of("event").length} events`, "T", options());
 		tile(VIEW_FAMILY, "git-fork", "Family tree", biggestFamily ? `Ancestors and descendants, starting with ${biggestFamily.name}.` : "Ancestors, descendants and marriages.", `${of("person").length} people`, "F",
@@ -159,7 +163,8 @@ export class OverviewView extends ChronicleView {
 		tile("chronicle-orgchart", "network", "Organisation chart", "Who leads and serves in each faction, house or guild, with a timeline of roles.", `${of("culture").length} organisations`, "R", { options: { folder: this.world ?? "" } });
 		tile(VIEW_MAP, "map", "Map", "Places, territories and journeys on your maps, with what happened where.", `${of("place").filter((x) => x.position || x.coords).length} of ${of("place").length} places placed`, "M", mapState);
 		// ---- Actions ----
-		const actions = el("div", { cls: "chronicle-ov-actions" }, page);
+		const grid = el("div", { cls: "chronicle-ov-grid" }, page);
+		const actions = el("div", { cls: "chronicle-ov-actions", attr: { "data-card": "actions", "data-title": "Quick actions", "data-span": "full" } }, grid);
 		const action = (iconName: string, label: string, run: () => void, badge?: number, cls = "") => {
 			const b = el("button", { cls: `chronicle-ov-action ${cls}`.trim() }, actions);
 			const ic = el("span", {}, b);
@@ -176,9 +181,8 @@ export class OverviewView extends ChronicleView {
 		action("shield-check", "Check data", () => new ValidateModal(p).open(), issues.length, issues.length ? "has-issues" : "");
 
 		// ---- Panels ----
-		const grid = el("div", { cls: "chronicle-ov-grid" }, page);
 		const panel = (kind: ListKind, i: number, more?: () => void) => {
-			const box = el("section", { cls: "chronicle-ov-panel" }, grid);
+			const box = el("section", { cls: "chronicle-ov-panel", attr: { "data-card": kind, "data-title": LIST_INFO[kind].title } }, grid);
 			box.style.setProperty("--i", String(i));
 			const head = el("div", { cls: "chronicle-ov-panel-head" }, box);
 			const ic = el("span", {}, head);
@@ -197,6 +201,7 @@ export class OverviewView extends ChronicleView {
 		panel("people", 2, () => void p.activateView(VIEW_FAMILY, people[0] ? { options: { root: people[0].key } } : {}));
 		panel("places", 3, () => void p.activateView(VIEW_MAP, { options: { folder: this.world ?? "" } }));
 		panel("recent", 4);
+		this.layout.apply(grid, "overview");
 		page.scrollTop = scrollTop;
 	}
 }

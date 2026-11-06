@@ -1,3 +1,4 @@
+import type { CardPrefs } from "./ui/cardlayout";
 import { PIN_SIZES } from "./types";
 import { relPropertyNames } from "./index/relkinds";
 import type { CalendarDef, EntityType, PinSize } from "./types";
@@ -101,6 +102,11 @@ export interface ChronicleSettings {
 		counts?: boolean;
 		compact?: boolean;
 	};
+	/** How each page's cards are arranged, by page. */
+	cardLayouts?: Record<string, CardPrefs>;
+	/** The dashboard's big tabs: their order, and those hidden. */
+	hubOrder?: string[];
+	hubHidden?: string[];
 	/** Width of the Library's file tree, in pixels. */
 	libraryTree?: number;
 	/** Its height, when it sits above the details. */

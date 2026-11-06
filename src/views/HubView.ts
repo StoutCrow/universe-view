@@ -1,4 +1,4 @@
-import { ItemView, Notice, Platform, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { ItemView, Menu, Notice, Platform, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { runCommand } from "../internals";
 import { el, icon } from "../render/common";
@@ -174,6 +174,7 @@ export const HUB_SECTIONS: HubSection[] = [
 /** The whole of UniverseView in one tab: big tabs down the side, smaller tabs along the top. */
 export class HubView extends ItemView {
 	private section = HUB_SECTIONS[0].id;
+	private dragging?: string;
 	private closed = false;
 	/** The small tab last open in each big tab. */
 	private tabs = new Map<string, string>();
@@ -303,7 +304,7 @@ export class HubView extends ItemView {
 
 	/** Draws the tabs and shows the page they point at (after a click, or a module switched on or off). */
 	refresh() {
-		const sections = HUB_SECTIONS.filter((s) => this.visible(s).length);
+		const sections = this.ordered().filter((s) => this.visible(s).length && !this.hiddenTab(s.id));
 		if (!sections.some((s) => s.id === this.section)) this.section = sections[0].id;
 		this.railEl.empty();
 		const brand = el("div", { cls: "uv-hub-brand" }, this.railEl);
@@ -318,6 +319,24 @@ export class HubView extends ItemView {
 			icon(el("span", { cls: "uv-hub-section-icon" }, b), s.icon);
 			el("span", { cls: "uv-hub-section-name", text: s.name }, b);
 			b.addEventListener("click", () => this.go(s.id));
+			b.addEventListener("contextmenu", (evt) => {
+				evt.preventDefault();
+				this.tabMenu(s, evt);
+			});
+			// Drag a big tab up or down to move it.
+			b.draggable = true;
+			b.addEventListener("dragstart", () => (this.dragging = s.id));
+			b.addEventListener("dragover", (evt) => {
+				if (this.dragging && this.dragging !== s.id) {
+					evt.preventDefault();
+					b.addClass("is-drop-target");
+				}
+			});
+			b.addEventListener("dragleave", () => b.removeClass("is-drop-target"));
+			b.addEventListener("drop", (evt) => {
+				evt.preventDefault();
+				if (this.dragging) void this.moveTab(this.dragging, s.id);
+			});
 		}
 		const section = sections.find((s) => s.id === this.section)!;
 		const mods = this.visible(section);
@@ -370,6 +389,70 @@ export class HubView extends ItemView {
 	}
 	addModule(...args: unknown[]) {
 		this.hosted()?.addModule?.(...args);
+	}
+
+	/** The big tabs in the order they've been put in. */
+	private ordered(): HubSection[] {
+		const order = this.plugin.settings.hubOrder ?? [];
+		const rank = (s: HubSection) => {
+			const at = order.indexOf(s.id);
+			return at < 0 ? order.length + HUB_SECTIONS.indexOf(s) : at;
+		};
+		return [...HUB_SECTIONS].sort((a, b) => rank(a) - rank(b));
+	}
+
+	private hiddenTab(id: string): boolean {
+		return (this.plugin.settings.hubHidden ?? []).includes(id);
+	}
+
+	private async saveTabs() {
+		await this.plugin.saveSettings();
+		this.refresh();
+	}
+
+	private async moveTab(id: string, before: string) {
+		const order = this.ordered().map((s) => s.id).filter((x) => x !== id);
+		order.splice(order.indexOf(before), 0, id);
+		this.plugin.settings.hubOrder = order;
+		this.dragging = undefined;
+		await this.saveTabs();
+	}
+
+	/** Puts the big tabs and the sidebar back as they came. */
+	async resetTabs() {
+		const s = this.plugin.settings;
+		s.hubOrder = s.hubHidden = s.hubRail = undefined;
+		this.setRail(208);
+		await this.saveTabs();
+	}
+
+	private tabMenu(s: HubSection, evt: MouseEvent) {
+		const shown = this.ordered().filter((x) => this.visible(x).length && !this.hiddenTab(x.id));
+		const at = shown.indexOf(s);
+		const step = (to: number) => {
+			const order = shown.map((x) => x.id);
+			order.splice(at, 1);
+			order.splice(to, 0, s.id);
+			this.plugin.settings.hubOrder = order;
+			void this.saveTabs();
+		};
+		const menu = new Menu();
+		if (at > 0) menu.addItem((i) => i.setTitle("Move up").setIcon("arrow-up").onClick(() => step(at - 1)));
+		if (at < shown.length - 1) menu.addItem((i) => i.setTitle("Move down").setIcon("arrow-down").onClick(() => step(at + 1)));
+		// Settings stays, so nothing can be hidden for good.
+		if (s.id !== "settings") menu.addItem((i) => i.setTitle(`Hide ${s.name}`).setIcon("eye-off").onClick(() => {
+			this.plugin.settings.hubHidden = [...(this.plugin.settings.hubHidden ?? []), s.id];
+			void this.saveTabs();
+		}));
+		for (const h of HUB_SECTIONS.filter((x) => this.hiddenTab(x.id))) menu.addItem((i) => i.setTitle(`Show ${h.name}`).setIcon("eye").onClick(() => {
+			this.plugin.settings.hubHidden = this.plugin.settings.hubHidden?.filter((x) => x !== h.id);
+			void this.saveTabs();
+		}));
+		menu.addSeparator();
+		const compact = this.contentEl.hasClass("is-compact");
+		menu.addItem((i) => i.setTitle(compact ? "Show names" : "Icons only").setIcon("panel-left").onClick(() => this.saveRail(this.setRail(compact ? 208 : 64))));
+		menu.addItem((i) => i.setTitle("Reset tabs").setIcon("rotate-ccw").onClick(() => void this.resetTabs()));
+		menu.showAtMouseEvent(evt);
 	}
 
 	private go(section: string, tab?: string) {
@@ -442,6 +525,12 @@ export class HubView extends ItemView {
 
 	modulesInto(host: HTMLElement) {
 		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves this dashboard, the ribbon and the command list. Your notes aren't touched." }, host);
+		el("h3", { cls: "uv-hub-group", text: "Layout" }, host);
+		new Setting(host).setName("Big tabs").setDesc("Drag them to move them, or right-click one to move, hide or show tabs.").addButton((b) => b.setButtonText("Reset tabs").onClick(() => void this.resetTabs()));
+		new Setting(host).setName("Cards").setDesc("Every page's card layout goes back as it came. Customise a page from its toolbar.").addButton((b) => b.setButtonText("Reset all cards").onClick(() => {
+			this.plugin.settings.cardLayouts = undefined;
+			void this.plugin.saveSettings().then(() => this.plugin.index.requestRebuild());
+		}));
 		for (const s of HUB_SECTIONS) {
 			const mods = s.modules.filter((m) => !m.fixed);
 			if (!mods.length) continue;

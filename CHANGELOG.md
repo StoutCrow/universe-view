@@ -2,6 +2,10 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.5.0 — 2026-11-06
+- **Customise any page**: the grid button on Home and Library lets you hide cards, drag them into order, resize them from the corner and choose how many columns. Each page remembers its own layout, and Reset puts it back.
+- **Big tabs move**: drag them up or down, or right-click one to move it, hide it, show hidden tabs, switch to icons only or reset. Settings → Modules can reset tabs and all cards.
+
 ## 1.4.2 — 2026-11-06
 - Library: the tree and details resize whichever way they sit, with a handle always in view, and stay side by side in much narrower panes.
 - Library's home is about your world: problems, recent notes, saved views, how complete it is and statistics. Its basic settings are in Settings, and its tools on the dashboard's Tools tab.

@@ -14,6 +14,7 @@ import { KnowledgeModal } from "../ui/people";
 import { renderCompleteness } from "../ui/tidying";
 import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/relations";
 import { relInverse } from "../index/relkinds";
+import { CardLayout } from "../ui/cardlayout";
 import { ChronicleView } from "./base";
 import { asText } from "../index/text";
 import { FileTree, TREE_OPTIONS_CHANGED, folderViews, plural, treeOptionsMenu, type TreeState } from "../ui/filetree";
@@ -61,6 +62,7 @@ export class ExplorerView extends ChronicleView {
 	private statsEl!: HTMLElement;
 	private treeEl!: HTMLElement;
 	private tree!: FileTree;
+	private layout = new CardLayout(this.plugin, () => this.fillToolbar());
 	private mainEl!: HTMLElement;
 	private detailEl!: HTMLElement;
 	private searchInput?: HTMLInputElement;
@@ -114,6 +116,7 @@ export class ExplorerView extends ChronicleView {
 		this.detailEl = el("div", { cls: "chronicle-dash-detail" }, main);
 		this.applyLayout();
 		// Side by side while there's room for both, otherwise one above the other.
+		this.register(() => this.layout.destroy());
 		const observer = new ResizeObserver(() => {
 			if (main.clientWidth) main.toggleClass("is-stacked", main.clientWidth < 560);
 		});
@@ -235,6 +238,7 @@ export class ExplorerView extends ChronicleView {
 			iconButton(left, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());
 			setPressed(iconButton(left, "bar-chart-3", "Show the summary", () => this.toggleLayout("hideStats")), !this.state.hideStats);
 			setPressed(iconButton(left, "panel-right", "Show details beside the tree", () => this.toggleLayout("hideDetail")), !this.state.hideDetail);
+			setPressed(iconButton(left, "layout-grid", "Customise this page: hide, move and resize its cards", () => this.layout.toggle()), this.layout.editing);
 			iconButton(left, "home", "Library home (problems, recent notes, statistics)", () => {
 				this.state.selected = undefined;
 				this.tree.render();
@@ -321,11 +325,15 @@ export class ExplorerView extends ChronicleView {
 		if (!sel) this.renderHome(box);
 		else if (this.state.isFolder) this.renderFolder(box, sel);
 		else this.renderNote(box, sel);
+		const grid = box.querySelector<HTMLElement>(":scope > .chronicle-dash-grid");
+		if (grid) this.layout.apply(grid, !sel ? "library-home" : this.state.isFolder ? "library-folder" : "library-note");
 		box.scrollTop = scroll;
 	}
 
 	private card(parent: HTMLElement, title: string, iconName: string, cls = ""): HTMLElement {
-		const c = el("section", { cls: `chronicle-dash-card ${cls}`.trim() }, parent);
+		// Named without its counts, so a card keeps its place as they change.
+		const id = /problem/i.test(title) ? "problems" : title.replace(/[^a-z]+/gi, "-").toLowerCase();
+		const c = el("section", { cls: `chronicle-dash-card ${cls}`.trim(), attr: { "data-card": id, "data-title": title.replace(/\s*\(\d+\)$/, "") } }, parent);
 		const h = el("h3", { cls: "chronicle-dash-card-title" }, c);
 		const ic = el("span", { cls: "chronicle-dash-card-icon" }, h);
 		icon(ic, iconName);
