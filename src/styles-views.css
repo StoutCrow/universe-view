@@ -31,7 +31,6 @@ button.chronicle-dash-stat {
 }
 button.chronicle-dash-stat:hover {
 	border-color: color-mix(in srgb, var(--stat-color) 60%, transparent);
-	transform: translateY(-1px);
 }
 button.chronicle-dash-stat.is-active {
 	border-color: var(--stat-color);

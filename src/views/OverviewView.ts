@@ -96,7 +96,6 @@ export class OverviewView extends ChronicleView {
 
 		// ---- Header ----
 		const hero = el("div", { cls: "chronicle-ov-hero" }, page);
-		el("div", { cls: "chronicle-ov-eyebrow", text: "UniverseView" }, hero);
 		el("h1", { cls: "chronicle-ov-title", text: this.world || this.app.vault.getName() }, hero);
 		let min = Infinity;
 		let max = -Infinity;

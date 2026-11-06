@@ -119,7 +119,6 @@ button.chronicle-ov-tile::after {
 button.chronicle-ov-tile:hover,
 button.chronicle-ov-tile:focus-visible {
 	border-color: color-mix(in srgb, var(--tile) 60%, var(--background-modifier-border));
-	transform: translateY(-3px);
 	box-shadow: var(--chronicle-shadow-lift);
 }
 button.chronicle-ov-tile:hover::after {
@@ -164,7 +163,6 @@ button.chronicle-ov-tile:hover .chronicle-ov-tile-icon {
 		box-shadow var(--chronicle-med) var(--chronicle-ease);
 }
 .chronicle-card:hover {
-	transform: translateY(-2px);
 	box-shadow: var(--chronicle-shadow-lift);
 }
 .chronicle-tl-dot {
@@ -1142,7 +1140,6 @@ button.chronicle-theme-card {
 		border-color var(--chronicle-fast) var(--chronicle-ease);
 }
 button.chronicle-theme-card:hover {
-	transform: translateY(-3px);
 	box-shadow: var(--chronicle-shadow-lift);
 }
 button.chronicle-theme-card.is-active {

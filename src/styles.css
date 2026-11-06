@@ -1352,13 +1352,6 @@ g.is-dimmed .chronicle-net-link.is-lit {
 .chronicle-ov-hero {
 	margin-bottom: 22px;
 }
-.chronicle-ov-eyebrow {
-	font-size: var(--font-ui-smaller);
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: var(--text-accent);
-	font-weight: var(--font-semibold);
-}
 .chronicle-ov-title {
 	margin: 2px 0 4px;
 	font-size: 2em;
@@ -1408,14 +1401,12 @@ button.chronicle-ov-tile {
 	border-radius: calc(var(--chronicle-radius) + 2px);
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-primary);
-	box-shadow: var(--chronicle-shadow);
 	cursor: pointer;
-	transition: border-color var(--chronicle-fast) var(--chronicle-ease), transform var(--chronicle-fast) var(--chronicle-ease);
+	transition: border-color var(--chronicle-fast) var(--chronicle-ease);
 }
 button.chronicle-ov-tile:hover,
 button.chronicle-ov-tile:focus-visible {
 	border-color: var(--interactive-accent);
-	transform: translateY(-1px);
 }
 .chronicle-ov-tile-icon {
 	width: 36px;

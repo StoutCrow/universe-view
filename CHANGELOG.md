@@ -2,6 +2,10 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.3.2 — 2026-11-06
+- Calmer dashboard: a plain star, neutral selected tabs, flat tool cards with quiet icons, sentence-case headings. Overview in the dashboard drops the tiles that repeated its tabs.
+- No more lifting on hover or blur behind dialogs.
+
 ## 1.3.1 — 2026-11-06
 - Dashboard tabs answer at once: pages open in the background while you work, each view draws once instead of twice, and views behind another tab wait to update until they're shown.
 - A very large map picture no longer brings up the "map hasn't appeared" report while it's still preparing, and the report clears once the map shows.
