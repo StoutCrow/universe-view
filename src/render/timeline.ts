@@ -937,7 +937,6 @@ export class TimelineRenderer {
 			const put = (it: Item, cluster?: Item[]) => {
 				const x1 = this.x(it.start);
 				const x2 = this.x(it.end);
-				const w = Math.max(x2 - x1, 4);
 				placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside: !it.point && Math.min(x2, this.width) - Math.max(x1, 0) >= this.insideWidth(it), cluster });
 			};
 			let run: Item[] = [];
