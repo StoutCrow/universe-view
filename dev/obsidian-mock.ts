@@ -108,7 +108,15 @@ G.createFragment = (cb?: (f: DocumentFragment) => void) => {
 
 // ---- Utilities -------------------------------------------------------------------------------------
 
+const customIcons = new Map<string, string>();
+export function addIcon(id: string, svg: string) {
+	customIcons.set(id, svg);
+}
 export function setIcon(el: HTMLElement, name: string) {
+	if (customIcons.has(name)) {
+		el.innerHTML = `<svg viewBox="0 0 100 100" class="svg-icon" width="18" height="18">${customIcons.get(name)}</svg>`;
+		return;
+	}
 	const pascal = name.replace(/(^|-)([a-z0-9])/g, (_m, _d, c: string) => c.toUpperCase());
 	const node = (icons as any)[pascal];
 	el.querySelectorAll("svg").forEach((s) => s.remove());
@@ -767,6 +775,7 @@ export class ItemView extends View {
 	}
 	async onOpen() {}
 	async onClose() {}
+	onResize() {}
 }
 
 export class WorkspaceLeaf {

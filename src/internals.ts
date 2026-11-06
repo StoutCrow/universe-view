@@ -43,6 +43,11 @@ export function templateFolders(app: App): (string | undefined)[] {
 	return [templater(app)?.settings?.templates_folder, i.internalPlugins?.plugins?.templates?.instance?.options?.folder];
 }
 
+/** Runs a command by its full id; false when it can't run now (it needs an open note, say). */
+export function runCommand(app: App, id: string): boolean {
+	return !!(app as unknown as { commands?: { executeCommandById?(id: string): boolean } }).commands?.executeCommandById?.(id);
+}
+
 /** Shows a file in the core file explorer, when it's on. */
 export function revealInExplorer(app: App, file: TAbstractFile) {
 	internals(app).internalPlugins?.getPluginById?.("file-explorer")?.instance?.revealInFolder?.(file);

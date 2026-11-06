@@ -88,6 +88,10 @@ export interface ChronicleSettings {
 	openInNewTab: boolean;
 	/** A left-sidebar button for every view, not just the overview. */
 	ribbonViews: boolean;
+	/** Modules switched off in the dashboard. */
+	modulesOff: string[];
+	/** Width of the dashboard's sidebar, in pixels. */
+	hubRail?: number;
 	tileUrl: string;
 	tileAttribution: string;
 	tileMaxZoom: number;
@@ -373,6 +377,7 @@ export const DEFAULT_SETTINGS: ChronicleSettings = {
 	showLifeEvents: false,
 	openInNewTab: false,
 	ribbonViews: true,
+	modulesOff: [],
 	tileUrl: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 	tileAttribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
 	tileMaxZoom: 19,

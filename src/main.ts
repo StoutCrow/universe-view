@@ -2,7 +2,7 @@ import { metadataEvents, templater } from "./internals";
 import { UndoHistoryModal } from "./ui/undohistory";
 import type { DrawHow } from "./views/MapView";
 import { TodayView, VIEW_TODAY } from "./views/TodayView";
-import { Editor, FuzzySuggestModal, ItemView, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Hotkey, type Modifier } from "obsidian";
+import { Editor, addIcon, FuzzySuggestModal, ItemView, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Hotkey, type Modifier } from "obsidian";
 
 // iPhones and iPads before iOS 15.4 have no structuredClone; everything UniverseView copies with it is plain data.
 if (typeof window.structuredClone !== "function") {
@@ -49,6 +49,7 @@ import { TableView, VIEW_TABLE } from "./views/TableView";
 import { HousesView, VIEW_HOUSES } from "./views/HousesView";
 import { RealmsView, VIEW_REALMS } from "./views/RealmsView";
 import { InspectorView, VIEW_INSPECTOR } from "./views/InspectorView";
+import { HubView, LOGO_ICON, LOGO_SVG, VIEW_HUB } from "./views/HubView";
 import { EntityPickerModal } from "./ui/suggest";
 import { TextPrompt } from "./ui/TextPrompt";
 import { KinshipModal, KnowledgeModal, NamesModal, SuccessionModal } from "./ui/people";
@@ -76,8 +77,9 @@ import { asText } from "./index/text";
 declare const UV_BUILD_VERSION: string | undefined;
 
 const VIEWS: { type: string; name: string; icon: string; key: string }[] = [
+	{ type: VIEW_HUB, name: "Dashboard", icon: LOGO_ICON, key: "U" },
 	{ type: VIEW_OVERVIEW, name: "Overview", icon: "library", key: "O" },
-	{ type: VIEW_EXPLORER, name: "Dashboard", icon: "panels-top-left", key: "H" },
+	{ type: VIEW_EXPLORER, name: "Library", icon: "panels-top-left", key: "H" },
 	{ type: VIEW_DASHBOARD, name: "Board", icon: "layout-dashboard", key: "B" },
 	{ type: VIEW_TIMELINE, name: "Timeline", icon: "calendar-range", key: "T" },
 	{ type: VIEW_FAMILY, name: "Family tree", icon: "git-fork", key: "F" },
@@ -116,6 +118,8 @@ export default class ChroniclePlugin extends Plugin {
 		this.calendars = new CalendarRegistry(this.settings.calendars, this.settings.defaultCalendar);
 		this.index = new EntityIndex(this.app, () => this.settings, this.calendars);
 
+		addIcon(LOGO_ICON, LOGO_SVG);
+		this.registerView(VIEW_HUB, (leaf) => new HubView(leaf, this));
 		this.registerView(VIEW_TIMELINE, (leaf) => new TimelineView(leaf, this));
 		this.registerView(VIEW_FAMILY, (leaf) => new FamilyTreeView(leaf, this));
 		this.registerView(VIEW_NETWORK, (leaf) => new NetworkView(leaf, this));
@@ -161,14 +165,17 @@ export default class ChroniclePlugin extends Plugin {
 		};
 		// The open note at a glance (what it is, where it sits) in the status bar, which phones don't have.
 		this.refreshStatus = Platform.isMobile ? noop : this.safely("Status bar", () => statusBar(this), noop);
-		this.addSettingTab(new ChronicleSettingTab(this.app, this));
+		this.settingTab = new ChronicleSettingTab(this.app, this);
+		this.addSettingTab(this.settingTab);
 
 		// Left sidebar: the overview is the main menu; each view also gets its own button
 		// (any of them can be hidden by right-clicking the ribbon).
 		for (const v of VIEWS) {
-			if (v.type !== VIEW_OVERVIEW && !this.settings.ribbonViews) continue;
-			const label = v.type === VIEW_OVERVIEW ? "UniverseView overview" : `UniverseView: ${v.name.toLowerCase()}`;
-			this.addRibbonIcon(v.icon, label, () => void this.activateView(v.type));
+			if (v.type !== VIEW_HUB && !this.settings.ribbonViews) continue;
+			const label = v.type === VIEW_HUB ? "UniverseView" : `UniverseView: ${v.name.toLowerCase()}`;
+			const button = this.addRibbonIcon(v.icon, label, () => void this.activateView(v.type));
+			this.ribbonButtons.set(v.type, button);
+			button.toggle(this.moduleOn(v.type));
 		}
 		this.registerCommands();
 		this.safely("Right-click menus", () => this.registerFileMenu(), undefined);
@@ -554,6 +561,12 @@ export default class ChroniclePlugin extends Plugin {
 	/** Opens a view: reusing an open one, or in a new tab / split beside the current one. */
 	async activateView(type: string, state: Record<string, unknown> = {}, where: false | "tab" | "split" = false): Promise<WorkspaceLeaf> {
 		const { workspace } = this.app;
+		// From inside the dashboard, a view opens on its tab there.
+		const hub = where ? null : workspace.getActiveViewOfType(HubView);
+		if (hub?.hosts(type)) {
+			await hub.openModule(type, state);
+			return hub.leaf;
+		}
 		let leaf = where ? null : workspace.getLeavesOfType(type)[0];
 		if (!leaf) leaf = workspace.getLeaf(where === "split" ? "split" : "tab");
 		await leaf.setViewState({ type, active: true, state });
@@ -711,6 +724,22 @@ export default class ChroniclePlugin extends Plugin {
 		const m = new WorldModal(this);
 		m.setPlaceholder(placeholder);
 		m.open();
+	}
+
+	settingTab?: ChronicleSettingTab;
+	private ribbonButtons = new Map<string, HTMLElement>();
+
+	/** Whether a module of the dashboard is switched on. */
+	moduleOn(id: string): boolean {
+		return !this.settings.modulesOff.includes(id);
+	}
+
+	/** Switches a module on or off, everywhere it shows. */
+	async setModule(id: string, on: boolean) {
+		const off = this.settings.modulesOff.filter((x) => x !== id);
+		this.settings.modulesOff = on ? off : [...off, id];
+		this.ribbonButtons.get(id)?.toggle(on);
+		await this.saveSettings();
 	}
 
 	/** The settings tab to show next time UniverseView's settings open. */
@@ -885,7 +914,7 @@ export default class ChroniclePlugin extends Plugin {
 
 	private showViewMenu(evt?: MouseEvent, pos?: { x: number; y: number }) {
 		const menu = new Menu();
-		for (const v of VIEWS) menu.addItem((i) => i.setTitle(v.name).setIcon(v.icon).onClick(() => void this.activateView(v.type)));
+		for (const v of VIEWS.filter((x) => this.moduleOn(x.type))) menu.addItem((i) => i.setTitle(v.name).setIcon(v.icon).onClick(() => void this.activateView(v.type)));
 		menu.addSeparator();
 		menu.addItem((i) => i.setTitle("Switch theme…").setIcon("swatch-book").onClick(() => {
 			const r = this.app.workspace.containerEl.getBoundingClientRect();
@@ -1431,7 +1460,11 @@ export default class ChroniclePlugin extends Plugin {
 				name: `Open ${v.name.toLowerCase()}`,
 				icon: v.icon,
 				...this.keys(["Mod", "Alt"], v.key),
-				callback: () => void this.activateView(v.type),
+				checkCallback: (checking) => {
+					if (!this.moduleOn(v.type)) return false;
+					if (!checking) void this.activateView(v.type);
+					return true;
+				},
 			});
 		}
 		this.addCommand({
@@ -1700,7 +1733,8 @@ export default class ChroniclePlugin extends Plugin {
 
 	/** Redraws every open map (after a change to how realms and territories look or merge). */
 	refreshMaps = debounce(() => {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_MAP)) (leaf.view as unknown as { renderer?: { refresh(): void } }).renderer?.refresh();
+		const hosted = this.app.workspace.getLeavesOfType(VIEW_HUB).flatMap((leaf) => (leaf.view as HubView).hostedMaps());
+		for (const view of [...this.app.workspace.getLeavesOfType(VIEW_MAP).map((leaf) => leaf.view), ...hosted]) (view as unknown as { renderer?: { refresh(): void } }).renderer?.refresh();
 	}, 150, true);
 	/** Redraws the status bar line for the open note. */
 	refreshStatus?: () => void;

@@ -123,7 +123,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			last = undefined;
 			sections.push({
 				heading,
-				group: { type: "group", heading: heading || undefined, cls: "chronicle-settings", items, extraButtons: help ? [(b) => b.setIcon("circle-help").setTooltip(help)] : undefined },
+				group: { type: "group", heading: heading || undefined, cls: "chronicle-settings", items, extraButtons: help ? [(b) => b.setIcon("info").setTooltip(help)] : undefined },
 			});
 		};
 		for (const child of Array.from(box.children) as HTMLElement[]) {
@@ -228,6 +228,28 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				s.simplifyPx = v;
 				await this.save(false);
 			}));
+	}
+
+	/** Set by the dashboard while it shows a settings page, so changes that add or remove rows redraw it. */
+	hubRedraw?: () => void;
+
+	update() {
+		super.update();
+		this.hubRedraw?.();
+	}
+
+	/** One page of settings, drawn straight into the dashboard. */
+	renderPage(id: string, host: HTMLElement) {
+		const box = el("div", { cls: "chronicle-settings" }, host);
+		this.build(box);
+		let page = PAGES[0].id;
+		for (const child of Array.from(box.children)) {
+			if (child.hasClass("setting-item-heading")) {
+				const name = child.querySelector(".setting-item-name")?.textContent ?? "";
+				page = (PAGES.find((p) => p.heads.some((h) => name.startsWith(h))) ?? PAGES[0]).id;
+			}
+			if (page !== id) child.remove();
+		}
 	}
 
 	/** Every row, in order, under its section headings. */

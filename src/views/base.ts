@@ -29,6 +29,22 @@ export abstract class ChronicleView extends ItemView {
 		this.registerEvent(this.plugin.index.on("changed", () => this.onIndexChanged()));
 	}
 
+	/** Runs this view inside UniverseView's dashboard, which owns the tab. */
+	async mount(host: HTMLElement) {
+		this.containerEl.dataset.type = this.getViewType();
+		host.appendChild(this.containerEl);
+		this.load();
+		await this.onOpen();
+		await this.setState({}, { history: false });
+	}
+
+	/** Ends a view started with mount(). */
+	async unmount() {
+		await this.onClose();
+		this.unload();
+		this.containerEl.remove();
+	}
+
 	protected get isBuilt(): boolean {
 		return this.built;
 	}

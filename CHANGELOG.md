@@ -2,6 +2,14 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.3.0 — 2026-11-06
+- **One dashboard for everything.** The new star button opens UniverseView in a single tab: big tabs down the side (Home, People, Groups, Places, Time, Library, Tools, Settings), smaller tabs along the top. Every view lives there, and links between views stay inside it. Each view can still open in its own tab.
+- **Modules**: Settings → Modules switches any view or set of tools off, everywhere it shows.
+- **Tools**: every tool is now a card under Write, Ask, Check, Tidy and Share, so none depend on remembering a command.
+- The sidebar can be dragged wider or narrower, down to icons only; pages stay as you left them when you switch tabs.
+- The star logo, on the ribbon and in the dashboard.
+- Selected filter chips in toolbars are readable again (their text had turned the same colour as their background).
+
 ## 1.2.1 — 2026-11-02
 - Stylesheet tidy-up for Obsidian's style review: no property declared twice in one rule. Nothing looks different.
 

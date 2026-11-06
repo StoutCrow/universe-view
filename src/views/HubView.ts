@@ -1,0 +1,434 @@
+import { ItemView, Notice, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import type ChroniclePlugin from "../main";
+import { runCommand } from "../internals";
+import { el, icon } from "../render/common";
+import { renderWorldStats } from "../render/stats";
+import type { ChronicleView } from "./base";
+import { CalendarView, VIEW_CALENDAR } from "./CalendarView";
+import { DashboardView, VIEW_DASHBOARD } from "./DashboardView";
+import { ExplorerView, VIEW_EXPLORER } from "./ExplorerView";
+import { FamilyTreeView, VIEW_FAMILY } from "./FamilyTreeView";
+import { HousesView, VIEW_HOUSES } from "./HousesView";
+import { LineageView, VIEW_LINEAGE } from "./LineageView";
+import { MapView, VIEW_MAP } from "./MapView";
+import { NetworkView, VIEW_NETWORK } from "./NetworkView";
+import { OrgChartView, VIEW_ORG } from "./OrgChartView";
+import { OverviewView, VIEW_OVERVIEW } from "./OverviewView";
+import { RealmsView, VIEW_REALMS } from "./RealmsView";
+import { TableView, VIEW_TABLE } from "./TableView";
+import { TimelineView, VIEW_TIMELINE } from "./TimelineView";
+import { TodayView, VIEW_TODAY } from "./TodayView";
+
+export const VIEW_HUB = "chronicle-hub";
+export const LOGO_ICON = "universe-view";
+/** The star in its orbit, drawn in the 100 × 100 box Obsidian's icons use. */
+export const LOGO_SVG = `<path fill="currentColor" d="M50 10C52.6 35 65 47.4 90 50 65 52.6 52.6 65 50 90 47.4 65 35 52.6 10 50 35 47.4 47.4 35 50 10Z"/><ellipse cx="50" cy="50" rx="47" ry="17" transform="rotate(-30 50 50)" fill="none" stroke="currentColor" stroke-width="4.5"/><circle cx="87" cy="23" r="5.5" fill="currentColor"/>`;
+
+interface Action {
+	id: string;
+	name: string;
+	icon: string;
+}
+
+interface HubModule {
+	id: string;
+	name: string;
+	icon: string;
+	desc: string;
+	/** A full view, hosted in the dashboard. */
+	view?: (leaf: WorkspaceLeaf, plugin: ChroniclePlugin) => ChronicleView;
+	/** A page drawn straight into the dashboard. */
+	draw?: (host: HTMLElement, hub: HubView) => void;
+	/** Always there: can't be switched off. */
+	fixed?: boolean;
+}
+
+interface HubSection {
+	id: string;
+	name: string;
+	icon: string;
+	modules: HubModule[];
+}
+
+/** A page of tools: each a card that runs its command. */
+const actions = (list: Action[]) => (host: HTMLElement, hub: HubView) => {
+	const grid = el("div", { cls: "uv-hub-actions" }, host);
+	for (const a of list) {
+		const card = el("button", { cls: "uv-hub-action" }, grid);
+		icon(el("span", { cls: "uv-hub-action-icon" }, card), a.icon);
+		el("span", { text: a.name }, card);
+		card.addEventListener("click", () => hub.run(a.id));
+	}
+};
+
+const settingsPage = (id: string) => (host: HTMLElement, hub: HubView) => hub.settingsInto(id, host);
+
+export const HUB_SECTIONS: HubSection[] = [
+	{
+		id: "home", name: "Home", icon: "layout-grid", modules: [
+			{ id: VIEW_OVERVIEW, name: "Overview", icon: "library", desc: "A world at a glance, with ways into everything.", view: (l, p) => new OverviewView(l, p) },
+			{ id: VIEW_TODAY, name: "Today", icon: "sunrise", desc: "What is happening on the world's current date.", view: (l, p) => new TodayView(l, p) },
+			{ id: VIEW_DASHBOARD, name: "Board", icon: "layout-dashboard", desc: "Your own arrangement of timelines, maps and lists.", view: (l, p) => new DashboardView(l, p) },
+			{ id: "stats", name: "Statistics", icon: "bar-chart-3", desc: "People alive over time, group balance, lifespans, names.", draw: (host, hub) => renderWorldStats(hub.owner, host) },
+		],
+	},
+	{
+		id: "people", name: "People", icon: "users", modules: [
+			{ id: VIEW_FAMILY, name: "Family tree", icon: "git-fork", desc: "Ancestors and descendants of anyone.", view: (l, p) => new FamilyTreeView(l, p) },
+			{ id: VIEW_NETWORK, name: "Connections", icon: "waypoints", desc: "How people, groups, places and events link.", view: (l, p) => new NetworkView(l, p) },
+		],
+	},
+	{
+		id: "groups", name: "Groups", icon: "crown", modules: [
+			{ id: VIEW_REALMS, name: "Realms", icon: "crown", desc: "Realms and cultures, tier by tier.", view: (l, p) => new RealmsView(l, p) },
+			{ id: VIEW_ORG, name: "Organisation", icon: "network", desc: "Who leads and serves, over time.", view: (l, p) => new OrgChartView(l, p) },
+			{ id: VIEW_LINEAGE, name: "Lineage", icon: "git-branch", desc: "How groups rise, split and fall.", view: (l, p) => new LineageView(l, p) },
+			{ id: VIEW_HOUSES, name: "Houses", icon: "castle", desc: "Houses as bands over the generations.", view: (l, p) => new HousesView(l, p) },
+		],
+	},
+	{
+		id: "places", name: "Places", icon: "map", modules: [
+			{ id: VIEW_MAP, name: "Map", icon: "map", desc: "Places, territories and journeys.", view: (l, p) => new MapView(l, p) },
+		],
+	},
+	{
+		id: "time", name: "Time", icon: "calendar-range", modules: [
+			{ id: VIEW_TIMELINE, name: "Timeline", icon: "calendar-range", desc: "Every dated event and lifespan, zoomable.", view: (l, p) => new TimelineView(l, p) },
+			{ id: VIEW_CALENDAR, name: "Calendar", icon: "calendar-days", desc: "Months and years in your world's calendar.", view: (l, p) => new CalendarView(l, p) },
+		],
+	},
+	{
+		id: "library", name: "Library", icon: "folder-tree", modules: [
+			{ id: VIEW_EXPLORER, name: "Browse", icon: "panels-top-left", desc: "Every folder and note, with details to edit.", view: (l, p) => new ExplorerView(l, p) },
+			{ id: VIEW_TABLE, name: "Table", icon: "table", desc: "Notes as a sortable, editable table.", view: (l, p) => new TableView(l, p) },
+		],
+	},
+	{
+		id: "tools", name: "Tools", icon: "wrench", modules: [
+			{
+				id: "tools-write", name: "Write", icon: "pen-line", desc: "Add notes and find ideas.", draw: actions([
+					{ id: "new-note", name: "New note", icon: "file-plus" },
+					{ id: "quick-add", name: "Quick add", icon: "zap" },
+					{ id: "story-ideas", name: "Story ideas", icon: "lightbulb" },
+					{ id: "name-ideas", name: "Name ideas", icon: "pencil" },
+					{ id: "suggest-relationships", name: "Suggest relationships", icon: "link" },
+					{ id: "world-settings", name: "World settings", icon: "globe" },
+				]),
+			},
+			{
+				id: "tools-ask", name: "Ask", icon: "search", desc: "Questions about your world.", draw: actions([
+					{ id: "how-related", name: "How are two people related?", icon: "users" },
+					{ id: "succession", name: "Line of succession", icon: "crown" },
+					{ id: "who-knows", name: "Who knows what", icon: "eye" },
+					{ id: "why-happened", name: "Why did this happen?", icon: "git-compare" },
+					{ id: "convert-date", name: "Convert a date", icon: "arrow-left-right" },
+				]),
+			},
+			{
+				id: "tools-check", name: "Check", icon: "shield-check", desc: "Find problems and gaps.", draw: actions([
+					{ id: "check-data", name: "Check data", icon: "shield-check" },
+					{ id: "completeness", name: "How complete is the world?", icon: "gauge" },
+					{ id: "loose-ends", name: "Loose ends", icon: "unlink" },
+					{ id: "find-duplicates", name: "Find duplicates", icon: "copy" },
+					{ id: "contradictions", name: "Text that disagrees", icon: "file-warning" },
+					{ id: "check-continuity", name: "Story continuity", icon: "book-open-check" },
+					{ id: "report-skipped-notes", name: "Skipped notes", icon: "file-x" },
+				]),
+			},
+			{
+				id: "tools-tidy", name: "Tidy", icon: "sparkles", desc: "Sort out notes in bulk.", draw: actions([
+					{ id: "detect-types", name: "Detect types", icon: "wand-2" },
+					{ id: "standardise-land-tags", name: "Standardise land tags", icon: "tags" },
+					{ id: "tidy-kinds-tags", name: "Tidy kinds and tags", icon: "tag" },
+					{ id: "tidy-into-folder-notes", name: "Move into folder notes", icon: "folder-tree" },
+					{ id: "undo-history", name: "Undo history", icon: "history" },
+					{ id: "rebuild-index", name: "Rebuild index", icon: "refresh-cw" },
+				]),
+			},
+			{
+				id: "tools-share", name: "Share", icon: "share-2", desc: "Bring data in, send worlds out.", draw: actions([
+					{ id: "website", name: "Export a website", icon: "globe" },
+					{ id: "world-book", name: "Export a world book", icon: "book" },
+					{ id: "export-gedcom", name: "Export GEDCOM", icon: "file-output" },
+					{ id: "import-gedcom", name: "Import GEDCOM", icon: "file-input" },
+				]),
+			},
+		],
+	},
+	{
+		id: "settings", name: "Settings", icon: "settings", modules: [
+			{ id: "set-modules", name: "Modules", icon: "toggle-right", desc: "", fixed: true, draw: (host, hub) => hub.modulesInto(host) },
+			{ id: "set-look", name: "Look & cards", icon: "palette", desc: "", fixed: true, draw: settingsPage("appearance") },
+			{ id: "set-notes", name: "Notes", icon: "file-text", desc: "", fixed: true, draw: settingsPage("notes") },
+			{ id: "set-time", name: "Time & calendars", icon: "calendar-days", desc: "", fixed: true, draw: settingsPage("time") },
+			{ id: "set-maps", name: "Maps & realms", icon: "map", desc: "", fixed: true, draw: settingsPage("maps") },
+			{ id: "set-tools", name: "Map tools", icon: "pencil-ruler", desc: "", fixed: true, draw: settingsPage("tools") },
+		],
+	},
+];
+
+/** The whole of UniverseView in one tab: big tabs down the side, smaller tabs along the top. */
+export class HubView extends ItemView {
+	private section = HUB_SECTIONS[0].id;
+	/** The small tab last open in each big tab. */
+	private tabs = new Map<string, string>();
+	private railEl!: HTMLElement;
+	private barEl!: HTMLElement;
+	private stageEl!: HTMLElement;
+	/** Pages already opened, kept alive so going back to one is instant and it stays as you left it. */
+	private panes = new Map<string, { el: HTMLElement; view?: ChronicleView; ready?: Promise<void>; module: HubModule }>();
+
+	constructor(leaf: WorkspaceLeaf, private plugin: ChroniclePlugin) {
+		super(leaf);
+	}
+
+	get owner(): ChroniclePlugin {
+		return this.plugin;
+	}
+
+	getViewType() {
+		return VIEW_HUB;
+	}
+	getDisplayText() {
+		return "UniverseView";
+	}
+	getIcon() {
+		return LOGO_ICON;
+	}
+
+	getState(): Record<string, unknown> {
+		return { section: this.section, tabs: Object.fromEntries(this.tabs) };
+	}
+
+	async setState(state: unknown, result: ViewStateResult) {
+		const s = state as { section?: string; tabs?: Record<string, string> } | undefined;
+		if (s?.tabs) this.tabs = new Map(Object.entries(s.tabs));
+		if (s?.section && HUB_SECTIONS.some((x) => x.id === s.section)) this.section = s.section;
+		if (this.stageEl) this.refresh();
+		await super.setState(state, result);
+	}
+
+	async onOpen() {
+		const root = this.contentEl;
+		root.empty();
+		root.addClass("uv-hub", "chronicle-scope");
+		this.railEl = el("nav", { cls: "uv-hub-rail" }, root);
+		const grip = el("div", { cls: "uv-hub-grip", attr: { role: "separator", "aria-label": "Resize the sidebar" } }, root);
+		const main = el("div", { cls: "uv-hub-main" }, root);
+		this.barEl = el("div", { cls: "uv-hub-bar" }, main);
+		this.stageEl = el("div", { cls: "uv-hub-stage" }, main);
+		this.setRail(this.plugin.settings.hubRail ?? 208);
+		this.dragRail(grip);
+		const observer = new ResizeObserver(() => this.activePane()?.view?.onResize());
+		observer.observe(this.stageEl);
+		this.register(() => observer.disconnect());
+		this.registerEvent(this.plugin.index.on("changed", () => this.redrawPages()));
+		this.refresh();
+	}
+
+	async onClose() {
+		for (const p of this.panes.values()) await p.view?.unmount();
+		this.panes.clear();
+		const tab = this.plugin.settingTab;
+		if (tab) tab.hubRedraw = undefined;
+	}
+
+	private setRail(px: number) {
+		const width = Math.max(64, Math.min(320, px));
+		const compact = width < 130;
+		this.contentEl.toggleClass("is-compact", compact);
+		this.contentEl.setCssProps({ "--uv-hub-rail": `${compact ? 64 : width}px` });
+		return compact ? 64 : width;
+	}
+
+	private saveRail = debounce((width: number) => {
+		this.plugin.settings.hubRail = width;
+		void this.plugin.saveSettings();
+	}, 400, true);
+
+	private dragRail(grip: HTMLElement) {
+		grip.addEventListener("pointerdown", (down) => {
+			down.preventDefault();
+			grip.setPointerCapture(down.pointerId);
+			const left = this.contentEl.getBoundingClientRect().left;
+			this.contentEl.addClass("is-resizing");
+			const move = (e: PointerEvent) => this.saveRail(this.setRail(e.clientX - left));
+			const up = () => {
+				this.contentEl.removeClass("is-resizing");
+				grip.removeEventListener("pointermove", move);
+				grip.removeEventListener("pointerup", up);
+			};
+			grip.addEventListener("pointermove", move);
+			grip.addEventListener("pointerup", up);
+		});
+	}
+
+	private visible(s: HubSection): HubModule[] {
+		return s.modules.filter((m) => m.fixed || this.plugin.moduleOn(m.id));
+	}
+
+	private activePane() {
+		const s = HUB_SECTIONS.find((x) => x.id === this.section);
+		const list = s ? this.visible(s) : [];
+		const id = this.tabs.get(this.section);
+		return this.panes.get(list.some((m) => m.id === id) ? id ?? "" : list[0]?.id ?? "");
+	}
+
+	/** Draws the tabs and shows the page they point at (after a click, or a module switched on or off). */
+	refresh() {
+		const sections = HUB_SECTIONS.filter((s) => this.visible(s).length);
+		if (!sections.some((s) => s.id === this.section)) this.section = sections[0].id;
+		this.railEl.empty();
+		const brand = el("div", { cls: "uv-hub-brand" }, this.railEl);
+		setIcon(el("span", { cls: "uv-hub-logo" }, brand), LOGO_ICON);
+		const words = el("div", { cls: "uv-hub-brand-words" }, brand);
+		el("div", { cls: "uv-hub-name", text: "UniverseView" }, words);
+		el("div", { cls: "uv-hub-vault", text: this.app.vault.getName() }, words);
+		const list = el("div", { cls: "uv-hub-sections", attr: { role: "tablist", "aria-orientation": "vertical" } }, this.railEl);
+		for (const s of sections) {
+			const on = s.id === this.section;
+			const b = el("button", { cls: "uv-hub-section" + (on ? " is-active" : ""), attr: { role: "tab", "aria-selected": String(on), "aria-label": s.name } }, list);
+			icon(el("span", { cls: "uv-hub-section-icon" }, b), s.icon);
+			el("span", { cls: "uv-hub-section-name", text: s.name }, b);
+			b.addEventListener("click", () => this.go(s.id));
+		}
+		const section = sections.find((s) => s.id === this.section)!;
+		const mods = this.visible(section);
+		const wanted = this.tabs.get(section.id);
+		const current = mods.find((m) => m.id === wanted) ?? mods[0];
+		this.barEl.empty();
+		const tabs = el("div", { cls: "uv-hub-tabs", attr: { role: "tablist" } }, this.barEl);
+		for (const m of mods) {
+			const on = m === current;
+			const b = el("button", { cls: "uv-hub-tab" + (on ? " is-active" : ""), attr: { role: "tab", "aria-selected": String(on) } }, tabs);
+			icon(el("span", { cls: "uv-hub-tab-icon" }, b), m.icon);
+			el("span", { text: m.name }, b);
+			b.addEventListener("click", () => this.go(section.id, m.id));
+		}
+		if (current.view) {
+			const out = el("button", { cls: "clickable-icon uv-hub-out", attr: { "aria-label": "Open in its own tab" } }, this.barEl);
+			icon(out, "external-link");
+			out.addEventListener("click", () => void this.plugin.activateView(current.id, {}, "tab"));
+		}
+		this.show(current);
+	}
+
+	/** Whether a view can open here, on its own small tab. */
+	hosts(type: string): boolean {
+		return this.plugin.moduleOn(type) && HUB_SECTIONS.some((s) => s.modules.some((m) => m.id === type && m.view));
+	}
+
+	/** Opens a view on its tab here, as a link from another view asks. */
+	async openModule(type: string, state: Record<string, unknown>) {
+		const section = HUB_SECTIONS.find((s) => s.modules.some((m) => m.id === type));
+		if (!section) return;
+		this.go(section.id, type);
+		const pane = this.panes.get(type);
+		await pane?.ready;
+		if (Object.keys(state).length) await pane?.view?.setState(state, { history: false });
+	}
+
+	// Links that reach into a view once it's open (focus a place, start drawing) go on to the view showing here.
+	private hosted(): Record<string, ((...args: unknown[]) => unknown) | undefined> | undefined {
+		return this.activePane()?.view as unknown as Record<string, ((...args: unknown[]) => unknown) | undefined> | undefined;
+	}
+	focus(...args: unknown[]) {
+		this.hosted()?.focus?.(...args);
+	}
+	placeNote(...args: unknown[]) {
+		this.hosted()?.placeNote?.(...args);
+	}
+	draw(...args: unknown[]) {
+		this.hosted()?.draw?.(...args);
+	}
+	addModule(...args: unknown[]) {
+		this.hosted()?.addModule?.(...args);
+	}
+
+	private go(section: string, tab?: string) {
+		this.section = section;
+		if (tab) this.tabs.set(section, tab);
+		this.app.workspace.requestSaveLayout();
+		this.refresh();
+	}
+
+	private show(m: HubModule) {
+		for (const [id, p] of this.panes) p.el.toggleClass("is-active", id === m.id);
+		let pane = this.panes.get(m.id);
+		if (!pane) {
+			pane = { el: el("div", { cls: "uv-hub-pane is-active" + (m.view ? "" : " is-page") }, this.stageEl), module: m };
+			this.panes.set(m.id, pane);
+			if (m.view) {
+				pane.view = m.view(this.leaf, this.plugin);
+				const host = pane.el;
+				pane.ready = pane.view.mount(host).catch((err) => {
+					console.error(`UniverseView: couldn't open ${m.name}`, err);
+					host.empty();
+					el("p", { cls: "uv-hub-lead uv-hub-failed", text: `${m.name} couldn't open here. Try the button at the top right to open it in its own tab.` }, host);
+				});
+			} else this.drawPage(pane.el, m);
+		}
+		pane.view?.onResize();
+	}
+
+	private drawPage(host: HTMLElement, m: HubModule) {
+		const top = host.scrollTop;
+		host.empty();
+		const body = el("div", { cls: "uv-hub-page" }, host);
+		m.draw?.(body, this);
+		host.scrollTop = top;
+	}
+
+	/** Pages that show the vault's data follow it; settings pages keep what you're typing. */
+	private redrawPages = debounce(() => {
+		for (const p of this.panes.values()) if (p.module.id === "stats") this.drawPage(p.el, p.module);
+	}, 400, true);
+
+	run(id: string) {
+		if (!runCommand(this.app, `${this.plugin.manifest.id}:${id}`)) new Notice("Open a note first: this works on the current note.");
+	}
+
+	settingsInto(page: string, host: HTMLElement) {
+		const tab = this.plugin.settingTab;
+		if (!tab) return;
+		tab.renderPage(page, host);
+		// A change that adds or removes rows redraws whichever settings page is open here.
+		tab.hubRedraw = () => {
+			const p = this.activePane();
+			if (p?.module.id.startsWith("set-") && p.module.id !== "set-modules") this.drawPage(p.el, p.module);
+		};
+	}
+
+	modulesInto(host: HTMLElement) {
+		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves this dashboard, the ribbon and the command list. Your notes aren't touched." }, host);
+		for (const s of HUB_SECTIONS) {
+			const mods = s.modules.filter((m) => !m.fixed);
+			if (!mods.length) continue;
+			el("h3", { cls: "uv-hub-group", text: s.name }, host);
+			const grid = el("div", { cls: "uv-hub-modules" }, host);
+			for (const m of mods) {
+				const row = new Setting(grid).setName(m.name).setDesc(m.desc).addToggle((t) => t.setValue(this.plugin.moduleOn(m.id)).onChange((v) => {
+					void this.plugin.setModule(m.id, v).then(() => this.refreshTabsOnly());
+				}));
+				row.settingEl.addClass("uv-hub-module");
+			}
+		}
+	}
+
+	/** Tabs change, but the page you're on (the switches) stays. */
+	private refreshTabsOnly() {
+		for (const [id, p] of this.panes) {
+			if (this.plugin.moduleOn(id) || p.module.fixed) continue;
+			void p.view?.unmount();
+			p.el.remove();
+			this.panes.delete(id);
+		}
+		this.refresh();
+	}
+
+	/** Every map open in the dashboard, for redrawing after a change to how maps look. */
+	hostedMaps(): MapView[] {
+		const v = this.panes.get(VIEW_MAP)?.view;
+		return v ? [v as MapView] : [];
+	}
+}

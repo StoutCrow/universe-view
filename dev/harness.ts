@@ -141,6 +141,14 @@ const app: any = {
 	_views: {} as Record<string, any>,
 	_codeblocks: {} as Record<string, any>,
 	_commands: [] as any[],
+	commands: {
+		executeCommandById(id: string) {
+			const c = app._commands.find((x: any) => id.endsWith(":" + x.id));
+			if (!c?.callback) return false;
+			c.callback();
+			return true;
+		},
+	},
 	_ribbon: [] as any[],
 	_pluginData: PLUGIN_DATA,
 	_settingTab: null as any,
@@ -149,6 +157,7 @@ const leaf = new WorkspaceLeaf(app, main);
 workspace.getLeaf = () => leaf;
 workspace.getLeavesOfType = (t: string) => (leaf.view?.getViewType() === t ? [leaf] : []);
 workspace.getMostRecentLeaf = () => leaf;
+workspace.getActiveViewOfType = (type: any) => (leaf.view instanceof type ? leaf.view : null);
 // One pane in the harness: the inspector opens in it like any other view.
 workspace.getRightLeaf = () => leaf;
 workspace.revealLeaf = async () => {};
@@ -213,6 +222,7 @@ function showEmbeds(notePath: string) {
 
 function boot() {
 	plugin.onload().then(() => {
+		navButton("UniverseView", "universe-view", () => void showView("chronicle-hub"));
 		navButton("Overview", "library", () => void showView("chronicle-overview"));
 		navButton("Board", "layout-dashboard", () => void showView("chronicle-dashboard"));
 		navButton("Timeline", "calendar-range", () => void showView("chronicle-timeline"));

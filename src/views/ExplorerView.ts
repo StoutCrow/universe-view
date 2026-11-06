@@ -87,7 +87,7 @@ export class ExplorerView extends ChronicleView {
 		return VIEW_EXPLORER;
 	}
 	getDisplayText() {
-		return "UniverseView dashboard";
+		return "UniverseView library";
 	}
 	getIcon() {
 		return "panels-top-left";
