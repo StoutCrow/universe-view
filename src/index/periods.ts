@@ -100,7 +100,7 @@ const holders: RowFormat = {
  *
  *   transfers:
  *     - "[[Los Angeles County]]: [[United States]] > [[Mexico]]"
- *     - "[[Elland]], [[Ilten]] > [[Mexico]]"
+ *     - "[[Virginia]], [[Ohio]] > [[Mexico]]"
  *
  * From the event's date the land answers to `to` (none: it becomes independent); before it, to `from`.
  */
@@ -200,7 +200,7 @@ export function readSides(value: unknown, victor: unknown, defeated: unknown, re
  * keeps its owner; without dates it lasts as long as the event:
  *
  *   occupied:
- *     - "[[Elland]], [[Ilten]] by [[Mexico]] (1240 – 1241)"
+ *     - "[[Virginia]], [[Ohio]] by [[Mexico]] (1240 – 1241)"
  */
 const occupied: RowFormat = {
 	read(value) {

@@ -30,7 +30,7 @@ function scrollerOf(start: HTMLElement): HTMLElement | undefined {
  * Lets an item be dragged among its neighbours by a handle, moving as the pointer goes. Done with
  * pointer events, not HTML drag and drop: Obsidian has its own use for that, and phones don't fire it.
  */
-export function dragToReorder(handle: HTMLElement, item: HTMLElement, items: () => HTMLElement[], done: () => void) {
+export function dragToReorder(handle: HTMLElement, item: HTMLElement, items: () => HTMLElement[], done: () => void, stacked = false) {
 	handle.addEventListener("pointerdown", (down) => {
 		if (down.button !== 0) return;
 		// Followed on the document: moving the item in the page would drop a capture on it.
@@ -53,8 +53,14 @@ export function dragToReorder(handle: HTMLElement, item: HTMLElement, items: () 
 				return x !== item && r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
 			});
 			if (!over) return;
+			const forward = list.indexOf(item) < list.indexOf(over);
+			// In a stack of different heights, past the middle: a tall neighbour would otherwise swap back and forth.
+			if (stacked) {
+				const r = over.getBoundingClientRect();
+				if (forward ? e.clientY < r.top + r.height / 2 : e.clientY > r.top + r.height / 2) return;
+			}
 			// Past a neighbour going down, it goes after it; going up, before.
-			over.parentElement?.insertBefore(item, list.indexOf(item) < list.indexOf(over) ? over.nextSibling : over);
+			over.parentElement?.insertBefore(item, forward ? over.nextSibling : over);
 		};
 		const up = () => {
 			doc.removeEventListener("pointermove", move);

@@ -21,7 +21,7 @@ import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSte
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { causePath, packRows } from "../src/render/timelinerows";
-import { standardTag, standardTagsFor } from "../src/index/tagrules";
+import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { quickAddFrontmatter, withFields } from "../src/import/quickadd";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
@@ -169,7 +169,7 @@ const note = (p: string, body = "", props: Record<string, unknown> = {}) => ({ p
 eq(guessType(note("Nature/Diseases/Blights/Blight of 1299.md", "The Blight of 1299 was a massive pestilence that spread.")).type, "event", "event despite concept-ish folders");
 eq(guessType(note("Nature/Diseases/Blights/Blight of 1299.md", "The Blight of 1299 was a massive pestilence.")).suggestions.date, "1299", "year from name");
 eq(guessType(note("Concepts/Society/Noble/Knight.md", "A knight is a mounted warrior.")).type, null, "concept note skipped");
-eq(guessType(note("World/Vetara.md", "Vetara is the capital city of the Empire.")).type, "place", "place from description");
+eq(guessType(note("World/Greyford.md", "Greyford is the capital city of the Empire.")).type, "place", "place from description");
 eq(guessType(note("World/North America.md"), { place: 2 }).type, "place", "place from incoming location links");
 eq(guessType(note("Groups/House Whitmore.md", "House Whitmore is a royal house.")).type, "culture", "group");
 eq(guessType(note("People/Ada.md", "", { born: "1200" })).type, "person", "person from properties");
@@ -184,7 +184,7 @@ eq(kin("Edgar Whitmore", "Edgar Whitmore was the second son of [[William II Whit
 eq(kin("Henry Whitmore", "The [[1928 Gala]] was held by [[Governor Cedric]] to commemorate his marriage to his wife [[Cecilia Hale]]."), [], "someone else's wife ignored");
 eq(kin("Henry Whitmore", "The prince, despite being betrothed to [[Adeline Avery]], strayed."), ["betrothed:Adeline Avery"], "betrothed");
 eq(kin("Arthur Harding", "Arthur Harding was the husband of [[Sarah Whitmore]], the elder sister of [[King Edward]]."), ["spouse:Sarah Whitmore"], "husband of");
-eq(kin("House Larador", "House Larador was founded by [[Godwyn]], the son of [[King Alfryd]]."), [], "groups have no parents");
+eq(kin("House Whitmore", "House Whitmore was founded by [[William]], the son of [[King Henry]]."), [], "groups have no parents");
 eq(kin("Henry I Whitmore", "King Henry expanded on the prosperity his father [[William II Whitmore|William]] began."), ["father:William II Whitmore"], "his father with alias");
 
 // Coordinates
@@ -993,7 +993,7 @@ eq(["Province", "Duchy", "Region_Medium", "Realm", "Nation_United_States"].map((
 }
 // ---- A border made sound: no spikes, no loops ----
 {
-	// Ilten's real tangle: a run of corners along an edge, a jump back up it, and back down.
+	// Ohio's real tangle: a run of corners along an edge, a jump back up it, and back down.
 	const spiked: [number, number][] = [[0, 0], [10, 0], [10, 3], [10, 6], [10, 9], [10, 2], [10, 9], [10, 20], [0, 20]];
 	const fixed = untangle(spiked);
 	const up = fixed.filter(([x]) => x === 10).map(([, y]) => y);
@@ -1093,10 +1093,10 @@ eq(["Province", "Duchy", "Region_Medium", "Realm", "Nation_United_States"].map((
 	eq([generationName(-2, "Rose"), generationName(0, "Rose"), generationName(4, "Rose")], ["Grandparents", "Rose's generation", "2× great-grandchildren"], "everyone: generations named from the centre");
 }
 // ---- Map tool help on a phone: taps, and no keyboard keys ----
-eq(touchHelp("Editing Ilten: drag corners (they snap to neighbours; Alt stops it) · Shift-click to pick several, then drag one · click a midpoint to add a corner · right-click one to remove it"),
-	"Editing Ilten: drag corners (they snap to neighbours) · tap a midpoint to add a corner · long-press one to remove it", "touch help: no Alt or Shift, taps and long-presses");
-eq(touchHelp("Painting Ilten: click to add points or drag to draw · corners snap to neighbouring borders (hold Alt to stop) · Enter or double-click to finish · Backspace undoes"),
-	"Painting Ilten: tap to add points or drag to draw · corners snap to neighbouring borders", "touch help: the Finish and Undo buttons do what Enter and Backspace did");
+eq(touchHelp("Editing Ohio: drag corners (they snap to neighbours; Alt stops it) · Shift-click to pick several, then drag one · click a midpoint to add a corner · right-click one to remove it"),
+	"Editing Ohio: drag corners (they snap to neighbours) · tap a midpoint to add a corner · long-press one to remove it", "touch help: no Alt or Shift, taps and long-presses");
+eq(touchHelp("Painting Ohio: click to add points or drag to draw · corners snap to neighbouring borders (hold Alt to stop) · Enter or double-click to finish · Backspace undoes"),
+	"Painting Ohio: tap to add points or drag to draw · corners snap to neighbouring borders", "touch help: the Finish and Undo buttons do what Enter and Backspace did");
 eq(touchHelp("Map notes: click to place a note, or click points for an arrow or line (Enter to finish) · right-click a note to edit or delete it"),
 	"Map notes: tap to place a note, or tap points for an arrow or line · long-press a note to edit or delete it", "touch help: asides about keys go");
 eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measuring: tap to add points · double-tap to finish", "touch help: double-tap");
@@ -1227,7 +1227,7 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(f.occupied.write(f.occupied.read(["[[L]] by [[X]] (1240 – 1241)"])), ["[[L]] by [[X]] (1240 – 1241)"], "occupied: survives editing");
 	// Tags follow the vault's standard.
 	const vaultTags = [
-		{ type: "event", tags: ["Event_War", "Event_Massive", "Nation_Elland"] },
+		{ type: "event", tags: ["Event_War", "Event_Massive", "Nation_Virginia"] },
 		{ type: "event", tags: ["#Event_Treaty", "Event_Massive"] },
 		{ type: "event", tags: ["Event_War", "Nation_Vael"] },
 		{ type: "person", tags: ["Character", "Character_Male"] },
@@ -1241,10 +1241,37 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(standardTagsFor("event", ["war"], "war", vaultTags), ["Event_War"], "tags: an event of a kind gets that kind's tag");
 	eq(standardTagsFor("event", ["treaty"], "treaty", vaultTags), ["Event_Treaty"], "tags: a common tag with a value isn't given to what it isn't true of");
 	eq(standardTagsFor("event", ["Vael"], undefined, vaultTags), ["Nation_Vael"], "tags: a fact can name a tag");
-	eq(standardTagsFor("person", ["Elland"], undefined, vaultTags).includes("Nation_Elland"), true, "tags: a fact's tag can come from another kind of note");
+	eq(standardTagsFor("person", ["Virginia"], undefined, vaultTags).includes("Nation_Virginia"), true, "tags: a fact's tag can come from another kind of note");
 	eq(standardTagsFor("event", [], "siege", vaultTags).includes("Event_Siege"), true, "tags: a new kind follows the type's pattern");
 	eq(standardTagsFor("person", ["male"], undefined, vaultTags).sort(), ["Character", "Character_Male"], "tags: people get the shared tag and their gender's");
 	eq(standardTagsFor("event", ["war"], "war", []), [], "tags: an untagged vault gets nothing it doesn't use");
+	// Normalising: the vault's own scheme, wherever a note's facts justify it.
+	const note = (path: string, type: string, tags: string[], facts: string[] = []) => ({ path, type, tags, facts });
+	const scheme = [
+		note("A.md", "person", ["Character", "Character_Vael", "Character_Dead"]),
+		note("B.md", "person", ["Character", "Character_Vael"]),
+		note("C.md", "person", ["Character"], ["World", "Vael", "dead"]),
+		note("D.md", "person", ["character_vael"], ["Vael"]),
+		note("E.md", "place", ["Title", "Region_Small"]),
+		note("F.md", "place", ["Title"]),
+		note("G.md", "place", ["Region"], ["Small"]),
+	];
+	const fixed = tagFixes(scheme, { person: "Character", place: "Title" });
+	const fixOf = (p: string) => fixed.find((f) => f.path === p);
+	eq(fixOf("C.md")?.add, ["Character_Dead", "Character_Vael"], "normalise: a note gains its type's tags that its facts justify");
+	eq(fixOf("D.md")?.rename, [["character_vael", "Character_Vael"]], "normalise: a stray spelling becomes the usual one");
+	eq(fixOf("D.md")?.add, ["Character"], "normalise: the tag that marks a type goes on, once most of the type have it");
+	eq(fixOf("A.md"), undefined, "normalise: a note that follows the scheme is left alone");
+	eq(fixOf("G.md")?.add.includes("Title"), true, "normalise: the required tag is the only plain one spread");
+	eq(fixOf("E.md"), undefined, "normalise: other tags aren't spread by being common");
+	eq(tagFixes([note("X.md", "person", [], ["Vael"]), note("Y.md", "event", ["Event_Vael"])]), [], "normalise: a tag is only given to the type that uses it");
+	const rare = [note("A.md", "place", ["Location_Vael"], ["Vael"]), ...["B", "C", "D", "E"].map((n) => note(`${n}.md`, "place", ["Title"], ["Vael"]))];
+	eq(tagFixes(rare), [], "normalise: a tag only one note in five uses is a leftover, not the scheme");
+	const groups = [note("A.md", "culture", ["Family", "Family_Noble"], ["Noble"]), note("B.md", "culture", ["Family"], ["Noble"]), note("C.md", "culture", ["Faith"], ["Noble"])];
+	eq(tagFixes(groups).map((x) => [x.path, x.add]), [["B.md", ["Family_Noble"]]], "normalise: a family's tags stay within the family");
+	eq(tagFixes([]), [], "normalise: an empty vault has nothing to do");
+	eq(factsFromPath("The World/Vael/Greyford.md"), ["The World", "Vael"], "normalise: folders are facts, the file isn't");
+
 	// The creator's form lands in the note's properties.
 	const typedLine = { name: "Ann", type: "person" as const, places: [], participants: [], cultures: [], parents: [], leaders: [], tags: [], unknown: [] };
 	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");

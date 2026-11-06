@@ -144,7 +144,8 @@ export const HUB_SECTIONS: HubSection[] = [
 			{
 				id: "tools-tidy", name: "Tidy", icon: "sparkles", desc: "Sort out notes in bulk.", draw: actions([
 					{ id: "detect-types", name: "Detect types", icon: "wand-2" },
-					{ id: "standardise-land-tags", name: "Standardise land tags", icon: "tags" },
+					{ id: "normalise-tags", name: "Normalise all tags", icon: "tags" },
+						{ id: "standardise-land-tags", name: "Standardise land tags", icon: "tag" },
 					{ id: "tidy-kinds-tags", name: "Tidy kinds and tags", icon: "tag" },
 					{ id: "tidy-into-folder-notes", name: "Move into folder notes", icon: "folder-tree" },
 					{ id: "undo-history", name: "Undo history", icon: "history" },

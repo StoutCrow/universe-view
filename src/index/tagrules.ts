@@ -22,6 +22,72 @@ export function standardTag(raw: string, known: string[]): string {
 	return capitals > known.length / 2 ? t.split("_").map(word).join("_") : t;
 }
 
+/** What a note's folders say about it: "The World/Vael/Greyford/Keep.md" is in Vael and Greyford. */
+export function factsFromPath(path: string): string[] {
+	return path.split("/").slice(0, -1);
+}
+
+export interface TagNote extends TagSample {
+	path: string;
+	/** What's known about it: its kind, gender, folders, realm, "dead", "ruler"… */
+	facts: string[];
+}
+
+export interface TagFix {
+	path: string;
+	/** Spellings that differ from the vault's usual one. */
+	rename: [string, string][];
+	add: string[];
+}
+
+/**
+ * What it takes to bring every note to the vault's own scheme. Each spelling becomes the commonest one,
+ * and a note gains a tag of its type's scheme (#Character_Dead, #Event_War) when its facts say so and
+ * the tag is established among the notes it fits.
+ * `required` is the plain tag that marks a type, added where most of that type have it. Other plain
+ * tags aren't spread: most places being #Title doesn't make a region one.
+ */
+export function tagFixes(notes: TagNote[], required: Partial<Record<string, string>> = {}): TagFix[] {
+	const uses = new Map<string, Map<string, number>>();
+	for (const n of notes) {
+		for (const t of new Set(n.tags.map(plain))) {
+			const spellings = uses.get(key(t)) ?? new Map<string, number>();
+			uses.set(key(t), spellings.set(t, (spellings.get(t) ?? 0) + 1));
+		}
+	}
+	// The commonest spelling; on a tie, the one with capitals.
+	const usual = (t: string) => [...(uses.get(key(t)) ?? [])].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? plain(t);
+	/** Whether a tag is really in use among the notes it fits: a third of them, or it's a leftover to leave be. */
+	const established = (t: string, peers: TagNote[]) => {
+		const value = key(t.slice(t.indexOf("_") + 1));
+		const holders = peers.filter((p) => p.tags.some((x) => key(x) === key(t)));
+		const fits = peers.filter((p) => p.facts.some((x) => key(x) === value));
+		return holders.length >= new Set([...holders, ...fits]).size / 3;
+	};
+	const byType = new Map<string, TagNote[]>();
+	for (const n of notes) byType.set(n.type, [...(byType.get(n.type) ?? []), n]);
+	const out: TagFix[] = [];
+	for (const n of notes) {
+		const peers = byType.get(n.type) ?? [];
+		const have = new Set(n.tags.map(key));
+		const rename = [...new Set(n.tags.map(plain))].filter((t) => usual(t) !== t).map((t): [string, string] => [t, usual(t)]);
+		const wanted = new Set(n.facts.filter(Boolean).map(key));
+		const add = new Set<string>();
+		for (const t of new Set(peers.flatMap((p) => p.tags.map(plain)))) {
+			const at = t.indexOf("_");
+			if (at <= 0 || have.has(key(t)) || !wanted.has(key(t.slice(at + 1)))) continue;
+			// #Family_Noble is for notes that are #Family, not every group.
+			const family = key(t.slice(0, at));
+			if (uses.has(family) && !have.has(family)) continue;
+			if (established(t, peers)) add.add(usual(t));
+		}
+		const mark = required[n.type];
+		if (mark && !have.has(key(mark)) && peers.filter((p) => p.tags.some((t) => key(t) === key(mark))).length > peers.length / 2) add.add(usual(mark));
+		if (rename.length || add.size) out.push({ path: n.path, rename, add: [...add].sort() });
+	}
+	return out;
+}
+
 /**
  * The tags a new note of this type should have: plain ones most notes of its type share, and any that
  * state one of its facts ("war" → #Event_War, "Vael" → #Nation_Vael). A `kind` the vault has

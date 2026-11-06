@@ -177,7 +177,7 @@ const KIN_PATTERNS: [RegExp, (m: RegExpMatchArray) => [KinRelation, string][]][]
 export function findKinship(name: string, body: string): KinFinding[] {
 	const text = body.replace(/^---[\s\S]*?---/, "").replace(/!\[\[[^\]]*\]\]/g, " ").replace(/\*\*/g, "").replace(/\r/g, "");
 	const first = name.replace(/^(king|queen|lord|lady|prince|princess|duke|duchess|sir)\s+/i, "").split(/\s+/)[0];
-	// Only meaningful for people: "House Larador … son of [[X]]" is about someone else.
+	// Only meaningful for people: "House Whitmore … son of [[X]]" is about someone else.
 	if (/^(house|the|order|clan|kingdom|empire|church|battle|war)$/i.test(first)) return [];
 	const subject = new RegExp(
 		String.raw`^(?:${escapeRe(first)}|${escapeRe(name)}|he|she|his|her|they|born|the (?:young |old )?(?:king|queen|prince|princess|lord|lady|duke|duchess|knight|emperor|empress)|(?:king|queen|prince|princess|lord|lady|duke|duchess|sir|emperor|empress)\b)`,

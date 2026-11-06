@@ -11,6 +11,7 @@ import { fitRange } from "./layout";
 import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
 import { battlesOf, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { causePath, packRows, type Box } from "./timelinerows";
+import { dragToReorder } from "../ui/cardlayout";
 import { KIND_LABELS, categoryColor, categoryOf, type ItemKind } from "./categories";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
@@ -41,6 +42,8 @@ export interface TimelineOptions {
 	occupations?: boolean;
 	/** Categories left off the timeline (see categoryOf): "battle", "kind:person"… */
 	hiddenCategories?: string[];
+	/** The lanes in the order they were dragged into, for each way of grouping. */
+	laneOrder?: Partial<Record<TimelineGroup, string[]>>;
 	/** How tall the rows are, as a multiple of the row height in settings. */
 	rowZoom?: number;
 }
@@ -621,8 +624,10 @@ export class TimelineRenderer {
 		const grouped = this.options.group !== "none";
 		for (const lane of lanes) {
 			const laneEl = el("div", { cls: "chronicle-tl-lane" }, this.lanesEl);
+			laneEl.dataset.lane = lane.id;
 			if (grouped) {
 				const head = el("div", { cls: "chronicle-tl-lane-label" }, laneEl);
+				if (!this.embedded) this.makeMovable(head, laneEl, lanes);
 				// By category, each lane's name carries its category's colour.
 				if (this.options.group === "category") {
 					head.addClass("is-category");
@@ -648,6 +653,46 @@ export class TimelineRenderer {
 		this.bodyEl.scrollTop = this.pendingScroll ?? scrollTop;
 		this.pendingScroll = undefined;
 		this.renderCauses();
+	}
+
+	/** A lane moves by dragging its name, or from the menu on it, and stays where it's put. */
+	private makeMovable(head: HTMLElement, laneEl: HTMLElement, lanes: Lane[]) {
+		const shown = () => Array.from(this.lanesEl.querySelectorAll<HTMLElement>(":scope > .chronicle-tl-lane"));
+		const save = (ids: string[]) => {
+			this.options.laneOrder = { ...this.options.laneOrder, [this.options.group]: ids };
+			this.schedule();
+		};
+		head.addClass("is-movable");
+		dragToReorder(head, laneEl, shown, () => save(shown().map((l) => l.dataset.lane ?? "")), true);
+		head.addEventListener("contextmenu", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			const ids = lanes.map((l) => l.id);
+			const at = ids.indexOf(laneEl.dataset.lane ?? "");
+			const moved = (to: number) => {
+				const next = ids.filter((_, i) => i !== at);
+				next.splice(to, 0, ids[at]);
+				save(next);
+			};
+			const menu = new Menu();
+			if (at > 0) {
+				menu.addItem((i) => i.setTitle("Move to the top").setIcon("arrow-up-to-line").onClick(() => moved(0)));
+				menu.addItem((i) => i.setTitle("Move up").setIcon("arrow-up").onClick(() => moved(at - 1)));
+			}
+			if (at < ids.length - 1) {
+				menu.addItem((i) => i.setTitle("Move down").setIcon("arrow-down").onClick(() => moved(at + 1)));
+				menu.addItem((i) => i.setTitle("Move to the bottom").setIcon("arrow-down-to-line").onClick(() => moved(ids.length - 1)));
+			}
+			if (this.options.laneOrder?.[this.options.group]) {
+				menu.addSeparator();
+				menu.addItem((i) => i.setTitle("Reset the order").setIcon("rotate-ccw").onClick(() => {
+					const { [this.options.group]: _gone, ...rest } = this.options.laneOrder ?? {};
+					this.options.laneOrder = rest;
+					this.schedule();
+				}));
+			}
+			menu.showAtMouseEvent(evt);
+		});
 	}
 
 	/** Curved arrows from each event to the events it led to, where both are on screen. */
@@ -715,8 +760,12 @@ export class TimelineRenderer {
 			if (this.options.group === "category") return rank(a) - rank(b) || b.items.length - a.items.length || a.label.localeCompare(b.label);
 			return a.first - b.first || a.label.localeCompare(b.label);
 		});
-		for (const lane of sorted) this.pack(lane);
-		return sorted;
+		// Lanes dragged into place stay there; new ones follow, in the usual order.
+		const order = this.options.laneOrder?.[this.options.group] ?? [];
+		const place = (l: Lane) => (order.includes(l.id) ? order.indexOf(l.id) : order.length);
+		const placed = sorted.map((l, i) => ({ l, i })).sort((a, b) => place(a.l) - place(b.l) || a.i - b.i).map((x) => x.l);
+		for (const lane of placed) this.pack(lane);
+		return placed;
 	}
 
 	/**

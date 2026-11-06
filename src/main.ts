@@ -68,6 +68,7 @@ import { CreateEntityModal, CreatePrefill } from "./ui/CreateEntityModal";
 import { ValidateModal } from "./ui/ValidateModal";
 import { DetectModal } from "./ui/DetectModal";
 import { SmartReaderModal } from "./ui/SmartReader";
+import { NormaliseTagsModal } from "./ui/NormaliseTags";
 import { GedcomModal } from "./ui/GedcomModal";
 import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
@@ -1712,6 +1713,7 @@ export default class ChroniclePlugin extends Plugin {
 			...this.keys(["Mod", "Alt"], "D"),
 			callback: () => new DetectModal(this).open(),
 		});
+		this.addCommand({ id: "normalise-tags", name: "Normalise all tags", icon: "tags", callback: () => new NormaliseTagsModal(this).open() });
 		this.addCommand({ id: "smart-reader", name: "Smart reader: find facts in your notes' text", icon: "scan-text", callback: () => new SmartReaderModal(this).open() });
 		this.addCommand({
 			id: "smart-reader-note",

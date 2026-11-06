@@ -895,6 +895,13 @@ button.chronicle-ov-tile:hover::after {
 	overflow: hidden;
 	transition: width var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease), margin var(--chronicle-fast) var(--chronicle-ease);
 }
+.chronicle-tl-lane-label.is-movable {
+	cursor: grab;
+	touch-action: none;
+}
+.chronicle-tl-lane.is-moving {
+	opacity: 0.6;
+}
 .chronicle-chip-check svg {
 	width: 13px;
 	height: 13px;

@@ -3,7 +3,7 @@ import type ChroniclePlugin from "../main";
 import type { EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { CREATOR_FIELDS, parseQuickAdd, quickAddFrontmatter, withFields, type CreatorField, type QuickAdd } from "../import/quickadd";
-import { standardTag, standardTagsFor, type TagSample } from "../index/tagrules";
+import { factsFromPath, standardTag, standardTagsFor, type TagSample } from "../index/tagrules";
 import { TYPE_ICONS, TYPE_LABELS, el, icon } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
 import { LinkList } from "./CreateEntityModal";
@@ -126,7 +126,7 @@ export class QuickCreator {
 
 	/** Every tag this note gets, in the vault's standard. */
 	private tagsFor(q: QuickAdd, kind?: string): string[] {
-		const facts = [q.kind, kind, q.gender, q.occupation, this.host.world, ...q.cultures, ...q.places].filter((x): x is string => !!x);
+		const facts = [q.kind, kind, q.gender, q.occupation, q.type === "person" && q.end ? "dead" : "", ...factsFromPath(`${this.folder}/`), ...q.cultures, ...q.places].filter(Boolean) as string[];
 		const land = this.landTags(q, kind);
 		// Once the land form has spoken, it decides between title and region, whatever most notes are.
 		const shared = standardTagsFor(q.type, facts, q.kind, this.samples).filter((t) => !land.length || !/^(title|region)$/i.test(t));
