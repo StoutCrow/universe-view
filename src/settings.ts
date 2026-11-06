@@ -103,6 +103,8 @@ export interface ChronicleSettings {
 	};
 	/** Width of the Library's file tree, in pixels. */
 	libraryTree?: number;
+	/** Its height, when it sits above the details. */
+	libraryTreeHeight?: number;
 	/** The files panel has been put in the sidebar once; closing it after that is respected. */
 	filesPanelAdded?: boolean;
 	/** Width of the dashboard's sidebar, in pixels. */

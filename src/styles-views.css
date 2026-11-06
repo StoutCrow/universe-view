@@ -67,29 +67,45 @@ button.chronicle-dash-stat.is-active {
 	display: grid;
 	grid-template-columns: var(--uv-tree-w, 340px) 12px minmax(0, 1fr);
 }
+.chronicle-dash-main.is-stacked {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: var(--uv-tree-h, 45%) 12px minmax(0, 1fr);
+}
 .chronicle-dash-main.is-tree-only {
 	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr);
 }
 .chronicle-dash-main.is-tree-only > .chronicle-dash-grip,
 .chronicle-dash-main.is-tree-only > .chronicle-dash-detail {
 	display: none;
 }
 .chronicle-dash-grip {
+	position: relative;
 	cursor: col-resize;
 	touch-action: none;
 }
-.chronicle-dash-grip:hover {
-	background: linear-gradient(var(--background-modifier-border-hover), var(--background-modifier-border-hover)) center / 2px 100% no-repeat;
+.chronicle-dash-main.is-stacked > .chronicle-dash-grip {
+	cursor: row-resize;
 }
-@container (max-width: 760px) {
-	.chronicle-dash-main:not(.is-tree-only) {
-		grid-template-columns: minmax(0, 1fr);
-		grid-template-rows: minmax(160px, 38%) minmax(0, 1fr);
-		gap: 12px;
-	}
-	.chronicle-dash-grip {
-		display: none;
-	}
+/* Always in view, so it's clear the two sides can be resized. */
+.chronicle-dash-grip::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 4px;
+	height: 36px;
+	border-radius: 2px;
+	background: var(--background-modifier-border-hover);
+	transform: translate(-50%, -50%);
+	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+}
+.chronicle-dash-main.is-stacked > .chronicle-dash-grip::after {
+	width: 36px;
+	height: 4px;
+}
+.chronicle-dash-grip:hover::after {
+	background: var(--text-muted);
 }
 .chronicle-dash-tree {
 	display: flex;
@@ -122,6 +138,16 @@ button.chronicle-dash-stat.is-active {
 	font-size: var(--font-ui-small);
 	cursor: pointer;
 	user-select: none;
+}
+/* A narrow tree keeps the names: counts and kinds step aside. */
+.chronicle-dash-list {
+	container-type: inline-size;
+}
+@container (max-width: 260px) {
+	.chronicle-dash-counts,
+	.chronicle-dash-row-meta {
+		display: none;
+	}
 }
 .chronicle-dash-list.is-compact .chronicle-dash-row {
 	min-height: 22px;

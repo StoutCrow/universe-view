@@ -1,6 +1,6 @@
 import { Keymap, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
 import { ENTITY_TYPES, PIN_SIZES, type ChronDate, type Entity, type EntityType } from "../types";
-import { buildFieldAliases, findMapping, setMapping, type FieldName, type PinColorBy } from "../settings";
+import { buildFieldAliases, findMapping, setMapping, type FieldName } from "../settings";
 import { formatDate, formatSpan } from "../dates/parser";
 import { validate } from "../index/validate";
 import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, setPressed, showEntityMenu, svg, toggleChip, typeColorVar } from "../render/common";
@@ -10,12 +10,8 @@ import { TextPrompt } from "../ui/TextPrompt";
 import { ArcRenderer } from "../render/arc";
 import { renderWorldStats } from "../render/stats";
 import { totalPopulation } from "../index/tidy";
-import { KnowledgeModal, NamesModal } from "../ui/people";
-import { PromptsModal, QuickAddModal } from "../ui/writing";
-import { CleanupModal, ContradictionsModal, DuplicatesModal, OrphansModal, renderCompleteness } from "../ui/tidying";
-import { exportWorldBook } from "../ui/worldbook";
-import { exportWebsite } from "../ui/website";
-import { ConvertModal } from "./CalendarView";
+import { KnowledgeModal } from "../ui/people";
+import { renderCompleteness } from "../ui/tidying";
 import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/relations";
 import { relInverse } from "../index/relkinds";
 import { ChronicleView } from "./base";
@@ -117,6 +113,12 @@ export class ExplorerView extends ChronicleView {
 		this.dragTree(el("div", { cls: "chronicle-dash-grip", attr: { role: "separator", "aria-label": "Resize the file tree" } }, main));
 		this.detailEl = el("div", { cls: "chronicle-dash-detail" }, main);
 		this.applyLayout();
+		// Side by side while there's room for both, otherwise one above the other.
+		const observer = new ResizeObserver(() => {
+			if (main.clientWidth) main.toggleClass("is-stacked", main.clientWidth < 560);
+		});
+		observer.observe(main);
+		this.register(() => observer.disconnect());
 		if (this.state.expanded.length === 0) this.state.expanded = this.plugin.index.topFolders();
 		this.renderAll();
 		// Catch up after edits made while the dashboard was in a background tab.
@@ -135,24 +137,25 @@ export class ExplorerView extends ChronicleView {
 	private applyLayout() {
 		this.statsEl.toggle(!this.state.hideStats);
 		this.mainEl.toggleClass("is-tree-only", !!this.state.hideDetail);
-		const width = this.plugin.settings.libraryTree;
-		if (width) this.mainEl.setCssProps({ "--uv-tree-w": `${width}px` });
+		const { libraryTree, libraryTreeHeight } = this.plugin.settings;
+		if (libraryTree) this.mainEl.setCssProps({ "--uv-tree-w": `${libraryTree}px` });
+		if (libraryTreeHeight) this.mainEl.setCssProps({ "--uv-tree-h": `${libraryTreeHeight}px` });
 	}
 
-	private saveTreeWidth = debounce((width: number) => {
-		this.plugin.settings.libraryTree = width;
-		void this.plugin.saveSettings();
-	}, 400, true);
+	private saveTreeSize = debounce(() => void this.plugin.saveSettings(), 400, true);
 
 	private dragTree(grip: HTMLElement) {
 		grip.addEventListener("pointerdown", (down) => {
 			down.preventDefault();
 			grip.setPointerCapture(down.pointerId);
 			const box = this.mainEl.getBoundingClientRect();
+			const stacked = this.mainEl.hasClass("is-stacked");
 			const move = (e: PointerEvent) => {
-				const width = Math.round(Math.max(200, Math.min(box.width * 0.7, e.clientX - box.left)));
-				this.mainEl.setCssProps({ "--uv-tree-w": `${width}px` });
-				this.saveTreeWidth(width);
+				const s = this.plugin.settings;
+				if (stacked) s.libraryTreeHeight = Math.round(Math.max(120, Math.min(box.height - 120, e.clientY - box.top)));
+				else s.libraryTree = Math.round(Math.max(200, Math.min(box.width - 240, e.clientX - box.left)));
+				this.applyLayout();
+				this.saveTreeSize();
 			};
 			const up = () => {
 				grip.removeEventListener("pointermove", move);
@@ -232,7 +235,7 @@ export class ExplorerView extends ChronicleView {
 			iconButton(left, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());
 			setPressed(iconButton(left, "bar-chart-3", "Show the summary", () => this.toggleLayout("hideStats")), !this.state.hideStats);
 			setPressed(iconButton(left, "panel-right", "Show details beside the tree", () => this.toggleLayout("hideDetail")), !this.state.hideDetail);
-			iconButton(left, "home", "Dashboard home (quick settings, problems)", () => {
+			iconButton(left, "home", "Library home (problems, recent notes, statistics)", () => {
 				this.state.selected = undefined;
 				this.tree.render();
 				this.renderDetail();
@@ -242,7 +245,6 @@ export class ExplorerView extends ChronicleView {
 			const right = this.group();
 			this.undoBtn = iconButton(right, "undo-2", "Undo", () => void this.plugin.undo());
 			this.syncUndo();
-			iconButton(right, "settings", "All UniverseView settings", () => this.plugin.openSettings());
 			iconButton(right, "plus", "New note", () => this.plugin.createEntityPrompt({ scope: this.scopeOfSelection() }), "mod-cta-icon");
 		});
 	}
@@ -333,29 +335,9 @@ export class ExplorerView extends ChronicleView {
 
 	private renderHome(box: HTMLElement) {
 		const head = el("div", { cls: "chronicle-dash-head" }, box);
-		el("h2", { cls: "chronicle-dash-title", text: "Dashboard" }, head);
-		el("div", { cls: "chronicle-dash-path", text: "Pick a folder or note on the left to see and edit its details and relationships." }, head);
+		el("h2", { cls: "chronicle-dash-title", text: "Library" }, head);
+		el("div", { cls: "chronicle-dash-path", text: "Pick a note or folder to see and edit it." }, head);
 		const grid = el("div", { cls: "chronicle-dash-grid" }, box);
-
-		// Quick settings
-		const s = this.plugin.settings;
-		const qs = this.card(grid, "Basic settings", "sliders-horizontal");
-		new Setting(qs).setName("Density").addDropdown((d) =>
-			d.addOptions({ compact: "Compact", cozy: "Cozy", roomy: "Roomy" }).setValue(s.density).onChange((v) => void this.setSetting(() => (s.density = v as typeof s.density))),
-		);
-		new Setting(qs).setName("Map pin colors").addDropdown((d) =>
-			d.addOptions({ realm: "By realm", liege: "By liege", house: "By house", culture: "By group", category: "By kind of place", type: "One color" }).setValue(s.pinColorBy === "region" ? "realm" : s.pinColorBy).onChange((v) => void this.setSetting(() => (s.pinColorBy = v as PinColorBy))),
-		);
-		new Setting(qs).setName("Hover cards").setDesc("A summary when you rest the pointer on something.").addToggle((t) =>
-			t.setValue(s.hoverCards).onChange((v) => void this.setSetting(() => (s.hoverCards = v))),
-		);
-		new Setting(qs).setName("Default calendar").addDropdown((d) => {
-			for (const c of this.plugin.calendars.all()) d.addOption(c.id, c.name);
-			d.setValue(s.defaultCalendar).onChange((v) => void this.setSetting(() => (s.defaultCalendar = v), true));
-		});
-		new Setting(qs).setName("Read Dataview fields").addToggle((t) => t.setValue(s.useDataview).onChange((v) => void this.setSetting(() => (s.useDataview = v), true)));
-		new Setting(qs).setName("Open notes in a new tab").addToggle((t) => t.setValue(s.openInNewTab).onChange((v) => void this.setSetting(() => (s.openInNewTab = v))));
-		new Setting(qs).addButton((b) => b.setButtonText("All settings…").onClick(() => this.plugin.openSettings()));
 
 		// Problems
 		const issues = validate(this.plugin.index).filter((i) => i.severity !== "info");
@@ -374,33 +356,8 @@ export class ExplorerView extends ChronicleView {
 		const rc = this.card(grid, "Recently edited", "history");
 		for (const e of recent) this.relRow(rc, { key: e.key, name: e.name, note: TYPE_LABELS[e.type] + (e.category ? ` · ${e.category}` : "") });
 
-		// Tools
-		const tools = this.card(grid, "Tools", "wrench");
-		const p = this.plugin;
-		const tool = (label: string, iconName: string, desc: string, run: () => void) => {
-			const b = el("button", { cls: "chronicle-dash-tool" }, tools);
-			const ic = el("span", { cls: "chronicle-dash-rel-icon" }, b);
-			icon(ic, iconName);
-			const txt = el("span", {}, b);
-			el("strong", { text: label }, txt);
-			el("span", { cls: "chronicle-dash-tool-desc", text: desc }, txt);
-			b.addEventListener("click", run);
-		};
-		tool("Quick add", "zap", "One line becomes a linked note", () => new QuickAddModal(p, this.scopeOfSelection()).open());
-		tool("Loose ends", "unlink", "Unlinked notes, places off the map…", () => new OrphansModal(p).open());
-		tool("Duplicates", "copy", "Notes that are probably the same", () => new DuplicatesModal(p).open());
-		tool("Tidy kinds and tags", "tags", "Rename and merge across the vault", () => new CleanupModal(p).open());
-		tool("Text vs properties", "scale", "Dates in the text that disagree", () => new ContradictionsModal(p).open());
-		tool("Story ideas", "lightbulb", "Prompts from your own world", () => new PromptsModal(p).open());
-		tool("Name ideas", "dices", "Names in your world's style", () => new NamesModal(p).open());
-		tool("How related?", "git-compare", "The relationship between two people", () => p.openKinship());
-		tool("World book", "book-open", "Everything as one web page or PDF", () => p.pickWorld("World book of which world?", (w) => void exportWorldBook(p, w)));
-		tool("Website", "globe", "The world as a folder of linked web pages", () => p.pickWorld("Website of which world?", (w) => void exportWebsite(p, w)));
-		tool("World settings", "settings-2", "Calendar, today, map, travel speeds for a world", () => p.pickWorld("Settings for which world?", (w) => p.editWorld(w ?? "")));
-		tool("Why did it happen?", "git-pull-request-arrow", "Causes and consequences of an event", () => p.openCauses());
-		tool("Convert a date", "arrow-left-right", "One date in every calendar", () => new ConvertModal(p).open());
-
 		// Saved views
+		const p = this.plugin;
 		const sv = this.card(grid, "Saved views", "bookmark");
 		if (!p.settings.savedViews.length) el("div", { cls: "chronicle-dash-muted", text: "Save any UniverseView view (with its filters, focus and date) with the bookmark button in its toolbar." }, sv);
 		for (const v of p.settings.savedViews) {

@@ -1720,8 +1720,7 @@ button.chronicle-ov-tile:focus-visible {
 /* Container queries are off on phones (above), so the narrow layouts they give come from the screen's width. */
 @media (max-width: 760px) {
 	/* The explorer: its tree above, the chosen note's page below, each the full width. */
-	.is-mobile .chronicle-dash-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(160px, 42%) minmax(0, 1fr); }
-}
+	}
 @media (max-width: 1000px) {
 	.is-mobile .chronicle-dash-grid.is-note { grid-template-columns: minmax(0, 1fr); }
 }

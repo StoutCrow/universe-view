@@ -2,6 +2,10 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.4.2 — 2026-11-06
+- Library: the tree and details resize whichever way they sit, with a handle always in view, and stay side by side in much narrower panes.
+- Library's home is about your world: problems, recent notes, saved views, how complete it is and statistics. Its basic settings are in Settings, and its tools on the dashboard's Tools tab.
+
 ## 1.4.1 — 2026-11-06
 - The file trees take your file colours: names and bars by realm and tier, with the same strengths as Obsidian's Files, and each note's icons.
 - A folder and its folder note are one row, as in Files. Click it to open the note; the arrow folds it.
