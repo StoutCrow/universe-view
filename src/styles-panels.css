@@ -123,8 +123,8 @@
 	align-items: center;
 	padding: 8px 10px;
 	border-radius: var(--radius-m);
-	background: linear-gradient(135deg, color-mix(in srgb, var(--ep-accent) 14%, var(--background-primary)), var(--background-secondary));
-	border: 1px solid color-mix(in srgb, var(--ep-accent) 22%, var(--background-modifier-border));
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
 }
 .chronicle-ep .chronicle-ep-pic {
 	flex: 0 0 44px;
@@ -823,8 +823,8 @@
 .uv-arc-missing-foot { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
 /* ---- Inspector: identity strip ---- */
-.uv-id { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 6px; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--id-color) 16%, var(--background-secondary)), var(--background-secondary) 70%); border: 1px solid color-mix(in srgb, var(--id-color) 30%, var(--background-modifier-border)); overflow: hidden; }
-.uv-id::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--id-color); }
+.uv-id { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 6px; padding: 12px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); overflow: hidden; }
+
 .uv-id-pic { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--id-color) 22%, var(--background-primary)); color: color-mix(in srgb, var(--id-color) 80%, var(--text-normal)); font-size: 26px; grid-row: span 2; }
 .uv-id-pic img { width: 100%; height: 100%; object-fit: cover; }
 .uv-id-pic svg { width: 26px; height: 26px; }

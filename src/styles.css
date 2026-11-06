@@ -15,8 +15,8 @@ body {
 	--chronicle-card-width: 180px;
 	--chronicle-card-height: 64px;
 	--chronicle-radius: var(--chronicle-user-radius, var(--chronicle-theme-radius, 10px));
-	--chronicle-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 14px rgba(0, 0, 0, 0.07);
-	--chronicle-shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.08), 0 12px 28px rgba(0, 0, 0, 0.12);
+	--chronicle-shadow: none;
+	--chronicle-shadow-lift: none;
 	--chronicle-grid: var(--background-modifier-border);
 	--chronicle-font-display: var(--font-interface);
 	/* Motion: durations scale with the "Motion" setting (--chronicle-speed). */
@@ -40,14 +40,10 @@ body.chronicle-flat {
 
 /* Inside Chronicle's own surfaces, Obsidian's accent follows the Chronicle accent. */
 .chronicle-scope {
-	--chronicle-glass: var(--background-primary);
 	--interactive-accent: var(--chronicle-accent);
 	--interactive-accent-hover: color-mix(in srgb, var(--chronicle-accent) 85%, var(--text-normal));
 	--text-accent: color-mix(in srgb, var(--chronicle-accent) 82%, var(--text-normal));
 	--text-accent-hover: var(--chronicle-accent);
-}
-body.chronicle-glass .chronicle-scope {
-	--chronicle-glass: color-mix(in srgb, var(--background-primary) 74%, transparent);
 }
 /* ---- View shell ---------------------------------------------------------------------------- */
 
@@ -320,7 +316,7 @@ body.chronicle-glass .chronicle-scope {
 	border-radius: var(--radius-s);
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
-	box-shadow: var(--chronicle-shadow);
+	box-shadow: var(--shadow-s);
 	opacity: 0;
 	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
 }
@@ -1044,7 +1040,7 @@ g.is-dimmed .chronicle-net-link.is-lit {
 }
 .chronicle-map .leaflet-bar {
 	border: 1px solid var(--background-modifier-border);
-	box-shadow: var(--chronicle-shadow);
+	box-shadow: var(--shadow-s);
 	border-radius: var(--radius-s);
 	overflow: hidden;
 }
@@ -1094,8 +1090,6 @@ g.is-dimmed .chronicle-net-link.is-lit {
 .chronicle-popup-heading {
 	margin-top: 10px;
 	font-size: var(--font-ui-smaller);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 	color: var(--text-faint);
 	font-weight: var(--font-semibold);
 }
@@ -1502,8 +1496,6 @@ button.chronicle-ov-tile:focus-visible {
 	margin: 0;
 	flex: 1;
 	font-size: var(--font-ui-small);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
 	color: var(--text-muted);
 }
 .chronicle-ov-more {
@@ -1728,7 +1720,7 @@ button.chronicle-ov-tile:focus-visible {
 	.is-mobile .chronicle-cal.has-side .chronicle-cal-side { display: none; }
 }
 /* The report shown when a map doesn't appear. */
-.uv-map-report { position: absolute; left: 12px; right: 12px; top: 12px; z-index: 950; padding: 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); font-size: var(--font-ui-smaller); }
+.uv-map-report { position: absolute; left: 12px; right: 12px; top: 12px; z-index: 950; padding: 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-smaller); }
 .uv-map-report-title { font-weight: 600; font-size: var(--font-ui-small); margin-bottom: 6px; }
 .uv-map-report pre { white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; margin: 0 0 8px; padding: 8px; border-radius: 6px; background: var(--background-secondary); font-size: 11px; user-select: text; -webkit-user-select: text; }
 .uv-map-report-actions { display: flex; gap: 8px; flex-wrap: wrap; }

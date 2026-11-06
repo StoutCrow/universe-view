@@ -356,8 +356,6 @@ button.chronicle-dash-stat.is-active {
 	margin: 0 0 8px;
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.07em;
 	color: var(--text-muted);
 }
 .chronicle-dash-card-icon {
@@ -495,7 +493,6 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 }
 .chronicle-dash-ego-node {
 	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
-	animation-delay: calc(var(--i, 0) * 18ms * var(--chronicle-speed));
 }
 .chronicle-dash-ego-node:hover circle {
 	r: 9;
@@ -665,8 +662,6 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 }
 .chronicle-org-card {
 	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
-	animation-delay: calc(var(--i, 0) * 30ms * var(--chronicle-speed));
-	filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
 }
 .chronicle-org-card-bg {
 	fill: var(--background-primary);
@@ -969,10 +964,9 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	gap: 2px;
 	padding: 8px 10px;
 	border-radius: var(--chronicle-radius, 10px);
-	background: color-mix(in srgb, var(--background-primary) 88%, transparent);
+	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	box-shadow: var(--shadow-s);
-	backdrop-filter: blur(6px);
 	z-index: 2;
 	max-width: 240px;
 }
@@ -980,10 +974,8 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	display: none;
 }
 .chronicle-org-legend-title {
-	font-size: 10.5px;
+	font-size: var(--font-ui-smaller);
 	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
 	color: var(--text-muted);
 	margin-bottom: 2px;
 }
@@ -1172,10 +1164,8 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	margin: 3px 6px;
 	padding: 1px 8px;
 	border-radius: 999px;
-	font-size: 10.5px;
+	font-size: var(--font-ui-smaller);
 	font-weight: 600;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
 	white-space: nowrap;
 	color: color-mix(in srgb, var(--era-color, var(--text-muted)) 70%, var(--text-muted));
 	background: color-mix(in srgb, var(--background-primary) 80%, transparent);
@@ -1276,7 +1266,7 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 .chronicle-tl-item.is-selected .chronicle-tl-dot,
 .chronicle-tl-item.is-selected .chronicle-tl-bar { box-shadow: 0 0 0 3px color-mix(in srgb, var(--item-color) 55%, transparent); }
 .chronicle-tl-item.is-selected .chronicle-tl-label { color: var(--text-accent); font-weight: 600; }
-.uv-tl-card { position: absolute; top: 40px; right: 12px; z-index: 6; width: 290px; max-width: calc(100% - 24px); max-height: calc(100% - 56px); overflow-y: auto; padding: 12px 14px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--item-color); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); cursor: default; user-select: text; font-size: var(--font-ui-small); animation: uv-card-in 140ms ease-out; }
+.uv-tl-card { position: absolute; top: 40px; right: 12px; z-index: 6; width: 290px; max-width: calc(100% - 24px); max-height: calc(100% - 56px); overflow-y: auto; padding: 12px 14px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--item-color); box-shadow: var(--shadow-l); cursor: default; user-select: text; font-size: var(--font-ui-small); animation: uv-card-in 140ms ease-out; }
 @keyframes uv-card-in { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .uv-tl-card { animation: none; } }
 .uv-tl-card-head { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: start; }
@@ -1288,7 +1278,7 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 .uv-tl-card-date { margin: 8px 0 2px; font-variant-numeric: tabular-nums; }
 .uv-tl-card-summary { margin: 8px 0; color: var(--text-muted); line-height: 1.45; }
 .uv-tl-card-row { display: grid; grid-template-columns: 60px 1fr; gap: 6px; margin-top: 6px; }
-.uv-tl-card-label { color: var(--text-faint); font-size: var(--font-ui-smaller); text-transform: uppercase; letter-spacing: 0.04em; padding-top: 2px; }
+.uv-tl-card-label { color: var(--text-faint); font-size: var(--font-ui-smaller); padding-top: 2px; }
 .uv-tl-card-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .uv-tl-card-chip { padding: 1px 8px; border-radius: 10px; background: var(--background-secondary); color: var(--text-normal); cursor: pointer; text-decoration: none; }
 .uv-tl-card-chip:hover { background: var(--background-modifier-hover); color: var(--text-accent); }
@@ -1316,7 +1306,7 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 /* ---- Connections: a picked note, pinned notes ---- */
 .chronicle-net-node.is-picked .chronicle-net-shape { stroke: var(--text-normal); stroke-width: 3px; }
 .chronicle-net-node.is-pinned .chronicle-net-shape { stroke-dasharray: 3 2; stroke: var(--text-muted); stroke-width: 2px; }
-.uv-net-card { position: absolute; top: 12px; right: 12px; z-index: 5; width: 260px; max-width: calc(100% - 24px); padding: 10px 12px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--node-color, var(--interactive-accent)); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16); font-size: var(--font-ui-small); }
+.uv-net-card { position: absolute; top: 12px; right: 12px; z-index: 5; width: 260px; max-width: calc(100% - 24px); padding: 10px 12px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--node-color, var(--interactive-accent)); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); }
 .uv-net-card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .uv-net-card-name { font-weight: 600; font-size: var(--font-ui-medium); color: var(--text-normal); cursor: pointer; text-decoration: none; }
 .uv-net-card-name:hover { color: var(--text-accent); }

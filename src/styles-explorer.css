@@ -173,7 +173,7 @@
 .uv-folder-overview { border: 1px solid var(--background-modifier-border); border-radius: 12px; padding: 12px 14px; background: var(--background-secondary); }
 .uv-fo-title { font-family: var(--chronicle-font-display, inherit); font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
 .uv-fo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 18px; }
-.uv-fo-head { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 3px; margin-bottom: 4px; }
+.uv-fo-head { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 3px; margin-bottom: 4px; }
 .uv-fo-head svg { width: 13px; height: 13px; }
 .uv-fo-count { margin-left: auto; color: var(--text-faint); }
 .uv-fo-item { display: flex; align-items: baseline; gap: 6px; padding: 1px 0 1px 6px; font-size: var(--font-ui-small); border-left: 2px solid transparent; }

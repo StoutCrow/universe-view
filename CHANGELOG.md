@@ -9,6 +9,7 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 - **Push neighbours back**: Brush can take land from a neighbour, moving both borders in one undo.
 - **Stay on land**: brushing on an image map keeps paint off the sea.
 - **Land painter**: the palette button on the map lists your lands: pick one and paint, pick the next.
+- **Cleaner design**: flat cards unless a theme gives them shadows, solid panels instead of frosted glass (the Frosted glass setting is gone), sentence-case labels, no glows or hover wiggles, and everything arrives at once.
 - **Inspector**: About now shows sides, battles, holders, names, lands changing hands, occupations, birthplaces and every other property written on the note, in the dashboard's style.
 
 ## 1.7.0 — 2026-11-06

@@ -136,8 +136,6 @@ export interface ChronicleSettings {
 	density: "compact" | "cozy" | "roomy";
 	/** Corner radius in px; -1 = the theme's. */
 	radius: number;
-	/** Frosted, see-through toolbars and panels. */
-	glass: boolean;
 
 	// ---- Hover cards ----
 	hoverCards: boolean;
@@ -416,7 +414,6 @@ export const DEFAULT_SETTINGS: ChronicleSettings = {
 	motion: "smooth",
 	density: "cozy",
 	radius: -1,
-	glass: true,
 	hoverCards: true,
 	hoverInNotes: "alt",
 	hoverDelay: 600,

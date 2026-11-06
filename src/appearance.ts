@@ -84,7 +84,6 @@ export function applyAppearance(s: ChronicleSettings) {
 	const body = document.body;
 	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-")) body.classList.remove(c);
 	body.classList.add(`chronicle-theme-${s.theme}`, `chronicle-motion-${s.motion}`);
-	body.classList.toggle("chronicle-glass", s.glass);
 	const set = (name: string, v: string | undefined) => (v ? body.style.setProperty(name, v) : body.style.removeProperty(name));
 	set("--chronicle-user-accent", s.colors.accent);
 	// Tooltip and fade timings and sizes (Settings → Hover cards and tips).
@@ -136,6 +135,6 @@ export function applyAppearance(s: ChronicleSettings) {
 
 export function clearAppearance() {
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c === "chronicle-glass" || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c.startsWith("uv-band-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c.startsWith("uv-band-")) body.classList.remove(c);
 	for (const v of BODY_VARS) body.style.removeProperty(v);
 }

@@ -974,13 +974,6 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				await save();
 			}));
 		new Setting(containerEl)
-			.setName("Frosted glass")
-			.setDesc("See-through, blurred toolbars and floating panels.")
-			.addToggle((t) => t.setValue(s.glass).onChange(async (v) => {
-				s.glass = v;
-				await save();
-			}));
-		new Setting(containerEl)
 			.setName("Flat style")
 			.setDesc("No shadows on cards and panels.")
 			.addToggle((t) => t.setValue(!!s.flatStyle).onChange(async (v) => {
