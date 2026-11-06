@@ -53,7 +53,7 @@ export class CardLayout {
 	}
 
 	private cards(): HTMLElement[] {
-		return Array.from(this.grid?.children ?? []).filter((c): c is HTMLElement => c instanceof HTMLElement && !!c.dataset.card);
+		return Array.from(this.grid?.querySelectorAll<HTMLElement>(":scope > [data-card]") ?? []);
 	}
 
 	apply(grid: HTMLElement, id: string) {
