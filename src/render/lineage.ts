@@ -5,9 +5,10 @@ import { formatSpan } from "../dates/parser";
 import { categoryColor, markPath } from "./categories";
 import { historyOf, type HistoryMark } from "./history";
 import { markKey } from "./markkey";
+import { NATION_BAR as BAR, drawNation } from "./nationbar";
 import { stackLevels, type TimeRange } from "./timelinerows";
 import { spacedLabels, yearTicks } from "../dates/calendars";
-import { bindHover, cultureColor, el, emptyState, glyph, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
+import { bindHover, cultureColor, el, emptyState, glyph, icon, iconButton, openEntity, showEntityMenu, svg } from "./common";
 import { GROUP_KINDS, groupKind, type GroupKind } from "./houses";
 import { entityPanel } from "../ui/EntityPanel";
 
@@ -28,7 +29,6 @@ export interface LineageOptions {
 }
 
 const ROW = 40;
-const BAR = 26;
 const LEFT = 20;
 const AXIS = 38;
 const LANE = 30;
@@ -478,44 +478,10 @@ export class LineageRenderer {
 			const g = svg("g", { class: "chronicle-lineage-item" + (c.key === this.options.focus ? " is-focus" : "") + (c.key === this.options.selected ? " is-selected" : ""), "data-key": c.key }, bars);
 			g.setAttribute("style", `--item-color: ${color}; --i: ${n % 20}`);
 			const w = Math.max(8, x(b) - x(a));
-			const open = !c.end;
-			let fill: string | undefined;
-			if (open) {
-				// Still standing: solid, then fading out to the current date.
-				const id = `chronicle-lineage-fade-${n}`;
-				const grad = svg("linearGradient", { id, x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
-				svg("stop", { offset: Math.max(0, 1 - Math.min(0.5, 80 / w)), "stop-color": color, "stop-opacity": 0.55 }, grad);
-				svg("stop", { offset: 1, "stop-color": color, "stop-opacity": 0.04 }, grad);
-				fill = `url(#${id})`;
-			}
-			const bar = svg("rect", { x: x(a), y: yy, width: w, height: BAR, rx: BAR / 2, class: "chronicle-lineage-bar" + (open ? " is-ongoing" : "") + (c.start?.approx ? " is-approx" : "") }, g);
-			if (fill) bar.setAttribute("style", `fill: ${fill}`);
-			// A badge at the start (kept in view while the bar is): the group's logo, else its kind's icon.
-			const bx = Math.min(Math.max(x(a), 2), x(a) + w - BAR) + BAR / 2;
-			const badge = svg("g", { class: "chronicle-lineage-badge", transform: `translate(${bx},${yy + BAR / 2})` }, g);
-			svg("circle", { r: BAR / 2 - 2, class: "chronicle-lineage-badge-bg" }, badge);
-			const logo = resourceUrl(p, c.logo ?? c.image);
-			if (logo) {
-				const clipId = `chronicle-lineage-clip-${n}`;
-				svg("circle", { r: BAR / 2 - 3 }, svg("clipPath", { id: clipId }, defs));
-				svg("image", { href: logo, x: -(BAR / 2 - 3), y: -(BAR / 2 - 3), width: BAR - 6, height: BAR - 6, "clip-path": `url(#${clipId})`, preserveAspectRatio: "xMidYMid slice" }, badge);
-			} else {
-				const fo = svg("foreignObject", { x: -7, y: -7, width: 14, height: 14, class: "uv-lin-badge-icon" }, badge);
-				const holder = createDiv();
-				fo.appendChild(holder);
-				if (!glyph(holder, c.icon ?? GROUP_KINDS[kind].icon)) icon(holder, GROUP_KINDS[kind].icon);
-			}
 			const members = idx.members(c.key).length;
 			const spanText = formatSpan(c.start, c.end, cal) + (openEnd !== undefined ? " – now" : "");
-			// The name sits inside the bar where it fits (kept in view as you pan), else just after it.
-			const shownFrom = Math.max(x(a), 0);
-			const shownTo = Math.min(x(a) + w, width);
-			const inside = c.name.length * 7 + 40 <= shownTo - shownFrom;
-			const lx = inside ? shownFrom + BAR + 4 : x(a) + w + 8;
-			const label = svg("text", { x: lx, y: yy + BAR / 2 + 4, class: "chronicle-lineage-label" + (inside ? "" : " is-outside") }, g);
-			svg("tspan", { class: "chronicle-lineage-name" }, label).textContent = c.name;
 			const meta = [byLane ? "" : GROUP_KINDS[kind].label, spanText, members ? `${members} ${members === 1 ? "member" : "members"}` : ""].filter(Boolean).join(" · ");
-			if (meta) svg("tspan", { class: "chronicle-lineage-meta", dx: 8 }, label).textContent = meta;
+			drawNation(p, c, g, defs, { id: String(n), left: x(a), top: yy, width: w, viewLeft: 0, viewRight: width, meta });
 			// Its history along the bar: the same marks as on the timeline.
 			const history = historyOf(p, c, [a, b]).filter((m) => (m.kind === "event" ? this.options.events !== false : m.kind === "reign" ? this.options.leaders !== false : true));
 			shown.push(...history);

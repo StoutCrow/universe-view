@@ -6,7 +6,7 @@ import type { HistoryMark } from "./history";
 export function markIcon(parent: Element, m: Pick<HistoryMark, "shape" | "categoryId">): SVGElement {
 	const box = svg("svg", { class: "uv-tl-mark", width: 14, height: 14, viewBox: "0 0 14 14" }, parent);
 	box.style.setProperty("--mark-color", categoryColor(m.categoryId));
-	svg("path", { d: markPath(m.shape, 7, 7) }, box);
+	svg("path", { d: markPath(m.shape, 7, 7, 4.5) }, box);
 	return box;
 }
 

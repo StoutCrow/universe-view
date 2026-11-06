@@ -8,8 +8,8 @@ import { rangeOf } from "../index/EntityIndex";
 import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
-import { bindHover, cssNumber, el, emptyState, entityColor, glyph, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
-import { GROUP_KINDS, groupKind } from "./houses";
+import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svg, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
+import { drawNation, nameFits } from "./nationbar";
 import { battlesOf, eventCategories, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { causePath, packRows, rowLayout, stackLevels, type Box, type TimeRange } from "./timelinerows";
 import { dragToReorder } from "../ui/cardlayout";
@@ -146,6 +146,7 @@ export class TimelineRenderer {
 	/** Where to look once the view has its width and rows. */
 	private pendingCenter?: number;
 	private pendingKey?: string;
+	private nationSeq = 0;
 
 	constructor(
 		private container: HTMLElement,
@@ -758,25 +759,11 @@ export class TimelineRenderer {
 		this.renderCauses();
 	}
 
-	/** A nation looks as it does on the lineage: its badge at the start, kept in view, with its name and dates. */
-	private dressNation(bar: HTMLElement, label: HTMLElement | undefined, p: Placed) {
-		const e = p.item.entity;
-		const off = p.labelInside ? Math.max(0, Math.min(-p.x1, p.x2 - p.x1 - this.insideWidth(p.item))) : 0;
-		const badge = el("span", { cls: "uv-nation-badge" }, bar);
-		badge.style.left = `${off + 2}px`;
-		const logo = resourceUrl(this.plugin, e.logo ?? e.image);
-		const kindIcon = GROUP_KINDS[groupKind(this.plugin, e)].icon;
-		if (logo) el("img", { attr: { src: logo, alt: "" } }, badge);
-		else if (!glyph(badge, e.icon ?? kindIcon)) icon(badge, kindIcon);
-		if (!label) return;
-		el("span", { cls: "uv-nation-name", text: p.item.label }, label);
-		if (p.item.meta) el("span", { cls: "uv-nation-meta", text: p.item.meta }, label);
-		if (p.labelInside) label.style.paddingLeft = `${off + 30}px`;
-	}
-
-	/** The room in a bar for its label to sit inside it: for a nation, as on the lineage, its badge and name. */
-	private insideWidth(it: Item): number {
-		return it.meta ? this.measure(it.label) + 46 : this.labelWidth(it) + 6;
+	/** A nation is drawn by what draws it on the lineage. */
+	private nationBar(bar: HTMLElement, p: Placed, height: number) {
+		const box = svg("svg", { class: "uv-lin uv-nation-svg", width: 1, height }, bar);
+		const width = Math.max(8, p.x2 - p.x1);
+		drawNation(this.plugin, p.item.entity, svg("g", {}, box), svg("defs", {}, box), { id: `tl${++this.nationSeq}`, left: 0, top: 0, width, height, viewLeft: -p.x1, viewRight: this.width - p.x1, meta: p.item.meta ?? "", label: !p.noLabel });
 	}
 
 	/** Room a label needs: a nation's holds its badge, name and dates. */
@@ -791,7 +778,8 @@ export class TimelineRenderer {
 		const box = markIcon(node, m);
 		box.classList.add("is-on-bar");
 		box.style.left = `${x - barLeft - 7}px`;
-		box.style.top = `${-7 - level * 11}px`;
+		box.style.top = `${-6 - level * 11}px`;
+		if (m.name) svg("text", { x: 13, y: 3, class: "uv-lin-rename-label" }, box).textContent = m.name;
 		box.setAttribute("aria-label", m.text);
 		box.setAttribute("data-tooltip-position", "top");
 		box.addEventListener("pointerdown", (evt) => evt.stopPropagation());
@@ -937,7 +925,7 @@ export class TimelineRenderer {
 			const put = (it: Item, cluster?: Item[]) => {
 				const x1 = this.x(it.start);
 				const x2 = this.x(it.end);
-				placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside: !it.point && Math.min(x2, this.width) - Math.max(x1, 0) >= this.insideWidth(it), cluster });
+				placed.push({ item: it, row, x1, x2: Math.max(x2, x1 + 4), labelInside: !it.point && (it.meta ? nameFits(it.label, Math.min(x2, this.width) - Math.max(x1, 0)) : Math.max(x2 - x1, 4) >= this.labelWidth(it) + 6), cluster });
 			};
 			let run: Item[] = [];
 			const flushRun = () => {
@@ -1029,12 +1017,12 @@ export class TimelineRenderer {
 			marks.forEach((m, i) => this.renderMark(node, m, p.x1, levels[i]));
 			const nation = it.kind === "culture";
 			if (nation) node.addClass("is-nation");
-			const label = p.noLabel ? undefined : el("span", { cls: "chronicle-tl-label" + (nation ? " uv-nation-label" : ""), text: nation ? "" : it.label }, p.labelInside ? bar : node);
-			if (nation) this.dressNation(bar, label, p);
+			if (nation) this.nationBar(bar, p, at.height);
+			const label = p.noLabel || nation ? undefined : el("span", { cls: "chronicle-tl-label", text: it.label }, p.labelInside ? bar : node);
 			if (p.labelInside && label) {
 				label.addClass("is-inside");
 				// Keep the label readable when the bar starts off-screen to the left.
-				if (p.x1 < 0 && !nation) label.style.paddingLeft = `${Math.min(-p.x1 + 6, p.x2 - p.x1 - this.measure(it.label) - 12)}px`;
+				if (p.x1 < 0) label.style.paddingLeft = `${Math.min(-p.x1 + 6, p.x2 - p.x1 - this.measure(it.label) - 12)}px`;
 			}
 		}
 		node.addEventListener("click", (evt) => {

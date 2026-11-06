@@ -895,53 +895,19 @@ button.chronicle-ov-tile:hover::after {
 	overflow: hidden;
 	transition: width var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease), margin var(--chronicle-fast) var(--chronicle-ease);
 }
-/* A nation looks as it does on the lineage. */
-.chronicle-tl-item.is-nation .chronicle-tl-bar {
-	border: 1px solid color-mix(in srgb, var(--item-color) 70%, var(--background-primary));
-	border-radius: 999px;
-	background: color-mix(in srgb, var(--item-color) 30%, var(--background-primary));
-}
-.chronicle-tl-item.is-nation.is-open-ended .chronicle-tl-bar {
+/* A nation is drawn by the lineage's own code: its row is only a holder. */
+.chronicle-tl-item.is-nation.is-span .chronicle-tl-bar:not(#uv-strong) {
+	overflow: visible;
 	border: none;
-	background: color-mix(in srgb, var(--item-color) 55%, var(--background-primary));
+	background: none;
+	-webkit-mask-image: none;
+	mask-image: none;
 }
-.uv-nation-badge {
+.uv-nation-svg {
 	position: absolute;
-	top: 2px;
-	bottom: 2px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	aspect-ratio: 1;
-	overflow: hidden;
-	border: 1.5px solid var(--item-color);
-	border-radius: 50%;
-	background: var(--background-primary);
-	color: color-mix(in srgb, var(--item-color) 75%, var(--text-normal));
-}
-.uv-nation-badge svg {
-	width: 13px;
-	height: 13px;
-}
-.uv-nation-badge img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-.uv-nation-label {
-	display: inline-flex;
-	align-items: baseline;
-	gap: 8px;
-}
-.uv-nation-name {
-	font-family: var(--chronicle-font-display);
-	font-size: 12.5px;
-	font-weight: 700;
-}
-.uv-nation-meta {
-	font-family: var(--chronicle-font-display);
-	font-size: 10.5px;
-	color: var(--text-muted);
+	top: 0;
+	left: 0;
+	overflow: visible;
 }
 
 /* Each category's shape, on dots and bars alike. */
