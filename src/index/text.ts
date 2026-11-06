@@ -10,6 +10,18 @@ export function asText(v: unknown): string {
 	return JSON.stringify(v) ?? "";
 }
 
+/**
+ * "1240 – 1241" as its two dates, with or without spaces. A lone hyphen only splits bare years:
+ * 1243-05 and 1243-05-14 are single dates.
+ */
+export function splitSpan(text: string): [string, string] {
+	const t = text.trim();
+	const years = /^(\d+)-(\d+)$/.exec(t);
+	if (years && years[2].length >= years[1].length) return [years[1], years[2]];
+	const [from = "", to = ""] = t.split(/\s*[–—]\s*|\s+-\s*|\s*-\s+/);
+	return [from.trim(), to.trim()];
+}
+
 /** Plain-text opening of a note: skips frontmatter, headings, callout titles, tables, embeds and inline fields. */
 export function excerptOf(md: string, max = 240): string {
 	const body = md.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```[\s\S]*?```/g, "").replace(/%%[\s\S]*?%%/g, "");

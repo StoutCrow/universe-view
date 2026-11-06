@@ -1,7 +1,7 @@
 import type { Entity, NameSpan } from "../types";
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
-import { asText } from "./text";
+import { asText, splitSpan } from "./text";
 
 const isNameMap = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v) && !("name" in v);
 
@@ -16,8 +16,8 @@ export function nameRows(value: unknown): Record<string, string>[] {
 		const s = asText(item).replace(/^\[\[|\]\]$/g, "").trim();
 		const span = /^(.+?)\s*\(([^)]+)\)\s*$/.exec(s);
 		if (span) {
-			const [from, to] = span[2].split(/\s+[–—-]\s*|\s*[–—-]\s+/);
-			return [{ name: span[1], from: from?.trim() ?? "", to: to?.trim() ?? "" }];
+			const [from, to] = splitSpan(span[2]);
+			return [{ name: span[1], from, to }];
 		}
 		const word = /^(.+?)\s*[:,]?\s+(from|since|until|to)\s+(.+)$/i.exec(s);
 		if (word) return [/^(from|since)$/i.test(word[2]) ? { name: word[1], from: word[3], to: "" } : { name: word[1], from: "", to: word[3] }];

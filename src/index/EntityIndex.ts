@@ -9,6 +9,7 @@ import { readNames } from "./renames";
 import { readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
+import { clearInferred, noteSignature } from "./derived";
 import {
 	PropReader, cleanLinkText, genderFromTags, normalizeGender, normalizeType, normalizeValue, readCategory, readIcon, readLayer, readPair, readPinSize,
 	readPoints, readRefs, readTimedRefs, typeFromTag,
@@ -55,6 +56,8 @@ export class EntityIndex extends Events {
 	readonly requestRebuild: () => void;
 	/** Notes edited since the last update (re-read on their own, not the whole vault). */
 	private dirty = new Set<string>();
+	/** What each note last gave the index, to tell a real change from a save of its body. */
+	private signatures = new Map<string, string>();
 	private readonly flushUpdates: () => void;
 
 	constructor(private app: App, private getSettings: () => ChronicleSettings, public calendars: CalendarRegistry) {
@@ -66,9 +69,11 @@ export class EntityIndex extends Events {
 	/**
 	 * A note's properties changed: re-read just that note (and refresh the links between notes),
 	 * instead of the whole vault. World notes change how other notes are read, so they rebuild all.
+	 * Saves that only touch the body change nothing here, unless `force` (Dataview reads the body).
 	 */
-	requestUpdate(file: TFile) {
+	requestUpdate(file: TFile, force = false) {
 		if (!this.ready) return this.requestRebuild();
+		if (!force && this.signatures.get(file.path) === noteSignature(this.app.metadataCache.getFileCache(file))) return;
 		this.dirty.add(file.path);
 		this.flushUpdates();
 	}
@@ -331,6 +336,7 @@ export class EntityIndex extends Events {
 
 	readFile(file: TFile): Entity | null {
 		const cache = this.app.metadataCache.getFileCache(file);
+		this.signatures.set(file.path, noteSignature(cache));
 		const fm: Record<string, unknown> = { ...(cache?.frontmatter ?? {}) };
 		delete fm.position; // Obsidian's internal position info, not ours…
 		if (cache?.frontmatter && "position" in cache.frontmatter) {
@@ -570,6 +576,8 @@ export class EntityIndex extends Events {
 			map.set(key, list);
 		};
 		const selfRef = (e: Entity): Ref => ({ key: e.key, name: e.name, resolved: true });
+		const inferredRef = (e: Entity): Ref => ({ ...selfRef(e), inferred: true });
+		for (const e of this.entities.values()) clearInferred(e);
 
 		// Relationships written from the "other side" (children:, branches:, map ids) are folded in first,
 		// so the rest of the index only has to follow one direction.
@@ -582,12 +590,12 @@ export class EntityIndex extends Events {
 		for (const e of this.entities.values()) {
 			for (const c of e.children) {
 				const child = this.entities.get(c.key);
-				if (child && !child.parents.some((p) => p.key === e.key) && child.parents.length < 2) child.parents.push(selfRef(e));
+				if (child && !child.parents.some((p) => p.key === e.key) && child.parents.length < 2) child.parents.push(inferredRef(e));
 				else if (!child) add(this.childrenOf, e.key, c.key);
 			}
 			for (const b of e.childCultures) {
 				const branch = this.entities.get(b.key);
-				if (branch && !branch.parentCultures.some((p) => p.key === e.key)) branch.parentCultures.push(selfRef(e));
+				if (branch && !branch.parentCultures.some((p) => p.key === e.key)) branch.parentCultures.push(inferredRef(e));
 			}
 			if ((e.type === "place" || e.type === "culture") && !e.map && (e.mapHint || e.position)) {
 				const hint = e.mapHint?.toLowerCase();
@@ -595,7 +603,7 @@ export class EntityIndex extends Events {
 					(hint && (mapById.get(hint) ?? maps.find((m) => m.name.toLowerCase() === hint) ??
 						[...mapById.entries()].find(([id]) => id.startsWith(hint) || hint.startsWith(id))?.[1])) ||
 					(e.position && maps.length === 1 ? maps[0] : undefined);
-				if (match) e.map = selfRef(match);
+				if (match) e.map = inferredRef(match);
 			}
 		}
 

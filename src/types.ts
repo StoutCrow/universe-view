@@ -26,6 +26,8 @@ export interface Ref {
 	key: string;
 	name: string;
 	resolved: boolean;
+	/** Worked out from another note, not written on this one. */
+	inferred?: boolean;
 }
 
 /** Someone holding a title for a while (`holders:`). */

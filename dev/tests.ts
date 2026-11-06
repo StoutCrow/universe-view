@@ -16,7 +16,10 @@ import { compareVersions, parseChangelog } from "../src/index/changelog";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "../src/ui/mappresets";
-import { sidesOf } from "../src/index/wars";
+import { occupationsAt, sidesOf } from "../src/index/wars";
+import { MAX_UNDO, addToStep, changesBetween, remember, renameInSteps, restoreFront } from "../src/index/undo";
+import { clearInferred, noteSignature } from "../src/index/derived";
+import { splitSpan } from "../src/index/text";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
 import { inRing, ringArea, splitRing } from "../src/index/geometry";
@@ -1218,6 +1221,48 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(occ("[[L]], [[M]] by [[X]] (1240 – 1241)"), [["L", "X", true, true], ["M", "X", true, true]], "occupied: one line, several lands, with dates");
 	eq(occ(["[[L]] by [[X]]"]), [["L", "X", false, false]], "occupied: no dates, it lasts as long as the event");
 	eq(f.occupied.write(f.occupied.read(["[[L]] by [[X]] (1240 – 1241)"])), ["[[L]] by [[X]] (1240 – 1241)"], "occupied: survives editing");
+	// Undo puts back what a step changed, and nothing else.
+	const changes = changesBetween({ a: 1, b: [1], gone: "x" }, { a: 2, b: [1], added: true });
+	eq(changes, { a: 1, gone: "x", added: undefined }, "undo: a step holds only what changed, as it was");
+	const handEdited: Record<string, unknown> = { a: 2, b: [1], added: true, born: "1200" };
+	restoreFront(handEdited, changes);
+	eq(handEdited, { a: 1, b: [1], born: "1200", gone: "x" }, "undo: a property typed by hand since stays");
+	const step = { label: "s", at: 0, notes: [] as { path: string; before: Record<string, unknown> }[] };
+	addToStep(step, "A.md", { a: 1 });
+	addToStep(step, "A.md", { a: 2, b: 3 });
+	eq(step.notes, [{ path: "A.md", before: { a: 1, b: 3 } }], "undo: a note edited twice in a step goes back to the first value");
+	const moved = [{ label: "s", at: 0, notes: [{ path: "Old/A.md", before: {} }, { path: "Older/B.md", before: {} }] }];
+	renameInSteps(moved, "Old", "New");
+	renameInSteps(moved, "Older/B.md", "Older/C.md");
+	eq(moved[0].notes.map((n) => n.path), ["New/A.md", "Older/C.md"], "undo: steps follow notes and folders that are renamed");
+	const long: typeof step[] = [];
+	for (let i = 0; i <= MAX_UNDO; i++) remember(long, { ...step, at: i });
+	eq([long.length, long[0].at], [MAX_UNDO, 1], "undo: only the newest steps are kept");
+
+	// Links worked out from other notes are cleared, so they can't outlive their source.
+	const child = { parents: [{ key: "W", name: "W", resolved: true }, { key: "A", name: "A", resolved: true, inferred: true }], parentCultures: [{ key: "C", name: "C", resolved: true, inferred: true }], map: { key: "M", name: "M", resolved: true, inferred: true } } as never as Parameters<typeof clearInferred>[0];
+	clearInferred(child);
+	eq([child.parents.map((p) => p.key), child.parentCultures.length, child.map], [["W"], 0, undefined], "index: inferred parents, branches and maps are cleared, written ones stay");
+
+	// Only what the index reads counts as a change.
+	const cached = { frontmatter: { born: "1200" }, tags: [{ tag: "#a", position: 1 }], links: [{ link: "B", position: 1 }] };
+	eq(noteSignature(cached) === noteSignature({ ...cached, tags: [{ tag: "#a", position: 9 }], links: [{ link: "B", position: 9 }] }), true, "index: text moving in the body isn't a change");
+	eq(noteSignature(cached) === noteSignature({ ...cached, frontmatter: { born: "1201" } }), false, "index: a changed property is");
+	eq(noteSignature(cached) === noteSignature({ ...cached, links: [] }), false, "index: a removed link is");
+
+	// Date ranges, with or without spaces.
+	eq(["1277-1278", "1277–1278", "1277 – 1278", "1277 - 1278 C.E."].map((s) => splitSpan(s)), [["1277", "1278"], ["1277", "1278"], ["1277", "1278"], ["1277", "1278 C.E."]], "spans: spaces or none");
+	eq(["1243-05-14", "1243-05", "1240 –", "– 1241", ""].map((s) => splitSpan(s)), [["1243-05-14", ""], ["1243-05", ""], ["1240", ""], ["", "1241"], ["", ""]], "spans: single dates stay whole, open ends stay open");
+	eq(readOccupied("[[L]] by [[X]] (1240-1241)", resolve as never, cal)!.map((o) => [!!o.from, !!o.to]), [[true, true]], "occupied: a range without spaces reads both dates");
+
+	// How long an occupation lasts.
+	const inYear = (y: number) => parseDate(String(y), cal)!;
+	const land = { key: "L", name: "L", resolved: true }, by = { key: "X", name: "X", resolved: true };
+	const wars = [{ start: inYear(1240), end: inYear(1245), occupied: [{ land, by, from: inYear(1241), to: inYear(1242) }, { land: by, by: land }] }];
+	const occIndex = { all: () => wars } as never;
+	const occAt = (y: number) => occupationsAt(occIndex, inYear(y).start).length;
+	eq([occAt(1239), occAt(1240), occAt(1241), occAt(1243), occAt(1246)], [0, 1, 2, 1, 0], "occupied: dated ones keep their dates, undated ones last the war");
+
 	const refs = readTimedRefs([{ alias: "cultures", value: ["[[House]] (king, 1220 – 1258)"] }], ((t: string) => ({ key: t, name: t })) as never, cal, ["cultures"], []);
 	eq([refs[0].ref.name, refs[0].role, !!refs[0].from, !!refs[0].to], ["House", "king", true, true], "dated links: role and dates on one line");
 }

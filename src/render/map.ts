@@ -7,7 +7,7 @@ import { ROUGHNESS, roughenRing } from "../index/rough";
 import { simplifyShared } from "../index/simplify";
 import { ribbon, smoothLine } from "../index/ribbon";
 import { landFill, thinWater } from "./landfill";
-import { formatDay } from "../dates/parser";
+import { formatDay, parseDate } from "../dates/parser";
 import { TextPrompt } from "../ui/TextPrompt";
 import type ChroniclePlugin from "../main";
 import type { Entity, PinSize, Territory } from "../types";
@@ -42,7 +42,7 @@ import { EntityPickerModal } from "../ui/suggest";
 import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
 import { battlesByWar, isBattle, occupationsAt, sidesOf, victorOf } from "../index/wars";
-import { asText } from "../index/text";
+import { asText, splitSpan } from "../index/text";
 
 export const WORLD_MAP = "world";
 
@@ -3403,8 +3403,13 @@ export class MapRenderer {
 		const cal = this.plugin.calendars.get(owner.calendar);
 		const start = this.options.at !== undefined ? formatDay(this.options.at, cal, "year") : "";
 		new TextPrompt(this.plugin, `When did ${owner.name} hold this? (from – to)`, start, (v) => {
-			const [from, to] = v.split(/\s+[–—-]\s*|\s*[–—-]\s+/).map((x) => x.trim());
-			void this.plugin.saveFront(owner.key, this.options.map, points.map(([x, y]) => [round(x, 1), round(y, 1)]), from ?? "", to ?? "").then(() => new Notice(`Occupied area saved for ${owner.name}. It shows at those dates on the time slider.`));
+			const [from, to] = splitSpan(v);
+			if ([from, to].some((d) => d && !parseDate(d, cal))) {
+				new Notice(`Couldn't read "${v}" as dates. Try 1240 – 1241.`);
+				this.askFrontDates(owner, points);
+				return;
+			}
+			void this.plugin.saveFront(owner.key, this.options.map, points.map(([x, y]) => [round(x, 1), round(y, 1)]), from, to).then(() => new Notice(`Occupied area saved for ${owner.name}. It shows at those dates on the time slider.`));
 		}).open();
 	}
 

@@ -72,6 +72,7 @@ import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
 import type { EntityFilter } from "./types";
 import { asText } from "./index/text";
+import { addToStep, changesBetween, remember, renameInSteps, restoreFront, type UndoStep } from "./index/undo";
 
 /** Every view, with its ribbon icon and default hotkey (Ctrl/Cmd + Alt + key; changeable in Settings → Hotkeys). */
 /** This build's version, written in by esbuild.config.mjs (absent in the test harness). */
@@ -215,14 +216,17 @@ export default class ChroniclePlugin extends Plugin {
 			firstPass = false;
 		}));
 		this.registerEvent(this.app.vault.on("create", () => this.index.ready && this.index.requestRebuild()));
-		this.registerEvent(this.app.vault.on("rename", () => this.index.requestRebuild()));
+		this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
+			renameInSteps([...this.history, ...(this.openStep ? [this.openStep] : [])], oldPath, file.path);
+			this.index.requestRebuild();
+		}));
 		this.registerEvent(this.app.vault.on("delete", () => this.index.requestRebuild()));
 		// Dataview fires these on the metadata cache once its own index is ready or changes.
 		const mc = metadataEvents(this.app);
 		this.registerEvent(mc.on("dataview:index-ready", () => this.index.requestRebuild()));
 		this.registerEvent(mc.on("dataview:metadata-change", (...args: unknown[]) => {
 			const file = args[1];
-			if (this.settings.useDataview && file instanceof TFile) this.index.requestUpdate(file);
+			if (this.settings.useDataview && file instanceof TFile) this.index.requestUpdate(file, true);
 		}));
 
 		this.app.workspace.onLayoutReady(() => this.index.rebuild());
@@ -1142,35 +1146,31 @@ export default class ChroniclePlugin extends Plugin {
 
 	// ---- Undo --------------------------------------------------------------------------------------
 
-	private history: { label: string; at: number; notes: { path: string; before: Record<string, unknown> }[] }[] = [];
-	private openStep?: { label: string; at: number; notes: { path: string; before: Record<string, unknown> }[] };
+	private history: UndoStep[] = [];
+	private openStep?: UndoStep;
 
 	/** Every UniverseView edit to a note's properties goes through here, so it can be undone. */
 	async editFrontmatter(file: TFile, fn: (front: Record<string, unknown>) => void, label = "Edit") {
 		await this.app.fileManager.processFrontMatter(file, (front: Record<string, unknown>) => {
 			const before = structuredClone(front);
 			fn(front);
-			if (JSON.stringify(before) === JSON.stringify(front)) return;
-			const note = { path: file.path, before };
-			if (this.openStep) {
-				if (!this.openStep.notes.some((n) => n.path === file.path)) this.openStep.notes.push(note);
-			} else {
-				this.history.push({ label, at: Date.now(), notes: [note] });
-				if (this.history.length > 50) this.history.shift();
-			}
+			const changes = changesBetween(before, front);
+			if (!Object.keys(changes).length) return;
+			if (this.openStep) addToStep(this.openStep, file.path, changes);
+			else remember(this.history, { label, at: Date.now(), notes: [{ path: file.path, before: changes }] });
 		});
 		this.app.workspace.trigger("chronicle:history-changed");
 	}
 
 	/** Runs several edits as one undo step. */
 	async undoGroup(label: string, run: () => Promise<void>) {
-		const step = { label, at: Date.now(), notes: [] as { path: string; before: Record<string, unknown> }[] };
+		const step: UndoStep = { label, at: Date.now(), notes: [] };
 		this.openStep = step;
 		try {
 			await run();
 		} finally {
 			this.openStep = undefined;
-			if (step.notes.length) this.history.push(step);
+			if (step.notes.length) remember(this.history, step);
 			this.app.workspace.trigger("chronicle:history-changed");
 		}
 	}
@@ -1196,15 +1196,18 @@ export default class ChroniclePlugin extends Plugin {
 			new Notice("Nothing to undo.");
 			return;
 		}
+		const missed: string[] = [];
 		for (const n of [...step.notes].reverse()) {
 			const f = this.app.vault.getAbstractFileByPath(n.path);
-			if (!(f instanceof TFile)) continue;
-			await this.app.fileManager.processFrontMatter(f, (front: Record<string, unknown>) => {
-				for (const k of Object.keys(front)) delete front[k];
-				Object.assign(front, structuredClone(n.before));
-			});
+			try {
+				if (!(f instanceof TFile)) throw new Error("note not found");
+				await this.app.fileManager.processFrontMatter(f, (front: Record<string, unknown>) => restoreFront(front, n.before));
+			} catch (err) {
+				console.error("UniverseView: couldn't undo", n.path, err);
+				missed.push(n.path.split("/").pop() ?? n.path);
+			}
 		}
-		new Notice(`Undid: ${step.label}`);
+		new Notice(missed.length ? `Undid: ${step.label}, except in ${missed.join(", ")}. Those notes couldn't be changed.` : `Undid: ${step.label}`);
 		this.app.workspace.trigger("chronicle:history-changed");
 	}
 
@@ -1280,51 +1283,53 @@ export default class ChroniclePlugin extends Plugin {
 		const fix = ([x, y]: [number, number]): [number, number] => [round2(x * sx + dx), round2(y * sy + dy)];
 		const aliases = buildFieldAliases(this.settings.fieldAliases);
 		let notes = 0;
-		for (const e of this.index.all()) {
-			const file = this.app.vault.getAbstractFileByPath(e.path);
-			if (!(file instanceof TFile)) continue;
-			const onThis = (m: string) => m === mapKey || (m === "*" && e.map?.key === mapKey);
-			const hasShapes = [...e.territories, ...e.routes].some((t) => onThis(t.map));
-			const hasPin = !!e.position && e.map?.key === mapKey;
-			if (!hasShapes && !hasPin) continue;
-			// Through the undoable edit, so Undo (Ctrl+Alt+Z) puts each note back.
-			await this.editFrontmatter(file, (front) => {
-				for (const [what, names] of [["territory", ["territory", "territories", "borders"]], ["route", ["routes", "route", "roads"]]] as const) {
-					const list = what === "territory" ? e.territories : e.routes;
-					if (!list.some((t) => onThis(t.map))) continue;
-					const field = names.find((k) => k in front) ?? names[0];
-					front[field] = list.map((t) => ({
-						map: t.map === "world" ? "world" : onThis(t.map) ? mapRef : `[[${this.index.get(t.map)?.name ?? t.map}]]`,
-						points: writePoints(onThis(t.map) ? t.points.map(fix) : t.points),
-						...(t.kind ? { kind: t.kind } : {}),
-						...(t.name ? { name: t.name } : {}),
-						...(t.fromText ? { from: t.fromText } : {}),
-						...(t.toText ? { to: t.toText } : {}),
-					}));
-				}
-				if (hasPin && e.position) {
-					if ("custom_coordinates_x" in front) {
-						front.custom_coordinates_x = round2(Number(front.custom_coordinates_x) * sx + dx);
-						// Charted Roots counts y from the bottom: scaling keeps that, a shift reverses.
-						front.custom_coordinates_y = round2(Number(front.custom_coordinates_y) * sy - dy);
-					} else {
-						const k = aliases.position.find((a) => a in front) ?? this.fieldName("position");
-						front[k] = fix(e.position);
+		// One undo step, however many notes are on the map.
+		await this.undoGroup(`Fit ${mapEntity.name} to its new picture`, async () => {
+			for (const e of this.index.all()) {
+				const file = this.app.vault.getAbstractFileByPath(e.path);
+				if (!(file instanceof TFile)) continue;
+				const onThis = (m: string) => m === mapKey || (m === "*" && e.map?.key === mapKey);
+				const fronts = e.fronts ?? [];
+				const hasShapes = [...e.territories, ...e.routes, ...fronts].some((t) => onThis(t.map));
+				const hasPin = !!e.position && e.map?.key === mapKey;
+				if (!hasShapes && !hasPin) continue;
+				await this.editFrontmatter(file, (front) => {
+					for (const [names, list] of [[["territory", "territories", "borders"], e.territories], [["routes", "route", "roads"], e.routes], [["occupied-areas"], fronts]] as const) {
+						if (!list.some((t) => onThis(t.map))) continue;
+						const field = names.find((k) => k in front) ?? names[0];
+						front[field] = list.map((t) => ({
+							map: t.map === "world" ? "world" : onThis(t.map) ? mapRef : `[[${this.index.get(t.map)?.name ?? t.map}]]`,
+							points: writePoints(onThis(t.map) ? t.points.map(fix) : t.points),
+							...(t.kind ? { kind: t.kind } : {}),
+							...(t.name ? { name: t.name } : {}),
+							...(t.fromText ? { from: t.fromText } : {}),
+							...(t.toText ? { to: t.toText } : {}),
+						}));
 					}
-				}
-			}, `Fit ${e.name} to ${mapEntity.name}'s new picture`);
-			notes++;
-		}
-		// The map note's own drawings (sticky notes, arrows), and its new size.
-		const mf = this.app.vault.getAbstractFileByPath(mapKey);
-		if (mf instanceof TFile) {
-			await this.app.fileManager.processFrontMatter(mf, (front: Record<string, unknown>) => {
-				if (Array.isArray(front.annotations)) {
-					front.annotations = (front.annotations as Record<string, unknown>[]).map((a) => (typeof a?.points === "string" ? { ...a, points: writePoints(readPoints(a.points).map(fix)) } : a));
-				}
-				if (newSize) front["image-size"] = newSize;
-			});
-		}
+					if (hasPin && e.position) {
+						if ("custom_coordinates_x" in front) {
+							front.custom_coordinates_x = round2(Number(front.custom_coordinates_x) * sx + dx);
+							// Charted Roots counts y from the bottom: scaling keeps that, a shift reverses.
+							front.custom_coordinates_y = round2(Number(front.custom_coordinates_y) * sy - dy);
+						} else {
+							const k = aliases.position.find((a) => a in front) ?? this.fieldName("position");
+							front[k] = fix(e.position);
+						}
+					}
+				});
+				notes++;
+			}
+			// The map note's own drawings (sticky notes, arrows), and its new size.
+			const mf = this.app.vault.getAbstractFileByPath(mapKey);
+			if (mf instanceof TFile) {
+				await this.editFrontmatter(mf, (front) => {
+					if (Array.isArray(front.annotations)) {
+						front.annotations = (front.annotations as Record<string, unknown>[]).map((a) => (typeof a?.points === "string" ? { ...a, points: writePoints(readPoints(a.points).map(fix)) } : a));
+					}
+					if (newSize) front["image-size"] = newSize;
+				});
+			}
+		});
 		new Notice(`Moved the pins and areas of ${notes} note${notes === 1 ? "" : "s"} to fit ${mapEntity.name}'s new image.`);
 	}
 

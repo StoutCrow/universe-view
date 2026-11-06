@@ -1,7 +1,7 @@
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import type { HolderSpan, Occupation, Ref, Side, Transfer } from "../types";
-import { asText } from "./text";
+import { asText, splitSpan } from "./text";
 
 type Resolve = (text: string) => Ref;
 
@@ -75,8 +75,8 @@ const holders: RowFormat = {
 			}
 			if (typeof item !== "string") return [];
 			const m = inBrackets(item);
-			const [from, to] = (m?.[2] ?? "").split(/\s+[–—-]\s*|\s*[–—-]\s+/);
-			return [{ holder: link(m ? m[1] : item), from: from?.trim() ?? "", to: to?.trim() ?? "" }];
+			const [from, to] = splitSpan(m?.[2] ?? "");
+			return [{ holder: link(m ? m[1] : item), from, to }];
 		});
 	},
 	write(rows) {
@@ -212,8 +212,8 @@ const occupied: RowFormat = {
 			if (typeof item !== "string") return [];
 			const m = /^(.+?)\s+by\s+(.+?)(?:\s*\(([^)]+)\))?\s*$/.exec(item);
 			if (!m) return [];
-			const [from, to] = (m[3] ?? "").split(/\s+[–—-]\s*|\s*[–—-]\s+/);
-			return namesIn(m[1]).map((land) => ({ land, by: link(m[2]), from: from?.trim() ?? "", to: to?.trim() ?? "" }));
+			const [from, to] = splitSpan(m[3] ?? "");
+			return namesIn(m[1]).map((land) => ({ land, by: link(m[2]), from, to }));
 		}).filter((r) => r.land && r.by);
 	},
 	write(rows) {
