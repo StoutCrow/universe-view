@@ -1,7 +1,7 @@
 import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import type { Calendar } from "../dates/calendars";
-import { formatDay, formatSpan } from "../dates/parser";
+import { formatSpan } from "../dates/parser";
 import { categoryColor, markPath } from "./categories";
 import { historyOf, type HistoryMark } from "./history";
 import { markKey } from "./markkey";
