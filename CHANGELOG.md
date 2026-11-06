@@ -2,6 +2,9 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.5.2 — 2026-11-06
+- Cards move like the big tabs: drag one by its title at any time. Its corner, shown on hover, resizes it, and right-clicking its title hides it, restores its size, or resets the page. The grid button is still there for columns and hidden cards.
+
 ## 1.5.1 — 2026-11-06
 - Cards and big tabs now really drag: they move as you go, the page scrolls at its edges, and it works with touch. Library's narrow column holds two cards sooner.
 

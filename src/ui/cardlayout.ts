@@ -1,3 +1,4 @@
+import { Menu, Platform } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { el, iconButton } from "../render/common";
 
@@ -116,6 +117,7 @@ export class CardLayout {
 	apply(grid: HTMLElement, id: string) {
 		this.grid = grid;
 		this.id = id;
+		grid.addClass("uv-cards");
 		this.observer.disconnect();
 		this.observer.observe(grid);
 		this.arrange();
@@ -145,6 +147,10 @@ export class CardLayout {
 			c.style.height = height ? `${height}px` : "";
 			c.toggleClass("uv-card-sized", !!height);
 			if (this.editing) this.tools(c);
+			if (!Platform.isMobile) {
+				this.corner(c);
+				this.title(c);
+			}
 		}
 		if (this.editing) this.showBar();
 		this.fit();
@@ -213,7 +219,46 @@ export class CardLayout {
 			p.hidden = [...(p.hidden ?? []), id];
 			this.save();
 		});
-		// The corner resizes: across in whole columns, down in pixels.
+	}
+
+	/** A card's title drags it, any time, and right-clicking it offers the rest. */
+	private title(c: HTMLElement) {
+		const head = c.querySelector<HTMLElement>(":scope > h3, :scope > .chronicle-ov-panel-head");
+		if (!head || head.dataset.moves) return;
+		head.dataset.moves = "true";
+		head.addClass("uv-card-title");
+		dragToReorder(head, c, () => this.cards(), () => {
+			this.prefs.order = this.cards().map((x) => x.dataset.card ?? "");
+			this.save();
+		});
+		head.addEventListener("contextmenu", (evt) => {
+			evt.preventDefault();
+			const id = c.dataset.card ?? "";
+			const p = this.prefs;
+			const menu = new Menu();
+			menu.addItem((i) => i.setTitle("Hide this card").setIcon("eye-off").onClick(() => {
+				p.hidden = [...(p.hidden ?? []), id];
+				this.save();
+			}));
+			if (p.height?.[id] || p.span?.[id]) menu.addItem((i) => i.setTitle("Back to its own size").setIcon("rotate-ccw").onClick(() => {
+				delete p.height?.[id];
+				delete p.span?.[id];
+				this.save();
+			}));
+			menu.addSeparator();
+			menu.addItem((i) => i.setTitle(this.editing ? "Finish customising" : "Customise this page…").setIcon("layout-grid").onClick(() => this.toggle()));
+			menu.addItem((i) => i.setTitle("Reset this page").setIcon("rotate-ccw").onClick(() => {
+				delete this.plugin.settings.cardLayouts?.[this.id];
+				this.save();
+			}));
+			menu.showAtMouseEvent(evt);
+		});
+	}
+
+	/** The corner resizes: across in whole columns, down in pixels. */
+	private corner(c: HTMLElement) {
+		const id = c.dataset.card ?? "";
+		const p = this.prefs;
 		const corner = el("div", { cls: "uv-card-corner", attr: { role: "separator", "aria-label": "Resize this card" } }, c);
 		corner.addEventListener("pointerdown", (down) => {
 			down.preventDefault();

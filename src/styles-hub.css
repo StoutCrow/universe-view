@@ -367,8 +367,14 @@ button.uv-cards-hidden {
 .uv-card-sized {
 	overflow: auto;
 }
-.is-arranging > [data-card] {
+.uv-cards > [data-card] {
 	position: relative;
+}
+.uv-card-title {
+	cursor: grab;
+	user-select: none;
+}
+.is-arranging > [data-card] {
 	outline: 1px dashed var(--background-modifier-border-hover);
 	outline-offset: 2px;
 }
@@ -401,6 +407,12 @@ button.uv-cards-hidden {
 	border-bottom: 3px solid var(--text-muted);
 	cursor: nwse-resize;
 	touch-action: none;
+	opacity: 0;
+	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+}
+[data-card]:hover > .uv-card-corner,
+.is-arranging .uv-card-corner {
+	opacity: 1;
 }
 
 /* ---- The files panel in Obsidian's sidebar ---- */
