@@ -8,6 +8,7 @@ import { LIST_INFO, ListKind, kinCount, listRows, renderList } from "../render/p
 import { VIEW_DASHBOARD } from "./DashboardView";
 import { ValidateModal } from "../ui/ValidateModal";
 import { DetectModal } from "../ui/DetectModal";
+import { SAMPLE_FOLDER, addSampleWorld } from "../ui/sample";
 import { CardLayout } from "../ui/cardlayout";
 import { ChronicleView } from "./base";
 import { VIEW_TIMELINE } from "./TimelineView";
@@ -87,6 +88,26 @@ export class OverviewView extends ChronicleView {
 		return Platform.isMacOS ? `⌘⌥${key}` : `Ctrl+Alt+${key}`;
 	}
 
+	/** A vault with nothing in it for UniverseView yet: the ways to begin, instead of a page of zeroes. */
+	private firstRun(page: HTMLElement) {
+		const p = this.plugin;
+		const box = el("div", { cls: "uv-setup" }, page);
+		el("h1", { cls: "chronicle-ov-title", text: "Start your world" }, box);
+		el("p", { cls: "uv-setup-lead", text: "UniverseView builds its timelines, trees and maps from the properties on your notes. Choose how to begin." }, box);
+		const choice = (iconName: string, title: string, desc: string, run: () => void) => {
+			const b = el("button", { cls: "uv-setup-choice" }, box);
+			icon(el("span", { cls: "uv-setup-icon" }, b), iconName);
+			const text = el("span", { cls: "uv-setup-text" }, b);
+			el("strong", { text: title }, text);
+			el("span", { text: desc }, text);
+			b.addEventListener("click", run);
+		};
+		const notes = this.app.vault.getMarkdownFiles().length;
+		if (notes) choice("wand-2", "Read my notes", `Find the people, places and events in your ${notes.toLocaleString()} note${notes === 1 ? "" : "s"}. You review each one before anything changes.`, () => new DetectModal(p).open());
+		choice("book-open", "Add a sample world", `Sixteen notes on the Tudors, with a family, a war and places on the map, in a folder called "${SAMPLE_FOLDER}". Delete it when you're done.`, () => void addSampleWorld(p));
+		choice("plus", "Start from scratch", "Create your first person, place, group or event.", () => p.createEntityPrompt());
+	}
+
 	private render() {
 		const page = this.page;
 		if (!page) return;
@@ -119,6 +140,11 @@ export class OverviewView extends ChronicleView {
 		const span = Number.isFinite(min) ? ` · ${cal.formatYear(cal.fromDays(min).y)} – ${cal.formatYear(cal.fromDays(max).y)}` : "";
 		el("div", { cls: "chronicle-ov-sub", text: counts.join(" · ") + span }, hero);
 
+		if (!idx.all().length) {
+			hero.remove();
+			this.firstRun(page);
+			return;
+		}
 		if (!all.length) {
 			const empty = el("div", { cls: "chronicle-ov-emptynote" }, page);
 			empty.setText("No people, places, events, realms or houses here yet. Create one, or let UniverseView detect them in your existing notes.");

@@ -1,5 +1,5 @@
 import { UndoHistoryModal } from "../ui/undohistory";
-import { ItemView, WorkspaceLeaf, debounce } from "obsidian";
+import { ItemView, Menu, WorkspaceLeaf, debounce } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { EntityType } from "../types";
 import { formatDay } from "../dates/parser";
@@ -86,17 +86,16 @@ export abstract class ChronicleView extends ItemView {
 		fill();
 		const last = this.toolbar.lastElementChild as HTMLElement | null;
 		const g = last?.hasClass("chronicle-toolbar-group") ? last : this.group();
-		if (this.exportable) {
-			const b = iconButton(g, "image-down", "Export as an image or PDF", (evt) => exportMenu(this.plugin, this.body, this.getDisplayText(), evt, this.exportExtras()));
-			g.insertBefore(b, g.firstChild);
-		}
-		// Every view can be saved under a name, with its filters, focus and date.
-		const save = iconButton(g, "bookmark-plus", "Save this view (open it again later, or link to it from a note)", () => this.plugin.saveCurrentView(this));
-		g.insertBefore(save, g.firstChild);
 		// What UniverseView changed lately, to undo back to any point.
 		iconButton(g, "history", "Undo history", () => new UndoHistoryModal(this.plugin).open());
-		// The settings that shape this view, one click away.
-		iconButton(g, "settings", "UniverseView settings for this view", () => this.plugin.openSettings(this.settingsTab));
+		// What every view has in common, in one place rather than a row of icons.
+		iconButton(g, "more-horizontal", "More: save this view, export, settings", (evt) => {
+			const menu = new Menu();
+			menu.addItem((i) => i.setTitle("Save this view…").setIcon("bookmark-plus").onClick(() => this.plugin.saveCurrentView(this)));
+			if (this.exportable) menu.addItem((i) => i.setTitle("Export as an image or PDF…").setIcon("image-down").onClick(() => exportMenu(this.plugin, this.body, this.getDisplayText(), evt, this.exportExtras())));
+			menu.addItem((i) => i.setTitle("Settings for this view").setIcon("settings").onClick(() => this.plugin.openSettings(this.settingsTab)));
+			menu.showAtMouseEvent(evt);
+		});
 	}
 
 	/** Which settings tab belongs to this view (maps → Maps & realms, timelines → Time…). */

@@ -135,7 +135,7 @@ body.chronicle-flat {
 	gap: 5px;
 	height: 28px;
 	padding: 0 10px;
-	border-radius: 14px;
+	border-radius: 8px;
 	font-size: var(--font-ui-small);
 	background: transparent;
 	color: var(--text-muted);

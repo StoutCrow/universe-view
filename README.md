@@ -185,11 +185,11 @@ Only write each relationship once — UniverseView infers children, siblings, th
 
 Every view opens notes on click (Ctrl/Cmd-click for a new tab), shows Page Preview on Ctrl-hover, and has a right-click menu to jump to the same note in the other views.
 
-**Export:** the picture button on the timeline, family tree, connections, lineage, org chart and map saves a PNG or SVG into `UniverseView exports/`, copies the picture, or opens it for printing (where you can save a PDF). Charts come out whole, not just the part on screen. A map comes out as it shows (tiers, shading, labels, battles and legend, without the zoom buttons or pop-ups), with the time slider's date under it. *Save a time-lapse* draws the map at a series of dates and saves a captioned picture of each, plus one page with every frame.
+**Export:** the ⋯ menu on the timeline, family tree, connections, lineage, org chart and map saves a PNG or SVG into `UniverseView exports/`, copies the picture, or opens it for printing (where you can save a PDF). Charts come out whole, not just the part on screen. A map comes out as it shows (tiers, shading, labels, battles and legend, without the zoom buttons or pop-ups), with the time slider's date under it. *Save a time-lapse* draws the map at a series of dates and saves a captioned picture of each, plus one page with every frame.
 
 **Undo:** every change UniverseView makes to your notes (moving pins, painting, editing in the Dashboard, linking, bulk edits) can be undone with the undo button or Ctrl+Alt+Z, up to 50 steps.
 
-On/off buttons show their state: a toggle that's on is filled with the accent colour and shows a check mark, and a map tool's button stays filled while the tool is running (click it again to stop).
+On/off buttons show their state: a toggle that's on has a soft fill and a coloured icon, and a map tool's button stays filled with the accent colour while the tool is running (click it again to stop).
 
 ## Boards: several views at once
 

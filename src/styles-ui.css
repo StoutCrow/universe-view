@@ -875,16 +875,17 @@ button.chronicle-ov-tile:hover::after {
 	opacity: 0.75;
 }
 .chronicle-chip.is-toggle.is-active {
-	background: var(--interactive-accent);
-	border-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+	background: var(--background-modifier-hover);
+	border-color: var(--background-modifier-border-hover);
+	color: var(--text-normal);
 }
 .chronicle-chip.is-toggle.is-active .chronicle-chip-icon {
 	opacity: 1;
+	color: var(--text-accent);
 }
 .chronicle-chip.is-toggle.is-active:hover {
-	background: var(--interactive-accent-hover);
-	color: var(--text-on-accent);
+	background: var(--background-modifier-active-hover);
+	color: var(--text-normal);
 }
 .chronicle-chip-check {
 	display: inline-flex;

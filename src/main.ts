@@ -324,6 +324,8 @@ export default class ChroniclePlugin extends Plugin {
 		if (seen === running) return;
 		this.settings.lastSeenVersion = running;
 		void this.saveSettings();
+		// A first install opens the dashboard, whose Home page shows the ways to begin.
+		if (!seen) this.app.workspace.onLayoutReady(() => void this.activateView(VIEW_HUB, {}));
 		if (!seen || this.settings.showWhatsNew === false || compareVersions(running, seen) <= 0) return;
 		this.app.workspace.onLayoutReady(() => window.setTimeout(() => new WhatsNewModal(this, seen).open(), 1500));
 	}
