@@ -1,16 +1,13 @@
-import { MarkdownPostProcessorContext, Modal, Notice, Setting, TFile, TFolder, debounce } from "obsidian";
+import { MarkdownPostProcessorContext, Modal, Setting, TFile, debounce } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { ChronDate, Entity, EntityType } from "../types";
 import { buildFieldAliases, type FieldName } from "../settings";
 import { formatDate, formatSpan } from "../dates/parser";
 import { findKinship, type KinFinding } from "../detect/classify";
-import { parseQuickAdd, quickAddFrontmatter } from "../import/quickadd";
 import { continuity } from "../index/validate";
 import { storyPrompts } from "../index/prompts";
 import { linkTarget } from "../index/reader";
-import { TYPE_ICONS, TYPE_LABELS, el, icon, openEntity } from "../render/common";
-import { GROUP_KINDS } from "../render/houses";
-import { makeFolderNote, placementFor } from "./foldernotes";
+import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { presetKinds, relKind } from "../index/relkinds";
 import { asText } from "../index/text";
