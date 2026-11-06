@@ -1,4 +1,4 @@
-import { Keymap, Menu, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
+import { Keymap, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
 import { ENTITY_TYPES, PIN_SIZES, type ChronDate, type Entity, type EntityType } from "../types";
 import { buildFieldAliases, findMapping, setMapping, type FieldName, type PinColorBy } from "../settings";
 import { formatDate, formatSpan } from "../dates/parser";
