@@ -140,7 +140,6 @@
 .uv-split-piece:hover:not(#uv-strong) { fill-opacity: 0.5; }
 
 /* ---- Renamings and editing ---- */
-.uv-lin-rename line { stroke: var(--text-normal); stroke-width: 1.5; stroke-dasharray: 3 2; opacity: 0.6; }
 .uv-lin-rename-label { font-size: 9.5px; fill: var(--text-muted); font-style: italic; }
 .chronicle-vertex.is-handle.is-selected { box-shadow: 0 0 0 3px var(--interactive-accent); }
 .chronicle-vertex.is-handle.is-shared { outline: 2px solid var(--background-primary); outline-offset: 1px; box-shadow: 0 0 0 4px var(--terr-color); }

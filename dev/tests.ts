@@ -20,7 +20,7 @@ import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
 import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
-import { NATIONS_LANE, categoryOf as laneCategory, laneFor, shapeFor } from "../src/render/categories";
+import { markPath, shapeFor } from "../src/render/categories";
 import { causePath, packRows } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { quickAddFrontmatter, withFields } from "../src/import/quickadd";
@@ -1252,14 +1252,11 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(holdersProperty({ succession: "[[A]] (1200 – 1210)" }), "[[A]] (1200 – 1210)", "holders: one linked line counts");
 	eq(holdersProperty({ holders: ["[[B]]"], succession: "agnatic" }), ["[[B]]"], "holders: holders: wins");
 
-	// A nation's history shares a lane; shapes tell its categories apart.
-	eq(["rename", "reign", "occupation"].map((k) => laneFor(k as "rename", laneCategory(k as "rename", undefined), false)[0]), [NATIONS_LANE[0], NATIONS_LANE[0], NATIONS_LANE[0]], "lanes: renamings, heirs and occupations join the nations' lane");
-	eq(laneFor("event", ["conflict", "Conflict"], true)[0], NATIONS_LANE[0], "lanes: wars are there too");
-	eq(laneFor("event", ["treaty", "Treaty"], false)[0], "treaty", "lanes: other kinds of event keep their own");
-	eq(laneFor("person", ["kind:person", "Lifespans"], false)[0], "kind:person", "lanes: lifespans keep theirs");
+	// Shapes tell a nation's history apart.
 	const cats = ["coronation", "kind:person", "treaty", "~event"];
 	const shapes = [shapeFor("rename", "kind:rename", undefined), shapeFor("reign", "kind:reign", undefined), shapeFor("occupation", "kind:occupation", undefined), shapeFor("event", "x", "war"), shapeFor("event", "x", "battle"), shapeFor("event", "coronation", undefined, cats), shapeFor("event", "treaty", undefined, cats)];
 	eq(new Set(shapes).size, shapes.length, "shapes: no two categories share one");
+	eq(new Set(["diamond", "arrow", "chevron", "battle", "hatch", "square", "hexagon", "triangle", "star", "round"].map((s) => markPath(s as "diamond", 7, 7))).size, 10, "shapes: each draws differently");
 	eq([shapeFor("person", "kind:person", undefined), shapeFor("event", "~event", undefined, cats)], ["round", "round"], "shapes: lifespans and uncategorised events stay plain");
 
 	// Normalising: the vault's own scheme, wherever a note's facts justify it.

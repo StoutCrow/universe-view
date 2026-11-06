@@ -45,6 +45,11 @@ export function warOf(idx: EntityIndex, e: Entity): Entity | undefined {
 	return w && w.type === "event" && w.key !== e.key ? w : undefined;
 }
 
+/** The kinds of event other than wars and battles, sorted: each gets its shape from its place here. */
+export function eventCategories(idx: EntityIndex): string[] {
+	return [...new Set(idx.all("event").filter((e) => !isBattle(e) && !namedAsWar(e)).flatMap((e) => e.category ?? []))].sort();
+}
+
 /** A war's battles, in the order they were fought. */
 export function battlesOf(idx: EntityIndex, war: Entity): Entity[] {
 	return idx

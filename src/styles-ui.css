@@ -943,15 +943,42 @@ button.chronicle-ov-tile:hover::after {
 	font-weight: normal;
 	color: var(--text-muted);
 }
+.uv-tl-key-row {
+	position: sticky;
+	left: 0;
+	z-index: 3;
+	display: inline-flex;
+	margin: 6px 0 0 8px;
+	font-size: var(--font-ui-smaller);
+}
+.uv-tl-key-row .uv-tl-key {
+	margin-left: 0;
+	padding-left: 0;
+	border-left: none;
+}
 .uv-tl-key-item {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
 }
-.uv-tl-key-item .chronicle-tl-dot {
-	width: 10px;
-	height: 10px;
-	margin-left: 0;
+.uv-tl-mark {
+	flex: none;
+	overflow: visible;
+}
+.uv-tl-mark path {
+	fill: var(--background-primary);
+	stroke: var(--mark-color);
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}
+.uv-tl-mark.is-on-bar {
+	position: absolute;
+	top: -7px;
+	z-index: 2;
+	cursor: pointer;
+}
+.uv-tl-mark.is-on-bar:hover path {
+	fill: var(--mark-color);
 }
 .chronicle-tl-lane-label.is-movable {
 	cursor: grab;

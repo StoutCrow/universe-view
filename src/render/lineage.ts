@@ -3,6 +3,8 @@ import type { Entity } from "../types";
 import type { Calendar } from "../dates/calendars";
 import { formatDay, formatSpan } from "../dates/parser";
 import { renamings } from "../index/renames";
+import { eventCategories, isBattle, namedAsWar } from "../index/wars";
+import { markPath, shapeFor } from "./categories";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import { bindHover, cultureColor, el, emptyState, glyph, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
 import { GROUP_KINDS, groupKind, type GroupKind } from "./houses";
@@ -471,8 +473,8 @@ export class LineageRenderer {
 				for (const t of ticksAt) {
 					const lx = x(t.day);
 					if (lx <= x(a) + BAR || lx >= x(a) + w - 2) continue;
-					const line = svg("line", { x1: lx, x2: lx, y1: yy + 4, y2: yy + BAR - 4, class: "uv-lin-leader" }, g);
-					svg("title", {}, line).textContent = t.text;
+					const heir = svg("path", { d: markPath("chevron", lx, yy + 1, 4.5), class: "uv-lin-event" }, g);
+					svg("title", {}, heir).textContent = t.text;
 				}
 			}
 			// Renamings (`names:`): a mark where it took a new name, with the name beside it.
@@ -480,8 +482,8 @@ export class LineageRenderer {
 				const rx = x(r.day);
 				if (rx <= x(a) + BAR || rx >= x(a) + w - 2) continue;
 				const mark = svg("g", { class: "uv-lin-rename" }, g);
-				svg("line", { x1: rx, x2: rx, y1: yy - 4, y2: yy + BAR + 2 }, mark);
-				svg("text", { x: rx + 3, y: yy - 3, class: "uv-lin-rename-label" }, mark).textContent = r.name;
+				svg("path", { d: markPath("diamond", rx, yy + 1, 4.5), class: "uv-lin-event" }, mark);
+				svg("text", { x: rx + 6, y: yy - 3, class: "uv-lin-rename-label" }, mark).textContent = r.name;
 				svg("title", {}, mark).textContent = `${r.before ? `${r.before} becomes ` : ""}${r.name}, ${formatDay(r.day, cal, "year")}`;
 			}
 			const members = idx.members(c.key).length;
@@ -497,10 +499,12 @@ export class LineageRenderer {
 			if (meta) svg("tspan", { class: "chronicle-lineage-meta", dx: 8 }, label).textContent = meta;
 			// Its events, as marks along the bar.
 			if (this.options.events !== false) {
+				const cats = eventCategories(idx);
 				for (const ev of idx.events(c.key)) {
 					if (!ev.start || ev.start.start < a || ev.start.start > b) continue;
 					const ex = x(ev.start.start);
-					const mark = svg("path", { d: `M${ex},${yy - 3} l4,4 l-4,4 l-4,-4 z`, class: "uv-lin-event" }, g);
+					const shape = shapeFor("event", ev.category ?? "~event", isBattle(ev) ? "battle" : namedAsWar(ev) ? "war" : undefined, cats);
+					const mark = svg("path", { d: markPath(shape, ex, yy + 1, 4.5), class: "uv-lin-event" }, g);
 					svg("title", {}, mark).textContent = `${ev.name} · ${formatSpan(ev.start, ev.end, p.calendars.get(ev.calendar))}`;
 					mark.addEventListener("click", (evt) => {
 						evt.stopPropagation();

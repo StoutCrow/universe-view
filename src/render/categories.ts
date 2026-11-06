@@ -26,14 +26,6 @@ export function categoryOf(kind: ItemKind, category: string | undefined): [strin
 	return [`kind:${k}`, KIND_LABELS[k]];
 }
 
-/** The lane a nation's history shares: its wars, new names, heirs and occupations, told apart by shape. */
-export const NATIONS_LANE: [string, string] = ["~nations", "Nations and wars"];
-
-/** Where an item goes when organising by category: `warlike` is a war or battle. */
-export function laneFor(kind: ItemKind, category: [string, string], warlike: boolean): [string, string] {
-	return kind === "rename" || kind === "reign" || kind === "occupation" || (kind === "event" && warlike) ? NATIONS_LANE : category;
-}
-
 export type ItemShape = "round" | "battle" | "arrow" | "diamond" | "chevron" | "hatch" | "square" | "hexagon" | "triangle" | "star";
 
 const EVENT_SHAPES: ItemShape[] = ["square", "hexagon", "triangle", "star"];
@@ -53,6 +45,23 @@ export function shapeFor(kind: ItemKind, id: string, war: "war" | "battle" | und
 	if (id === "~event") return "round";
 	const events = all.filter((c) => !c.startsWith("kind:") && c !== "~event");
 	return EVENT_SHAPES[Math.max(0, events.indexOf(id)) % EVENT_SHAPES.length];
+}
+
+/** A shape as an SVG path, centred on x, y, for marks along a bar. */
+export function markPath(shape: ItemShape, x: number, y: number, r = 5): string {
+	const at = (...pts: [number, number][]) => `M${pts.map(([a, b]) => `${x + a * r},${y + b * r}`).join(" L")} Z`;
+	switch (shape) {
+		case "diamond": return at([0, -1], [1, 0], [0, 1], [-1, 0]);
+		case "arrow": return at([-0.9, -1], [1, 0], [-0.9, 1]);
+		case "chevron": return at([-1, -0.9], [0.1, -0.9], [1, 0], [0.1, 0.9], [-1, 0.9], [-0.1, 0]);
+		case "battle": return `M${x - r},${y - r} L${x + r},${y + r} M${x + r},${y - r} L${x - r},${y + r}`;
+		case "hatch": return `${at([-1, -1], [1, -1], [1, 1], [-1, 1])} M${x - r},${y + r} L${x + r},${y - r}`;
+		case "square": return at([-0.85, -0.85], [0.85, -0.85], [0.85, 0.85], [-0.85, 0.85]);
+		case "hexagon": return at([-0.5, -0.9], [0.5, -0.9], [1, 0], [0.5, 0.9], [-0.5, 0.9], [-1, 0]);
+		case "triangle": return at([0, -1], [1, 0.85], [-1, 0.85]);
+		case "star": return at([0, -1], [0.27, -0.33], [1, -0.3], [0.42, 0.14], [0.6, 0.85], [0, 0.45], [-0.6, 0.85], [-0.42, 0.14], [-1, -0.3], [-0.27, -0.33]);
+		case "round": return `M${x - r},${y} a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 ${-r * 2},0 Z`;
+	}
 }
 
 /**

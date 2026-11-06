@@ -9,11 +9,11 @@ import { rangeOf } from "../index/EntityIndex";
 import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
-import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
-import { battlesOf, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
+import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svg, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
+import { battlesOf, eventCategories, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { causePath, packRows, type Box } from "./timelinerows";
 import { dragToReorder } from "../ui/cardlayout";
-import { KIND_LABELS, NATIONS_LANE, categoryColor, categoryOf, laneFor, shapeFor, type ItemKind, type ItemShape } from "./categories";
+import { KIND_LABELS, categoryColor, categoryOf, markPath, shapeFor, type ItemKind, type ItemShape } from "./categories";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
 
@@ -81,6 +81,19 @@ interface Item {
 	open?: boolean;
 	/** A reign's title (the item itself is the holder): the realm lane it belongs in. */
 	context?: string;
+	/** On a nation's bar: what happened to it, as marks along it. */
+	marks?: Mark[];
+}
+
+/** Something that happened to a nation, drawn on its bar. */
+interface Mark {
+	day: number;
+	shape: ItemShape;
+	color: string;
+	text: string;
+	category: string;
+	/** The note it opens. */
+	key: string;
 }
 
 interface Placed {
@@ -194,6 +207,8 @@ export class TimelineRenderer {
 		else if (!this.userMoved) this.fit();
 		else this.schedule();
 	}
+
+	private eventCats: string[] = [];
 
 	/** Every category on the timeline (for colours), sorted. */
 	private catOrder: string[] = [];
@@ -312,7 +327,10 @@ export class TimelineRenderer {
 				const a = span.start?.start;
 				if (a === undefined) continue;
 				const b = span.end?.end ?? p.end?.end ?? plugin.openEndOf(p) ?? a;
-				const title = holdingsOf(tree, p.key).map((k) => idx.get(k)).sort((x, y) => (tree.nodes.get(x?.key ?? "")?.rank ?? 9) - (tree.nodes.get(y?.key ?? "")?.rank ?? 9))[0];
+				// What they ruled: their own title, else the greatest their house holds.
+				const held = holdingsOf(tree, p.key);
+				const titles = held.length ? held : p.cultures.flatMap((c) => holdingsOf(tree, c.ref.key));
+				const title = titles.map((k) => idx.get(k)).sort((x, y) => (tree.nodes.get(x?.key ?? "")?.rank ?? 9) - (tree.nodes.get(y?.key ?? "")?.rank ?? 9))[0];
 				add(p, "reign", a, Math.max(a, b), a === b, !!span.start?.approx, `${p.name} reigns${title ? ` over ${title.name}` : ""}: ${asText(written)}`, title ? `${p.name} · ${title.name}` : p.name);
 				if (title) out[out.length - 1].context = title.key;
 			}
@@ -360,6 +378,8 @@ export class TimelineRenderer {
 		if (hidden.size) for (let i = out.length - 1; i >= 0; i--) if (hidden.has(this.categoryIn(out[i])[0])) out.splice(i, 1);
 		// Organised by category, each takes its category's colour, so the kinds of event read at a glance.
 		if (options.group === "category") for (const it of out) it.color = this.colorOf(this.categoryIn(it)[0]);
+		this.eventCats = eventCategories(idx);
+		this.attachMarks(out);
 		// Index ids are per-kind, but life events produce two items per person.
 		out.forEach((it, i) => (it.id += ":" + i));
 		return out.sort((a, b) => a.start - b.start || b.importance - a.importance);
@@ -371,12 +391,40 @@ export class TimelineRenderer {
 		return categoryOf(it.kind, e.category ?? (isBattle(e) ? "battle" : namedAsWar(e) ? "war" : undefined));
 	}
 
+	/**
+	 * A nation's history goes on its bar, as on the lineage: its wars and other events, its renamings,
+	 * who inherited it and who occupied it. What has no bar here keeps a place of its own.
+	 */
+	private attachMarks(out: Item[]) {
+		const bars = new Map(out.filter((it) => (it.kind === "culture" || it.kind === "place") && !it.point).map((it) => [it.key, it]));
+		const mark = (bar: Item, it: Item, day: number) => {
+			(bar.marks ??= []).push({ day, shape: this.shapeIn(it), color: this.colorOf(this.categoryIn(it)[0]), text: `${it.label} · ${it.dateText}`, category: this.categoryIn(it)[1], key: it.key });
+		};
+		for (let i = out.length - 1; i >= 0; i--) {
+			const it = out[i];
+			const host = it.kind === "reign" ? it.context : it.kind === "rename" || it.kind === "occupation" ? it.key : undefined;
+			const bar = host ? bars.get(host) : undefined;
+			if (!bar) continue;
+			mark(bar, it, it.start);
+			out.splice(i, 1);
+		}
+		for (const it of out) {
+			if (it.kind !== "event") continue;
+			const e = it.entity;
+			const hosts = new Set([...sidesOf(this.plugin.index, e).map((s) => s.party.key), ...e.cultures.map((c) => c.ref.key), ...e.places.map((p) => p.key)]);
+			for (const k of hosts) {
+				const bar = bars.get(k);
+				if (bar && it.start >= bar.start && it.start <= bar.end) mark(bar, it, it.start);
+			}
+		}
+	}
+
 	private warOf(it: Item): "war" | "battle" | undefined {
 		return it.kind !== "event" ? undefined : isBattle(it.entity) ? "battle" : namedAsWar(it.entity) ? "war" : undefined;
 	}
 
 	private shapeIn(it: Item): ItemShape {
-		return shapeFor(it.kind, this.categoryIn(it)[0], this.warOf(it), this.catOrder);
+		return shapeFor(it.kind, this.categoryIn(it)[0], this.warOf(it), this.eventCats);
 	}
 
 	private groupsOf(it: Item): [string, string][] {
@@ -385,7 +433,7 @@ export class TimelineRenderer {
 			case "none":
 				return [["", ""]];
 			case "category":
-				return [laneFor(it.kind, this.categoryIn(it), !!this.warOf(it))];
+				return [this.categoryIn(it)];
 			case "realm": {
 				// The realm a title, its people and its events belong to: the highest title someone holds.
 				const tree = this.plugin.realms();
@@ -655,7 +703,7 @@ export class TimelineRenderer {
 				// By category, each lane's name carries its category's colour.
 				if (this.options.group === "category") {
 					head.addClass("is-category");
-					head.style.setProperty("--uv-cat-color", lane.id === NATIONS_LANE[0] ? "var(--text-muted)" : this.colorOf(lane.id));
+					head.style.setProperty("--uv-cat-color", this.colorOf(lane.id));
 				}
 				const ent = this.plugin.index.get(lane.id);
 				const name = el("span", { cls: "chronicle-tl-lane-name", text: lane.label }, head);
@@ -666,6 +714,12 @@ export class TimelineRenderer {
 				}
 				el("span", { cls: "chronicle-tl-lane-count", text: String(lane.items.length) }, head);
 				this.shapeKey(head, lane);
+			}
+			// With no lane to label, the key has a line of its own.
+			else {
+				const row = el("div", { cls: "uv-tl-key-row" }, laneEl);
+				this.shapeKey(row, lane);
+				if (!row.hasChildNodes()) row.remove();
 			}
 			const track = el("div", { cls: "chronicle-tl-track" }, laneEl);
 			track.style.height = `${lane.rows * rowH + 8}px`;
@@ -680,18 +734,40 @@ export class TimelineRenderer {
 		this.renderCauses();
 	}
 
-	/** Which shape is which, when a lane holds several. */
+	/** Which shape is which, for the marks on a lane's bars. */
 	private shapeKey(head: HTMLElement, lane: Lane) {
-		const seen = new Map<ItemShape, Item>();
-		for (const it of lane.items) if (!seen.has(this.shapeIn(it))) seen.set(this.shapeIn(it), it);
-		if (seen.size < 2) return;
+		const seen = new Map<ItemShape, Mark>();
+		for (const it of lane.items) for (const m of it.marks ?? []) if (!seen.has(m.shape)) seen.set(m.shape, m);
+		if (!seen.size) return;
 		const key = el("span", { cls: "uv-tl-key" }, head);
-		for (const [shape, it] of seen) {
-			const entry = el("span", { cls: `uv-tl-key-item uv-shape-${shape}` }, key);
-			entry.style.setProperty("--item-color", it.color);
-			el("span", { cls: "chronicle-tl-dot" }, entry);
-			el("span", { text: this.categoryIn(it)[1] }, entry);
+		for (const [shape, m] of seen) {
+			const entry = el("span", { cls: "uv-tl-key-item" }, key);
+			this.markIcon(entry, shape, m.color);
+			el("span", { text: m.category }, entry);
 		}
+	}
+
+	private markIcon(parent: Element, shape: ItemShape, color: string): SVGElement {
+		const box = svg("svg", { class: "uv-tl-mark", width: 14, height: 14, viewBox: "0 0 14 14" }, parent);
+		box.style.setProperty("--mark-color", color);
+		svg("path", { d: markPath(shape, 7, 7) }, box);
+		return box;
+	}
+
+	/** One mark on a bar: its name on hover, and a click opens it. */
+	private renderMark(node: HTMLElement, m: Mark, barLeft: number) {
+		const x = this.x(m.day);
+		if (x < -20 || x > this.width + 20) return;
+		const box = this.markIcon(node, m.shape, m.color);
+		box.classList.add("is-on-bar");
+		box.style.left = `${x - barLeft - 7}px`;
+		box.setAttribute("aria-label", m.text);
+		box.setAttribute("data-tooltip-position", "top");
+		box.addEventListener("pointerdown", (evt) => evt.stopPropagation());
+		box.addEventListener("click", (evt) => {
+			evt.stopPropagation();
+			openEntity(this.plugin, m.key, evt);
+		});
 	}
 
 	/** A lane moves by dragging its name, or from the menu on it, and stays where it's put. */
@@ -792,7 +868,7 @@ export class TimelineRenderer {
 		}
 		// By category: the events' own categories first (busiest on top), "other events" after them, then
 		// lifespans, groups and the rest. Otherwise lanes go in order of their first date.
-		const rank = (l: Lane) => (l.id === NATIONS_LANE[0] ? -1 : l.id.startsWith("kind:") ? 2 : l.id === "~event" ? 1 : 0);
+		const rank = (l: Lane) => (l.id.startsWith("kind:") ? 2 : l.id === "~event" ? 1 : 0);
 		const sorted = [...lanes.values()].sort((a, b) => {
 			if (a.id === "~") return 1;
 			if (b.id === "~") return -1;
@@ -918,6 +994,7 @@ export class TimelineRenderer {
 			node.style.left = `${p.x1}px`;
 			const bar = el("span", { cls: "chronicle-tl-bar" }, node);
 			bar.style.width = `${p.x2 - p.x1}px`;
+			for (const m of it.marks ?? []) this.renderMark(node, m, p.x1);
 			const label = p.noLabel ? undefined : el("span", { cls: "chronicle-tl-label", text: it.label }, p.labelInside ? bar : node);
 			if (p.labelInside && label) {
 				label.addClass("is-inside");
