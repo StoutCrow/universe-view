@@ -349,7 +349,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		}
 		new Setting(containerEl)
 			.setName("Sidebar button for every view")
-			.setDesc("Off: only the UniverseView overview button. Takes effect after reloading Obsidian. Single buttons can also be hidden by right-clicking the sidebar.")
+			.setDesc("Off: only the UniverseView star. Takes effect after reloading Obsidian.")
 			.addToggle((t) => t.setValue(s.ribbonViews).onChange(async (v) => {
 				s.ribbonViews = v;
 				await this.save(false);

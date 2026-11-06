@@ -135,7 +135,7 @@ export default class ChroniclePlugin extends Plugin {
 		this.registerView(VIEW_HOUSES, (leaf) => new HousesView(leaf, this));
 		this.registerView(VIEW_REALMS, (leaf) => new RealmsView(leaf, this));
 		this.registerView(VIEW_INSPECTOR, (leaf) => new InspectorView(leaf, this));
-		this.addRibbonIcon("panel-right", "UniverseView: inspector", () => void this.inspect(this.app.workspace.getActiveFile()?.path));
+		if (this.settings.ribbonViews) this.addRibbonIcon("panel-right", "UniverseView: inspector", () => void this.inspect(this.app.workspace.getActiveFile()?.path));
 		this.registerHoverLinkSource(HOVER_SOURCE, { display: "UniverseView", defaultMod: true });
 		// Each extra below starts on its own: one that can't run here (a phone, an unusual theme or
 		// layout) switches only itself off, instead of stopping the plugin from enabling.
@@ -343,6 +343,11 @@ export default class ChroniclePlugin extends Plugin {
 		if (!data.realmColors) {
 			if (this.settings.pinColorBy === "culture" || this.settings.pinColorBy === "region") this.settings.pinColorBy = "realm";
 			(this.settings as unknown as Record<string, unknown>).realmColors = true;
+		}
+		// 1.3.1: the dashboard holds every view, so the sidebar keeps only its star (the setting brings the rest back).
+		if (!this.settings.hubRibbon) {
+			this.settings.hubRibbon = true;
+			this.settings.ribbonViews = false;
 		}
 		// 0.26: no default shortcuts (Obsidian's guidelines); anyone already using the plugin keeps them.
 		if (this.settings.suggestedHotkeys === undefined) this.settings.suggestedHotkeys = Object.keys(data).length > 0;

@@ -1,4 +1,4 @@
-import { ItemView, Notice, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, Platform, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { runCommand } from "../internals";
 import { el, icon } from "../render/common";
@@ -170,6 +170,7 @@ export const HUB_SECTIONS: HubSection[] = [
 /** The whole of UniverseView in one tab: big tabs down the side, smaller tabs along the top. */
 export class HubView extends ItemView {
 	private section = HUB_SECTIONS[0].id;
+	private closed = false;
 	/** The small tab last open in each big tab. */
 	private tabs = new Map<string, string>();
 	private railEl!: HTMLElement;
@@ -224,13 +225,35 @@ export class HubView extends ItemView {
 		this.register(() => observer.disconnect());
 		this.registerEvent(this.plugin.index.on("changed", () => this.redrawPages()));
 		this.refresh();
+		this.preload();
 	}
 
 	async onClose() {
+		this.closed = true;
 		for (const p of this.panes.values()) await p.view?.unmount();
 		this.panes.clear();
 		const tab = this.plugin.settingTab;
 		if (tab) tab.hubRedraw = undefined;
+	}
+
+	/** Opens the other pages quietly, one at a time when nothing else is going on, so tabs are ready when clicked. */
+	private preload() {
+		if (Platform.isMobile) return;
+		const first = HUB_SECTIONS.filter((s) => s.id === this.section);
+		const queue = [...first, ...HUB_SECTIONS.filter((s) => s.id !== this.section)].flatMap((s) => this.visible(s));
+		const next = () => {
+			const m = queue.shift();
+			if (!m || this.closed) return;
+			if (this.panes.has(m.id)) return next();
+			// Behind another tab the dashboard has no size, and views can't lay themselves out: wait.
+			if (!this.stageEl.clientWidth) {
+				queue.unshift(m);
+				window.setTimeout(next, 1000);
+				return;
+			}
+			void this.ensure(m).ready?.then(() => window.requestIdleCallback(next, { timeout: 1500 }));
+		};
+		window.requestIdleCallback(next, { timeout: 1500 });
 	}
 
 	private setRail(px: number) {
@@ -353,22 +376,36 @@ export class HubView extends ItemView {
 	}
 
 	private show(m: HubModule) {
-		for (const [id, p] of this.panes) p.el.toggleClass("is-active", id === m.id);
-		let pane = this.panes.get(m.id);
-		if (!pane) {
-			pane = { el: el("div", { cls: "uv-hub-pane is-active" + (m.view ? "" : " is-page") }, this.stageEl), module: m };
-			this.panes.set(m.id, pane);
-			if (m.view) {
-				pane.view = m.view(this.leaf, this.plugin);
-				const host = pane.el;
-				pane.ready = pane.view.mount(host).catch((err) => {
-					console.error(`UniverseView: couldn't open ${m.name}`, err);
-					host.empty();
-					el("p", { cls: "uv-hub-lead uv-hub-failed", text: `${m.name} couldn't open here. Try the button at the top right to open it in its own tab.` }, host);
-				});
-			} else this.drawPage(pane.el, m);
+		const shown = this.ensure(m);
+		for (const [id, p] of this.panes) {
+			p.el.toggleClass("is-active", id === m.id);
+			p.view?.setWaiting(id !== m.id);
 		}
-		pane.view?.onResize();
+		shown.view?.onResize();
+	}
+
+	/** A page's place in the dashboard, filled just after it's been painted, so a tab answers at once. */
+	private ensure(m: HubModule) {
+		const found = this.panes.get(m.id);
+		if (found) return found;
+		const host = el("div", { cls: "uv-hub-pane" + (m.view ? "" : " is-page") }, this.stageEl);
+		const pane: { el: HTMLElement; view?: ChronicleView; ready?: Promise<void>; module: HubModule } = { el: host, module: m };
+		this.panes.set(m.id, pane);
+		setIcon(el("div", { cls: "uv-hub-loading" }, host), LOGO_ICON);
+		pane.ready = new Promise<void>((done) => window.setTimeout(done, 16)).then(async () => {
+			if (this.panes.get(m.id) !== pane) return;
+			if (m.view) {
+				host.empty();
+				pane.view = m.view(this.leaf, this.plugin);
+				await pane.view.mount(host);
+				pane.view.setWaiting(!host.hasClass("is-active"));
+			} else this.drawPage(host, m);
+		}).catch((err) => {
+			console.error(`UniverseView: couldn't open ${m.name}`, err);
+			host.empty();
+			el("p", { cls: "uv-hub-lead uv-hub-failed", text: `${m.name} couldn't open here. Try the button at the top right to open it in its own tab.` }, host);
+		});
+		return pane;
 	}
 
 	private drawPage(host: HTMLElement, m: HubModule) {

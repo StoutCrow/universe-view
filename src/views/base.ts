@@ -14,6 +14,8 @@ export abstract class ChronicleView extends ItemView {
 	protected toolbarRight!: HTMLElement;
 	protected body!: HTMLElement;
 	private built = false;
+	private waiting = false;
+	private changedWhileWaiting = false;
 
 	constructor(leaf: WorkspaceLeaf, protected plugin: ChroniclePlugin) {
 		super(leaf);
@@ -26,7 +28,10 @@ export abstract class ChronicleView extends ItemView {
 		this.body = el("div", { cls: "chronicle-view-body" }, this.contentEl);
 		this.build();
 		this.built = true;
-		this.registerEvent(this.plugin.index.on("changed", () => this.onIndexChanged()));
+		this.registerEvent(this.plugin.index.on("changed", () => {
+			if (this.waiting) this.changedWhileWaiting = true;
+			else this.onIndexChanged();
+		}));
 	}
 
 	/** Runs this view inside UniverseView's dashboard, which owns the tab. */
@@ -35,7 +40,15 @@ export abstract class ChronicleView extends ItemView {
 		host.appendChild(this.containerEl);
 		this.load();
 		await this.onOpen();
-		await this.setState({}, { history: false });
+	}
+
+	/** Behind another tab of the dashboard: changes wait until it's shown again. */
+	setWaiting(waiting: boolean) {
+		this.waiting = waiting;
+		if (!waiting && this.changedWhileWaiting) {
+			this.changedWhileWaiting = false;
+			this.onIndexChanged();
+		}
 	}
 
 	/** Ends a view started with mount(). */

@@ -312,6 +312,7 @@ export class MapRenderer {
 	private stage = "starting";
 	private lastError?: string;
 	private watchdog = 0;
+	private watchdogWaits = 0;
 
 	private showError(err: unknown) {
 		console.error("UniverseView map:", err);
@@ -324,6 +325,11 @@ export class MapRenderer {
 	/** Shows the report when there's still no map to see (no map made, or one with no size). */
 	private checkAppeared() {
 		if (!this.root.isConnected) return;
+		// A very large picture can take a while to prepare: that isn't a failure yet.
+		if (!this.map && /^(measuring|preparing)/.test(this.stage) && this.watchdogWaits++ < 4) {
+			this.watchdog = window.setTimeout(() => this.checkAppeared(), 7000);
+			return;
+		}
 		const box = this.mapEl.getBoundingClientRect();
 		const ok = !!this.map && box.width > 20 && box.height > 20;
 		if (!ok && !this.root.querySelector(".chronicle-empty")) this.showReport("The map hasn't appeared");
@@ -450,6 +456,7 @@ export class MapRenderer {
 		}
 		this.draw();
 		this.stage = "drawn";
+		this.root.querySelector(".uv-map-report")?.remove();
 		if (this.options.focus) {
 			this.focusOn(this.options.focus);
 			this.options.focus = undefined;

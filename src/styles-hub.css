@@ -204,12 +204,27 @@ button.uv-hub-tab.is-active {
 .uv-hub-pane {
 	position: absolute;
 	inset: 0;
-	display: none;
+	/* Kept at full size behind the active page, so showing one again needs no layout or redraw. */
+	visibility: hidden;
+	opacity: 0;
 	overflow: hidden;
+	transition: opacity 90ms ease;
 }
 .uv-hub-pane.is-active {
-	display: block;
-	animation: chronicle-fade var(--chronicle-fast) var(--chronicle-ease);
+	visibility: visible;
+	opacity: 1;
+}
+.uv-hub-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--chronicle-accent);
+	opacity: 0.35;
+}
+.uv-hub-loading svg {
+	width: 44px;
+	height: 44px;
 }
 .uv-hub-pane.is-page {
 	overflow: hidden auto;

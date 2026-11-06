@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.3.1 — 2026-11-06
+- Dashboard tabs answer at once: pages open in the background while you work, each view draws once instead of twice, and views behind another tab wait to update until they're shown.
+- A very large map picture no longer brings up the "map hasn't appeared" report while it's still preparing, and the report clears once the map shows.
+- The left sidebar now holds only the UniverseView star. *Sidebar button for every view* brings the others back.
+
 ## 1.3.0 — 2026-11-06
 - **One dashboard for everything.** The new star button opens UniverseView in a single tab: big tabs down the side (Home, People, Groups, Places, Time, Library, Tools, Settings), smaller tabs along the top. Every view lives there, and links between views stay inside it. Each view can still open in its own tab.
 - **Modules**: Settings → Modules switches any view or set of tools off, everywhere it shows.

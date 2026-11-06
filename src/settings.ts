@@ -88,6 +88,8 @@ export interface ChronicleSettings {
 	openInNewTab: boolean;
 	/** A left-sidebar button for every view, not just the overview. */
 	ribbonViews: boolean;
+	/** 1.3.1: the sidebar was cut down to the dashboard's star, once, for everyone. */
+	hubRibbon?: boolean;
 	/** Modules switched off in the dashboard. */
 	modulesOff: string[];
 	/** Width of the dashboard's sidebar, in pixels. */
@@ -376,7 +378,7 @@ export const DEFAULT_SETTINGS: ChronicleSettings = {
 	folderCalendars: "",
 	showLifeEvents: false,
 	openInNewTab: false,
-	ribbonViews: true,
+	ribbonViews: false,
 	modulesOff: [],
 	tileUrl: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 	tileAttribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",

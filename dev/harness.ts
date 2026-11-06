@@ -44,7 +44,7 @@ function folderFor(path: string): TFolder {
 
 function parseNote(text: string) {
 	const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-	const frontmatter = m ? YAML.parse(m[1]) ?? {} : undefined;
+	const frontmatter = m ? YAML.parse(m[1], { uniqueKeys: false }) ?? {} : undefined;
 	const body = m ? text.slice(m[0].length) : text;
 	const tags = [...body.matchAll(/(^|\s)#([\w/-]+)/g)].map((x) => ({ tag: "#" + x[2] }));
 	return { frontmatter, tags };
