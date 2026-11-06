@@ -2,6 +2,9 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 1.5.1 — 2026-11-06
+- Cards and big tabs now really drag: they move as you go, the page scrolls at its edges, and it works with touch. Library's narrow column holds two cards sooner.
+
 ## 1.5.0 — 2026-11-06
 - **Customise any page**: the grid button on Home and Library lets you hide cards, drag them into order, resize them from the corner and choose how many columns. Each page remembers its own layout, and Reset puts it back.
 - **Big tabs move**: drag them up or down, or right-click one to move it, hide it, show hidden tabs, switch to icons only or reset. Settings → Modules can reset tabs and all cards.

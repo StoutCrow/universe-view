@@ -2,6 +2,7 @@ import { ItemView, Menu, Notice, Platform, Setting, debounce, setIcon, type View
 import type ChroniclePlugin from "../main";
 import { runCommand } from "../internals";
 import { el, icon } from "../render/common";
+import { dragToReorder } from "../ui/cardlayout";
 import { renderWorldStats } from "../render/stats";
 import type { ChronicleView } from "./base";
 import { CalendarView, VIEW_CALENDAR } from "./CalendarView";
@@ -174,7 +175,6 @@ export const HUB_SECTIONS: HubSection[] = [
 /** The whole of UniverseView in one tab: big tabs down the side, smaller tabs along the top. */
 export class HubView extends ItemView {
 	private section = HUB_SECTIONS[0].id;
-	private dragging?: string;
 	private closed = false;
 	/** The small tab last open in each big tab. */
 	private tabs = new Map<string, string>();
@@ -323,19 +323,12 @@ export class HubView extends ItemView {
 				evt.preventDefault();
 				this.tabMenu(s, evt);
 			});
-			// Drag a big tab up or down to move it.
-			b.draggable = true;
-			b.addEventListener("dragstart", () => (this.dragging = s.id));
-			b.addEventListener("dragover", (evt) => {
-				if (this.dragging && this.dragging !== s.id) {
-					evt.preventDefault();
-					b.addClass("is-drop-target");
-				}
-			});
-			b.addEventListener("dragleave", () => b.removeClass("is-drop-target"));
-			b.addEventListener("drop", (evt) => {
-				evt.preventDefault();
-				if (this.dragging) void this.moveTab(this.dragging, s.id);
+			// Drag a big tab up or down to move it (on phones, from its menu).
+			b.dataset.section = s.id;
+			if (!Platform.isMobile) dragToReorder(b, b, () => Array.from(list.querySelectorAll<HTMLElement>(".uv-hub-section")), () => {
+				const shown = Array.from(list.querySelectorAll<HTMLElement>(".uv-hub-section")).map((x) => x.dataset.section ?? "");
+				this.plugin.settings.hubOrder = [...shown, ...this.ordered().map((x) => x.id).filter((id) => !shown.includes(id))];
+				void this.saveTabs();
 			});
 		}
 		const section = sections.find((s) => s.id === this.section)!;
@@ -408,14 +401,6 @@ export class HubView extends ItemView {
 	private async saveTabs() {
 		await this.plugin.saveSettings();
 		this.refresh();
-	}
-
-	private async moveTab(id: string, before: string) {
-		const order = this.ordered().map((s) => s.id).filter((x) => x !== id);
-		order.splice(order.indexOf(before), 0, id);
-		this.plugin.settings.hubOrder = order;
-		this.dragging = undefined;
-		await this.saveTabs();
 	}
 
 	/** Puts the big tabs and the sidebar back as they came. */

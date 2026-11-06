@@ -14,8 +14,66 @@ export interface CardPrefs {
 }
 
 /** Narrowest a column gets on its own, and when columns are asked for. */
-const MIN_COLUMN = 280;
+const MIN_COLUMN = 240;
 const MIN_CHOSEN_COLUMN = 180;
+
+/** The nearest box around an element that scrolls. */
+function scrollerOf(start: HTMLElement): HTMLElement | undefined {
+	for (let e = start.parentElement; e; e = e.parentElement) {
+		if (e.scrollHeight > e.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(e).overflowY)) return e;
+	}
+	return undefined;
+}
+
+/**
+ * Lets an item be dragged among its neighbours by a handle, moving as the pointer goes. Done with
+ * pointer events, not HTML drag and drop: Obsidian has its own use for that, and phones don't fire it.
+ */
+export function dragToReorder(handle: HTMLElement, item: HTMLElement, items: () => HTMLElement[], done: () => void) {
+	handle.addEventListener("pointerdown", (down) => {
+		if (down.button !== 0) return;
+		// Followed on the document: moving the item in the page would drop a capture on it.
+		const doc = handle.ownerDocument;
+		const scroller = scrollerOf(item);
+		let moved = false;
+		const move = (e: PointerEvent) => {
+			if (!moved && Math.hypot(e.clientX - down.clientX, e.clientY - down.clientY) < 5) return;
+			moved = true;
+			e.preventDefault();
+			item.addClass("is-moving");
+			if (scroller) {
+				const box = scroller.getBoundingClientRect();
+				if (e.clientY < box.top + 48) scroller.scrollTop -= 14;
+				else if (e.clientY > box.bottom - 48) scroller.scrollTop += 14;
+			}
+			const list = items();
+			const over = list.find((x) => {
+				const r = x.getBoundingClientRect();
+				return x !== item && r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+			});
+			if (!over) return;
+			// Past a neighbour going down, it goes after it; going up, before.
+			over.parentElement?.insertBefore(item, list.indexOf(item) < list.indexOf(over) ? over.nextSibling : over);
+		};
+		const up = () => {
+			doc.removeEventListener("pointermove", move);
+			doc.removeEventListener("pointerup", up);
+			doc.removeEventListener("pointercancel", up);
+			item.removeClass("is-moving");
+			if (!moved) return;
+			// The click this drag ends in isn't a click.
+			const swallow = (evt: MouseEvent) => evt.stopImmediatePropagation();
+			doc.addEventListener("click", swallow, { capture: true, once: true });
+			window.setTimeout(() => {
+				doc.removeEventListener("click", swallow, { capture: true });
+				done();
+			}, 0);
+		};
+		doc.addEventListener("pointermove", move);
+		doc.addEventListener("pointerup", up);
+		doc.addEventListener("pointercancel", up);
+	});
+}
 
 /**
  * Lets the cards of a page be hidden, moved and resized. Pages draw their cards as usual, each marked
@@ -26,7 +84,6 @@ export class CardLayout {
 	private grid?: HTMLElement;
 	private id = "";
 	private bar?: HTMLElement;
-	private dragging?: string;
 	private observer = new ResizeObserver(() => this.fit());
 
 	/** `onToggle`: customising went on or off (the toolbar's button shows it). */
@@ -61,23 +118,6 @@ export class CardLayout {
 		this.id = id;
 		this.observer.disconnect();
 		this.observer.observe(grid);
-		const over = (evt: DragEvent) => {
-			const id = (evt.target as HTMLElement).closest<HTMLElement>("[data-card]")?.dataset.card;
-			return this.dragging && id !== this.dragging ? id : undefined;
-		};
-		grid.addEventListener("dragover", (evt) => {
-			if (over(evt)) evt.preventDefault();
-		});
-		grid.addEventListener("drop", (evt) => {
-			const id = over(evt);
-			if (!id) return;
-			evt.preventDefault();
-			const order = this.cards().map((x) => x.dataset.card ?? "").filter((x) => x !== this.dragging);
-			order.splice(order.indexOf(id), 0, this.dragging ?? "");
-			this.prefs.order = order;
-			this.dragging = undefined;
-			this.save();
-		});
 		this.arrange();
 	}
 
@@ -164,15 +204,10 @@ export class CardLayout {
 		const p = this.prefs;
 		const tools = el("div", { cls: "uv-card-tools" }, c);
 		const grip = iconButton(tools, "grip-vertical", "Drag to move", () => {});
-		grip.draggable = true;
-		grip.addEventListener("dragstart", (evt) => {
-			this.dragging = id;
-			evt.dataTransfer?.setDragImage(c, 24, 24);
-			c.addClass("is-moving");
-		});
-		grip.addEventListener("dragend", () => {
-			this.dragging = undefined;
-			c.removeClass("is-moving");
+		grip.addClass("uv-card-grip");
+		dragToReorder(grip, c, () => this.cards(), () => {
+			p.order = this.cards().map((x) => x.dataset.card ?? "");
+			this.save();
 		});
 		iconButton(tools, "eye-off", "Hide this card", () => {
 			p.hidden = [...(p.hidden ?? []), id];

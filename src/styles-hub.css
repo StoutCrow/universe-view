@@ -84,6 +84,7 @@ button.uv-hub-section {
 	font-weight: 600;
 	color: var(--text-muted);
 	cursor: pointer;
+	user-select: none;
 	transition: background-color var(--chronicle-fast) var(--chronicle-ease), color var(--chronicle-fast) var(--chronicle-ease);
 }
 button.uv-hub-section:hover {
@@ -120,8 +121,9 @@ button.uv-hub-section.is-active {
 	padding: 0;
 }
 
-button.uv-hub-section.is-drop-target {
-	box-shadow: inset 0 2px 0 var(--text-muted);
+button.uv-hub-section.is-moving {
+	background: var(--background-modifier-hover);
+	cursor: grabbing;
 }
 
 /* ---- Resize handle ---- */
@@ -383,8 +385,10 @@ button.uv-cards-hidden {
 	border-radius: var(--radius-s);
 	background: var(--background-primary);
 }
-.uv-card-tools .clickable-icon:first-child {
+.uv-card-grip {
 	cursor: grab;
+	touch-action: none;
+	user-select: none;
 }
 .uv-card-corner {
 	position: absolute;
