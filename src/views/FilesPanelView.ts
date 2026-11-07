@@ -75,6 +75,7 @@ export class FilesPanelView extends ChronicleView {
 		});
 		this.refresh();
 		this.registerEvent(this.app.workspace.on(TREE_OPTIONS_CHANGED as "quit", () => this.tree.render()));
+		this.registerEvent(this.app.vault.on("rename", (f, old) => this.tree.followRename(f.path, old)));
 		// The panel follows the open note, however it was opened.
 		this.registerEvent(this.app.workspace.on("file-open", (f: TFile | null) => {
 			if (!f || f.path === this.state.selected) return;

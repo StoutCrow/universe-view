@@ -20,6 +20,7 @@ import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
 import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
+import { followPath, moveTarget } from "../src/index/moves";
 import { markPath, shapeFor } from "../src/render/categories";
 import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
@@ -1291,6 +1292,14 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		note("F.md", "place", ["Title"]),
 		note("G.md", "place", ["Region"], ["Small"]),
 	];
+	eq(moveTarget("A/Note.md", false, "B/C"), "B/C/Note.md", "move: a note lands in the folder");
+	eq(moveTarget("A/Note.md", false, ""), "Note.md", "move: the root is a place too");
+	eq(moveTarget("A/Note.md", false, "A"), undefined, "move: already there");
+	eq(moveTarget("A/B", true, "A/B/C"), undefined, "move: a folder can't go inside itself");
+	eq(moveTarget("A/B", true, "A/B"), undefined, "move: nor onto itself");
+	eq(moveTarget("A/B", true, "A/Bee"), "A/Bee/B", "move: a folder with a similar name is another folder");
+	eq(followPath("A/B/Note.md", "A/B", "C/B"), "C/B/Note.md", "move: what's inside follows");
+	eq(followPath("A/Bee", "A/B", "C/B"), "A/Bee", "move: a similar name stays");
 	const fixed = tagFixes(scheme, { person: "Character", place: "Title" });
 	const fixOf = (p: string) => fixed.find((f) => f.path === p);
 	eq(fixOf("C.md")?.add, ["Character_Dead", "Character_Vael"], "normalise: a note gains its type's tags that its facts justify");

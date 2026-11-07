@@ -1,8 +1,9 @@
-import { Keymap, Menu, TFile } from "obsidian";
+import { FuzzySuggestModal, Keymap, Menu, Notice, TFile, TFolder, type App } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES, type EntityType } from "../types";
 import type { ChronicleSettings } from "../settings";
-import { TYPE_ICONS, TYPE_LABELS, el, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
+import { followPath, moveTarget } from "../index/moves";
+import { TYPE_ICONS, TYPE_LABELS, clickNotice, el, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
 import { fileIconBox, tintRow } from "./icons";
 
 /** What a tree shows and what's picked in it, kept by the view that hosts it. */
@@ -86,6 +87,23 @@ export function folderViews(path: string): [string, string, string, Record<strin
 	];
 }
 
+/** Picks the folder something moves to. */
+class MoveToModal extends FuzzySuggestModal<TFolder> {
+	constructor(app: App, private path: string, private isFolder: boolean, private onPick: (dest: string) => void) {
+		super(app);
+		this.setPlaceholder("Move to which folder?");
+	}
+	getItems() {
+		return this.app.vault.getAllFolders(true).filter((f) => moveTarget(this.path, this.isFolder, f.isRoot() ? "" : f.path));
+	}
+	getItemText(f: TFolder) {
+		return f.isRoot() ? "/" : f.path;
+	}
+	onChooseItem(f: TFolder) {
+		this.onPick(f.isRoot() ? "" : f.path);
+	}
+}
+
 /** Every folder and note, with counts by type, problems marked, search and keyboard control. */
 export class FileTree {
 	private options!: TreeOptions;
@@ -93,6 +111,125 @@ export class FileTree {
 	constructor(private plugin: ChroniclePlugin, private list: HTMLElement, private state: () => TreeState, private hooks: TreeHooks) {
 		list.setAttribute("role", "tree");
 		list.addEventListener("keydown", (evt) => this.onKey(evt));
+		list.addEventListener("pointerdown", (evt) => this.onDragStart(evt));
+	}
+
+	/** Moves a note or folder, links and all. A folder note's row is its folder, so they go together. */
+	async moveTo(path: string, dest: string, undoable = true) {
+		const { vault, fileManager } = this.plugin.app;
+		const item = vault.getAbstractFileByPath(path);
+		const target = item && moveTarget(path, item instanceof TFolder, dest);
+		if (!item || !target) return;
+		if (vault.getAbstractFileByPath(target)) {
+			new Notice(`${target} already exists.`);
+			return;
+		}
+		const from = path.split("/").slice(0, -1).join("/");
+		const s = this.state();
+		if (dest) s.expanded = [...new Set([...s.expanded, dest])];
+		try {
+			await fileManager.renameFile(item, target);
+		} catch (err) {
+			new Notice(`Couldn't move ${item.name}: ${(err as Error).message}`);
+			return;
+		}
+		const message = `Moved ${item.name} to ${dest || "the top of the vault"}.`;
+		if (undoable) clickNotice(`${message} Click to move it back.`, 8000, () => void this.moveTo(target, from, false));
+		else new Notice(message);
+	}
+
+	/** The selection and open folders stay with what was renamed or moved, wherever that happened. */
+	followRename(to: string, from: string) {
+		const s = this.state();
+		if (s.selected) s.selected = followPath(s.selected, from, to);
+		s.expanded = s.expanded.map((p) => followPath(p, from, to));
+		this.hooks.changed();
+	}
+
+	private chooseMove(path: string, isFolder: boolean) {
+		new MoveToModal(this.plugin.app, path, isFolder, (dest) => void this.moveTo(path, dest)).open();
+	}
+
+	/** A row's folder at a point: the folder itself, the one a note sits in, the root below the rows. */
+	private dropAt(x: number, y: number, doc: Document): string | undefined {
+		const under = doc.elementFromPoint(x, y);
+		if (!under || !this.list.contains(under)) return undefined;
+		const row = under.closest<HTMLElement>(".chronicle-dash-row");
+		if (!row) return "";
+		const path = row.dataset.path ?? "";
+		return row.hasClass("is-folder") ? path : path.split("/").slice(0, -1).join("/");
+	}
+
+	/** Dragging a row onto a folder moves it; resting on a closed folder opens it; Esc calls it off. Touch scrolls instead. */
+	private onDragStart(down: PointerEvent) {
+		if (down.button !== 0 || down.pointerType === "touch") return;
+		const row = (down.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row");
+		if (!row?.dataset.path) return;
+		const path = row.dataset.path;
+		const isFolder = row.hasClass("is-folder");
+		const name = row.querySelector(".chronicle-dash-row-name")?.textContent ?? "";
+		const doc = this.list.ownerDocument;
+		let ghost: HTMLElement | undefined;
+		let dest: string | undefined;
+		let springAt: string | undefined;
+		let spring = 0;
+		const clearMarks = () => {
+			this.list.removeClass("is-drop-root");
+			this.list.querySelectorAll(".is-drop-target").forEach((r) => r.removeClass("is-drop-target"));
+		};
+		const finish = () => {
+			doc.removeEventListener("pointermove", move);
+			doc.removeEventListener("pointerup", up);
+			doc.removeEventListener("pointercancel", cancel);
+			doc.removeEventListener("keydown", onEsc, { capture: true });
+			window.clearTimeout(spring);
+			clearMarks();
+			this.list.removeClass("is-dragging");
+			ghost?.remove();
+		};
+		const move = (e: PointerEvent) => {
+			if (!ghost && Math.hypot(e.clientX - down.clientX, e.clientY - down.clientY) < 5) return;
+			ghost ??= el("div", { cls: "uv-tree-ghost", text: name }, doc.body);
+			this.list.addClass("is-dragging");
+			ghost.setCssProps({ "--uv-x": `${e.clientX + 12}px`, "--uv-y": `${e.clientY + 8}px` });
+			const box = this.list.getBoundingClientRect();
+			if (e.clientY < box.top + 28) this.list.scrollTop -= 10;
+			else if (e.clientY > box.bottom - 28) this.list.scrollTop += 10;
+			const at = this.dropAt(e.clientX, e.clientY, doc);
+			dest = at !== undefined && moveTarget(path, isFolder, at) ? at : undefined;
+			clearMarks();
+			if (dest === "") this.list.addClass("is-drop-root");
+			const target = dest ? Array.from(this.list.querySelectorAll<HTMLElement>(".chronicle-dash-row.is-folder")).find((r) => r.dataset.path === dest) : undefined;
+			target?.addClass("is-drop-target");
+			if (springAt !== dest) {
+				springAt = dest;
+				window.clearTimeout(spring);
+				if (target?.getAttribute("aria-expanded") === "false") spring = window.setTimeout(() => this.toggle(target.dataset.path ?? ""), 700);
+			}
+		};
+		const swallowClick = () => {
+			const swallow = (evt: MouseEvent) => evt.stopImmediatePropagation();
+			doc.addEventListener("click", swallow, { capture: true, once: true });
+			window.setTimeout(() => doc.removeEventListener("click", swallow, { capture: true }), 0);
+		};
+		const up = () => {
+			const dragged = !!ghost;
+			finish();
+			if (!dragged) return;
+			swallowClick();
+			if (dest !== undefined) void this.moveTo(path, dest);
+		};
+		const cancel = () => finish();
+		const onEsc = (e: KeyboardEvent) => {
+			if (e.key !== "Escape" || !ghost) return;
+			e.stopPropagation();
+			finish();
+			swallowClick();
+		};
+		doc.addEventListener("pointermove", move);
+		doc.addEventListener("pointerup", up);
+		doc.addEventListener("pointercancel", cancel);
+		doc.addEventListener("keydown", onEsc, { capture: true });
 	}
 
 	private build(): FolderNode {
@@ -208,7 +345,7 @@ export class FileTree {
 		});
 		row.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
-			if (entity) showEntityMenu(this.plugin, entity.key, evt);
+			if (entity) showEntityMenu(this.plugin, entity.key, evt, { top: (m) => this.moveItem(m, n.path, true) });
 			else this.folderMenu(n.path, evt);
 		});
 		if (entity) this.plugin.hoverCards?.attach(row, entity.key);
@@ -229,19 +366,25 @@ export class FileTree {
 		row.addEventListener("dblclick", (evt) => openEntity(this.plugin, f.path, evt));
 		row.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
-			if (e) showEntityMenu(this.plugin, f.path, evt);
+			if (e) showEntityMenu(this.plugin, f.path, evt, { top: (m) => this.moveItem(m, f.path, false) });
 			else {
 				const menu = new Menu();
 				menu.addItem((it) => it.setTitle("Open").setIcon("file").onClick(() => openEntity(this.plugin, f.path)));
+				this.moveItem(menu, f.path, false);
 				menu.showAtMouseEvent(evt);
 			}
 		});
 		if (e) this.plugin.hoverCards?.attach(row, e.key);
 	}
 
+	private moveItem(menu: Menu, path: string, isFolder: boolean) {
+		menu.addItem((i) => i.setTitle("Move to…").setIcon("folder-input").onClick(() => this.chooseMove(path, isFolder)));
+	}
+
 	private folderMenu(path: string, evt: MouseEvent) {
 		const menu = new Menu();
 		menu.addItem((i) => i.setTitle("Folder settings and notes").setIcon("folder-cog").onClick(() => void this.plugin.activateView("chronicle-explorer", { select: path, isFolder: true })));
+		this.moveItem(menu, path, true);
 		menu.addSeparator();
 		for (const [view, label, iconName, state] of folderViews(path)) menu.addItem((i) => i.setTitle(label).setIcon(iconName).onClick(() => void this.plugin.activateView(view, state)));
 		menu.addSeparator();

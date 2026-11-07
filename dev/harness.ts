@@ -1,4 +1,6 @@
 import { TidyModal, tidyPlan } from "../src/ui/tidy";
+import { tagFacts } from "../src/ui/NormaliseTags";
+import { tagFixes } from "../src/index/tagrules";
 import { viewToSvg } from "../src/ui/export";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
@@ -84,6 +86,7 @@ vault.getMarkdownFiles = () => [...files.values()].filter((f) => f.extension ===
 vault.getFiles = () => [...files.values()];
 vault.getAllLoadedFiles = () => [...folders.values(), ...files.values()];
 vault.getAbstractFileByPath = (p: string) => files.get(p) ?? folders.get(p) ?? null;
+vault.getAllFolders = () => [...folders.values()];
 // The plugin's own files, kept in the browser so they outlast a reload.
 vault.adapter = {
 	exists: async (p: string) => localStorage.getItem(`uv-file:${p}`) !== null,
@@ -136,6 +139,18 @@ const app: any = {
 	metadataCache,
 	workspace,
 	fileManager: {
+		renameFile: async (item: any, target: string) => {
+			const from = item.path;
+			for (const f of [...files.values()].filter((x) => x.path === from || x.path.startsWith(from + "/"))) {
+				const old = f.path;
+				const text = contents.get(old) ?? "";
+				files.delete(old);
+				contents.delete(old);
+				caches.delete(old);
+				const moved = addFile(target + old.slice(from.length), text);
+				vault.trigger("rename", moved, old);
+			}
+		},
 		processFrontMatter: async (f: TFile, fn: (fm: any) => void) => {
 			const fm = { ...(caches.get(f.path)?.frontmatter ?? {}) };
 			fn(fm);
@@ -175,6 +190,7 @@ workspace.requestSaveLayout = () => {};
 
 const plugin = new ChroniclePlugin(app, { id: "UniverseView", version: "dev" });
 (window as any).chronicle = plugin;
+(window as any).tagPlan = () => tagFixes(plugin.index.all().map((e: any) => ({ path: e.key, type: e.type, tags: e.tags, facts: tagFacts(plugin, e) })), plugin.settings.typeStyle === "tag" ? plugin.settings.typeTags : {});
 (window as any).TidyModal = TidyModal;
 (window as any).tidyPlan = tidyPlan;
 (window as any).chronicleTrace = trace;

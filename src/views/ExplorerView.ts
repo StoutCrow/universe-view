@@ -133,6 +133,7 @@ export class ExplorerView extends ChronicleView {
 		}));
 		this.registerEvent(this.app.workspace.on("chronicle:history-changed" as "quit", () => this.syncUndo()));
 		this.registerEvent(this.app.workspace.on(TREE_OPTIONS_CHANGED as "quit", () => this.tree.render()));
+		this.registerEvent(this.app.vault.on("rename", (f, old) => this.tree.followRename(f.path, old)));
 	}
 
 	private undoBtn?: HTMLElement;

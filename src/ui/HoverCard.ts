@@ -156,8 +156,8 @@ export class HoverCards {
 
 	private schedule(target: Element, key: string, evt: MouseEvent) {
 		if (!this.plugin.settings.hoverCards || Keymap.isModEvent(evt)) return;
-		// No cards over a map while a tool runs there (drawing, filling): they'd cover the work.
-		if (target.closest?.(".is-tool")) return;
+		// No cards over a map while a tool runs there (drawing, filling), or a tree during a drag: they'd cover the work.
+		if (target.closest?.(".is-tool, .is-dragging")) return;
 		// Moving onto something else lets the open card close as usual; only coming back to its own
 		// item (or onto the card) keeps it.
 		const sameItem = target === this.anchor || !!this.card?.contains(target);
