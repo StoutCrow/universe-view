@@ -94,11 +94,11 @@ export class OrgChartView extends ChronicleView {
 					const idx = this.plugin.index;
 					const same = idx.timeStep(day) === idx.timeStep(o.at);
 					o.at = day;
-					// Scrubbing redraws only where something changed, and cards don't fade in each time.
-					this.contentEl.addClass("uv-scrubbed");
-					// The timeline layout marks the date itself, so it follows every step.
-					if (same && !this.contentEl.querySelector(".chronicle-org-cursor")) this.app.workspace.requestSaveLayout();
-					else this.update();
+					// Nothing on the chart changes between these two days: only the timeline's date line moves.
+					if (same) {
+						this.renderer?.moveCursor(day);
+						this.app.workspace.requestSaveLayout();
+					} else this.update();
 				},
 				["culture", "person"],
 			);

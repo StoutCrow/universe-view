@@ -323,7 +323,16 @@ export class OrgChartRenderer {
 		return this.plugin.calendars.get(this.options.calendar ?? (this.options.root ? idx.get(this.options.root)?.calendar : undefined) ?? idx.dominantCalendar(this.options.folder));
 	}
 
+	/** Draws the timeline's date line at a day, when the timeline is showing. */
+	private cursor?: (at: number | undefined) => void;
+
+	/** Moves the timeline's date line alone, when nothing else on the chart changes with the date. */
+	moveCursor(at: number | undefined) {
+		this.cursor?.(at);
+	}
+
 	refresh() {
+		this.cursor = undefined;
 		this.layer.replaceChildren();
 		this.legendEl.empty();
 		this.rowAt.clear();
@@ -913,10 +922,13 @@ export class OrgChartRenderer {
 			bindHover(this.plugin, label, l.key, this.hoverParent);
 		});
 		// The chosen day, and picking one by clicking the axis.
-		if (this.options.at !== undefined) {
-			const cx = x(this.options.at);
+		this.cursor = (at: number | undefined) => {
+			s.querySelector(".chronicle-org-cursor")?.remove();
+			if (at === undefined) return;
+			const cx = x(at);
 			svg("line", { x1: cx, x2: cx, y1: AXIS - 6, y2: height, class: "chronicle-org-cursor" }, s);
-		}
+		};
+		this.cursor(this.options.at);
 		const hit = svg("rect", { x: LABEL, y: 0, width: plotW, height: AXIS, class: "chronicle-org-axis-hit" }, s);
 		const tip = svg("title", {}, hit);
 		tip.textContent = "Click to see the organisation on that date (Esc or the Time button for all time)";

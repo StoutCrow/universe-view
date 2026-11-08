@@ -829,9 +829,17 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 .chronicle-org-card {
 	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
 }
-/* Once the time slider has moved, a redraw is the same chart a moment later: nothing fades in again. */
-.uv-scrubbed .chronicle-org-card,
-.uv-scrubbed .chronicle-dash-ego-node {
+/* Once a view has opened (views/base.ts), a redraw is the same view a moment later: nothing fades or pops in again. */
+.uv-shown .chronicle-view-body > *:not(#uv-strong),
+.uv-shown .chronicle-org-card,
+.uv-shown .chronicle-dash-ego-node,
+.uv-shown .chronicle-fan-cell,
+.uv-shown .chronicle-lineage-item,
+.uv-shown .chronicle-pin-dot,
+.uv-shown .chronicle-pin-label,
+.uv-shown .chronicle-pin-count,
+.uv-shown .chronicle-dash-card,
+.uv-shown .chronicle-dash-head {
 	animation: none;
 }
 .chronicle-org-card-bg {

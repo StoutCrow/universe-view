@@ -38,6 +38,15 @@
 .chronicle-territory-label:not(#uv-strong) {
 	transition: opacity var(--chronicle-label-fade, 150ms) ease;
 }
+/* Just redrawn (map.ts draw): states apply at once, nothing fades into them. */
+.chronicle-map.uv-settling .chronicle-territory:not(#uv-strong),
+.chronicle-map.uv-settling .chronicle-territory-label:not(#uv-strong),
+.chronicle-map.uv-settling .chronicle-pin-label:not(#uv-strong),
+.chronicle-map.uv-settling .uv-realm-name:not(#uv-strong),
+.chronicle-map.uv-settling .uv-terr-overlay,
+.chronicle-map.uv-settling .uv-terr-texture {
+	transition: none;
+}
 .chronicle-map-crumbs {
 	position: absolute;
 	top: 10px;

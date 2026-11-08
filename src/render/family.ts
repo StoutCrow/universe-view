@@ -151,16 +151,20 @@ export class FamilyTreeRenderer {
 	refresh() {
 		this.W = cssNumber(this.root, "--chronicle-card-width", 180);
 		this.H = cssNumber(this.root, "--chronicle-card-height", 64);
-		this.layer.replaceChildren();
-		this.cardBox.replaceChildren();
-		this.cardEls = [];
-		this.slotsByKey.clear();
-		this.root.querySelector(".chronicle-empty")?.remove();
-		this.root.querySelector(".uv-family-note")?.remove();
+		const clear = () => {
+			this.layer.replaceChildren();
+			this.cardBox.replaceChildren();
+			this.cardEls = [];
+			this.slotsByKey.clear();
+			this.root.querySelector(".chronicle-empty")?.remove();
+			this.root.querySelector(".uv-family-note")?.remove();
+		};
 		const idx = this.plugin.index;
 		const rootKey = this.options.root;
 		const rootEntity = idx.get(rootKey);
 		if (!rootKey || !rootEntity || rootEntity.type !== "person") {
+			clear();
+			this.drawnSig = undefined;
 			this.svgEl.addClass("is-hidden");
 			const people = idx.all("person");
 			emptyState(
@@ -182,6 +186,12 @@ export class FamilyTreeRenderer {
 		this.truncated = false;
 		if (this.options.layout === "everyone") this.layoutEveryone(rootKey);
 		else this.layout(rootKey);
+		// An edit elsewhere in the vault that changes nobody here: keep the cards as they are, portraits
+		// and all, rather than drawing the same tree again.
+		const sig = JSON.stringify([this.W, this.H, this.options, this.truncated, this.nodes.map((n) => [n.key, n.x, n.y, idx.get(n.key)?.props]), this.families.map((f) => [f.parents, f.children, [...f.adoptive]])]);
+		if (sig === this.drawnSig) return;
+		this.drawnSig = sig;
+		clear();
 		this.draw();
 		if (this.truncated) el("div", { cls: "uv-family-note", text: `The first ${this.nodes.length} people: fewer steps shows the rest of this family more closely.` }, this.root);
 		// Re-centre for a new person; on note edits keep wherever the user has panned to.
@@ -190,6 +200,8 @@ export class FamilyTreeRenderer {
 	}
 
 	private drawnRoot?: string;
+	/** What the cards on screen were drawn from: the same again needs no redraw. */
+	private drawnSig?: string;
 
 	private initialView() {
 		const r = this.nodes.find((n) => n.root);

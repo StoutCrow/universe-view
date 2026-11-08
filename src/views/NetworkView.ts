@@ -137,7 +137,6 @@ export class NetworkView extends ChronicleView {
 					const idx = this.plugin.index;
 					const same = idx.timeStep(day) === idx.timeStep(o.at);
 					o.at = day;
-					this.contentEl.addClass("uv-scrubbed");
 					if (same) this.app.workspace.requestSaveLayout();
 					else this.update();
 				},

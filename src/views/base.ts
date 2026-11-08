@@ -29,6 +29,9 @@ export abstract class ChronicleView extends ItemView {
 		this.body = el("div", { cls: "chronicle-view-body" }, this.contentEl);
 		this.build();
 		this.built = true;
+		// Opening animations play once: after this, a redraw (an edit, the time slider) appears at once
+		// instead of every card, pin and person fading in again.
+		window.setTimeout(() => this.contentEl.addClass("uv-shown"), 900);
 		this.registerEvent(this.plugin.index.on("changed", () => {
 			if (this.waiting) this.changedWhileWaiting = true;
 			else this.onIndexChanged();

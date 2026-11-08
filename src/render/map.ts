@@ -470,6 +470,14 @@ export class MapRenderer {
 	}
 
 	private draw() {
+		// Freshly drawn lands and names take their tier and crowding state at once: the fades are for
+		// zooming, and on a redraw (each step of the time slider) every land would visibly morph into
+		// its state. On for two frames, past the name sorting that runs on the next one.
+		this.root.addClass("uv-settling");
+		cancelAnimationFrame(this.settleFrame);
+		this.settleFrame = window.requestAnimationFrame(() => {
+			this.settleFrame = window.requestAnimationFrame(() => this.root.removeClass("uv-settling"));
+		});
 		this.drawTerritories();
 		this.drawOccupation();
 		this.drawRoutes();
@@ -1074,6 +1082,8 @@ export class MapRenderer {
 	}
 
 	/** Hides labels that would collide with a more important one. */
+	private settleFrame = 0;
+
 	private scheduleDeclutter() {
 		cancelAnimationFrame(this.declutterFrame);
 		this.declutterFrame = window.requestAnimationFrame(() => this.declutter());
