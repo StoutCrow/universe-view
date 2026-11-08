@@ -1,5 +1,5 @@
 import type { ViewStateResult } from "obsidian";
-import { DEFAULT_HOUSES_OPTIONS, HousesOptions, HousesRenderer } from "../render/houses";
+import { DEFAULT_HOUSES_OPTIONS, GROUP_KINDS, HousesOptions, HousesRenderer } from "../render/houses";
 import { iconButton, toggleChip } from "../render/common";
 import { ChronicleView } from "./base";
 
@@ -14,7 +14,7 @@ export class HousesView extends ChronicleView {
 		return VIEW_HOUSES;
 	}
 	getDisplayText() {
-		return "Houses";
+		return GROUP_KINDS.house.plural;
 	}
 	getIcon() {
 		return "castle";

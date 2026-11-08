@@ -95,7 +95,7 @@ class FolderOverview extends MarkdownRenderChild {
 			} else if (e.type === "culture") {
 				const k = groupKind(p, e);
 				const id = k === "house" ? "houses" : "groups";
-				add(id, k === "house" ? "Houses" : "Groups", k === "house" ? GROUP_KINDS.house.icon : GROUP_KINDS.group.icon, { file, e, meta: k === "house" ? year(e) : GROUP_KINDS[k].label, sort: e.name });
+				add(id, k === "house" ? GROUP_KINDS.house.plural : "Groups", k === "house" ? GROUP_KINDS.house.icon : GROUP_KINDS.group.icon, { file, e, meta: k === "house" ? year(e) : GROUP_KINDS[k].label, sort: e.name });
 			} else if (e.type === "person") {
 				const dead = !!e.end;
 				add(dead ? "dead" : "living", dead ? "The dead" : "People", TYPE_ICONS.person, { file, e, meta: year(e), sort: dead ? String(-(e.end?.start ?? 0)).padStart(12, "0") : e.name });

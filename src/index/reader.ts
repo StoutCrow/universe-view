@@ -11,7 +11,7 @@ const TYPE_SYNONYMS: Record<EntityType, string[]> = {
 	culture: [
 		"culture", "faction", "nation", "kingdom", "empire", "organization", "organisation", "order", "house",
 		"dynasty", "religion", "tribe", "clan", "guild", "group", "state", "polity", "civilization", "civilisation", "ethnicity",
-		"family", "faith", "realm", "company", "corporation", "government",
+		"family", "faith", "realm", "company", "corporation", "government", "federation", "commonwealth", "agency", "party", "union", "fleet", "military",
 	],
 	place: [
 		"place", "location", "city", "town", "village", "region", "settlement", "landmark", "building", "area", "site",
@@ -308,7 +308,8 @@ export function readIcon(value: unknown): string | undefined {
 }
 
 const GENERIC_TAGS = new Set(["person", "character", "npc", "people", "event", "culture", "group", "place", "location", "map"]);
-const CATEGORY_KEYS = ["kind", "subtype", "place_type", "place-type", "place_category", "settlement", "category"];
+/** Properties that say a note's finer kind, first found wins (`org_type: corporation`, `event_type: conflict`). */
+export const CATEGORY_KEYS = ["kind", "subtype", "place_type", "place-type", "place_category", "org_type", "org-type", "group_type", "group-type", "event_type", "event-type", "settlement", "category"];
 
 /** The finer kind of a note: a "kind:" property, or a type tag more specific than the type (#City, #House). */
 export function readCategory(fm: Record<string, unknown>, tags: string[], type: EntityType): string | undefined {

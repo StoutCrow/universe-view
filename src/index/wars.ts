@@ -8,7 +8,7 @@ import { victorsOf } from "./periods";
  * `sides:` say who fought and who won; a war's sides are its own, or gathered from its battles.
  */
 
-const BATTLE = /\b(battle|siege|skirmish|sack|assault|ambush|engagement|clash|stand|rout|storming|sortie|duel)\b/i;
+const BATTLE = /\b(battle|siege|skirmish|sack|assault|ambush|engagement|clash|stand|rout|storming|sortie|duel|raid|strike|bombardment|bombing|offensive|firefight|operation)\b/i;
 const WAR = /\b(war|wars|rebellion|revolt|uprising|invasion|crusade|conflict|campaign|conquest|feud|insurrection)\b/i;
 
 export function isBattle(e: Entity): boolean {

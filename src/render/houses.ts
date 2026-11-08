@@ -18,8 +18,8 @@ export interface HousesOptions {
 export const DEFAULT_HOUSES_OPTIONS: HousesOptions = { all: false, descent: true };
 
 const HOUSE = /\b(house|family|dynasty|clan|lineage|line|kin|kindred|tribe|bloodline)\b/i;
-const HEAD = /\b(head|lord|lady|king|queen|patriarch|matriarch|chief|ruler|duke|duchess|count|countess|baron|prince|princess|emperor|empress|monarch|sovereign)\b/i;
-const NOT_HOUSE = /\b(church|faith|religion|order|guild|company|army|navy|kingdom|realm|empire|nation|council|crown|republic|city|league|society|cult|temple)\b/i;
+const HEAD = /\b(head|lord|lady|king|queen|patriarch|matriarch|chief|ruler|duke|duchess|count|countess|baron|prince|princess|emperor|empress|monarch|sovereign|president|chairman|chairwoman|chair|ceo|director|founder)\b/i;
+const NOT_HOUSE = /\b(church|faith|religion|order|guild|company|army|navy|kingdom|realm|empire|nation|council|crown|republic|city|league|society|cult|temple|corporation|corp|agency|commission|ministry|party|government|federation|commonwealth|military|fleet|union|bank)\b/i;
 const YEAR = 365.2425;
 const LABEL_W = 230;
 const ROW_H = 20;

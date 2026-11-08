@@ -8,6 +8,8 @@ import { CustomCalendar } from "../dates/calendars";
 import { formatDay } from "../dates/parser";
 import { TYPE_LABELS, el, glyph, helpTip, icon } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
+import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
+import { chooseWorldSetting } from "./worldsettingui";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
 import { MOTIONS, THEMES, applyAppearance } from "../appearance";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
@@ -36,7 +38,7 @@ function resolveColor(key: string): string {
 
 /** The settings' pages, each holding the sections whose headings start as named here (anything else goes on the first). */
 const PAGES: { id: string; label: string; heads: string[] }[] = [
-	{ id: "appearance", label: "Look & cards", heads: ["Appearance", "Views", "About", "Fonts", "Inspector", "Icons", "Hover cards"] },
+	{ id: "appearance", label: "Look & cards", heads: ["World setting", "Appearance", "Views", "About", "Fonts", "Inspector", "Icons", "Hover cards"] },
 	{ id: "notes", label: "Notes", heads: ["Recognising notes", "New notes", "Folder notes", "Writing and families", "Relationships"] },
 	{ id: "time", label: "Time & calendars", heads: ["Timeline", "Calendars"] },
 	{ id: "maps", label: "Maps & realms", heads: ["Maps", "Map look", "Realms and tiers"] },
@@ -255,6 +257,20 @@ export class ChronicleSettingTab extends PluginSettingTab {
 	/** Every row, in order, under its section headings. */
 	private build(containerEl: HTMLElement) {
 		const s = this.plugin.settings;
+
+		// ---- World setting -------------------------------------------------------------------
+		const worldHead = new Setting(containerEl).setName("World setting").setHeading();
+		helpTip(worldHead.nameEl, "Only words and defaults change: what tiers, families and ranks are called, which kinds of place are offered, and the map look. Every property (`liege:`, `house:`, `kind: castle`) reads the same in all three, so you can switch at any time. Tier names and a map look of your own are kept.");
+		new Setting(containerEl)
+			.setName("Setting")
+			.setDesc(WORLD_SETTINGS.find(([id]) => id === (s.worldSetting ?? "medieval"))?.[2] ?? "")
+			.addDropdown((d) => {
+				for (const [id, label] of WORLD_SETTINGS) d.addOption(id, label);
+				d.setValue(s.worldSetting ?? "medieval").onChange(async (v) => {
+					await chooseWorldSetting(this.plugin, v as WorldSetting);
+					this.update();
+				});
+			});
 
 		this.appearance(containerEl);
 		this.mapTools(containerEl);

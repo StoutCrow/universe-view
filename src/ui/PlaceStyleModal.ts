@@ -1,7 +1,8 @@
 import { Setting, TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { PIN_SIZES, type Entity, type PinSize } from "../types";
-import { CATEGORY_SCALE, COMMON_PLACE_KINDS, parseMapCategories } from "../settings";
+import { CATEGORY_SCALE, COMMON_PLACE_KINDS, parseMapCategories, placeCategories } from "../settings";
+import { settingWords } from "../index/worldsetting";
 import { TextPrompt } from "../views/DashboardView";
 import { helpTip } from "../render/common";
 
@@ -23,26 +24,28 @@ const NOT_KINDS = new Set(["kingdom", "realm", "empire", "province", "duchy", "c
 
 /** The kinds of place to offer, grouped: built-in groups first, then any others in use or in the settings. */
 export function placeKindGroups(plugin: ChroniclePlugin): [string, string[]][] {
+	const setting = plugin.settings.worldSetting;
+	const later = setting === "modern" || setting === "futuristic";
 	const groups: [string, string[]][] = [
-		["Settlements", ["capital", "city", "town", "village", "settlement", "port"]],
-		["Defences", ["castle", "fort"]],
-		["Buildings and sites", ["building", "temple", "landmark", "ruin"]],
+		["Settlements", ["capital", "city", "town", "village", "settlement", "port", ...(setting === "futuristic" ? ["colony"] : later ? ["district"] : [])]],
+		["Defences", settingWords(setting).defences],
+		["Buildings and sites", ["building", "temple", "landmark", "ruin", ...(later ? ["airport", "factory", "office", "campus", "stadium"] : [])]],
 		["Nature", ["region", "landform", "mountain", "forest", "river", "lake", "sea", "island"]],
-		["Space", ["planet", "moon", "star", "station"]],
+		["Space", ["planet", "moon", "star", "station", ...(setting === "futuristic" ? ["spaceport", "habitat", "asteroid", "system", "galaxy", "ship"] : [])]],
 	];
 	const known = new Set(groups.flatMap(([, k]) => k));
 	const others = new Set<string>();
 	for (const k of [...COMMON_PLACE_KINDS, ...parseMapCategories(plugin.settings.mapCategories).keys()]) if (!known.has(k) && !NOT_KINDS.has(k)) others.add(k);
 	for (const p of plugin.index.all("place")) if (p.category && !known.has(p.category) && !NOT_KINDS.has(p.category)) others.add(p.category);
-	// Space only for vaults that use it (a planet or station among the places or the settings' kinds).
-	const space = [...parseMapCategories(plugin.settings.mapCategories).keys()].some((k) => ["planet", "station"].includes(k)) && plugin.index.all("place").some((p) => ["planet", "moon", "star", "station"].includes(p.category ?? ""));
+	// Space only for futuristic worlds and vaults that use it (a planet or station among the places or the settings' kinds).
+	const space = setting === "futuristic" || ([...parseMapCategories(plugin.settings.mapCategories).keys()].some((k) => ["planet", "station"].includes(k)) && plugin.index.all("place").some((p) => ["planet", "moon", "star", "station"].includes(p.category ?? "")));
 	return [...groups.filter(([name]) => name !== "Space" || space), ...(others.size ? [["Other", [...others].sort()] as [string, string[]]] : [])];
 }
 
 /** What a place gets when it doesn't say: its kind's size and layer from the settings, or built-in ones. */
 export function kindDefaults(plugin: ChroniclePlugin, kind?: string): { size?: PinSize; layer: number } {
 	if (!kind) return { layer: 1 };
-	const cat = parseMapCategories(plugin.settings.mapCategories).get(kind);
+	const cat = placeCategories(plugin.settings.mapCategories).get(kind);
 	const builtin = CATEGORY_SCALE[kind];
 	return { size: cat?.size ?? builtin?.size, layer: cat?.layer ?? builtin?.layer ?? 1 };
 }

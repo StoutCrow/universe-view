@@ -82,6 +82,14 @@ const ONE: Record<string, string> = {
 	employer: "employer", employees: "employee", leader: "leader", leads: "leads", "trade-partners": "trade partner", founder: "founder", founded: "founded",
 };
 
+/** The setting's words for `liege:` and `vassals:` (Superior and Subordinates in a modern world). The property names stay. */
+export function setRankWords(w: { liege: string; vassals: string; liegeOne: string; vassalOne: string }) {
+	BY_NAME.get("liege")!.label = w.liege;
+	BY_NAME.get("vassals")!.label = w.vassals;
+	ONE.liege = w.liegeOne;
+	ONE.vassals = w.vassalOne;
+}
+
 /** What one person or group is to another, in the singular ("Corin Hale (mentor)"). */
 export function relOne(kind: string | undefined): string {
 	const known = relKind(kind);

@@ -1,6 +1,7 @@
 import { Keymap, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
 import { ENTITY_TYPES, PIN_SIZES, type ChronDate, type Entity, type EntityType } from "../types";
 import { buildFieldAliases, findMapping, setMapping, type FieldName } from "../settings";
+import { settingWords } from "../index/worldsetting";
 import { formatDate, formatSpan } from "../dates/parser";
 import { validate } from "../index/validate";
 import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, setPressed, showEntityMenu, svg, toggleChip, typeColorVar } from "../render/common";
@@ -524,7 +525,7 @@ export class ExplorerView extends ChronicleView {
 			const d = kindDefaults(this.plugin, e.category);
 			el("div", { cls: "chronicle-dash-muted", text: `Shown on the map as ${e.pinSize ?? d.size ?? "event-sized"} pins, layer ${e.layer ?? d.layer} (${LAYER_NAMES[(e.layer ?? d.layer) - 1].toLowerCase()}).` }, body);
 		} else {
-			new Setting(body).setName("Kind").setDesc(kindHint(e.type)).addText((t) => {
+			new Setting(body).setName("Kind").setDesc(kindHint(e.type, this.plugin.settings.worldSetting)).addText((t) => {
 				t.setValue(e.category ?? "");
 				t.inputEl.addEventListener("change", () =>
 					void this.plugin.editFrontmatter(file, (f) => this.plugin.setKindMark(f, e.category, t.getValue().trim().toLowerCase() || null), "Change kind"));
@@ -966,8 +967,8 @@ export class ExplorerView extends ChronicleView {
 	}
 }
 
-function kindHint(t: EntityType): string {
-	return { person: "Knight, merchant, deity…", event: "Battle, treaty, birth…", culture: "Kingdom, house, guild, faith…", place: "", map: "World, region, city plan…" }[t];
+function kindHint(t: EntityType, setting: string | undefined): string {
+	return t === "place" ? "" : settingWords(setting).hints[t];
 }
 
 function toHex(c?: string): string | undefined {

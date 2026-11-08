@@ -36,8 +36,8 @@ export interface QuickAddContext {
 }
 
 const EVENT_WORDS = /\b(battle|siege|war|treaty|coronation|founding|foundation|death|birth|marriage|wedding|fall|sack|rebellion|revolt|council|massacre|raid|discovery|election|uprising|invasion|duel|accord|pact|plague|festival|voyage|expedition|crowning|burning|flood|eruption)\b/i;
-const CULTURE_WORDS = /^(house|order|kingdom|empire|guild|clan|church|tribe|company|league|republic|realm|dynasty|faith|cult|brotherhood|sisterhood|council of)\b/i;
-const PLACE_WORDS = /\b(city|town|village|keep|castle|fort|fortress|tower|abbey|temple|port|harbou?r|bridge|forest|wood|mountain|river|lake|island|isle|valley|pass|hold|citadel)\b/i;
+const CULTURE_WORDS = /^(house|order|kingdom|empire|guild|clan|church|tribe|company|league|republic|realm|dynasty|faith|cult|brotherhood|sisterhood|council of|federation|commonwealth|corporation|agency|ministry|department of|party|fleet)\b/i;
+const PLACE_WORDS = /\b(city|town|village|keep|castle|fort|fortress|tower|abbey|temple|port|harbou?r|bridge|forest|wood|mountain|river|lake|island|isle|valley|pass|hold|citadel|station|spaceport|airport|base|colony|outpost|habitat|planet|moon)\b/i;
 const TYPE_PREFIX = /^(event|person|character|culture|group|faction|place|location|map)\s*:\s*/i;
 const TYPE_OF: Record<string, EntityType> = { event: "event", person: "person", character: "person", culture: "culture", group: "culture", faction: "culture", place: "place", location: "place", map: "map" };
 

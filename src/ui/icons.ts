@@ -4,7 +4,9 @@ import type { EntityType } from "../types";
 import { TYPE_ICONS, el, entityColor, glyph, icon } from "../render/common";
 import { chainOf, tierName } from "../index/realms";
 import { GROUP_KINDS, groupKind, type GroupKind } from "../render/houses";
-import { parseMapCategories } from "../settings";
+import { placeCategories } from "../settings";
+import { settingWords } from "../index/worldsetting";
+import { setRankWords } from "../index/relkinds";
 
 /** The built-in icons, kept so a cleared setting goes back to them. */
 const DEFAULT_TYPE_ICONS = { ...TYPE_ICONS };
@@ -13,8 +15,14 @@ const DEFAULT_GROUP_ICONS = Object.fromEntries(Object.entries(GROUP_KINDS).map((
 /** Puts the icons chosen in the settings (per type, per kind of group) in place of the built-in ones. */
 export function applyIconSettings(plugin: ChroniclePlugin) {
 	const s = plugin.settings;
+	// The world's setting first: what a family is called, its icon, and the liege's and vassals' labels.
+	const w = settingWords(s.worldSetting);
+	GROUP_KINDS.house.label = w.house;
+	GROUP_KINDS.house.plural = w.houses;
+	setRankWords(w);
+	const builtIn = { ...DEFAULT_GROUP_ICONS, house: w.houseIcon };
 	for (const t of Object.keys(DEFAULT_TYPE_ICONS) as EntityType[]) TYPE_ICONS[t] = s.typeIcons?.[t]?.trim() || DEFAULT_TYPE_ICONS[t];
-	for (const k of Object.keys(DEFAULT_GROUP_ICONS) as GroupKind[]) GROUP_KINDS[k].icon = s.groupIcons?.[k]?.trim() || DEFAULT_GROUP_ICONS[k];
+	for (const k of Object.keys(DEFAULT_GROUP_ICONS) as GroupKind[]) GROUP_KINDS[k].icon = s.groupIcons?.[k]?.trim() || builtIn[k];
 }
 
 export { DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS };
@@ -32,7 +40,7 @@ export function noteIcons(plugin: ChroniclePlugin, path: string): { type?: strin
 		return typeof own === "string" && own.trim() ? { kind: own.trim() } : {};
 	}
 	const type = TYPE_ICONS[e.type];
-	const cat = e.category ? parseMapCategories(plugin.settings.mapCategories).get(e.category)?.icon : undefined;
+	const cat = e.category ? placeCategories(plugin.settings.mapCategories).get(e.category)?.icon : undefined;
 	const group = e.type === "culture" ? GROUP_KINDS[groupKind(plugin, e)].icon : undefined;
 	const kind = e.icon ?? cat ?? group;
 	return { type, kind: kind && kind !== type ? kind : undefined };
@@ -41,7 +49,7 @@ export function noteIcons(plugin: ChroniclePlugin, path: string): { type?: strin
 /** How strongly each tier is coloured in the file explorer (1 empire … 6 settlement), and houses and people. */
 export const DEFAULT_FILE_STRENGTH: Record<string, number> = { "1": 100, "2": 95, "3": 85, "4": 65, "5": 50, "6": 40, region: 45, house: 75, person: 45, other: 55 };
 export function fileStrengthNames(): [string, string][] {
-	return [...["1", "2", "3", "4", "5", "6"].map((t): [string, string] => [t, tierName(Number(t), true)]), ["region", "Regions (geography)"], ["house", "Houses"], ["person", "People"], ["other", "Other titles"]];
+	return [...["1", "2", "3", "4", "5", "6"].map((t): [string, string] => [t, tierName(Number(t), true)]), ["region", "Regions (geography)"], ["house", GROUP_KINDS.house.plural], ["person", "People"], ["other", "Other titles"]];
 }
 
 /**

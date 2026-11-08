@@ -62,7 +62,8 @@ import type { SavedView } from "./settings";
 import { buildGedcom } from "./import/gedcom-export";
 import { HoverCards } from "./ui/HoverCard";
 import { THEMES, applyAppearance, clearAppearance } from "./appearance";
-import { TAG_TYPES, normalizeType, readPoints, writePoints } from "./index/reader";
+import { suggestWorldSetting } from "./ui/worldsettingui";
+import { CATEGORY_KEYS, TAG_TYPES, normalizeType, readPoints, writePoints } from "./index/reader";
 import type { ModuleKind } from "./settings";
 import { CreateEntityModal, CreatePrefill } from "./ui/CreateEntityModal";
 import { ValidateModal } from "./ui/ValidateModal";
@@ -233,7 +234,10 @@ export default class ChroniclePlugin extends Plugin {
 			if (this.settings.useDataview && file instanceof TFile) this.index.requestUpdate(file, true);
 		}));
 
-		this.app.workspace.onLayoutReady(() => this.index.rebuild());
+		this.app.workspace.onLayoutReady(() => {
+			this.index.rebuild();
+			window.setTimeout(() => this.safely("World setting", () => suggestWorldSetting(this), undefined), 3000);
+		});
 	}
 
 	/**
@@ -1147,8 +1151,7 @@ export default class ChroniclePlugin extends Plugin {
 	setKindMark(front: Record<string, unknown>, current: string | undefined, kind: string | null) {
 		const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
 		const tagIdx = current ? tags.findIndex((t) => t.replace(/^#/, "").toLowerCase() === current) : -1;
-		const keys = ["kind", "subtype", "place_type", "place-type", "place_category", "settlement", "category"];
-		const propKey = keys.find((k) => typeof front[k] === "string");
+		const propKey = CATEGORY_KEYS.find((k) => typeof front[k] === "string");
 		if (tagIdx >= 0 && !propKey) {
 			if (kind) {
 				const old = tags[tagIdx].replace(/^#/, "");

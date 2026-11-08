@@ -40,7 +40,7 @@ import { asText, excerptOf } from "../src/index/text";
 import { fillFrom, rasterize, simplifyRing, snapPoint, snapRing, traceOutlines } from "../src/render/fill";
 import { settle } from "../src/render/layout";
 import { cappedSize, levelFor, MAX_PIXELS, piecesIn } from "../src/render/bigimage";
-import { TIER_NAME_PRESETS, chainOf, holdingsOf, natureOf, rankOf, realmTree, regionRankOf, setTierNames, tierLabel, tierName, tierRenamed, tierWordsWith } from "../src/index/realms";
+import { TIER_NAME_PRESETS, tierPresetOf, chainOf, holdingsOf, natureOf, rankOf, realmTree, regionRankOf, setTierNames, tierLabel, tierName, tierRenamed, tierWordsWith } from "../src/index/realms";
 import { shownAs, visibleTiers } from "../src/render/tiers";
 import { fitRange } from "../src/render/layout";
 import { buildGedcom, gedcomDate } from "../src/import/gedcom-export";
@@ -57,12 +57,13 @@ import { labelOutlines, partitionLand } from "../src/render/fill";
 import { storyPrompts } from "../src/index/prompts";
 import type { EntityType } from "../src/types";
 import { validate } from "../src/index/validate";
-import { findMapping, parseMapCategories, setMapping } from "../src/settings";
+import { findMapping, parseMapCategories, placeCategories, setMapping } from "../src/settings";
+import { guessSetting, settingWords } from "../src/index/worldsetting";
 import { CALENDAR_PRESETS, formatLeaps, formatMonths, monthIndex, parseHolidays, parseLeaps, parseMonths, parseMoons, parseSeasons } from "../src/dates/calendar-text";
 import { knownTo } from "../src/index/knowledge";
 import { pageName } from "../src/index/pagename";
 import { detectCoast, detectLines, edgeColor, lineColorAt, traceBetween, waterLines } from "../src/render/trace";
-import { presetKinds, relInverse, relKind, relLabel, relTone } from "../src/index/relkinds";
+import { presetKinds, relInverse, relKind, relLabel, relTone, setRankWords } from "../src/index/relkinds";
 import { DEFAULT_FIELD_ALIASES } from "../src/settings";
 
 let failed = 0;
@@ -1469,6 +1470,23 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	const spot = labelSpot(sq(0, 0, 100), [sq(0, 0, 50)]);
 	eq([spot.p[0] > 50 || spot.p[1] > 50, spot.room > 10], [true, true], "labels: the name sits in the open part, away from a sub-land");
 	eq(Math.round((mainAxis([[0, 0], [100, 10], [100, 20], [0, 10]]).angle * 180) / Math.PI / 10), 1, "labels: a long land's axis follows it");
+}
+// World setting: medieval by default, modern and futuristic words and defaults on top.
+{
+	eq(settingWords(undefined).house, "House", "setting: unset is medieval");
+	eq([settingWords("modern").liege, settingWords("futuristic").houses, settingWords("futuristic").tiers], ["Superior", "Families", "galactic"], "setting: later worlds' words");
+	eq(TIER_NAME_PRESETS.some(([id]) => id === settingWords("modern").tiers), true, "setting: its tier names are a preset");
+	eq([guessSetting(["planet", "moon", "station", "city"]), guessSetting(["airport", "base", "factory"]), guessSetting(["castle", "planet"]), guessSetting([])], ["futuristic", "modern", undefined, undefined], "setting: guessed from kinds of place");
+	eq([tierPresetOf(undefined), tierPresetOf(TIER_NAME_PRESETS[1][2]), tierPresetOf({ "3": { one: "Shire" } })], ["medieval", TIER_NAME_PRESETS[1][0], undefined], "setting: tier names as a preset, or the vault's own");
+	eq([readCategory({ org_type: "Corporation" }, [], "culture"), readCategory({ event_type: "conflict" }, [], "event"), readCategory({ kind: "house", org_type: "nation" }, [], "culture")], ["corporation", "conflict", "house"], "setting: org_type and event_type are kinds, after kind:");
+	const words = tierWordsWith("");
+	eq([words.federation, words.commonwealth, words.municipality, words.kingdom], [1, 2, 6, 2], "setting: modern tier words");
+	const cats = placeCategories("spaceport = #ff0000");
+	eq([cats.get("spaceport")?.color, cats.get("airport")?.icon, parseMapCategories("").has("airport")], ["#ff0000", "plane", false], "setting: built-in extra kinds under the settings' own");
+	setRankWords(settingWords("modern"));
+	eq([relLabel("liege"), relLabel("liege", true)], ["Superior", "Subordinates"], "setting: rank labels follow it");
+	setRankWords(settingWords("medieval"));
+	eq(relLabel("vassals"), "Vassals", "setting: back to medieval");
 }
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

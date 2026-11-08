@@ -3,6 +3,7 @@ import { PIN_SIZES } from "./types";
 import { relPropertyNames } from "./index/relkinds";
 import type { CalendarDef, EntityType, PinSize } from "./types";
 import type { TierName } from "./index/realms";
+import type { WorldSetting } from "./index/worldsetting";
 
 export type FieldName =
 	| "type" | "date" | "end" | "born" | "died" | "founded" | "dissolved"
@@ -313,6 +314,10 @@ export interface ChronicleSettings {
 	brushSize?: number;
 	/** The vault's own names for realm tiers ("3" → State); unset tiers keep the built-in names. */
 	tierNames?: Record<string, TierName>;
+	/** The world's setting (medieval, modern, futuristic): words, tier names, map look. Unset is medieval. */
+	worldSetting?: WorldSetting;
+	/** The one-time "this looks like a futuristic world" suggestion has been shown. */
+	worldSettingAsked?: boolean;
 	/** A realm splits into its duchies (and so on) once it's this many pixels across on screen. */
 	tierSplitPx: number;
 	/** Today's date in each calendar, for worlds without a world note (universal days). */
@@ -504,7 +509,42 @@ export const CATEGORY_SCALE: Record<string, { size: PinSize; layer: number }> = 
 	town: { size: "small", layer: 3 }, fort: { size: "small", layer: 3 }, castle: { size: "small", layer: 3 }, temple: { size: "small", layer: 3 },
 	river: { size: "small", layer: 3 }, ruin: { size: "small", layer: 3 }, landmark: { size: "small", layer: 3 }, district: { size: "small", layer: 3 },
 	village: { size: "tiny", layer: 4 }, hamlet: { size: "tiny", layer: 4 }, building: { size: "tiny", layer: 5 }, room: { size: "tiny", layer: 5 },
+	galaxy: { size: "huge", layer: 1 }, nebula: { size: "large", layer: 1 }, system: { size: "large", layer: 1 }, colony: { size: "medium", layer: 2 },
+	spaceport: { size: "medium", layer: 2 }, airport: { size: "medium", layer: 2 }, habitat: { size: "medium", layer: 2 }, base: { size: "small", layer: 3 },
+	outpost: { size: "small", layer: 3 }, asteroid: { size: "small", layer: 3 }, stadium: { size: "small", layer: 3 }, campus: { size: "small", layer: 3 },
+	factory: { size: "tiny", layer: 4 }, office: { size: "tiny", layer: 5 }, ship: { size: "small", layer: 3 },
 };
+
+/**
+ * Kinds of place for modern and futuristic worlds, known in every vault: a colour and icon when the
+ * settings' own list doesn't name them (that list is copied into each vault, so new kinds go here).
+ */
+export const EXTRA_PLACE_KINDS = `airport = #546e7a, plane
+base = #6c5b7b, shield
+factory = #8d6e63, factory
+office = #78909c, building-2
+campus = #7e57c2, school
+stadium = #43a047, trophy
+district = #c0392b, map-pin
+spaceport = #00a8b5, rocket
+colony = #d35400, house
+habitat = #1f9e89, orbit
+outpost = #6c5b7b, radio-tower
+asteroid = #8d8d8d, circle-dot
+galaxy = #7e57c2, sparkles
+nebula = #ab47bc, cloud
+system = #f1c40f, orbit
+ship = #546e7a, ship`;
+
+let extraKinds: Map<string, MapCategory> | undefined;
+
+/** The settings' kinds of place over the built-in extra ones (spaceport, airport…): what maps and icons use. */
+export function placeCategories(text: string): Map<string, MapCategory> {
+	extraKinds ??= parseMapCategories(EXTRA_PLACE_KINDS);
+	const out = new Map(extraKinds);
+	for (const [k, c] of parseMapCategories(text)) out.set(k, c);
+	return out;
+}
 
 /** Common kinds of place offered in pickers (plus whatever the vault already uses). */
 export const COMMON_PLACE_KINDS = ["settlement", "capital", "city", "town", "village", "region", "kingdom", "province", "fort", "castle", "temple", "port", "landmark", "ruin", "mountain", "forest", "river", "lake", "island", "sea", "building"];

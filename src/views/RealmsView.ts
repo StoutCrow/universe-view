@@ -90,7 +90,7 @@ export class RealmsView extends ChronicleView {
 			const s = this.state;
 			const left = this.group();
 			const tabs = el("div", { cls: "chronicle-segmented" }, left);
-			for (const [id, label, ic] of [["realms", "Realms", "crown"], ["houses", "Houses", "castle"], ["cultures", "Peoples & groups", "flag"]] as const) {
+			for (const [id, label, ic] of [["realms", "Realms", "crown"], ["houses", GROUP_KINDS.house.plural, GROUP_KINDS.house.icon], ["cultures", "Peoples & groups", "flag"]] as const) {
 				const b = el("button", { cls: "chronicle-segment" + (s.tab === id ? " is-active" : "") }, tabs);
 				icon(el("span", {}, b), ic);
 				el("span", { text: label }, b);

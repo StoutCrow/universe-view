@@ -11,6 +11,7 @@ import { ExplorerView, VIEW_EXPLORER } from "./ExplorerView";
 import { VIEW_FILES } from "./FilesPanelView";
 import { FamilyTreeView, VIEW_FAMILY } from "./FamilyTreeView";
 import { HousesView, VIEW_HOUSES } from "./HousesView";
+import { GROUP_KINDS } from "../render/houses";
 import { LineageView, VIEW_LINEAGE } from "./LineageView";
 import { MapView, VIEW_MAP } from "./MapView";
 import { NetworkView, VIEW_NETWORK } from "./NetworkView";
@@ -88,7 +89,7 @@ export const HUB_SECTIONS: HubSection[] = [
 		id: "groups", name: "Groups", icon: "crown", modules: [
 			{ id: VIEW_REALMS, name: "Realms", icon: "crown", desc: "Realms and cultures, tier by tier.", view: (l, p) => new RealmsView(l, p) },
 			{ id: VIEW_ORG, name: "Organisation", icon: "network", desc: "Who leads and serves, over time.", view: (l, p) => new OrgChartView(l, p) },
-			{ id: VIEW_HOUSES, name: "Houses", icon: "castle", desc: "Houses as bands over the generations.", view: (l, p) => new HousesView(l, p) },
+			{ id: VIEW_HOUSES, get name() { return GROUP_KINDS.house.plural; }, get icon() { return GROUP_KINDS.house.icon; }, get desc() { return `${GROUP_KINDS.house.plural} as bands over the generations.`; }, view: (l, p) => new HousesView(l, p) },
 		],
 	},
 	{

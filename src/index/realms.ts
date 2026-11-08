@@ -51,12 +51,12 @@ export interface RealmTree {
 
 /** Words that name a tier of title, as a kind or a tag; lower is bigger. */
 export const DEFAULT_TIER_WORDS: Record<string, number> = {
-	empire: 1, hegemony: 1, imperium: 1,
-	kingdom: 2, realm: 2, nation: 2, country: 2, state: 2, republic: 2, principality: 2,
-	duchy: 3, province: 3, archduchy: 3, grandduchy: 3,
-	county: 4, earldom: 4, march: 4,
+	empire: 1, hegemony: 1, imperium: 1, federation: 1, confederation: 1,
+	kingdom: 2, realm: 2, nation: 2, country: 2, state: 2, republic: 2, principality: 2, commonwealth: 2, dominion: 2,
+	duchy: 3, province: 3, archduchy: 3, grandduchy: 3, prefecture: 3,
+	county: 4, earldom: 4, march: 4, canton: 4,
 	barony: 5, shire: 5, district: 5, territory: 5, lordship: 5, fief: 5,
-	city: 6, town: 6, village: 6, settlement: 6, castle: 6, fort: 6, fortress: 6,
+	city: 6, town: 6, village: 6, settlement: 6, castle: 6, fort: 6, fortress: 6, municipality: 6, metropolis: 6, megacity: 6,
 };
 
 /**
@@ -64,8 +64,8 @@ export const DEFAULT_TIER_WORDS: Record<string, number> = {
  * by these (#Region, #Continent, `kind: island`) is a region: it holds land, but no one holds it.
  */
 export const DEFAULT_REGION_WORDS: Record<string, number> = {
-	supercontinent: 1, continent: 1, ocean: 1, world: 1,
-	subcontinent: 2, landmass: 2, sea: 2,
+	supercontinent: 1, continent: 1, ocean: 1, world: 1, galaxy: 1,
+	subcontinent: 2, landmass: 2, sea: 2, nebula: 2,
 	region: 3, archipelago: 3, expanse: 3, wilds: 3,
 	area: 4, peninsula: 4, island: 4, isle: 4, mountains: 4, range: 4, desert: 4, highlands: 4, lowlands: 4, steppe: 4, tundra: 4,
 	forest: 5, wood: 5, woods: 5, valley: 5, plain: 5, plains: 5, coast: 5, marsh: 5, swamp: 5, moor: 5, hills: 5, bay: 5, gulf: 5, strait: 5,
@@ -90,6 +90,12 @@ export const TIER_NAME_PRESETS: [string, string, Record<string, TierName>][] = [
 	["provincial", "Provincial (empire, kingdom, province, county, parish)", { "3": { one: "Province" }, "5": { one: "Parish", many: "Parishes" } }],
 	["galactic", "Galactic (empire, sector, system, planet, moon, colony)", { "2": { one: "Sector" }, "3": { one: "System" }, "4": { one: "Planet" }, "5": { one: "Moon" }, "6": { one: "Colony", many: "Colonies" } }],
 ];
+
+/** Which ready-made set the vault's tier names are, or undefined for names of its own. */
+export function tierPresetOf(names: Record<string, TierName> | undefined): string | undefined {
+	const key = (n: Record<string, TierName> | undefined) => [1, 2, 3, 4, 5, 6].map((t) => `${n?.[t]?.one?.trim() || ""}|${n?.[t]?.many?.trim() || ""}`).join(",");
+	return TIER_NAME_PRESETS.find(([, , p]) => key(p) === key(names))?.[0];
+}
 
 /** County → Counties, Parish → Parishes, State → States. */
 export function pluralOf(word: string): string {

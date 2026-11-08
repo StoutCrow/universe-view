@@ -19,17 +19,17 @@ export interface TypeGuess {
 
 const FOLDER_WORDS: [RegExp, EntityType | "concept", number][] = [
 	[/^(people|persons|characters?|npcs?|cast|dead|living|deceased)$/i, "person", 3],
-	[/^(places|locations?|atlas|cities|towns|villages|regions|geography|settlements|forts|castles|planets|landforms)$/i, "place", 3],
+	[/^(places|locations?|atlas|cities|towns|villages|regions|geography|settlements|forts|castles|planets|moons|systems|stations|colonies|landforms)$/i, "place", 3],
 	[/^(events?|history|wars|battles|conflicts|periods|disasters)$/i, "event", 3],
-	[/^(groups|organi[sz]ations|factions|families|houses|nations|religions|faiths|orgs|guilds|dynasties|companies|realms)$/i, "culture", 3],
+	[/^(groups|organi[sz]ations|factions|families|houses|nations|religions|faiths|orgs|guilds|dynasties|companies|corporations|agencies|parties|governments|realms)$/i, "culture", 3],
 	[/^maps$/i, "map", 3],
 	[/^(concepts?|dictionary|glossary|nature|fauna|flora|diseases|blights|technology|electronics|templates?|guide|society|government)$/i, "concept", 3],
 ];
 
 const NAME_RULES: [RegExp, EntityType, number, string][] = [
-	[/^(house|clan|order of|kingdom of|empire of|duchy of|republic of|church of|guild of|company of)\b/i, "culture", 4, "name looks like a group"],
-	[/\b(battle|siege|war|rebellion|revolt|uprising|treaty|massacre|coronation|founding|sack|blight|plague|pestilence|famine|flood|tourney|tournament|crusade|invasion|assassination|golden age|dark age)\b/i, "event", 4, "name looks like an event"],
-	[/\b(city|town|village|keep|castle|fort|fortress|isle|island|river|mountains?|forest|valley|bay|sea|lake|peninsula)\b/i, "place", 2, "name looks like a place"],
+	[/^(house|clan|order of|kingdom of|empire of|duchy of|republic of|church of|guild of|company of|federation of|ministry of|department of|bureau of)\b/i, "culture", 4, "name looks like a group"],
+	[/\b(battle|siege|war|rebellion|revolt|uprising|treaty|massacre|coronation|founding|sack|blight|plague|pestilence|famine|flood|tourney|tournament|crusade|invasion|assassination|golden age|dark age|election|landings?|launch|missions?|accord|referendum|coup|bombing|pandemic)\b/i, "event", 4, "name looks like an event"],
+	[/\b(city|town|village|keep|castle|fort|fortress|isle|island|river|mountains?|forest|valley|bay|sea|lake|peninsula|spaceport|airport|station|colony|outpost)\b/i, "place", 2, "name looks like a place"],
 ];
 
 const PROP_RULES: [string[], EntityType, number][] = [
@@ -43,9 +43,9 @@ const PROP_RULES: [string[], EntityType, number][] = [
 const BODY_RULES: [RegExp, EntityType, number, string][] = [
 	[/\b(was|is) (born|the (?:\w+ )?(son|daughter|wife|husband|widow|king|queen|lord|lady|prince|princess|duke|duchess|knight|emperor|empress|heir))\b/i, "person", 3, "described as a person"],
 	[/\b(son|daughter) of \[\[/i, "person", 2, "has a parent link"],
-	[/\b(is|was) (?:a|an|the) (?:[\w'-]+ ){0,3}(city|town|village|capital|peninsula|island|region|province|county|duchy|river|mountain|forest|fortress|castle|keep|continent|planet|moon|valley|lake|sea|bay|desert|hamlet|port)\b/i, "place", 3, "described as a place"],
-	[/\b(is|was) (?:a|an|the) (?:[\w'-]+ ){0,3}(war|battle|rebellion|revolt|conflict|siege|pestilence|plague|blight|epidemic|pandemic|famine|disaster|treaty|massacre|uprising|invasion|tournament|tourney|period|age|era)\b/i, "event", 3, "described as an event"],
-	[/\b(is|was) (?:a|an|the) (?:[\w'-]+ ){0,3}(house|family|dynasty|order|faction|guild|company|corporation|kingdom|empire|republic|religion|faith|organization|organisation|cult|clan|tribe|alliance|league|realm)\b/i, "culture", 3, "described as a group"],
+	[/\b(is|was) (?:a|an|the) (?:[\w'-]+ ){0,3}(city|town|village|capital|peninsula|island|region|province|county|duchy|river|mountain|forest|fortress|castle|keep|continent|planet|moon|star|asteroid|station|colony|spaceport|airport|base|outpost|habitat|valley|lake|sea|bay|desert|hamlet|port)\b/i, "place", 3, "described as a place"],
+	[/\b(is|was) (?:a|an|the) (?:[\w'-]+ ){0,3}(war|battle|rebellion|revolt|conflict|siege|pestilence|plague|blight|epidemic|pandemic|famine|disaster|treaty|massacre|uprising|invasion|tournament|tourney|period|age|era|election|mission|landing|coup|accord|crash)\b/i, "event", 3, "described as an event"],
+	[/\b(is|was) (?:a|an|the) (?:[\w'-]+ ){0,3}(house|family|dynasty|order|faction|guild|company|corporation|kingdom|empire|republic|religion|faith|organization|organisation|cult|clan|tribe|alliance|league|realm|federation|commonwealth|agency|commission|ministry|party|government|military|navy|fleet|union|conglomerate|megacorporation)\b/i, "culture", 3, "described as a group"],
 ];
 
 /** How often other notes link to this one from a place-, group-, person- or event-like property. */

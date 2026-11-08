@@ -11,7 +11,7 @@ import { formatDay, parseDate } from "../dates/parser";
 import { TextPrompt } from "../ui/TextPrompt";
 import type ChroniclePlugin from "../main";
 import type { Entity, PinSize, Territory } from "../types";
-import { CATEGORY_SCALE, PinColorBy, parseMapCategories } from "../settings";
+import { CATEGORY_SCALE, PinColorBy, parseMapCategories, placeCategories } from "../settings";
 import { formatDate, formatSpan } from "../dates/parser";
 import { activeAt } from "../index/EntityIndex";
 import { motionMs } from "../appearance";
@@ -878,7 +878,7 @@ export class MapRenderer {
 		if (!this.map || !this.layers) return;
 		this.layers.clearLayers();
 		this.pins = [];
-		this.categories = parseMapCategories(this.plugin.settings.mapCategories);
+		this.categories = placeCategories(this.plugin.settings.mapCategories);
 		this.root.toggleClass("hide-pins", this.options.showPins === false);
 		const idx = this.plugin.index;
 		const at = this.options.at;
@@ -1295,7 +1295,7 @@ export class MapRenderer {
 		layer.clearLayers();
 		this.drawnAreas = [];
 		if (!this.options.showTerritories) return;
-		this.categories = parseMapCategories(this.plugin.settings.mapCategories);
+		this.categories = placeCategories(this.plugin.settings.mapCategories);
 		const idx = this.plugin.index;
 		const at = this.options.at;
 		const tree = this.tiersOn ? this.plugin.realms(at) : undefined;

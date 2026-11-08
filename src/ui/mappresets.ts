@@ -123,6 +123,23 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			tierStyles: tiers((t) => ({ edge: "plain", pattern: "flat", width: Math.max(0.8, t.width * 0.7) })),
 		},
 	},
+	{
+		id: "star-chart",
+		name: "Star chart",
+		desc: "A navigator's chart for space: faint fills, thin even lines, dashed borders for the smaller claims, plain names.",
+		look: {
+			territoryFillScale: 0.45,
+			territoryBorder: "own",
+			mapLabelStyle: "plain",
+			mapLabelHalo: true,
+			mapLabelScale: 0.95,
+			realmBand: "soft",
+			roughBorders: "off",
+			riverWidth: 0.75,
+			riverColor: undefined,
+			tierStyles: tiers((t) => ({ edge: "plain", pattern: "flat", line: t.tier >= 4 ? "dashed" : "solid", width: by(t.tier, [1, 1.8, 1.5, 1.2, 1, 0.8, 0.7, 0.8]) })),
+		},
+	},
 ];
 
 /** The look as the settings have it now (to save as your own preset). */
