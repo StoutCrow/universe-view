@@ -2,6 +2,37 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.0.1 — not released yet
+
+**One tag scheme**
+- Every tag says one thing, one way: what a note is (`#Place_County`, `#Character_Person`), what it belongs to (`#Group_Nation_United_States`) and facts about it (`#Character_Status_Dead`, `#Place_Size_Small`). The type words are always Character, Group, Place, Event and Map, and every note has one kind tag.
+- *Move tags to the tag scheme* rewrites older tags (`#Nation_United_States`, `#Character_Dead`, `#Region_Small`, `#Title`) in the properties and in the text, after a review where you can leave any change out. Undo takes it all back in one step. Older tags keep working until you move them.
+- New notes, land tags, kinds, the Quick creator and *Normalise all tags* all write the new tags. Settings → Notes explains them and keeps your older type tags for reading.
+- Undo now also puts back changes UniverseView made to a note's text, unless you've written in it since.
+
+**Timeline**
+- Rows stay put when you zoom, arrows point where they should, and events are sorted by type.
+- A nations lane: each nation's history is drawn as marks on its bar, a shape per category, with real reigns. The timeline and the lineage are now two modes of one view and share the same years and drawing.
+- Lanes can be dragged into order.
+
+**Notes and tags**
+- Quick creator: Quick add is now a form in the inspector.
+- *Normalise all tags* brings every note to the tags your vault already uses, after a review.
+- Smart reader finds facts in your notes' text and adds only the ones you approve.
+- The file tree moves notes and folders by dragging or with *Move to…*.
+- Changing a note's type or kind can no longer drop it out of UniverseView. Land has one Kind box, where a region's landform is its kind.
+
+**World setting**
+- Choose medieval, modern or futuristic for the whole vault: the words for houses, ranks, tiers and kinds of place follow, and modern and futuristic vaults get a modern sample.
+
+**Maps and looks**
+- Textures take each land's colour; the inspector fits a narrow sidebar; the map, family tree and org chart no longer flash while they redraw, and the time slider redraws only when something changes.
+
+**Fixes**
+- Undo puts back only what a step changed, follows renamed notes, and survives a restart. Occupation shows everywhere.
+- Stale inferred links clear, date ranges split one way everywhere, and saving a note's text alone no longer redraws every view.
+- A first run with a sample world, and calmer toolbars across every view.
+
 ## 2.0.0 — 2026-11-06
 UniverseView is now one dashboard for your whole world. This brings together everything from 1.3 to 1.8, listed in full below.
 

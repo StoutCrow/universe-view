@@ -22,6 +22,7 @@ import { DEFAULT_TIER_NAMES, TIER_NAME_PRESETS, pluralOf, tierName, tierWords, t
 import type { TierStyle } from "./territorystyle";
 import { tierStyleEditor } from "./tierstyleeditor";
 import { TagStandardModal } from "./tagstandard";
+import { NormaliseTagsModal } from "./NormaliseTags";
 import { CALENDAR_PRESETS } from "../dates/calendar-text";
 import { ConfirmPrompt } from "./TextPrompt";
 
@@ -284,7 +285,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		}, containerEl);
 		new Setting(containerEl)
 			.setName("Use tags as types")
-			.setDesc("Treat #person, #character, #event, #culture, #faction, #place, #location and #map as types.")
+			.setDesc("Treat tags as types: the tag scheme's (#Character_Person, #Place_County) and older ones (#person, #character, #event, #faction, #place, #location, #map).")
 			.addToggle((t) => t.setValue(s.tagTypes).onChange(async (v) => {
 				s.tagTypes = v;
 				await this.save();
@@ -332,7 +333,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			.setName("Mark new notes with")
 			.setDesc("Match how this vault already marks types, so other plugins and your own queries keep working.")
 			.addDropdown((d) =>
-				d.addOptions({ property: "A type property (type: person)", tag: "A type tag (#Character)", cr_type: "Charted Roots’ cr_type" })
+				d.addOptions({ property: "A type property (type: person)", tag: "Tags (#Character_Person, #Place_County)", cr_type: "Charted Roots’ cr_type" })
 					.setValue(s.typeStyle)
 					.onChange(async (v) => {
 						s.typeStyle = v as typeof s.typeStyle;
@@ -341,9 +342,14 @@ export class ChronicleSettingTab extends PluginSettingTab {
 					}),
 			);
 		if (s.typeStyle === "tag") {
+			new Setting(containerEl)
+				.setName("Tag scheme")
+				.setDesc("New notes get one tag for what they are (#Character_Person, #Place_County), one per thing they belong to (#Group_Nation_United_States) and one per fact (#Character_Status_Dead, #Place_Size_Small). Older tags still work; this moves them over after a review.")
+				.addButton((b) => b.setButtonText("Move tags…").onClick(() => new NormaliseTagsModal(this.plugin, true).open()));
 			for (const type of ENTITY_TYPES) {
 				new Setting(containerEl)
-					.setName(`Tag for ${TYPE_LABELS[type].toLowerCase()} notes`)
+					.setName(`Older tag for ${TYPE_LABELS[type].toLowerCase()} notes`)
+					.setDesc(type === ENTITY_TYPES[0] ? "Read from notes tagged before the tag scheme (#Character, #Region); new notes don't get it." : "")
 					.addText((t) => t.setPlaceholder(type).setValue(s.typeTags[type]).onChange(async (v) => {
 						if (!v.trim()) return;
 						s.typeTags[type] = v.trim().replace(/^#/, "");
@@ -815,7 +821,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const presetNow = TIER_NAME_PRESETS.find(([, , p]) => same(p, s.tierNames ?? {}))?.[0] ?? "own";
 		new Setting(containerEl)
 			.setName("Tier names")
-			.setDesc("What your world calls each tier of land, as in United States › California › Los Angeles County. A renamed tier works exactly like the built-in one: its name shows on the map, in the realm tree and in menus, tags like #State put a land on it, and standardised tags use it.")
+			.setDesc("What your world calls each tier of land, as in United States › California › Los Angeles County. A renamed tier works exactly like the built-in one: its name shows on the map, in the realm tree and in menus, tags like #Place_State put a land on it, and standardised tags use it.")
 			.addDropdown((d) => {
 				for (const [id, label] of TIER_NAME_PRESETS) d.addOption(id, label);
 				d.addOption("own", "Your own names");
@@ -869,7 +875,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 		// How each tier is drawn on the map.
 		const styles = el("div", { cls: "chronicle-settings-rows" }, containerEl);
-		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from tags and kinds like #Realm, #Province or #Region_Small.").settingEl.addClass("chronicle-settings-rows-head");
+		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from its kind and tags like #Place_Realm, #Place_Province or #Place_Size_Small.").settingEl.addClass("chronicle-settings-rows-head");
 		const saveStyles = debounce(async () => {
 			await this.save(false);
 			this.plugin.restyleTerritories?.();
@@ -880,7 +886,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		});
 		new Setting(containerEl)
 			.setName("Standardise land tags")
-			.setDesc("Go through every place and realm: ruled land (#Title #Province #Region_Small) or geography (#Region #Region_Enormous), with its tier or landform and size. You see each change before it's written.")
+			.setDesc("Go through every place and realm: ruled land (#Place_Province #Place_Size_Small) or geography (#Place_Region #Place_Size_Enormous), with its tier or landform and size. You see each change before it's written.")
 			.addButton((b) => b.setButtonText("Review tags…").onClick(() => new TagStandardModal(this.plugin).open()));
 		new Setting(styles).addButton((b) => b.setButtonText("Reset to the built-in styles").onClick(async () => {
 			s.tierStyles = undefined;
@@ -1190,7 +1196,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Style tags in notes")
-			.setDesc("UniverseView's tags (#Character, #Realm, #Region_Small, #Nation_United_States…) as pills in their type's or realm's colour, in reading view and while editing.")
+			.setDesc("UniverseView's tags (#Character_Person, #Place_Realm, #Place_Size_Small, #Group_Nation_United_States…) as pills in their type's or realm's colour, in reading view and while editing.")
 			.addToggle((t) => t.setValue(s.styleTags !== false).onChange(async (v) => {
 				s.styleTags = v;
 				await save();

@@ -76,7 +76,7 @@ import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
 import type { EntityFilter } from "./types";
 import { asText } from "./index/text";
-import { addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory, type UndoStep } from "./index/undo";
+import { addBodyToStep, addToStep, changesBetween, readHistory, splitBody, remember, renameInSteps, restoreFront, writeHistory, type UndoStep } from "./index/undo";
 
 /** Every view, with its ribbon icon and default hotkey (Ctrl/Cmd + Alt + key; changeable in Settings → Hotkeys). */
 /** This build's version, written in by esbuild.config.mjs (absent in the test harness). */
@@ -1222,6 +1222,22 @@ export default class ChroniclePlugin extends Plugin {
 		this.historyChanged();
 	}
 
+	/** An edit to a note's text below its properties (tags written in the text), undoable like the rest. */
+	async editBody(file: TFile, fn: (body: string) => string, label = "Edit") {
+		let changed = false;
+		await this.app.vault.process(file, (text) => {
+			const [front, body] = splitBody(text);
+			const next = fn(body);
+			if (next === body) return text;
+			changed = true;
+			const step = this.openStep ?? { label, at: Date.now(), notes: [] };
+			addBodyToStep(step, file.path, body, next);
+			if (!this.openStep) remember(this.history, step);
+			return front + next;
+		});
+		if (changed) this.historyChanged();
+	}
+
 	/** Runs several edits as one undo step. */
 	async undoGroup(label: string, run: () => Promise<void>) {
 		const step: UndoStep = { label, at: Date.now(), notes: [] };
@@ -1261,7 +1277,19 @@ export default class ChroniclePlugin extends Plugin {
 			const f = this.app.vault.getAbstractFileByPath(n.path);
 			try {
 				if (!(f instanceof TFile)) throw new Error("note not found");
-				await this.app.fileManager.processFrontMatter(f, (front: Record<string, unknown>) => restoreFront(front, n.before));
+				// The text goes back only if it's as the step left it: later writing is never overwritten.
+				const body = n.body;
+				if (body) {
+					let kept = false;
+					await this.app.vault.process(f, (text) => {
+						const [front, now] = splitBody(text);
+						if (now !== body.after) return text;
+						kept = true;
+						return front + body.before;
+					});
+					if (!kept) missed.push(n.path.split("/").pop() ?? n.path);
+				}
+				if (Object.keys(n.before).length) await this.app.fileManager.processFrontMatter(f, (front: Record<string, unknown>) => restoreFront(front, n.before));
 			} catch (err) {
 				console.error("UniverseView: couldn't undo", n.path, err);
 				missed.push(n.path.split("/").pop() ?? n.path);

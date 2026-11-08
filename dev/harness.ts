@@ -107,6 +107,13 @@ vault.createBinary = async (p: string, data: ArrayBuffer) => {
 vault.modify = async (f: TFile, text: string) => {
 	contents.set(f.path, text);
 };
+vault.process = async (f: TFile, fn: (text: string) => string) => {
+	const text = fn(contents.get(f.path) ?? "");
+	contents.set(f.path, text);
+	caches.set(f.path, parseNote(text));
+	metadataCache.trigger("changed", f);
+	return text;
+};
 vault.create = async (p: string, text: string) => {
 	const f = addFile(p, text);
 	metadataCache.trigger("changed", f);

@@ -272,6 +272,31 @@ export function migrateTags(n: MigrateNote, find: (name: string) => MigrateTarge
 	return out;
 }
 
+/**
+ * A note's text with its tags renamed and dropped the same way. Only real tags change: a `#` at the
+ * start or after a space (so [[Note#Title]] stays), outside code. A dropped tag goes with the space before it.
+ */
+export function migrateBodyTags(body: string, m: Pick<Migration, "rename" | "drop">): string {
+	const swap = new Map(m.rename.map(([a, b]) => [a.toLowerCase(), b]));
+	const drop = new Set(m.drop.map((d) => d.toLowerCase()));
+	if (!swap.size && !drop.size) return body;
+	let fenced = false;
+	return body.split("\n").map((line) => {
+		if (/^\s*(```|~~~)/.test(line)) {
+			fenced = !fenced;
+			return line;
+		}
+		if (fenced) return line;
+		// Inline code keeps its text: only the parts between backticks change.
+		return line.split(/(`[^`]*`)/).map((part) => part.startsWith("`") ? part : part.replace(/(^|\s)#([\p{L}\p{N}_/-]+)/gu, (all, pre: string, tag: string) => {
+			const k = tag.toLowerCase();
+			const next = swap.get(k);
+			if (next) return `${pre}#${next}`;
+			return drop.has(k) ? "" : all;
+		})).join("");
+	}).join("\n");
+}
+
 /** A note's tags after a migration (or the part of it that was kept). */
 export function applyMigration(tags: string[], m: Migration): string[] {
 	const swap = new Map(m.rename.map(([a, b]) => [a.toLowerCase(), b]));

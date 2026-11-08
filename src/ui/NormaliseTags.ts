@@ -3,7 +3,7 @@ import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import { DEFAULT_REGION_WORDS, chainOf, holdingsOf, tierName, tierWords, tierWordsWith } from "../index/realms";
 import { typeFromTag } from "../index/reader";
-import { applyMigration, migrateTags, migrationKind, tidyKinds, type MigrateNote, type MigrateWords, type Migration } from "../index/tagscheme";
+import { applyMigration, migrateBodyTags, migrateTags, migrationKind, tidyKinds, type MigrateNote, type MigrateWords, type Migration } from "../index/tagscheme";
 import { factsFromPath, tagFixes, type TagFix, type TagNote } from "../index/tagrules";
 import { el, openEntity } from "../render/common";
 
@@ -33,7 +33,13 @@ export function schemeMigrations(plugin: ChroniclePlugin): { entity: Entity; fix
 		regions: { ...DEFAULT_REGION_WORDS, ...tierWords(s.regionWords ?? "") },
 	};
 	const tree = plugin.realms();
-	const ownTags = (e: Entity) => ([] as unknown[]).concat(plugin.app.metadataCache.getFileCache(e.file)?.frontmatter?.tags ?? []).filter((t) => t !== null && t !== "").map(String);
+	// Tags in the properties and in the text, each once.
+	const ownTags = (e: Entity) => {
+		const cache = plugin.app.metadataCache.getFileCache(e.file);
+		const all = ([] as unknown[]).concat(cache?.frontmatter?.tags ?? []).filter((t) => t !== null && t !== "").map((t) => String(t).replace(/^#/, ""));
+		for (const t of cache?.tags ?? []) all.push(t.tag.replace(/^#/, ""));
+		return [...new Map(all.map((t) => [t.toLowerCase(), t])).values()];
+	};
 	const noteOf = (e: Entity): MigrateNote => {
 		const node = tree.nodes.get(e.key);
 		return {
@@ -100,7 +106,7 @@ export class NormaliseTagsModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 		const intro = this.scheme
-			? "Rewrites tags into one scheme: what a note is (#Place_County, #Character_Person), what it belongs to (#Group_Nation_United_States) and facts (#Character_Status_Dead, #Place_Size_Small). #Title and bare type tags go: the kind says it. Only tags in the properties change. Click a change to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step."
+			? "Rewrites tags into one scheme: what a note is (#Place_County, #Character_Person), what it belongs to (#Group_Nation_United_States) and facts (#Character_Status_Dead, #Place_Size_Small). #Title and bare type tags go: the kind says it. Tags in the properties and in the text change (not in code). Click a change to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step."
 			: undefined;
 		el("p", { cls: "chronicle-detect-intro", text: intro ?? "Brings every note to the tags your vault already uses: each spelling becomes the usual one, and a note gains the tags its folders, realm, kind and dates say it should have. Click a tag to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step." }, contentEl);
 		const list = el("div", { cls: "chronicle-detect-list" }, contentEl);
@@ -168,8 +174,12 @@ export class NormaliseTagsModal extends Modal {
 					const own = ([] as unknown[]).concat(front[field] ?? []).filter((t) => t !== null && t !== "").map(String);
 					const now = this.scheme ? applyMigration(own, { rename, drop, add }) : own.map((t) => swap.get(t.replace(/^#/, "").toLowerCase()) ?? t);
 					// Normalising can add a kind tag beside the default one: one kind tag per type.
-					front[field] = this.scheme ? now : tidyKinds([...new Set([...now, ...add])]);
+					const next = this.scheme ? now : tidyKinds([...new Set([...now, ...add])]);
+					// A note whose tags are all in its text gets no empty tags property.
+					if (next.length || field in front) front[field] = next;
 				});
+				// Tags written in the text follow, in the same undo step.
+				await plugin.editBody(row.entity.file, (body) => migrateBodyTags(body, { rename, drop: this.scheme ? drop : [] }));
 			}
 		});
 		new Notice(`${this.scheme ? "Moved to the tag scheme" : "Normalised"} the tags on ${notes} note${notes === 1 ? "" : "s"}.`);

@@ -17,7 +17,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "../src/ui/mappresets";
 import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
-import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, writeHistory } from "../src/index/undo";
+import { MAX_UNDO, addBodyToStep, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, splitBody, writeHistory, type UndoStep } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { followPath, moveTarget } from "../src/index/moves";
@@ -68,7 +68,7 @@ import { pageName } from "../src/index/pagename";
 import { detectCoast, detectLines, edgeColor, lineColorAt, traceBetween, waterLines } from "../src/render/trace";
 import { presetKinds, relInverse, relKind, relLabel, relTone, setRankWords } from "../src/index/relkinds";
 import { DEFAULT_FIELD_ALIASES } from "../src/settings";
-import { applyMigration, factTag, kindTag, memberTag, migrateTags, parseTag, tidyKinds, type MigrateNote, type MigrateTarget, type MigrateWords } from "../src/index/tagscheme";
+import { applyMigration, factTag, kindTag, memberTag, migrateBodyTags, migrateTags, parseTag, tidyKinds, type MigrateNote, type MigrateTarget, type MigrateWords } from "../src/index/tagscheme";
 import { DEFAULT_REGION_WORDS as SCHEME_REGIONS, DEFAULT_TIER_WORDS as SCHEME_TIERS } from "../src/index/realms";
 
 let failed = 0;
@@ -1541,6 +1541,14 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(run({ ...base, type: "event", name: "War", tags: ["Event", "Event_War", "Event_Massive", "Event_Vael"] }), ["Event_War", "Event_Size_Massive", "Place_World_Vael"], "scheme: an event");
 	eq(run({ ...base, type: "culture", name: "House", tags: ["Family", "Family_Noble", "Family_Ruler"], kind: "family" }), ["Group_Family", "Group_Class_Noble", "Group_Role_Ruler"], "scheme: a family");
 	eq(run({ ...base, type: "place", name: "Kent", tags: ["Title", "County", "County"], kind: "county", land: { nature: "realm" } }), ["Place_County"], "scheme: a tag written twice");
+	const m = { rename: [["Character_Dead", "Character_Status_Dead"], ["Nation_Vael", "Group_Nation_Vael"]] as [string, string][], drop: ["Title"] };
+	eq(migrateBodyTags("Mary #Character_Dead of #nation_vael, see [[Vael#Title]].\nNot #Character_Deadly. #Title here\n`#Title` stays\n```\n#Title\n```", m),
+		"Mary #Character_Status_Dead of #Group_Nation_Vael, see [[Vael#Title]].\nNot #Character_Deadly. here\n`#Title` stays\n```\n#Title\n```", "scheme: tags in the text, not in links or code");
+	eq(splitBody("---\ntags: [a]\n---\nText #a"), ["---\ntags: [a]\n---\n", "Text #a"], "undo: text below the properties");
+	const step: UndoStep = { label: "x", at: 1, notes: [] };
+	addBodyToStep(step, "a.md", "one", "two");
+	addBodyToStep(step, "a.md", "two", "three");
+	eq(readHistory(writeHistory([step]))[0].notes[0].body, { before: "one", after: "three" }, "undo: a note's text, earliest before and latest after, kept in the history file");
 	eq(run({ ...base, type: "person", name: "Ann", tags: ["Favourite"] }), ["Favourite", "Character_Person"], "scheme: other tags stay, the kind tag is added");
 }
 console.log(`${passed} passed, ${failed} failed`);
