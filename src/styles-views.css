@@ -829,6 +829,11 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 .chronicle-org-card {
 	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
 }
+/* Once the time slider has moved, a redraw is the same chart a moment later: nothing fades in again. */
+.uv-scrubbed .chronicle-org-card,
+.uv-scrubbed .chronicle-dash-ego-node {
+	animation: none;
+}
 .chronicle-org-card-bg {
 	fill: var(--background-primary);
 	stroke: var(--background-modifier-border);

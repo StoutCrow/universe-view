@@ -10,6 +10,7 @@ import { holdersProperty, readHolders, readOccupied, readSides, readTransfers } 
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
 import { clearInferred, noteSignature } from "./derived";
+import { timeBoundaries, timeStep } from "./timesteps";
 import {
 	PropReader, cleanLinkText, genderFromTags, normalizeGender, normalizeType, normalizeValue, readCategory, readIcon, readLayer, readPair, readPinSize,
 	readPoints, readRefs, readTimedRefs, typeFromTag,
@@ -49,6 +50,13 @@ export class EntityIndex extends Events {
 	worlds = new Map<string, WorldSettings>();
 	ready = false;
 	version = 0;
+	private steps?: { version: number; bounds: number[] };
+
+	/** Which stretch of time a day falls in: between two days of change, every view looks the same. */
+	timeStep(at: number | undefined): number {
+		if (this.steps?.version !== this.version) this.steps = { version: this.version, bounds: timeBoundaries(this.all()) };
+		return timeStep(this.steps.bounds, at);
+	}
 
 	private aliases = buildFieldAliases("");
 	private folderTypes: [string, EntityType][] = [];

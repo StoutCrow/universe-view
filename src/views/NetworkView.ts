@@ -134,8 +134,12 @@ export class NetworkView extends ChronicleView {
 				() => o.filter.folder,
 				o.at,
 				(day) => {
+					const idx = this.plugin.index;
+					const same = idx.timeStep(day) === idx.timeStep(o.at);
 					o.at = day;
-					this.update();
+					this.contentEl.addClass("uv-scrubbed");
+					if (same) this.app.workspace.requestSaveLayout();
+					else this.update();
 				},
 			);
 			toggleChip(time, "Fade other times", "ghost", !!o.fade, (v) => {

@@ -149,6 +149,12 @@ export class MapView extends ChronicleView {
 		});
 	}
 
+	/** The date moved but nothing it shows changed: only the header and the saved state follow. */
+	private timeOnly() {
+		(this.leaf as unknown as { updateHeader?: () => void }).updateHeader?.();
+		this.app.workspace.requestSaveLayout();
+	}
+
 	private update(save = true) {
 		if (!this.renderer) return;
 		this.renderer.options = this.options;
@@ -384,8 +390,11 @@ export class MapView extends ChronicleView {
 				() => o.folder || undefined,
 				o.at,
 				(day) => {
+					const same = idx.timeStep(day) === idx.timeStep(o.at);
 					o.at = day;
-					this.update();
+					// Nothing on the map changes between these two days: keep what's drawn.
+					if (same) this.timeOnly();
+					else this.update();
 				},
 				["event", "place", "culture"],
 			);
