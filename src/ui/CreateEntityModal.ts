@@ -10,6 +10,7 @@ import { GROUP_KINDS } from "../render/houses";
 import { EntityInputSuggest } from "./suggest";
 import { generateNames, givenNames, trainNames } from "../index/names";
 import { presetKinds, relKind } from "../index/relkinds";
+import { tierName } from "../index/realms";
 
 /**
  * Names to learn a style from: the members of the chosen groups when there are enough, otherwise
@@ -370,7 +371,7 @@ export class CreateEntityModal extends Modal {
 	private landFields(open: boolean) {
 		const box = el("details", { cls: "chronicle-create-relations uv-create-land" }, this.fieldsEl);
 		box.open = open || this.stdUsed;
-		el("summary", { text: open ? "What it is" : "Is it land? A title (a duchy, a city) or geography (a region, an island)" }, box);
+		el("summary", { text: open ? "What it is" : `Is it land? A title (a ${tierName(3).toLowerCase()}, a city) or geography (a region, an island)` }, box);
 		if (open) this.stdUsed = true;
 		box.addEventListener("toggle", () => {
 			if (box.open) this.stdUsed = true;

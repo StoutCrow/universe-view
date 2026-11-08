@@ -24,12 +24,12 @@ import { detectCoast, detectLines, edgeColor, lineColorAt, traceBetween, waterLi
 import { alongRing, traceMask } from "./follow";
 import { getPyramid, levelFor, type Pyramid } from "./bigimage";
 import { shownAs, visibleTiers, type Tiers } from "./tiers";
-import { chainOf, tierLabel, type RealmTree } from "../index/realms";
+import { chainOf, tierLabel, tierName, type RealmTree } from "../index/realms";
 import { ensureTerritoryDefs, styleFor, tierClass, tierNumber } from "../ui/territorystyle";
 import { boxOf, gridIn, inRing, labelSpot, mainAxis, nearestOnRing, ringArea, shapeHash, snapToNeighbour, splitRing, unionOutline, type P2 } from "../index/geometry";
 import { checkBorders, type BorderArea, type BorderIssue, type BorderIssueKind } from "../index/bordercheck";
 import { nameSize, realmShape, type RealmShape } from "./strategy";
-import { groupKind } from "./houses";
+import { GROUP_KINDS, groupKind } from "./houses";
 
 /** Lands with no house, culture or faith in the current map mode. */
 const NO_GROUP = "#9a958c";
@@ -47,10 +47,11 @@ import { asText, splitSpan } from "../index/text";
 export const WORLD_MAP = "world";
 
 export type PaintMode = "realm" | "title" | "house" | "culture" | "faith" | "terrain";
-export const PAINT_MODES: [PaintMode, string, string, string][] = [
-	["realm", "Realms", "crown", "Each land in the colour of the realm it shows as (its kingdom from afar, its county close up)"],
+/** The ways to colour lands, in the world setting's words (tier names, what a family is called). */
+export const paintModes = (): [PaintMode, string, string, string][] => [
+	["realm", "Realms", "crown", `Each land in the colour of the realm it shows as (its ${tierName(2).toLowerCase()} from afar, its ${tierName(4).toLowerCase()} close up)`],
 	["title", "Titles", "layers", "Every title in its own colour, whatever realm it's in"],
-	["house", "Houses", "castle", "Coloured by the house that holds each realm"],
+	["house", GROUP_KINDS.house.plural, GROUP_KINDS.house.icon, `Coloured by the ${GROUP_KINDS.house.label.toLowerCase()} that holds each realm`],
 	["culture", "Cultures", "languages", "Coloured by each realm's culture or people"],
 	["faith", "Faiths", "sparkles", "Coloured by each realm's faith"],
 	["terrain", "Terrain", "mountain", "No colour: the map itself, with borders"],
@@ -1150,7 +1151,7 @@ export class MapRenderer {
 			L.DomEvent.disableClickPropagation(box);
 			L.DomEvent.disableScrollPropagation(box);
 			const head = el("div", { cls: "chronicle-legend-head" }, box);
-			const titles: Record<PinColorBy, string> = { realm: "Realms", region: "Realms", liege: "Held under", house: "Held by house", culture: "Groups", category: "Kinds of place", type: "" };
+			const titles: Record<PinColorBy, string> = { realm: "Realms", region: "Realms", liege: "Held under", house: `Held by ${GROUP_KINDS.house.label.toLowerCase()}`, culture: "Groups", category: "Kinds of place", type: "" };
 			el("span", { text: titles[this.colorBy] }, head);
 			const legendHelp: Record<PinColorBy, string> = {
 				realm: "Pins and areas coloured by the realm they belong to: the highest title above them that someone holds. Each row says who holds it; click a row to hide or show it (Alt-click shows only it), or the target to zoom there.",
@@ -2340,7 +2341,7 @@ export class MapRenderer {
 		const map = this.map;
 		const layer = this.strategyLayer;
 		this.root.toggleClass("uv-strategy", this.strategy);
-		for (const [m] of PAINT_MODES) this.root.toggleClass(`uv-paint-${m}`, (this.options.paint ?? "realm") === m);
+		for (const [m] of paintModes()) this.root.toggleClass(`uv-paint-${m}`, (this.options.paint ?? "realm") === m);
 		if (!map || !layer) return;
 		const tiers = this.tiers;
 		const tree = this.realmTree;

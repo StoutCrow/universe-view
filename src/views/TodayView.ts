@@ -2,6 +2,7 @@ import type { ViewStateResult } from "obsidian";
 import type { Entity } from "../types";
 import { formatDay, formatSpan } from "../dates/parser";
 import { tierLabel } from "../index/realms";
+import { relLabel, relOne } from "../index/relkinds";
 import { nameAt } from "../index/renames";
 import { TYPE_ICONS, el, emptyState, entityColor, icon, openEntity } from "../render/common";
 import { ChronicleView } from "./base";
@@ -119,7 +120,7 @@ export class TodayView extends ChronicleView {
 		for (const e of standing.slice(0, 24)) {
 			const n = tree.nodes.get(e.key)!;
 			const vassals = n.children.length;
-			row(rulers, e, [tierLabel(n), n.holder ? `${n.holder.name}${n.house ? ` of ${n.house.name.replace(/^House\s+/i, "House ")}` : ""}` : "no holder", vassals ? `${vassals} vassal${vassals === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · "), nameAt(e, today));
+			row(rulers, e, [tierLabel(n), n.holder ? `${n.holder.name}${n.house ? ` of ${n.house.name.replace(/^House\s+/i, "House ")}` : ""}` : "no holder", vassals ? `${vassals} ${vassals === 1 ? relOne("vassals") : relLabel("vassals").toLowerCase()}` : ""].filter(Boolean).join(" · "), nameAt(e, today));
 		}
 		if (!standing.length) empty(rulers, "No realms standing on this day.");
 

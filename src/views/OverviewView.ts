@@ -8,7 +8,7 @@ import { LIST_INFO, ListKind, kinCount, listRows, renderList } from "../render/p
 import { VIEW_DASHBOARD } from "./DashboardView";
 import { ValidateModal } from "../ui/ValidateModal";
 import { DetectModal } from "../ui/DetectModal";
-import { SAMPLE_FOLDER, addSampleWorld } from "../ui/sample";
+import { SAMPLE_FOLDER, addSampleWorld, sampleBlurb } from "../ui/sample";
 import { CardLayout } from "../ui/cardlayout";
 import { ChronicleView } from "./base";
 import { VIEW_TIMELINE } from "./TimelineView";
@@ -104,7 +104,7 @@ export class OverviewView extends ChronicleView {
 		};
 		const notes = this.app.vault.getMarkdownFiles().length;
 		if (notes) choice("wand-2", "Read my notes", `Find the people, places and events in your ${notes.toLocaleString()} note${notes === 1 ? "" : "s"}. You review each one before anything changes.`, () => new DetectModal(p).open());
-		choice("book-open", "Add a sample world", `Sixteen notes on the Tudors, with a family, a war and places on the map, in a folder called "${SAMPLE_FOLDER}". Delete it when you're done.`, () => void addSampleWorld(p));
+		choice("book-open", "Add a sample world", sampleBlurb(p), () => void addSampleWorld(p));
 		choice("plus", "Start from scratch", "Create your first person, place, group or event.", () => p.createEntityPrompt());
 	}
 

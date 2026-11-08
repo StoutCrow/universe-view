@@ -637,7 +637,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			.setName("Pin colors")
 			.setDesc("What a pin's color means by default. Each map view can switch this in its toolbar, and its legend can hide groups.")
 			.addDropdown((d) => d
-				.addOptions({ realm: "The realm it's part of", liege: "The title it's directly under", house: "The house holding it", culture: "Its group (first one listed)", category: "Kind of place (city, fort…)", type: "One color" })
+				.addOptions({ realm: "The realm it's part of", liege: "The title it's directly under", house: `The ${GROUP_KINDS.house.label.toLowerCase()} holding it`, culture: "Its group (first one listed)", category: "Kind of place (city, fort…)", type: "One color" })
 				.setValue(s.pinColorBy === "region" ? "realm" : s.pinColorBy)
 				.onChange(async (v) => {
 					s.pinColorBy = v as typeof s.pinColorBy;
@@ -803,7 +803,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		helpTip(realmHead.nameEl, "Titles sit under each other from what your notes already say: a `location:` or `located-in:`, `nation:`, a tag like #Nation_United_States, or the folder note above (United States/California/California.md is under United States).\n\nThe person in `lord:`, `holder:`, `owner:` or `ruler:` holds a title, with their house. Tags and kinds such as #Realm, #Province or #Region_Small say a title's tier.");
 		new Setting(containerEl)
 			.setName("Split realms at")
-			.setDesc("On the map, a realm shows as one block until it's this many pixels across, then splits into its duchies (and those into their counties). Bigger: kingdoms appear with less zooming out. The map's Tier button can also hold one level.")
+			.setDesc(`On the map, a realm shows as one block until it's this many pixels across, then splits into its ${tierName(3, true).toLowerCase()} (and those into their ${tierName(4, true).toLowerCase()}). Bigger: ${tierName(2, true).toLowerCase()} appear with less zooming out. The map's Tier button can also hold one level.`)
 			.addSlider((sl) => sl.setLimits(160, 1600, 20).setValue(s.tierSplitPx).onChange(async (v) => {
 				s.tierSplitPx = v;
 				await this.save(false);
@@ -1272,7 +1272,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			}));
 		slider("Help tips: delay", "How long to rest on a ? before its explanation opens (milliseconds).", 0, 1500, 50, () => s.helpDelay ?? 350, (v) => (s.helpDelay = v));
 		slider("Help tips: fade", "How long a ? tip takes to fade in (milliseconds).", 0, 800, 20, () => s.helpFadeMs ?? 220, (v) => (s.helpFadeMs = v));
-		slider("Map: tier fade", "How long realms take to fade into their duchies and back as you zoom (milliseconds).", 0, 1200, 50, () => s.tierFadeMs ?? 300, (v) => (s.tierFadeMs = v));
+		slider("Map: tier fade", `How long realms take to fade into their ${tierName(3, true).toLowerCase()} and back as you zoom (milliseconds).`, 0, 1200, 50, () => s.tierFadeMs ?? 300, (v) => (s.tierFadeMs = v));
 		slider("Map: name fade", "How long place and territory names take to fade in and out as room appears (milliseconds).", 0, 800, 25, () => s.labelFadeMs ?? 150, (v) => (s.labelFadeMs = v));		new Setting(containerEl)
 			.setName("Show a timer ring")
 			.setDesc("A small ring by the pointer fills up while a card is on its way, so you can move off or right-click before it opens.")

@@ -3,7 +3,7 @@ import type ChroniclePlugin from "../main";
 import type { Entity, Side, TimedRef } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { chainOf, holdingsOf , tierLabel } from "../index/realms";
-import { relLabel, relTone } from "../index/relkinds";
+import { relLabel, relOne, relTone } from "../index/relkinds";
 import { totalPopulation } from "../index/tidy";
 import { battlesOf, isWar, occupationsByLand, sidesOf, warSpan } from "../index/wars";
 import { asText } from "../index/text";
@@ -134,7 +134,7 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 		const led = idx.effectsOf.get(e.key)?.size ?? 0;
 		if (led) tiles.push(["git-pull-request-arrow", String(led), "led to"]);
 	}
-	if (node?.children.length) tiles.push(["git-fork", String(node.children.length), node.children.length === 1 ? "vassal" : "vassals"]);
+	if (node?.children.length) tiles.push(["git-fork", String(node.children.length), node.children.length === 1 ? relOne("vassals") : relLabel("vassals").toLowerCase()]);
 	if (events.length && e.type !== "event") tiles.push(["calendar-days", String(events.length), events.length === 1 ? "event" : "events"]);
 	if (tiles.length) {
 		const grid = el("div", { cls: "chronicle-ep-tiles" }, root);
@@ -189,7 +189,7 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	if (e.type === "person" || e.type === "culture") {
 		list("Holds", "landmark", holdingsOf(tree, e.key).filter((k) => k !== e.key).map((k) => refOf(k, chainOf(tree, k).slice(0, -1).map((x) => idx.get(x)?.name).join(" › "))));
 	}
-	if (node) list("Vassals", "git-fork", node.children.map((k) => { const n = tree.nodes.get(k); return refOf(k, [n?.holder?.name, n?.house?.name].filter(Boolean).join(" · ")); }));
+	if (node) list(relLabel("vassals"), "git-fork", node.children.map((k) => { const n = tree.nodes.get(k); return refOf(k, [n?.holder?.name, n?.house?.name].filter(Boolean).join(" · ")); }));
 	if (e.type === "culture") {
 		const members = idx.members(e.key).filter((m) => idx.get(m.key)?.type === "person");
 		list("Members", "users", members.map((m) => ({ key: m.key, name: idx.get(m.key)!.name, sub: [m.link.role, formatSpan(m.link.from, m.link.to, cal)].filter(Boolean).join(" · ") })), 16);

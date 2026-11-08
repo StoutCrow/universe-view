@@ -4,7 +4,7 @@ import { formatSpan } from "../dates/parser";
 import { occupationsAt } from "../index/wars";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import { activeAt } from "../index/EntityIndex";
-import { relInverse, relKind, relLabel, relSymmetric, relTone, type RelTone } from "../index/relkinds";
+import { relInverse, relKind, relLabel, relOne, relSymmetric, relTone, type RelTone } from "../index/relkinds";
 import { PanZoom } from "./panzoom";
 import { bindHover, cultureColor, el, emptyState, entityColor, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
 import { pickLogo } from "../ui/suggest";
@@ -94,7 +94,7 @@ const GAP_Y = 70;
 export const TONE_NAMES: Record<RelTone, string> = {
 	ally: "Allies",
 	hostile: "Rivals and enemies",
-	rank: "Liege, vassals and service",
+	get rank() { return `${relLabel("liege")}, ${relLabel("vassals").toLowerCase()} and service`; },
 	trade: "Trade",
 	bond: "Friends and bonds",
 	neutral: "Other ties",
@@ -714,7 +714,7 @@ export class OrgChartRenderer {
 			// Who holds it, even when they have no note yet.
 			if (node.holder && !node.holder.resolved) stats.push(node.holder.name);
 			if (node.house) stats.push(node.house.name);
-			if (kids) stats.push(`${kids} vassal${kids === 1 ? "" : "s"}`);
+			if (kids) stats.push(`${kids} ${kids === 1 ? relOne("vassals") : relLabel("vassals").toLowerCase()}`);
 		} else {
 			if (total) stats.push(`${total} member${total === 1 ? "" : "s"}`);
 			if (kids) stats.push(mode === "dynasties" ? `${kids} cadet branch${kids === 1 ? "" : "es"}` : `${kids} branch${kids === 1 ? "" : "es"}`);

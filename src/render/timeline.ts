@@ -63,7 +63,7 @@ export const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 };
 
 /** Kinds of event note drawn as a band behind the timeline. */
-export const ERA_KINDS = new Set(["era", "age", "epoch", "period", "reign", "dynasty", "war", "golden age", "dark age"]);
+export const ERA_KINDS = new Set(["era", "age", "epoch", "period", "reign", "dynasty", "war", "golden age", "dark age", "administration", "presidency", "regime", "decade", "century"]);
 
 
 interface Item {

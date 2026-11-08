@@ -5,8 +5,10 @@ export type DrawHow = "paint" | "split" | "edit" | "grow" | "borders";
 import { STAT_NAMES, type StatKey } from "../index/realmstats";
 import { tierName } from "../index/realms";
 import { Menu, Notice, ViewStateResult } from "obsidian";
-import { DEFAULT_MAP_OPTIONS, MapMode, MapOptions, MapRenderer, PAINT_MODES, WORLD_MAP } from "../render/map";
+import { DEFAULT_MAP_OPTIONS, MapMode, MapOptions, MapRenderer, paintModes, WORLD_MAP } from "../render/map";
 import { dropdown, el, icon, iconButton, setPressed, toggleChip } from "../render/common";
+import { GROUP_KINDS } from "../render/houses";
+import { relOne } from "../index/relkinds";
 import type { PinColorBy } from "../settings";
 import { EntityPickerModal } from "../ui/suggest";
 import { ChronicleView, TimeSlider } from "./base";
@@ -390,14 +392,14 @@ export class MapView extends ChronicleView {
 			const look = this.group();
 			// The map mode, as strategy maps have: what the lands are coloured by.
 			const paint = o.paint ?? "realm";
-			const current = PAINT_MODES.find(([k]) => k === paint)!;
+			const current = paintModes().find(([k]) => k === paint)!;
 			const modeBtn = el("button", { cls: "chronicle-chip chronicle-overlay-btn uv-mode-btn", attr: { "aria-haspopup": "menu", title: `Map mode: ${current[3]}` } }, look);
 			icon(el("span", { cls: "chronicle-chip-icon" }, modeBtn), current[2]);
 			el("span", { text: current[1] }, modeBtn);
 			modeBtn.addEventListener("click", (evt) => {
 				const menu = new Menu();
 				menu.addItem((i) => i.setTitle("Map mode").setDisabled(true));
-				for (const [k, label, ic, desc] of PAINT_MODES)
+				for (const [k, label, ic, desc] of paintModes())
 					menu.addItem((i) => {
 						i.setTitle(label).setIcon(ic).setChecked(k === paint).onClick(() => {
 							o.paint = k;
@@ -409,7 +411,7 @@ export class MapView extends ChronicleView {
 				menu.showAtMouseEvent(evt);
 			});
 			// How the map is coloured, in one menu: pins, realms, and which tier of realms shows.
-			const colorBy: [string, string][] = [["realm", "By realm"], ["liege", "By liege"], ["house", "By house"], ["culture", "By group"], ["category", "By kind"], ["type", "One colour"]];
+			const colorBy: [string, string][] = [["realm", "By realm"], ["liege", `By ${relOne("liege")}`], ["house", `By ${GROUP_KINDS.house.label.toLowerCase()}`], ["culture", "By group"], ["category", "By kind"], ["type", "One colour"]];
 			const shades: [string, string][] = [["", "Their own colours"], ...STAT_NAMES.map(([k, l]) => [k, `Shaded by ${l.toLowerCase()}`] as [string, string])];
 			const tierLevels: [string, string][] = [["", "By zoom"], ...[1, 2, 3, 4, 5].map((t): [string, string] => [String(t), tierName(t, true)]), ["9", "Every land"]];
 			const lookBtn = el("button", { cls: "chronicle-chip chronicle-overlay-btn", attr: { "aria-haspopup": "menu", title: "Pin colours, realm colours and realm tiers" } }, look);
@@ -450,7 +452,7 @@ export class MapView extends ChronicleView {
 				["showPins", "Places", "map-pin", "Pins for places"],
 				["showLabels", "Place names", "type", "Names next to the pins"],
 				["showTerritories", "Territories", "hexagon", "Painted realms and regions"],
-				["tiers", "Realm tiers", "layers-3", "Realms show whole from afar and split into their duchies and counties as you zoom in (or double-click them); a click picks one"],
+				["tiers", "Realm tiers", "layers-3", `Realms show whole from afar and split into their ${tierName(3, true).toLowerCase()} and ${tierName(4, true).toLowerCase()} as you zoom in (or double-click them); a click picks one`],
 				["fadeSmall", "Fade small areas when zoomed out", "eye-off", "Without realm tiers: provinces and small regions fade away when zoomed out (size in Settings)"],
 				["showRoutes", "Routes", "route", "Roads, rivers and sea lanes"],
 				["heatmap", "Event heat map", "flame", "A glow where events happened (follows the time slider)"],

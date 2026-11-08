@@ -4,7 +4,7 @@ import type { Entity, EntityType } from "../types";
 import { buildFieldAliases, type FieldName } from "../settings";
 import { EntityInputSuggest } from "./suggest";
 import { linkTarget } from "../index/reader";
-import { relKind } from "../index/relkinds";
+import { relKind, relOne } from "../index/relkinds";
 import { asText } from "../index/text";
 
 /** Where a relationship is written: a property on one of the two notes. */
@@ -135,7 +135,7 @@ export function linkChoices(plugin: ChroniclePlugin, a: Entity, b: Entity): { la
 		rel(a, b, "enemies", "Enemies", "skull");
 		rel(a, b, "mentors", `${b.name} taught ${a.name}`, "graduation-cap");
 		rel(a, b, "students", `${a.name} taught ${b.name}`, "graduation-cap");
-		rel(a, b, "liege", `${a.name} serves ${b.name} (liege)`, "crown");
+		rel(a, b, "liege", `${a.name} serves ${b.name} (${relOne("liege")})`, "crown");
 		rel(a, b, "employer", `${a.name} works for ${b.name}`, "briefcase");
 	} else if ((p = pair("person", "culture"))) {
 		const [person, group] = p;
@@ -149,8 +149,8 @@ export function linkChoices(plugin: ChroniclePlugin, a: Entity, b: Entity): { la
 		rel(a, b, "rivals", "Rivals", "swords");
 		rel(a, b, "enemies", "At war (enemies)", "skull");
 		rel(a, b, "trade-partners", "Trade partners", "coins");
-		rel(a, b, "vassals", `${b.name} is ${a.name}'s vassal`, "crown");
-		rel(b, a, "vassals", `${a.name} is ${b.name}'s vassal`, "crown");
+		rel(a, b, "vassals", `${b.name} is ${a.name}'s ${relOne("vassals")}`, "crown");
+		rel(b, a, "vassals", `${a.name} is ${b.name}'s ${relOne("vassals")}`, "crown");
 		field(a, b, "parentCultures", `${a.name} is a branch of ${b.name}`, "git-branch");
 		field(b, a, "parentCultures", `${b.name} is a branch of ${a.name}`, "git-branch");
 	} else if ((p = pair("event", "person"))) {
