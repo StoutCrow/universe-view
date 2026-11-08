@@ -126,7 +126,7 @@
 /* ---- Territories: polished edges and textures ---- */
 .uv-terr-overlay { fill: none; stroke: none; pointer-events: none; }
 .uv-terr-overlay.uv-edge-band { stroke: var(--terr-color); stroke-opacity: 0.4; stroke-width: calc(var(--uv-band, 6px) * 2); stroke-linejoin: round; }
-.uv-terr-overlay.uv-edge-double { stroke: var(--background-primary); stroke-opacity: 0.85; stroke-width: 1px; }
+.uv-terr-overlay.uv-edge-double { stroke: var(--background-primary); stroke-opacity: 0.85; stroke-width: calc(var(--uv-band, 6px) * 0.6); }
 .uv-terr-overlay.uv-pat-hatch { fill: url(#uv-pat-hatch); }
 .uv-terr-overlay.uv-pat-dots { fill: url(#uv-pat-dots); }
 .uv-terr-overlay.uv-pat-grain { fill: #000; filter: url(#uv-grain); }
@@ -382,7 +382,8 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 	stroke: color-mix(in srgb, var(--terr-color) 55%, #000);
 }
 .chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft):not(#uv-strong) {
-	fill-opacity: calc(0.1 + 0.62 * var(--uv-political, 0));
+	/* Scaled by the tier's own fill (Territory styles), 0.2 being the usual. */
+	fill-opacity: calc((0.1 + 0.62 * var(--uv-political, 0)) * var(--uv-tf, 0.2) * 5);
 	stroke-width: 0.8px;
 	stroke-opacity: calc(0.75 - 0.45 * var(--uv-political, 0));
 }
@@ -396,6 +397,17 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .uv-realm-edge.depth-1 { stroke-width: 2.4px; }
 .uv-realm-edge.depth-2 { stroke-width: 1.6px; }
 .uv-realm-edge.depth-3 { stroke-width: 1.1px; }
+/* Its tier's border width (Territory styles), a little bolder than an area's own line. */
+.uv-realm-edge[class*="uv-tier-"] { stroke-width: calc(var(--uv-tw, 2px) * 1.2); }
+/* Each tier's border width and fill as two short names, for looks that draw them their own way. */
+.uv-tier-0 { --uv-tw: var(--uv-tier-0-line, 2px); --uv-tf: var(--uv-tier-0-fill, 0.2); }
+.uv-tier-1 { --uv-tw: var(--uv-tier-1-line, 2px); --uv-tf: var(--uv-tier-1-fill, 0.2); }
+.uv-tier-2 { --uv-tw: var(--uv-tier-2-line, 2px); --uv-tf: var(--uv-tier-2-fill, 0.2); }
+.uv-tier-3 { --uv-tw: var(--uv-tier-3-line, 2px); --uv-tf: var(--uv-tier-3-fill, 0.2); }
+.uv-tier-4 { --uv-tw: var(--uv-tier-4-line, 2px); --uv-tf: var(--uv-tier-4-fill, 0.2); }
+.uv-tier-5 { --uv-tw: var(--uv-tier-5-line, 2px); --uv-tf: var(--uv-tier-5-fill, 0.2); }
+.uv-tier-6 { --uv-tw: var(--uv-tier-6-line, 2px); --uv-tf: var(--uv-tier-6-fill, 0.2); }
+.uv-tier-7 { --uv-tw: var(--uv-tier-7-line, 2px); --uv-tf: var(--uv-tier-7-fill, 0.2); }
 /* Names: spaced serif capitals across the land, dark on a pale halo. */
 .uv-realm-name { overflow: visible; pointer-events: none; }
 .uv-realm-name text { font-family: var(--chronicle-font-map, "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia, serif); font-weight: 700; fill: rgba(28, 20, 12, 0.86); stroke: rgba(255, 246, 225, 0.7); stroke-width: 0.09em; paint-order: stroke; letter-spacing: 0.08em; }

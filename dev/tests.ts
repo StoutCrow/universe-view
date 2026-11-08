@@ -21,6 +21,8 @@ import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSte
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { followPath, moveTarget } from "../src/index/moves";
+import { isKindTag, kindLabel, markedType, typeFromTag } from "../src/index/reader";
+import { kindChoices } from "../src/index/kinds";
 import { markPath, shapeFor } from "../src/render/categories";
 import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
@@ -1293,6 +1295,18 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		note("F.md", "place", ["Title"]),
 		note("G.md", "place", ["Region"], ["Small"]),
 	];
+	const marks = { keys: ["type", "cr_type"], tags: true, prefix: "", custom: { place: "Title" } };
+	eq(markedType({ tags: ["City"] }, marks), "place", "type: a kind tag marks the type");
+	eq(markedType({ tags: ["Title"] }, marks), "place", "type: the vault's own type tag counts");
+	eq(markedType({ Type: "event", tags: ["City"] }, marks), "event", "type: a property wins over tags");
+	eq(markedType({ tags: ["Starport"] }, marks), null, "type: a word that isn't a type tag marks nothing");
+	eq(markedType({ tags: ["uv/place"] }, { ...marks, prefix: "uv/" }), "place", "type: tags under the prefix");
+	eq(markedType({ tags: ["place"] }, { ...marks, prefix: "uv/" }), null, "type: without the prefix they don't count");
+	eq(markedType({ tags: ["City"] }, { ...marks, tags: false }), null, "type: tags off");
+	eq(typeFromTag("Title", "", { place: "Title" }), "place", "type: custom type tag");
+	eq([isKindTag("city", "place"), isKindTag("starport", "place"), isKindTag("place", "place"), isKindTag("battle", "place")], [true, false, false, false], "kind: only a specific type tag of the same type is a kind tag");
+	eq([kindLabel("space station"), kindLabel("space_station"), kindLabel(undefined)], ["Space station", "Space station", ""], "kind: read as words");
+	eq(kindChoices(["conflict", "Conflict", "treaty", undefined], "Battle, treaty, birth…").map((c) => `${c.kind}:${c.count}`), ["conflict:2", "treaty:1", "battle:0", "birth:0"], "kind: the vault's own first, then the setting's examples");
 	eq(moveTarget("A/Note.md", false, "B/C"), "B/C/Note.md", "move: a note lands in the folder");
 	eq(moveTarget("A/Note.md", false, ""), "Note.md", "move: the root is a place too");
 	eq(moveTarget("A/Note.md", false, "A"), undefined, "move: already there");

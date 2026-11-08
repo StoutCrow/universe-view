@@ -63,7 +63,7 @@ import { buildGedcom } from "./import/gedcom-export";
 import { HoverCards } from "./ui/HoverCard";
 import { THEMES, applyAppearance, clearAppearance } from "./appearance";
 import { suggestWorldSetting } from "./ui/worldsettingui";
-import { CATEGORY_KEYS, TAG_TYPES, normalizeType, readPoints, writePoints } from "./index/reader";
+import { CATEGORY_KEYS, isKindTag, markedType, normalizeType, readPoints, typeFromTag, writePoints, type TypeMarks } from "./index/reader";
 import type { ModuleKind } from "./settings";
 import { CreateEntityModal, CreatePrefill } from "./ui/CreateEntityModal";
 import { ValidateModal } from "./ui/ValidateModal";
@@ -1097,15 +1097,29 @@ export default class ChroniclePlugin extends Plugin {
 	/** Marks a note's type the way this vault does: a property, a tag, or Charted Roots' cr_type. */
 	applyType(front: Record<string, unknown>, type: EntityType) {
 		const style = this.settings.typeStyle;
-		if (style === "tag") {
-			const tag = this.settings.typeTags[type] || type;
+		if (style === "tag" && this.settings.tagTypes) {
+			const prefix = this.settings.tagPrefix.replace(/^#/, "").replace(/\/$/, "");
+			const tag = (prefix ? `${prefix}/` : "") + (this.settings.typeTags[type] || type);
 			const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
-			if (!tags.some((t) => t.toLowerCase() === tag.toLowerCase())) front.tags = [tag, ...tags];
+			if (!tags.some((t) => t.replace(/^#/, "").toLowerCase() === tag.toLowerCase())) front.tags = [tag, ...tags];
 		} else if (style === "cr_type") {
 			front.cr_type = type === "culture" ? "organization" : type;
 		} else {
 			front[this.fieldName("type")] = type;
 		}
+		// Whatever the style, the note must read as this type afterwards: a property always does.
+		if (this.markedType(front) !== type) front[this.fieldName("type")] = type;
+	}
+
+	/** How this vault marks types, for `markedType`. */
+	private get typeMarks(): TypeMarks {
+		const s = this.settings;
+		return { keys: [...buildFieldAliases(s.fieldAliases).type, "cr_type"], tags: s.tagTypes, prefix: s.tagPrefix, custom: s.typeTags };
+	}
+
+	/** The type a note's properties and tags give it (folder rules aside). */
+	markedType(front: Record<string, unknown>): EntityType | null {
+		return markedType(front, this.typeMarks);
 	}
 
 	/**
@@ -1113,11 +1127,7 @@ export default class ChroniclePlugin extends Plugin {
 	 * (a `type:` property, a type tag, Charted Roots' `cr_type`) so they can't disagree.
 	 */
 	setTypeMark(front: Record<string, unknown>, type: EntityType | null) {
-		const tagType = (t: string): EntityType | undefined => {
-			const low = t.toLowerCase().replace(/^#/, "");
-			const custom = (Object.entries(this.settings.typeTags) as [EntityType, string][]).find(([, tag]) => tag.toLowerCase().replace(/^#/, "") === low);
-			return custom?.[0] ?? TAG_TYPES[low];
-		};
+		const tagType = (t: string): EntityType | undefined => typeFromTag(t, this.settings.tagPrefix, this.settings.typeTags) ?? undefined;
 		const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
 		const usesTag = tags.some((t) => tagType(t));
 		const typeKeys = ["type", this.fieldName("type"), "cr_type"];
@@ -1149,21 +1159,26 @@ export default class ChroniclePlugin extends Plugin {
 	 * property the note already uses).
 	 */
 	setKindMark(front: Record<string, unknown>, current: string | undefined, kind: string | null) {
+		const type = this.markedType(front);
 		const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
 		const tagIdx = current ? tags.findIndex((t) => t.replace(/^#/, "").toLowerCase() === current) : -1;
 		const propKey = CATEGORY_KEYS.find((k) => typeof front[k] === "string");
 		if (tagIdx >= 0 && !propKey) {
-			if (kind) {
-				const old = tags[tagIdx].replace(/^#/, "");
-				tags[tagIdx] = old[0] === old[0].toUpperCase() ? kind.charAt(0).toUpperCase() + kind.slice(1) : kind;
-			} else tags.splice(tagIdx, 1);
+			const old = tags[tagIdx].replace(/^#/, "");
+			// A tag only says a kind it's a type tag for (#City, not #Starport): any other kind goes in `kind:`.
+			const asTag = kind && type && isKindTag(kind, type);
+			if (asTag) tags[tagIdx] = old[0] === old[0].toUpperCase() ? kind.charAt(0).toUpperCase() + kind.slice(1) : kind;
+			else tags.splice(tagIdx, 1);
 			if (tags.length) front.tags = tags;
 			else delete front.tags;
-			return;
+			if (kind && !asTag) front.kind = kind;
+		} else {
+			const k = propKey ?? "kind";
+			if (kind) front[k] = kind;
+			else delete front[k];
 		}
-		const k = propKey ?? "kind";
-		if (kind) front[k] = kind;
-		else delete front[k];
+		// The kind's tag may have been all that marked the note's type (#City on a place): keep the type.
+		if (type && this.markedType(front) !== type) this.applyType(front, type);
 	}
 
 	// ---- Undo --------------------------------------------------------------------------------------

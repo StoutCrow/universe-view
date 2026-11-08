@@ -1,6 +1,7 @@
 import { Keymap, Menu, Notice, TFile, WorkspaceLeaf, setIcon } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity, EntityType } from "../types";
+import { kindLabel } from "../index/reader";
 
 export const HOVER_SOURCE = "chronicle";
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -334,7 +335,7 @@ export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseE
 	const menu = new Menu();
 	if (e) {
 		menu.addItem((i) => {
-			i.setTitle(`${e.name}${e.category ? ` · ${e.category}` : ""}`).setIcon(TYPE_ICONS[e.type] ?? "file").setDisabled(true);
+			i.setTitle(`${e.name}${e.category ? ` · ${kindLabel(e.category)}` : ""}`).setIcon(TYPE_ICONS[e.type] ?? "file").setDisabled(true);
 			(i as unknown as { setIsLabel?: (v: boolean) => void }).setIsLabel?.(true);
 		});
 		// One way in: the inspector reads and edits everything (kind, size, map layer, realm, names…).

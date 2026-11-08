@@ -1,5 +1,5 @@
 import { pluginEnabled } from "../internals";
-import { App, Notice, PluginSettingTab, Setting, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting, debounce, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import type { CalendarDef } from "../types";
@@ -19,7 +19,8 @@ import { CalendarEditorModal } from "./CalendarEditor";
 import { TidyModal } from "./tidy";
 import { rowEditor, type Field, type RowEditorOptions } from "./rows";
 import { DEFAULT_TIER_NAMES, TIER_NAME_PRESETS, pluralOf, tierName, tierWords, type TierName } from "../index/realms";
-import { DEFAULT_TIER_STYLES, EDGE_NAMES, PATTERN_NAMES, tierStyleNames, type TierStyle } from "./territorystyle";
+import type { TierStyle } from "./territorystyle";
+import { tierStyleEditor } from "./tierstyleeditor";
 import { TagStandardModal } from "./tagstandard";
 import { CALENDAR_PRESETS } from "../dates/calendar-text";
 import { ConfirmPrompt } from "./TextPrompt";
@@ -867,22 +868,16 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		}, { blank: () => ({ word: "", rank: "4" }), addLabel: "Add a tier word" });
 
 		// How each tier is drawn on the map.
-		const tierNames = (): [string, string][] => tierStyleNames().map((n, i) => [String(i), n]);
-		const lines = (): [string, string][] => [["solid", "Solid"], ["dashed", "Dashed"], ["dotted", "Dotted"]];
-		const styleRows = (s.tierStyles?.length ? s.tierStyles : DEFAULT_TIER_STYLES).map((x) => ({ tier: String(x.tier), width: x.width, line: x.line, fill: x.fill, outline: x.outline, edge: x.edge ?? "plain", pattern: x.pattern ?? "flat" }));
-		const styles = this.rows(containerEl, "Territory styles", "How each tier of title is drawn: border width, line and fill strength (0–100), and how thick its border stays once it splits into its vassals. Tiers come from tags and kinds like #Realm, #Province or #Region_Small; areas that aren't titles use “Other areas”.", [
-			{ key: "tier", label: "Tier", kind: "select", options: tierNames, width: "1.4fr" },
-			{ key: "width", label: "Border", kind: "number", min: 0, step: 0.5, width: "0.8fr" },
-			{ key: "line", label: "Line", kind: "select", options: lines, width: "1fr" },
-			{ key: "fill", label: "Fill", kind: "number", min: 0, step: 2, width: "0.8fr" },
-			{ key: "outline", label: "When split", kind: "number", min: 0, step: 0.5, width: "0.9fr" },
-			{ key: "edge", label: "Edge", kind: "select", options: () => EDGE_NAMES, width: "1.1fr" },
-			{ key: "pattern", label: "Texture", kind: "select", options: () => PATTERN_NAMES, width: "1.1fr" },
-		], styleRows, async (rows) => {
-			s.tierStyles = rows.map((r) => ({ tier: Number(r.tier) || 0, width: Number(r.width) || 0, line: (r.line as TierStyle["line"]) || "solid", fill: Number(r.fill) || 0, outline: Number(r.outline) || 0, edge: (r.edge as TierStyle["edge"]) || "plain", pattern: (r.pattern as TierStyle["pattern"]) || "flat" }));
+		const styles = el("div", { cls: "chronicle-settings-rows" }, containerEl);
+		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from tags and kinds like #Realm, #Province or #Region_Small.").settingEl.addClass("chronicle-settings-rows-head");
+		const saveStyles = debounce(async () => {
 			await this.save(false);
 			this.plugin.restyleTerritories?.();
-		}, { blank: () => ({ tier: "4", width: 1.5, line: "solid", fill: 18, outline: 2.5, edge: "plain", pattern: "flat" }), addLabel: "Add a tier" });
+		}, 250, true);
+		tierStyleEditor(styles, s.tierStyles, (next: TierStyle[]) => {
+			s.tierStyles = next;
+			void saveStyles();
+		});
 		new Setting(containerEl)
 			.setName("Standardise land tags")
 			.setDesc("Go through every place and realm: ruled land (#Title #Province #Region_Small) or geography (#Region #Region_Enormous), with its tier or landform and size. You see each change before it's written.")

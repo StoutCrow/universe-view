@@ -228,7 +228,7 @@ export class EntityIndex extends Events {
 		const s = this.getSettings();
 		if (s.tagTypes) {
 			for (const t of tags) {
-				const tt = typeFromTag(t, s.tagPrefix);
+				const tt = typeFromTag(t, s.tagPrefix, s.typeTags);
 				if (tt) return tt;
 			}
 		}

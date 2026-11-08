@@ -3,6 +3,7 @@ import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES, type EntityType } from "../types";
 import type { ChronicleSettings } from "../settings";
 import { followPath, moveTarget } from "../index/moves";
+import { kindLabel } from "../index/reader";
 import { TYPE_ICONS, TYPE_LABELS, clickNotice, el, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
 import { fileIconBox, tintRow } from "./icons";
 
@@ -319,7 +320,7 @@ export class FileTree {
 		this.dress(row, note?.path ?? n.path, open ? "folder-open" : "folder");
 		el("span", { cls: "chronicle-dash-row-name", text: n.name }, row);
 		const entity = note ? this.plugin.index.get(note.path) : undefined;
-		if (this.options.kinds && entity?.category) el("span", { cls: "chronicle-dash-row-meta", text: entity.category }, row);
+		if (this.options.kinds && entity?.category) el("span", { cls: "chronicle-dash-row-meta", text: kindLabel(entity.category) }, row);
 		const counts = el("span", { cls: "chronicle-dash-counts" }, row);
 		if (this.options.counts) for (const t of ENTITY_TYPES) {
 			const c = n.counts[t];
@@ -357,7 +358,7 @@ export class FileTree {
 		const row = this.row(f.path, "is-file" + (e ? "" : " is-plain"), depth, !s.isFolder && s.selected === f.path);
 		this.dress(row, f.path, e ? TYPE_ICONS[e.type] : "file-text");
 		el("span", { cls: "chronicle-dash-row-name", text: f.basename }, row);
-		if (this.options.kinds && e?.category) el("span", { cls: "chronicle-dash-row-meta", text: e.category }, row);
+		if (this.options.kinds && e?.category) el("span", { cls: "chronicle-dash-row-meta", text: kindLabel(e.category) }, row);
 		if (e?.issues.length) el("span", { cls: "chronicle-dash-issue", text: "!", attr: { title: e.issues.join("\n") } }, row);
 		row.addEventListener("click", (evt) => {
 			if (Keymap.isModEvent(evt)) openEntity(this.plugin, f.path, evt);

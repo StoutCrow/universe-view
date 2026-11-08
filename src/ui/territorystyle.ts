@@ -71,7 +71,9 @@ export function styleTerritories(plugin: ChroniclePlugin) {
 		for (const s of list) {
 			const t = `--uv-tier-${s.tier}`;
 			const fill = Math.min(1, (Math.max(0, Math.min(100, s.fill)) / 100) * k);
-			put(`${t}-width`, `${s.width}px`);
+			// A double line is the border, a gap and a thin line inside: drawn wide, with the overlay's gap over its inner part.
+			put(`${t}-width`, `${s.edge === "double" ? s.width * 3.5 : s.width}px`);
+			put(`${t}-line`, `${s.width}px`);
 			put(`${t}-dash`, dash(s));
 			put(`${t}-fill`, String(fill));
 			put(`${t}-fill-hover`, String(Math.min(1, fill + 0.12)));

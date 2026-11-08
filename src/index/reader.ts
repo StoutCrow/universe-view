@@ -57,7 +57,10 @@ export function normalizeType(value: unknown): EntityType | null {
 	return null;
 }
 
-export function typeFromTag(tag: string, prefix: string): EntityType | null {
+/** The vault's own type tags (Settings: "Character" for people…), read before the built-in ones. */
+export type TypeTags = Partial<Record<EntityType, string>>;
+
+export function typeFromTag(tag: string, prefix: string, custom: TypeTags = {}): EntityType | null {
 	let t = tag.replace(/^#/, "").toLowerCase();
 	const p = prefix.replace(/^#/, "").replace(/\/$/, "").toLowerCase();
 	if (p) {
@@ -65,8 +68,46 @@ export function typeFromTag(tag: string, prefix: string): EntityType | null {
 		t = t.slice(p.length + 1);
 	}
 	if (t.includes("/")) return null;
+	for (const [type, own] of Object.entries(custom) as [EntityType, string][]) if (own && own.replace(/^#/, "").toLowerCase() === t) return type;
 	// Only exact type tags count: #Character is a type, #Character_Male or #Nation_United_States are not.
 	return TAG_TYPES[t] ?? null;
+}
+
+/** How a vault marks types: the property names it reads, and whether (and how) tags count. */
+export interface TypeMarks {
+	keys: string[];
+	tags: boolean;
+	prefix: string;
+	custom: TypeTags;
+}
+
+/** The type a note's own properties and tags give it, read the way the index reads them (folder rules aside). */
+export function markedType(fm: Record<string, unknown>, marks: TypeMarks): EntityType | null {
+	const lower = new Map(Object.keys(fm).map((k) => [k.toLowerCase(), k]));
+	for (const k of marks.keys) {
+		const key = lower.get(k.toLowerCase());
+		const t = key === undefined ? null : normalizeType(fm[key]);
+		if (t) return t;
+	}
+	if (!marks.tags) return null;
+	for (const t of ([] as unknown[]).concat(fm.tags ?? fm.tag ?? [])) {
+		const tt = typeof t === "string" ? typeFromTag(t, marks.prefix, marks.custom) : null;
+		if (tt) return tt;
+	}
+	return null;
+}
+
+/** Whether a tag can say a note's kind: a type tag of that same type, more specific than the type (#City for a place). */
+export function isKindTag(kind: string, type: EntityType): boolean {
+	const low = kind.replace(/^#/, "").toLowerCase();
+	return TAG_TYPES[low] === type && !GENERIC_TAGS.has(low);
+}
+
+/** A kind as people read it: "space station" → "Space station". */
+export function kindLabel(kind: string | undefined): string {
+	if (!kind) return "";
+	const k = kind.replace(/[_-]+/g, " ").trim();
+	return k.charAt(0).toUpperCase() + k.slice(1);
 }
 
 /** Values that mean "unknown" rather than naming a note. */

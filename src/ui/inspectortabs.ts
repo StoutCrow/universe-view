@@ -3,6 +3,7 @@ import type ChroniclePlugin from "../main";
 import type { Entity, Territory } from "../types";
 import { chainOf, descendantsOf, tierLabel } from "../index/realms";
 import { validate } from "../index/validate";
+import { kindLabel } from "../index/reader";
 import { formatSpan } from "../dates/parser";
 import { TYPE_LABELS, el, entityColor, helpTip, icon } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
@@ -306,7 +307,7 @@ export function noteTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: C
 		el("span", { text: v }, facts);
 	};
 	fact("Type", e.type === "culture" ? `${TYPE_LABELS[e.type]} · ${GROUP_KINDS[groupKind(p, e)].label}` : TYPE_LABELS[e.type]);
-	fact("Kind", e.category);
+	fact("Kind", kindLabel(e.category));
 	if (node) {
 		fact("Land", node.nature === "region" ? `Geography: ${tierLabel(node) || "a region"}. Nobody rules it; realms lie in it.` : `Ruled land: ${tierLabel(node) || "a title"}${node.holder ? `, held by ${node.holder.name}` : ""}.`);
 		fact("Chain", chainOf(tree, e.key).map((k) => p.index.get(k)?.name).join(" › "));

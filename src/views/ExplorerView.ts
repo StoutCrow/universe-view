@@ -18,6 +18,8 @@ import { relInverse } from "../index/relkinds";
 import { CardLayout } from "../ui/cardlayout";
 import { ChronicleView } from "./base";
 import { asText } from "../index/text";
+import { kindLabel } from "../index/reader";
+import { KindSuggest, kindsFor } from "../ui/kindpicker";
 import { FileTree, TREE_OPTIONS_CHANGED, folderViews, plural, treeOptionsMenu, type TreeState } from "../ui/filetree";
 
 export const VIEW_EXPLORER = "chronicle-explorer";
@@ -364,7 +366,7 @@ export class ExplorerView extends ChronicleView {
 		// Recent edits
 		const recent = this.plugin.index.all().sort((a, b) => b.file.stat.mtime - a.file.stat.mtime).slice(0, 10);
 		const rc = this.card(grid, "Recently edited", "history");
-		for (const e of recent) this.relRow(rc, { key: e.key, name: e.name, note: TYPE_LABELS[e.type] + (e.category ? ` · ${e.category}` : "") });
+		for (const e of recent) this.relRow(rc, { key: e.key, name: e.name, note: TYPE_LABELS[e.type] + (e.category ? ` · ${kindLabel(e.category)}` : "") });
 
 		// Saved views
 		const p = this.plugin;
@@ -402,7 +404,7 @@ export class ExplorerView extends ChronicleView {
 		const ic = el("span", { cls: "chronicle-dash-title-icon" }, title);
 		icon(ic, e ? TYPE_ICONS[e.type] : "file-text");
 		el("h2", { cls: "chronicle-dash-title", text: file.basename }, title);
-		if (e) el("span", { cls: "chronicle-dash-badge", text: TYPE_LABELS[e.type] + (e.category ? ` · ${e.category}` : "") }, title);
+		if (e) el("span", { cls: "chronicle-dash-badge", text: TYPE_LABELS[e.type] + (e.category ? ` · ${kindLabel(e.category)}` : "") }, title);
 		el("div", { cls: "chronicle-dash-path", text: file.path }, head);
 		const actions = el("div", { cls: "chronicle-dash-actions" }, head);
 		const act = (label: string, iconName: string, run: (evt: MouseEvent) => void, cta = false) => {
@@ -474,13 +476,32 @@ export class ExplorerView extends ChronicleView {
 				else f[key] = value;
 			}, label);
 
-		new Setting(body).setName("Type").setDesc(e ? "Written the way this note already marks its type (property, tag or cr_type)." : "Not a UniverseView note yet.").addDropdown((d) => {
-			d.addOption("", "Not a UniverseView note");
-			for (const t of ENTITY_TYPES) d.addOption(t, TYPE_LABELS[t]);
-			d.setValue(e?.type ?? "");
-			d.onChange((v) => void this.plugin.editFrontmatter(file, (f) => this.plugin.setTypeMark(f, (v || null) as EntityType | null), "Change type"));
-		});
-		if (!e) return;
+		// What it is, in one row: its type and, but for places (whose kind sets the pin, below), its kind.
+		const what = el("div", { cls: "uv-identity" }, body);
+		const typeBox = el("label", { cls: "uv-identity-field" }, what);
+		el("span", { cls: "uv-identity-label", text: "Type" }, typeBox);
+		const typeSel = el("select", { cls: "dropdown", attr: { "aria-label": "Type" } }, typeBox);
+		typeSel.createEl("option", { value: "", text: "Not a UniverseView note" });
+		for (const t of ENTITY_TYPES) typeSel.createEl("option", { value: t, text: TYPE_LABELS[t] });
+		typeSel.value = e?.type ?? "";
+		typeSel.addEventListener("change", () => void this.plugin.editFrontmatter(file, (f) => this.plugin.setTypeMark(f, (typeSel.value || null) as EntityType | null), "Change type"));
+		if (!e) {
+			el("div", { cls: "chronicle-dash-muted", text: "Pick a type to bring this note into UniverseView. It's marked the way your vault marks types." }, body);
+			return;
+		}
+		if (e.type !== "place") {
+			const kindBox = el("label", { cls: "uv-identity-field" }, what);
+			el("span", { cls: "uv-identity-label", text: "Kind" }, kindBox);
+			const input = el("input", { attr: { type: "text", spellcheck: "false", "aria-label": "Kind", placeholder: kindHint(e.type, this.plugin.settings.worldSetting) || "None" } }, kindBox);
+			input.value = kindLabel(e.category);
+			const save = (kind: string) => {
+				const next = kind.trim().toLowerCase() || null;
+				if (next === (e.category ?? null)) return;
+				void this.plugin.editFrontmatter(file, (f) => this.plugin.setKindMark(f, e.category, next), "Change kind");
+			};
+			new KindSuggest(this.app, input, () => kindsFor(this.plugin, e.type), save);
+			input.addEventListener("change", () => save(input.value));
+		}
 
 		const dates = DATE_FIELDS[e.type];
 		if (dates) {
@@ -524,12 +545,6 @@ export class ExplorerView extends ChronicleView {
 			});
 			const d = kindDefaults(this.plugin, e.category);
 			el("div", { cls: "chronicle-dash-muted", text: `Shown on the map as ${e.pinSize ?? d.size ?? "event-sized"} pins, layer ${e.layer ?? d.layer} (${LAYER_NAMES[(e.layer ?? d.layer) - 1].toLowerCase()}).` }, body);
-		} else {
-			new Setting(body).setName("Kind").setDesc(kindHint(e.type, this.plugin.settings.worldSetting)).addText((t) => {
-				t.setValue(e.category ?? "");
-				t.inputEl.addEventListener("change", () =>
-					void this.plugin.editFrontmatter(file, (f) => this.plugin.setKindMark(f, e.category, t.getValue().trim().toLowerCase() || null), "Change kind"));
-			});
 		}
 		new Setting(body).setName("Importance").setDesc("1–5: bigger on timelines and in lists.").addSlider((sl) =>
 			sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => void write(keyFor("importance"), v)),
@@ -951,7 +966,7 @@ export class ExplorerView extends ChronicleView {
 				icon(ic2, TYPE_ICONS[e.type]);
 				el("span", { text: e.name }, nameTd);
 				el("td", { text: TYPE_LABELS[e.type] }, tr);
-				el("td", { text: e.category ?? "" }, tr);
+				el("td", { text: kindLabel(e.category) }, tr);
 				el("td", { text: formatSpan(e.start, e.end, this.plugin.calendars.get(e.calendar) ?? cal) }, tr);
 				el("td", { text: String(links(e)), cls: "is-num" }, tr);
 				el("td", { text: e.issues.length ? String(e.issues.length) : "", cls: "is-num" + (e.issues.length ? " is-warning" : ""), attr: { title: e.issues.join("\n") } }, tr);

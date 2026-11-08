@@ -397,6 +397,142 @@ button.chronicle-dash-stat.is-active {
 .chronicle-dash-card .setting-item:first-child {
 	border-top: none;
 }
+/* In a narrow card the name keeps its width and the control drops below it, instead of the name
+   being squeezed down to a letter per line. */
+.chronicle-dash-card .setting-item {
+	flex-wrap: wrap;
+	gap: 6px 12px;
+}
+.chronicle-dash-card .setting-item-info {
+	flex: 1 1 140px;
+	min-width: 120px;
+	margin-inline-end: 0;
+}
+.chronicle-dash-card .setting-item-control {
+	flex: 1 1 150px;
+	min-width: 0;
+	justify-content: flex-end;
+}
+.chronicle-dash-card .setting-item-control > input[type="text"],
+.chronicle-dash-card .setting-item-control > select {
+	min-width: 0;
+	max-width: 100%;
+}
+/* Territory styles: a card per tier, a picture of it whole and split, its controls in words. */
+.uv-tier-styles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 10px;
+	padding: 4px 0 12px;
+}
+.uv-tier-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+}
+.uv-tier-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.uv-tier-pics {
+	display: flex;
+	flex: none;
+	gap: 4px;
+}
+.uv-tier-prev {
+	width: 68px;
+	height: 48px;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+}
+.uv-tier-prev-land {
+	fill: var(--interactive-accent);
+	stroke: var(--interactive-accent);
+	stroke-linejoin: round;
+	--terr-color: var(--interactive-accent);
+}
+.uv-tier-prev-land.is-glow { filter: drop-shadow(0 0 3px var(--interactive-accent)); }
+.uv-tier-prev-land.is-shadow { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)); }
+.uv-tier-prev .uv-terr-overlay { --terr-color: var(--interactive-accent); }
+.uv-tier-prev-vassal {
+	fill: none;
+	stroke: var(--interactive-accent);
+	stroke-width: 1;
+	stroke-dasharray: 3 2;
+}
+.uv-tier-title {
+	min-width: 0;
+}
+.uv-tier-name {
+	font-weight: var(--font-semibold);
+}
+.uv-tier-note {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+.uv-tier-controls {
+	display: grid;
+	gap: 6px;
+}
+.uv-tier-row {
+	display: grid;
+	grid-template-columns: 92px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 8px;
+	font-size: var(--font-ui-small);
+}
+.uv-tier-row select {
+	grid-column: 2 / 4;
+	width: 100%;
+}
+.uv-tier-row .slider {
+	width: 100%;
+}
+.uv-tier-label {
+	color: var(--text-muted);
+}
+.uv-tier-value {
+	min-width: 36px;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+/* What a note is: type and kind side by side. */
+.uv-identity {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	padding-bottom: 10px;
+}
+.uv-identity-field {
+	display: flex;
+	flex: 1 1 140px;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+.uv-identity-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+.uv-identity-field select,
+.uv-identity-field input {
+	width: 100%;
+}
+.uv-kind-suggestion {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+.uv-kind-count {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
 .chronicle-dash-card .setting-item-description.mod-warning {
 	color: var(--text-error);
 }
