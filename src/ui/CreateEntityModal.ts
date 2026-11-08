@@ -528,7 +528,7 @@ export class CreateEntityModal extends Modal {
 		if (cal && cal !== p.index.calendarFor(this.folder.replace(/\/$/, ""))) fm[f("calendar")] = cal;
 		try {
 			if (this.type === "culture" && this.groupKind) fm.__kind = this.groupKind;
-			if (this.stdUsed && (this.type === "place" || (this.type === "culture" && this.groupKind === "realm"))) fm.tags = choiceTags(this.std);
+			if (this.stdUsed && (this.type === "place" || (this.type === "culture" && this.groupKind === "realm"))) fm.tags = choiceTags(this.std, this.type);
 			// Going inside a note that has no folder yet: give it one first.
 			const pl = this.placement;
 			if (pl?.convert && this.folder === pl.folder) await makeFolderNote(p, pl.convert);

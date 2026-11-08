@@ -63,7 +63,8 @@ import { buildGedcom } from "./import/gedcom-export";
 import { HoverCards } from "./ui/HoverCard";
 import { THEMES, applyAppearance, clearAppearance } from "./appearance";
 import { suggestWorldSetting } from "./ui/worldsettingui";
-import { CATEGORY_KEYS, isKindTag, markedType, normalizeType, readPoints, typeFromTag, writePoints, type TypeMarks } from "./index/reader";
+import { kindTag, parseTag, tidyKinds } from "./index/tagscheme";
+import { CATEGORY_KEYS, markedType, normalizeType, readPoints, typeFromTag, writePoints, type TypeMarks } from "./index/reader";
 import type { ModuleKind } from "./settings";
 import { CreateEntityModal, CreatePrefill } from "./ui/CreateEntityModal";
 import { ValidateModal } from "./ui/ValidateModal";
@@ -1082,6 +1083,8 @@ export default class ChroniclePlugin extends Plugin {
 			}
 			// A realm or a house: its kind, marked the way this vault marks kinds (a tag or `kind:`).
 			if (typeof fm.__kind === "string" && fm.__kind) this.setKindMark(front, undefined, fm.__kind);
+			// One kind tag per type: a real kind replaces the default one applyType gave it.
+			if (Array.isArray(front.tags)) front.tags = tidyKinds(front.tags.map(String), this.settings.tagPrefix.replace(/^#/, "").replace(/\/$/, ""));
 			// Relationship properties ready to fill in, unless the template has them under another name.
 			if (this.settings.presetRelations && (type === "person" || type === "culture")) {
 				const have = new Set(Object.keys(front).map((k) => relKind(k)?.key ?? k.toLowerCase()));
@@ -1099,9 +1102,9 @@ export default class ChroniclePlugin extends Plugin {
 		const style = this.settings.typeStyle;
 		if (style === "tag" && this.settings.tagTypes) {
 			const prefix = this.settings.tagPrefix.replace(/^#/, "").replace(/\/$/, "");
-			const tag = (prefix ? `${prefix}/` : "") + (this.settings.typeTags[type] || type);
+			// The tag scheme's kind tag, with the type's default kind until one is set (#Character_Person).
 			const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
-			if (!tags.some((t) => t.replace(/^#/, "").toLowerCase() === tag.toLowerCase())) front.tags = [tag, ...tags];
+			if (!tags.some((t) => typeFromTag(t, this.settings.tagPrefix, this.settings.typeTags) === type)) front.tags = [(prefix ? `${prefix}/` : "") + kindTag(type), ...tags];
 		} else if (style === "cr_type") {
 			front.cr_type = type === "culture" ? "organization" : type;
 		} else {
@@ -1160,20 +1163,25 @@ export default class ChroniclePlugin extends Plugin {
 	 */
 	setKindMark(front: Record<string, unknown>, current: string | undefined, kind: string | null) {
 		const type = this.markedType(front);
+		const prefix = this.settings.tagPrefix.replace(/^#/, "").replace(/\/$/, "");
 		const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
-		const tagIdx = current ? tags.findIndex((t) => t.replace(/^#/, "").toLowerCase() === current) : -1;
+		// The kind tag of the tag scheme (#Place_County), else an older tag that says the current kind (#City).
+		const schemeIdx = type ? tags.findIndex((t) => {
+			const p = parseTag(t, prefix);
+			return p?.role === "kind" && p.type === type;
+		}) : -1;
+		const tagIdx = schemeIdx >= 0 ? schemeIdx : current ? tags.findIndex((t) => t.replace(/^#/, "").split("/").pop()?.toLowerCase() === current) : -1;
 		const propKey = CATEGORY_KEYS.find((k) => typeof front[k] === "string");
-		// A tag only says a kind it's a type tag for (#City, #Island; not #Starport): any other kind goes in `kind:`.
-		const tagSays = !!kind && !!type && isKindTag(kind, type);
-		// The tag that says the old kind is renamed or dropped, so a tag and a property never disagree.
-		if (tagIdx >= 0) {
-			const old = tags[tagIdx].replace(/^#/, "");
-			if (tagSays) tags[tagIdx] = old[0] === old[0].toUpperCase() ? kind.charAt(0).toUpperCase() + kind.slice(1) : kind;
-			else tags.splice(tagIdx, 1);
-			if (tags.length) front.tags = tags;
-			else delete front.tags;
+		// Notes that keep their kind in a tag get the scheme's kind tag; a cleared kind is the type's default (#Place_Other).
+		const tagStyle = !!type && (tagIdx >= 0 || (!propKey && this.settings.typeStyle === "tag"));
+		if (tagStyle && type) {
+			const next = (prefix ? `${prefix}/` : "") + kindTag(type, kind ?? undefined);
+			if (tagIdx >= 0) tags[tagIdx] = next;
+			else tags.unshift(next);
+			front.tags = tidyKinds(tags, prefix);
 		}
-		if (propKey || !(tagIdx >= 0 && tagSays)) {
+		// A property that says the kind follows too, so a tag and a property never disagree.
+		if (propKey || !tagStyle) {
 			if (kind) front[propKey ?? "kind"] = kind;
 			else if (propKey) delete front[propKey];
 		}
@@ -1732,6 +1740,7 @@ export default class ChroniclePlugin extends Plugin {
 			callback: () => new DetectModal(this).open(),
 		});
 		this.addCommand({ id: "normalise-tags", name: "Normalise all tags", icon: "tags", callback: () => new NormaliseTagsModal(this).open() });
+		this.addCommand({ id: "tag-scheme", name: "Move tags to the tag scheme", icon: "tags", callback: () => new NormaliseTagsModal(this, true).open() });
 		this.addCommand({ id: "smart-reader", name: "Smart reader: find facts in your notes' text", icon: "scan-text", callback: () => new SmartReaderModal(this).open() });
 		this.addCommand({
 			id: "smart-reader-note",

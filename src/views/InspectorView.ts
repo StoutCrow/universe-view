@@ -581,7 +581,7 @@ export class InspectorView extends ItemView {
 			if (!(file instanceof TFile)) return;
 			void p.editFrontmatter(file, (fm) => {
 				const own = ([] as unknown[]).concat(fm.tags ?? before).map((t) => String(t).replace(/^#/, ""));
-				fm.tags = restandardise(p, own, choice);
+				fm.tags = restandardise(p, own, choice, e.type);
 			}, `${e.name}: what it is`);
 		});
 	}

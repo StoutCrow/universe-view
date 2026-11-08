@@ -4,6 +4,7 @@ import type { EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { CREATOR_FIELDS, parseQuickAdd, quickAddFrontmatter, withFields, type CreatorField, type QuickAdd } from "../import/quickadd";
 import { factsFromPath, standardTag, standardTagsFor, type TagSample } from "../index/tagrules";
+import { factTag, kindTag, parseTag, tidyKinds } from "../index/tagscheme";
 import { TYPE_ICONS, TYPE_LABELS, el, icon } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
 import { LinkList } from "./CreateEntityModal";
@@ -121,7 +122,7 @@ export class QuickCreator {
 		if (!this.stdUsed || (q.type !== "place" && kind !== "realm")) return [];
 		// The kind already written says which settlement it is.
 		const settlement = SETTLEMENT_KINDS.find((k) => k.toLowerCase() === q.kind?.toLowerCase());
-		return choiceTags(settlement ? { ...this.std, settlement } : this.std);
+		return choiceTags(settlement ? { ...this.std, settlement } : this.std, q.type);
 	}
 
 	/** Every tag this note gets, in the vault's standard. */
@@ -130,9 +131,17 @@ export class QuickCreator {
 		const land = this.landTags(q, kind);
 		// Once the land form has spoken, it decides between title and region, whatever most notes are.
 		const shared = standardTagsFor(q.type, facts, q.kind, this.samples).filter((t) => !land.length || !/^(title|region)$/i.test(t));
-		const all = [...shared, ...land, ...q.tags, ...this.tagsOwn];
+		// A vault on the tag scheme gets the note's kind and facts as scheme tags (#Character_Gender_Female).
+		const scheme: string[] = [];
+		if (this.plugin.settings.typeStyle === "tag" || this.known.some((t) => parseTag(t))) {
+			if (!land.length) scheme.push(kindTag(q.type, q.kind || kind));
+			const g = /^(m|male)$/i.test(q.gender ?? "") ? "male" : /^(f|female)$/i.test(q.gender ?? "") ? "female" : "";
+			if (q.type === "person" && g) scheme.push(factTag("person", "gender", g));
+			if (q.type === "person" && q.end) scheme.push(factTag("person", "status", "dead"));
+		}
+		const all = [...scheme, ...shared, ...land, ...q.tags, ...this.tagsOwn];
 		const out = new Map(all.map((t) => standardTag(t, this.known)).map((t) => [t.toLowerCase(), t]));
-		return [...out.values()];
+		return tidyKinds([...out.values()]);
 	}
 
 	mount(parent: HTMLElement) {

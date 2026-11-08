@@ -1,5 +1,8 @@
+import type { EntityType } from "../types";
+import { kindTag, parseTag, tagValue } from "./tagscheme";
+
 /**
- * Keeping tags to one standard: a tag is written the way the vault already writes it, and a new note
+ * Keeping tags to one standard (the tag scheme itself is in tagscheme.ts): a tag is written the way the vault already writes it, and a new note
  * gets the tags notes like it have. Nothing here is a fixed list: the rules are read from the vault,
  * so #Event_War comes from a vault that writes #Event_War, and an untagged vault gets nothing extra.
  */
@@ -12,6 +15,12 @@ export interface TagSample {
 const plain = (t: string) => t.replace(/^#/, "").trim();
 const key = (t: string) => plain(t).toLowerCase().replace(/[\s_-]+/g, "_");
 const word = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** What a tag states: the scheme's kind, fact or name (#Group_Nation_Vael → vael), else what follows the first underscore. */
+const valueOf = (t: string) => {
+	const v = tagValue(plain(t));
+	if (v !== undefined) return key(v);
+	return plain(t).includes("_") ? key(plain(t).slice(plain(t).indexOf("_") + 1)) : "";
+};
 
 /** A tag as the vault spells it; a new one follows the vault's habit of capitals and underscores. */
 export function standardTag(raw: string, known: string[]): string {
@@ -59,7 +68,7 @@ export function tagFixes(notes: TagNote[], required: Partial<Record<string, stri
 	const usual = (t: string) => [...(uses.get(key(t)) ?? [])].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? plain(t);
 	/** Whether a tag is really in use among the notes it fits: a third of them, or it's a leftover to leave be. */
 	const established = (t: string, peers: TagNote[]) => {
-		const value = key(t.slice(t.indexOf("_") + 1));
+		const value = valueOf(t);
 		const holders = peers.filter((p) => p.tags.some((x) => key(x) === key(t)));
 		const fits = peers.filter((p) => p.facts.some((x) => key(x) === value));
 		return holders.length >= new Set([...holders, ...fits]).size / 3;
@@ -75,10 +84,13 @@ export function tagFixes(notes: TagNote[], required: Partial<Record<string, stri
 		const add = new Set<string>();
 		for (const t of new Set(peers.flatMap((p) => p.tags.map(plain)))) {
 			const at = t.indexOf("_");
-			if (at <= 0 || have.has(key(t)) || !wanted.has(key(t.slice(at + 1)))) continue;
+			if (at <= 0 || have.has(key(t)) || !wanted.has(valueOf(t))) continue;
+			// A scheme fact or kind is about notes of its own type; a belonging tag can go on any note.
+			const s = parseTag(t);
+			if (s && s.role !== "member" && s.type !== n.type) continue;
 			// #Family_Noble is for notes that are #Family, not every group.
 			const family = key(t.slice(0, at));
-			if (uses.has(family) && !have.has(family)) continue;
+			if (!s && uses.has(family) && !have.has(family)) continue;
 			if (established(t, peers)) add.add(usual(t));
 		}
 		const mark = required[n.type];
@@ -102,16 +114,20 @@ export function standardTagsFor(type: string, facts: string[], kind: string | un
 	const add = (t: string) => out.set(key(t), t);
 	for (const [t, n] of counts) {
 		// #Character can go on every person; #Event_War says something, so it has to be true of this note.
-		const value = t.includes("_") ? key(t.slice(t.indexOf("_") + 1)) : "";
+		const value = valueOf(t);
 		if (value ? wanted.has(value) : wanted.has(key(t)) || (same.length >= 3 && n > same.length / 2)) add(t);
 	}
 	// A fact's tag may only be used on other kinds of note so far: #Nation_Vael on the realm's own lands.
 	for (const n of notes) {
 		for (const t of n.tags.map(plain)) {
-			if (t.includes("_") && wanted.has(key(t.slice(t.indexOf("_") + 1)))) add(t);
+			if (t.includes("_") && wanted.has(valueOf(t)) && !(parseTag(t) && parseTag(t)?.role !== "member" && parseTag(t)?.type !== type)) add(t);
 		}
 	}
-	if (kind) {
+	// A vault on the tag scheme writes the kind as its kind tag (#Place_Starport).
+	if (kind && notes.some((n) => n.tags.some((t) => parseTag(plain(t))))) {
+		for (const [k, t] of out) if (parseTag(t)?.role === "kind" && parseTag(t)?.type === type) out.delete(k);
+		add(kindTag(type as EntityType, kind));
+	} else if (kind) {
 		const prefixes = new Map<string, Set<string>>();
 		for (const t of counts.keys()) {
 			const at = t.indexOf("_");

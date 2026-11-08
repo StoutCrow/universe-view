@@ -68,6 +68,8 @@ import { pageName } from "../src/index/pagename";
 import { detectCoast, detectLines, edgeColor, lineColorAt, traceBetween, waterLines } from "../src/render/trace";
 import { presetKinds, relInverse, relKind, relLabel, relTone, setRankWords } from "../src/index/relkinds";
 import { DEFAULT_FIELD_ALIASES } from "../src/settings";
+import { applyMigration, factTag, kindTag, memberTag, migrateTags, parseTag, tidyKinds, type MigrateNote, type MigrateTarget, type MigrateWords } from "../src/index/tagscheme";
+import { DEFAULT_REGION_WORDS as SCHEME_REGIONS, DEFAULT_TIER_WORDS as SCHEME_TIERS } from "../src/index/realms";
 
 let failed = 0;
 let passed = 0;
@@ -1508,6 +1510,38 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq([relLabel("liege"), relLabel("liege", true)], ["Superior", "Subordinates"], "setting: rank labels follow it");
 	setRankWords(settingWords("medieval"));
 	eq(relLabel("vassals"), "Vassals", "setting: back to medieval");
+}
+{
+	// The tag scheme: Type_Kind, Type_Kind_Name, Type_Field_Value.
+	eq([parseTag("Group_Nation_United_States"), parseTag("Character_Status_Dead"), parseTag("Place_SpaceStation"), parseTag("Nation_Vael"), parseTag("Character"), parseTag("uv/Place_City", "uv")], [
+		{ role: "member", type: "culture", kind: "nation", name: "United States" },
+		{ role: "fact", type: "person", field: "status", value: "dead" },
+		{ role: "kind", type: "place", kind: "space station" },
+		null, null,
+		{ role: "kind", type: "place", kind: "city" },
+	], "scheme: parse");
+	eq([kindTag("place", "space station"), kindTag("person"), memberTag("culture", "nation", "United States"), factTag("person", "status", "dead")], ["Place_SpaceStation", "Character_Person", "Group_Nation_United_States", "Character_Status_Dead"], "scheme: write");
+	eq(tidyKinds(["Character", "Character_Person", "Character_Noble", "Group_Family_Tudors"]), ["Character_Noble", "Group_Family_Tudors"], "scheme: one kind tag");
+	eq([typeFromTag("Place_County", ""), typeFromTag("Character_Status_Dead", ""), typeFromTag("Group_Nation_United_States", "")], ["place", "person", null], "scheme: kind and fact tags mark the type, belonging tags don't");
+	eq([readCategory({}, ["Place_County", "Place_Size_Small"], "place"), readCategory({}, ["Character_Vael", "Character_Tudors"], "person"), readCategory({}, ["Character_Person"], "person"), readCategory({}, ["Character_Gender_Male", "Character_Noble"], "person")], ["county", undefined, undefined, "noble"], "scheme: kind tag read; several older Type_Word tags say nothing");
+	const words: MigrateWords = { bareType: (w) => (w.includes("_") ? null : typeFromTag(w, "", { place: "Region" })), tiers: SCHEME_TIERS, regions: SCHEME_REGIONS };
+	const base = { folders: ["The World", "Vael"], world: "Vael" };
+	const targets: Record<string, MigrateTarget> = { tudors: { type: "culture", kind: "family", name: "Tudors" }, "united states": { type: "place", kind: "realm", name: "United States" } };
+	const run = (n: MigrateNote) => applyMigration(n.tags, migrateTags(n, (name) => (name.toLowerCase() === n.name.toLowerCase() ? { type: n.type, kind: "", name: n.name, self: true } : targets[name.toLowerCase()]), words));
+	const person: MigrateNote = { ...base, type: "person", name: "Mary", tags: ["Character", "Character_Vael", "Character_Female", "Character_Dead", "Character_Ruler", "Nation_Tudors", "Character_Noble"] };
+	const migrated = run(person);
+	eq(migrated, ["Character_Person", "Place_World_Vael", "Character_Gender_Female", "Character_Status_Dead", "Character_Role_Ruler", "Group_Family_Tudors", "Character_Class_Noble"], "scheme: a person's older tags");
+	eq(run({ ...person, tags: migrated }), migrated, "scheme: migrating twice changes nothing");
+	eq(run({ ...person, kind: "noble" }).slice(0, 1), ["Character_Noble"], "scheme: a word that is the note's own kind is its kind tag");
+	eq(run({ ...base, type: "place", name: "United States", tags: ["Title", "Region", "Realm", "Region_Huge", "Nation_United_States"], kind: "region", land: { nature: "realm", tier: "Kingdom" } }), ["Place_Realm", "Place_Size_Huge"], "scheme: a realm drops #Title and tags of itself");
+	eq(run({ ...base, type: "place", name: "Kent", tags: ["Title", "County", "Region_Small", "Nation_United_States", "Location_Vael"], kind: "county", land: { nature: "realm" } }), ["Place_County", "Place_Size_Small", "Place_Realm_United_States", "Place_World_Vael"], "scheme: a county");
+	eq(run({ ...base, type: "place", name: "Greyford", tags: ["Title", "Region", "Region_Small"], kind: "region", land: { nature: "realm", tier: "Barony" } }), ["Place_Barony", "Place_Size_Small"], "scheme: ruled land with no tier tag takes its tier");
+	eq(run({ ...base, type: "place", name: "North", tags: ["Region", "Region_Enormous", "Continent"], kind: "continent", land: { nature: "region" } }), ["Place_Continent", "Place_Size_Enormous"], "scheme: geography");
+	eq(run({ ...base, type: "place", name: "Port", tags: ["City", "City_Huge", "City_Capital", "Nation_Vael"], kind: "city", land: { nature: "realm" } }), ["Place_City", "Place_Size_Huge", "Place_Role_Capital", "Group_Nation_Vael"], "scheme: a settlement; an unknown realm keeps the old word as its kind");
+	eq(run({ ...base, type: "event", name: "War", tags: ["Event", "Event_War", "Event_Massive", "Event_Vael"] }), ["Event_War", "Event_Size_Massive", "Place_World_Vael"], "scheme: an event");
+	eq(run({ ...base, type: "culture", name: "House", tags: ["Family", "Family_Noble", "Family_Ruler"], kind: "family" }), ["Group_Family", "Group_Class_Noble", "Group_Role_Ruler"], "scheme: a family");
+	eq(run({ ...base, type: "place", name: "Kent", tags: ["Title", "County", "County"], kind: "county", land: { nature: "realm" } }), ["Place_County"], "scheme: a tag written twice");
+	eq(run({ ...base, type: "person", name: "Ann", tags: ["Favourite"] }), ["Favourite", "Character_Person"], "scheme: other tags stay, the kind tag is added");
 }
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

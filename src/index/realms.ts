@@ -1,4 +1,17 @@
 import type { Entity, Ref, TimedRef } from "../types";
+import { parseTag } from "./tagscheme";
+
+/**
+ * A kind or tag as the words the tier readers look at: #Place_County → ["county"], #Place_Size_Small
+ * → ["size", "small"], a belonging tag → nothing; an older tag split on its separators.
+ */
+function landParts(raw: string): string[] {
+	const p = parseTag(raw);
+	if (p?.role === "kind") return [p.kind.replace(/\s+/g, "")];
+	if (p?.role === "fact") return p.field === "size" ? ["size", p.value] : [];
+	if (p) return [];
+	return raw.replace(/^#/, "").toLowerCase().split(/[_/\s-]+/).filter(Boolean);
+}
 
 /**
  * Who holds what, strategy-game style: every landed title (a realm, a duchy, a county, a city with
@@ -170,7 +183,7 @@ export function natureOf(e: Entity, words: Record<string, number> = DEFAULT_TIER
 	let political = false;
 	let geographic = false;
 	for (const raw of [e.category ?? "", ...e.tags]) {
-		const parts = raw.replace(/^#/, "").toLowerCase().split(/[_/\s-]+/).filter(Boolean);
+		const parts = landParts(raw);
 		if (!parts.length) continue;
 		const sized = parts.length === 2 && SIZE[parts[1]] !== undefined;
 		const word = parts.length === 1 || sized ? parts[0] : parts.join("");
@@ -191,11 +204,11 @@ export function regionRankOf(e: Entity, regionWords: Record<string, number> = DE
 	let best = 9;
 	let size = 0;
 	for (const raw of [e.category ?? "", ...e.tags]) {
-		const parts = raw.replace(/^#/, "").toLowerCase().split(/[_/\s-]+/);
+		const parts = landParts(raw);
 		const sized = parts.length === 2 && REGION_SIZE[parts[1]] !== undefined;
 		const r = regionWords[parts.join("")] ?? (parts.length === 1 || sized ? regionWords[parts[0]] : undefined);
 		if (r !== undefined && r < best) best = r;
-		if (sized && regionWords[parts[0]] !== undefined) size = REGION_SIZE[parts[1]];
+		if (sized && (regionWords[parts[0]] !== undefined || parts[0] === "size")) size = REGION_SIZE[parts[1]];
 	}
 	return best === 9 ? 9 : Math.max(1, best + size);
 }
@@ -218,7 +231,7 @@ export function rankOf(e: Entity, words: Record<string, number> = DEFAULT_TIER_W
 	let best = 9;
 	let size = 0;
 	for (const raw of [e.category ?? "", ...e.tags]) {
-		const parts = raw.replace(/^#/, "").toLowerCase().split(/[_/\s-]+/);
+		const parts = landParts(raw);
 		// "Region_Small" is a tier with a size; "Nation_United_States" names a realm, it isn't one.
 		const sized = parts.length === 2 && SIZE[parts[1]] !== undefined;
 		const r = words[parts.join("")] ?? (parts.length === 1 || sized ? words[parts[0]] : undefined);
@@ -271,6 +284,12 @@ export function realmTree(src: RealmSource, isHouse: (e: Entity) => boolean, at?
 		if (e.locatedIn) push(src.get(e.locatedIn.key));
 		for (const c of e.cultures) if (now(c)) push(src.get(c.ref.key));
 		for (const t of e.tags) {
+			// #Group_Nation_United_States, #Place_Continent_North_America: the land or realm it belongs to.
+			const p = parseTag(t);
+			if (p?.role === "member") {
+				if (p.type === "place" || p.type === "culture") push(src.findByName(p.name));
+				continue;
+			}
 			const m = /^#?(?:nation|realm|kingdom|under)[_/](.+)$/i.exec(t);
 			if (m) push(src.findByName(m[1].replace(/_/g, " ")));
 		}

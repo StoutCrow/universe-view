@@ -1,15 +1,19 @@
 import { Modal, Notice, Setting, TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
-import type { Entity } from "../types";
+import type { Entity, EntityType } from "../types";
+import { TYPE_WORDS, factTag, kindTag, parseTag } from "../index/tagscheme";
 import { DEFAULT_REGION_WORDS, chainOf, tierLabel, tierName, tierRenamed, tierWords, tierWordsWith } from "../index/realms";
 import { el, icon } from "../render/common";
 
 /**
  * One standard for tagging land, so every note says the same things the same way:
  *
- *   Ruled land (a title):  #Title  #<Tier>   #Region_<Size>     e.g. #Title #Province #Region_Small
- *   A settlement:          #<Kind> #<Kind>_<Size>               e.g. #City #City_Huge
- *   Geography (a region):  #Region #Region_<Size> [#<Landform>] e.g. #Region #Region_Enormous
+ * in the tag scheme (`index/tagscheme.ts`): the land's kind and its size.
+ *
+ *   Ruled land (a title):  #Place_<Tier>        #Place_Size_<Size>   e.g. #Place_Province #Place_Size_Small
+ *   A settlement:          #Place_<Kind>        #Place_Size_<Size>   e.g. #Place_City #Place_Size_Huge
+ *   Geography (a region):  #Place_<Landform>    #Place_Size_<Size>   e.g. #Place_Region #Place_Size_Enormous
+ *   A realm kept as a group note writes #Group_<Tier> (#Group_Realm).
  *
  * A region is geography (a continent, a sub-continent, an island, a forest): it holds land but nobody
  * rules it and it is never anyone's liege. A title is ruled land (a kingdom, a duchy, a county), held
@@ -65,7 +69,8 @@ const SIZE_WORDS = new Set(SIZES.map((s) => s[0].toLowerCase()).filter(Boolean).
 export function readChoice(plugin: ChroniclePlugin, e: Entity): TagChoice {
 	const node = plugin.realms().nodes.get(e.key);
 	const tags = e.tags.map((t) => t.replace(/^#/, ""));
-	const size = tags.map((t) => t.split("_")).find((p) => p.length === 2 && SIZE_WORDS.has(p[1].toLowerCase()))?.[1] ?? "";
+	const schemeSize = tags.map((t) => parseTag(t)).find((p) => p?.role === "fact" && p.field === "size");
+	const size = (schemeSize?.role === "fact" ? schemeSize.value : undefined) ?? tags.map((t) => t.split("_")).find((p) => p.length === 2 && SIZE_WORDS.has(p[1].toLowerCase()))?.[1] ?? "";
 	const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 	// The note's kind says it first (it's what the Kind box shows), then its tags.
 	const named = (list: string[]) => list.find((k) => k && e.category === k.toLowerCase()) ?? list.find((k) => k && tags.some((t) => t.toLowerCase() === k.toLowerCase()));
@@ -76,25 +81,28 @@ export function readChoice(plugin: ChroniclePlugin, e: Entity): TagChoice {
 	return { nature: node?.nature ?? "realm", tier, settlement, landform, size: SIZES.some((s) => s[0] === cap(size)) ? cap(size) : "" };
 }
 
-/** The tags a choice stands for. */
-export function choiceTags(c: TagChoice): string[] {
-	const size = c.size ? `_${c.size}` : "";
-	if (c.nature === "region") return ["Region", ...(c.size ? [`Region${size}`] : []), ...(c.landform ? [c.landform] : [])];
-	if (c.tier === "6") return [c.settlement, ...(c.size ? [`${c.settlement}${size}`] : [])];
-	const tierTag = realmTiers().find((t) => t[0] === c.tier)?.[2] ?? "Province";
-	return ["Title", tierTag, ...(c.size ? [`Region${size}`] : [])];
+/** The tags a choice stands for, in the tag scheme (`tagscheme.ts`): its kind and its size. */
+export function choiceTags(c: TagChoice, type: EntityType = "place"): string[] {
+	const size = c.size ? [factTag(type, "size", c.size)] : [];
+	if (c.nature === "region") return [kindTag(type, c.landform || "region"), ...size];
+	if (c.tier === "6") return [kindTag(type, c.settlement), ...size];
+	return [kindTag(type, realmTiers().find((t) => t[0] === c.tier)?.[2] || "Province"), ...size];
 }
 
 /**
  * A note's tags with the land tags swapped for the standard ones: anything naming a tier, a kind
  * of settlement, a region or a size goes; other tags (#Nation_United_States, #City_Capital, type tags) stay.
  */
-export function restandardise(plugin: ChroniclePlugin, tags: string[], c: TagChoice): string[] {
+export function restandardise(plugin: ChroniclePlugin, tags: string[], c: TagChoice, type: EntityType = "place"): string[] {
 	const words = tierWordsWith(plugin.settings.tierWords);
 	const regionWords = { ...DEFAULT_REGION_WORDS, ...tierWords(plugin.settings.regionWords ?? "") };
 	// The vault's own type tags (#Location, #Character…) are never touched.
 	const typeTags = new Set(Object.values(plugin.settings.typeTags).map((x) => x.toLowerCase().replace(/^#/, "")));
 	const land = (t: string) => {
+		// The scheme's own kind and size tags give way to the new ones; its facts and belonging tags stay.
+		const s = parseTag(t);
+		if (s) return s.type === type && (s.role === "kind" || (s.role === "fact" && s.field === "size"));
+		if (TYPE_WORDS[type].toLowerCase() === t.replace(/^#/, "").toLowerCase()) return true;
 		if (plugin.settings.typeStyle === "tag" && typeTags.has(t.replace(/^#/, "").toLowerCase())) return false;
 		const parts = t.replace(/^#/, "").toLowerCase().split(/[_/\s-]+/);
 		const head = parts[0];
@@ -103,7 +111,7 @@ export function restandardise(plugin: ChroniclePlugin, tags: string[], c: TagCho
 		return parts.length === 2 && isWord && SIZE_WORDS.has(parts[1]);
 	};
 	const kept = tags.map((t) => t.replace(/^#/, "")).filter((t) => !land(t));
-	const out = [...choiceTags(c), ...kept];
+	const out = [...choiceTags(c, type), ...kept];
 	return out.filter((t, i) => out.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i);
 }
 
@@ -193,7 +201,7 @@ export class TagStandardModal extends Modal {
 		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-std-modal");
 		this.titleEl.setText("Standardise land tags");
 		const { contentEl } = this;
-		el("p", { cls: "chronicle-dash-muted", text: "One way to tag land. Ruled land: #Title, its tier (#Realm, #Province, #County…) and #Region_<Size>. Settlements: #City and #City_<Size>. Geography: #Region, #Region_<Size> (gigantic is a continent, enormous a sub-continent) and a landform. Other tags such as #Nation_United_States stay. Only rows you change, or that don't match the standard yet, are written." }, contentEl);
+		el("p", { cls: "chronicle-dash-muted", text: "One way to tag land: its kind and its size. Ruled land: its tier (#Place_Realm, #Place_Province, #Place_County…). Settlements: #Place_City, #Place_Town… Geography: #Place_Region or a landform (#Place_Island). Size: #Place_Size_Small (for geography, gigantic is a continent, enormous a sub-continent). Other tags such as #Group_Nation_United_States stay. Only rows you change, or that don't match the standard yet, are written." }, contentEl);
 		const tree = p.realms();
 		const notes = p.index.all().filter((e) => tree.nodes.has(e.key) && (!this.world || e.path.startsWith(this.world + "/")));
 		notes.sort((a, b) => chainOf(tree, a.key).map((k) => p.index.get(k)?.name).join("›").localeCompare(chainOf(tree, b.key).map((k) => p.index.get(k)?.name).join("›")));
@@ -207,7 +215,7 @@ export class TagStandardModal extends Modal {
 		for (const e of notes) {
 			const c = readChoice(p, e);
 			const before = e.tags.map((t) => t.replace(/^#/, ""));
-			const next = () => restandardise(p, before, c);
+			const next = () => restandardise(p, before, c, e.type);
 			rows.push({ e, c, next });
 			const row = el("div", { cls: "uv-std-row" }, list);
 			row.dataset.name = e.name.toLowerCase();
@@ -268,7 +276,7 @@ export class TagStandardModal extends Modal {
 				await p.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 					// Tags written in the body stay there; the land tags go in the properties.
 					const own = ([] as unknown[]).concat(fm.tags ?? []).map((t) => String(t).replace(/^#/, ""));
-					fm.tags = restandardise(p, own, r.c);
+					fm.tags = restandardise(p, own, r.c, r.e.type);
 				});
 				n++;
 			}

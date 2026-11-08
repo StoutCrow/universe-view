@@ -2,6 +2,7 @@ import { debounce } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { TAG_TYPES } from "../index/reader";
 import { tierWordsWith } from "../index/realms";
+import { parseTag } from "../index/tagscheme";
 import { entityColor } from "../render/common";
 
 /**
@@ -35,7 +36,14 @@ export function styleTags(plugin: ChroniclePlugin) {
 			const parts = low.split(/[_/-]/);
 			let colour: string | undefined;
 			const type = custom.get(low) ?? TAG_TYPES[low];
-			if (type) colour = `var(--chronicle-${type}-color)`;
+			// The tag scheme: a kind in its type's colour, a fact muted, a belonging tag in that note's colour.
+			const scheme = parseTag(tag);
+			if (scheme?.role === "kind") colour = `var(--chronicle-${scheme.type}-color)`;
+			else if (scheme?.role === "fact") colour = "var(--text-muted)";
+			else if (scheme) {
+				const ref = plugin.index.findByName(scheme.name);
+				colour = ref ? entityColor(plugin, ref) : `var(--chronicle-${scheme.type}-color)`;
+			} else if (type) colour = `var(--chronicle-${type}-color)`;
 			else if (words[low] !== undefined) colour = words[low] <= 3 ? "var(--chronicle-culture-color)" : "var(--chronicle-place-color)";
 			else if (parts.length > 1) {
 				// "Region_Small": a size; "Nation_United_States": that realm's colour; "Family_Noble": its type's.

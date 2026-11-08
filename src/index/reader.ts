@@ -4,6 +4,7 @@ import type { FieldName } from "../settings";
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import { asText } from "./text";
+import { factOnly, isDefaultKind, parseTag, type SchemeTag } from "./tagscheme";
 
 const TYPE_SYNONYMS: Record<EntityType, string[]> = {
 	event: ["event", "events", "happening", "incident", "battle", "war", "treaty", "occurrence", "period", "era"],
@@ -73,7 +74,11 @@ export function typeFromTag(tag: string, prefix: string, custom: TypeTags = {}):
 	}
 	if (t.includes("/")) return null;
 	for (const [type, own] of Object.entries(custom) as [EntityType, string][]) if (own && own.replace(/^#/, "").toLowerCase() === t) return type;
-	// Only exact type tags count: #Character is a type, #Character_Male or #Nation_United_States are not.
+	// The scheme's kind and fact tags (#Place_County, #Character_Status_Dead) say the note's own type;
+	// a belonging tag (#Group_Nation_United_States on a person) says another note's.
+	const scheme = parseTag(t);
+	if (scheme) return scheme.role === "member" ? null : scheme.type;
+	// Otherwise only exact type tags count: #Character is a type, #Nation_United_States is not.
 	return TAG_TYPES[t] ?? null;
 }
 
@@ -374,6 +379,10 @@ export function readCategory(fm: Record<string, unknown>, tags: string[], type: 
 		const low = v.replace(/^#/, "").trim().toLowerCase();
 		if (normalizeType(low) === type && !GENERIC_TAGS.has(low) && !TYPE_SYNONYMS[type].slice(0, 2).includes(low)) return low;
 	}
+	// The scheme's kind tag (#Place_County), when there's one: older vaults may have several Type_Word
+	// tags (#Character_Male, #Character_Vael), which say nothing certain.
+	const kinds = tags.map((t) => parseTag(t)).filter((p): p is SchemeTag & { role: "kind" } => p?.role === "kind" && p.type === type && !factOnly(p.kind) && !GENERIC_TAGS.has(p.kind) && !isDefaultKind(type, p.kind));
+	if (kinds.length === 1) return kinds[0].kind;
 	// The most telling tag: #Region on a continent says less than #Continent.
 	const said = tags.map((t) => t.replace(/^#/, "").toLowerCase()).filter((low) => TAG_TYPES[low] === type && !GENERIC_TAGS.has(low));
 	return said.find((low) => !BROAD_KINDS.has(low)) ?? said[0];
