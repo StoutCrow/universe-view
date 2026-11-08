@@ -6,7 +6,7 @@ import { formatDate, formatSpan } from "../dates/parser";
 import { findKinship, type KinFinding } from "../detect/classify";
 import { continuity } from "../index/validate";
 import { storyPrompts } from "../index/prompts";
-import { kindLabel, linkTarget } from "../index/reader";
+import { CATEGORY_KEYS, kindLabel, linkTarget } from "../index/reader";
 import { settingWords } from "../index/worldsetting";
 import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
@@ -86,7 +86,8 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 			t.setPlaceholder(e.type === "place" ? "None" : settingWords(p.settings.worldSetting).hints[e.type] ?? "None").setValue(kindLabel(e.category)).onChange((v) => (kind = v.trim().toLowerCase() || null));
 			new KindSuggest(p.app, t.inputEl, () => kindsFor(p, e.type), (k) => (kind = k));
 		});
-		used.add("kind");
+		// Whatever property holds the kind (`kind:`, `place_type:`…), the Kind box edits it: no second row for it.
+		for (const k of CATEGORY_KEYS) used.add(k);
 		const sumKey = keyFor("summary");
 		used.add(sumKey);
 		new Setting(box).setName("Summary").addTextArea((t) => {

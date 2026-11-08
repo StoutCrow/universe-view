@@ -35,17 +35,17 @@ export function realmTiers(): [string, string, string][] {
 	});
 }
 export const SETTLEMENT_KINDS = ["City", "Town", "Village", "Castle", "Fort", "Fortress", "Settlement"];
-export const LANDFORMS = ["", "Continent", "Island", "Archipelago", "Peninsula", "Mountains", "Highlands", "Forest", "Valley", "Plains", "Desert", "Coast", "Marsh", "Sea", "Lake"];
+export const LANDFORMS = ["", "Continent", "Island", "Archipelago", "Peninsula", "Mountains", "Highlands", "Forest", "Valley", "Plains", "Desert", "Coast", "Marsh", "Sea", "Lake", "Crater", "Canyon"];
 export const SIZES: [string, string, string][] = [
 	// [tag word, as a title, as geography]
 	["", "No size", "No size"],
-	["Gigantic", "Gigantic", "Gigantic: a continent"],
-	["Enormous", "Enormous", "Enormous: a sub-continent"],
-	["Huge", "Huge", "Huge: a great region"],
-	["Large", "Large", "Large: a region"],
-	["Medium", "Medium", "Medium: a region"],
-	["Small", "Small", "Small: a land"],
-	["Tiny", "Tiny", "Tiny: a locale"],
+	["Gigantic", "Gigantic", "Gigantic"],
+	["Enormous", "Enormous", "Enormous"],
+	["Huge", "Huge", "Huge"],
+	["Large", "Large", "Large"],
+	["Medium", "Medium", "Medium"],
+	["Small", "Small", "Small"],
+	["Tiny", "Tiny", "Tiny"],
 ];
 
 export interface TagChoice {
@@ -67,8 +67,10 @@ export function readChoice(plugin: ChroniclePlugin, e: Entity): TagChoice {
 	const tags = e.tags.map((t) => t.replace(/^#/, ""));
 	const size = tags.map((t) => t.split("_")).find((p) => p.length === 2 && SIZE_WORDS.has(p[1].toLowerCase()))?.[1] ?? "";
 	const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-	const settlement = SETTLEMENT_KINDS.find((k) => tags.some((t) => t.toLowerCase() === k.toLowerCase()) || e.category === k.toLowerCase()) ?? "City";
-	const landform = LANDFORMS.find((l) => l && tags.some((t) => t.toLowerCase() === l.toLowerCase())) ?? "";
+	// The note's kind says it first (it's what the Kind box shows), then its tags.
+	const named = (list: string[]) => list.find((k) => k && e.category === k.toLowerCase()) ?? list.find((k) => k && tags.some((t) => t.toLowerCase() === k.toLowerCase()));
+	const settlement = named(SETTLEMENT_KINDS) ?? "City";
+	const landform = named(LANDFORMS) ?? "";
 	// Nothing says its tier yet: a realm note (a group) is most likely a kingdom, a place a county.
 	const tier = node && node.nature !== "region" && node.rank < 9 ? String(Math.max(1, Math.min(6, Math.round(node.rank)))) : e.type === "culture" ? "2" : "4";
 	return { nature: node?.nature ?? "realm", tier, settlement, landform, size: SIZES.some((s) => s[0] === cap(size)) ? cap(size) : "" };
@@ -77,7 +79,7 @@ export function readChoice(plugin: ChroniclePlugin, e: Entity): TagChoice {
 /** The tags a choice stands for. */
 export function choiceTags(c: TagChoice): string[] {
 	const size = c.size ? `_${c.size}` : "";
-	if (c.nature === "region") return ["Region", ...(c.size ? [`Region${size}`] : []), ...(c.landform && c.landform !== "Continent" ? [c.landform] : [])];
+	if (c.nature === "region") return ["Region", ...(c.size ? [`Region${size}`] : []), ...(c.landform ? [c.landform] : [])];
 	if (c.tier === "6") return [c.settlement, ...(c.size ? [`${c.settlement}${size}`] : [])];
 	const tierTag = realmTiers().find((t) => t[0] === c.tier)?.[2] ?? "Province";
 	return ["Title", tierTag, ...(c.size ? [`Region${size}`] : [])];
@@ -109,7 +111,9 @@ export function restandardise(plugin: ChroniclePlugin, tags: string[], c: TagCho
  * The three questions, with what they mean: ruled land or geography, which tier (or landform),
  * and how big. Calls back with each change.
  */
-export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: TagChoice) => void) {
+export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: TagChoice) => void, opts: { kinds?: boolean } = {}) {
+	// Where a Kind box sits beside these (the inspector), the landform and kind of settlement are that box.
+	const kinds = opts.kinds !== false;
 	const box = el("div", { cls: "uv-std" }, parent);
 	const draw = () => {
 		box.empty();
@@ -137,7 +141,7 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 					draw();
 				});
 			});
-			if (c.tier === "6") {
+			if (c.tier === "6" && kinds) {
 				new Setting(box).setName("Kind of settlement").addDropdown((d) => {
 					for (const k of SETTLEMENT_KINDS) d.addOption(k, k);
 					d.setValue(c.settlement).onChange((v) => {
@@ -146,7 +150,7 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 					});
 				});
 			}
-		} else {
+		} else if (kinds) {
 			new Setting(box).setName("Landform").setDesc("Optional: what kind of land it is.").addDropdown((d) => {
 				for (const l of LANDFORMS) d.addOption(l, l || "Just a region");
 				d.setValue(c.landform).onChange((v) => {
@@ -159,7 +163,7 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 		}
 		new Setting(box)
 			.setName("Size")
-			.setDesc(c.nature === "region" ? "For geography the size is its scale: gigantic is a continent, enormous a sub-continent." : "Between titles of the same tier: a small duchy, a huge kingdom.")
+			.setDesc(c.nature === "region" ? "How big it is beside other regions." : "How big it is beside titles of the same tier.")
 			.addDropdown((d) => {
 				for (const [v, asTitle, asRegion] of SIZES) d.addOption(v, c.nature === "region" ? asRegion : asTitle);
 				d.setValue(c.size).onChange((v) => {

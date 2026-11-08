@@ -5,6 +5,7 @@ import { CATEGORY_SCALE, COMMON_PLACE_KINDS, parseMapCategories, placeCategories
 import { settingWords } from "../index/worldsetting";
 import { TextPrompt } from "../views/DashboardView";
 import { helpTip } from "../render/common";
+import { LANDFORMS } from "./tagstandard";
 
 const SIZE_KEYS = ["pin-size", "pin_size", "pinsize", "map-size", "size"];
 const LAYER_KEYS = ["layer", "map-layer", "map_layer", "zoom-layer", "zoom_layer"];
@@ -30,8 +31,9 @@ export function placeKindGroups(plugin: ChroniclePlugin): [string, string[]][] {
 		["Settlements", ["capital", "city", "town", "village", "settlement", "port", ...(setting === "futuristic" ? ["colony"] : later ? ["district"] : [])]],
 		["Defences", settingWords(setting).defences],
 		["Buildings and sites", ["building", "temple", "landmark", "ruin", ...(later ? ["airport", "factory", "office", "campus", "stadium"] : [])]],
-		["Nature", ["region", "landform", "mountain", "forest", "river", "lake", "sea", "island"]],
-		["Space", ["planet", "moon", "star", "station", ...(setting === "futuristic" ? ["spaceport", "habitat", "asteroid", "system", "galaxy", "ship"] : [])]],
+		// A region's landform is its kind: the same list the land tags use.
+		["Land and water", ["region", ...LANDFORMS.filter(Boolean).map((l) => l.toLowerCase()), "mountain", "river"]],
+		["Space", ["planet", "moon", "star", "station", ...(setting === "futuristic" ? ["spaceport", "habitat", "asteroid", "system", "galaxy", "nebula", "ship"] : [])]],
 	];
 	const known = new Set(groups.flatMap(([, k]) => k));
 	const others = new Set<string>();
@@ -90,7 +92,7 @@ export function placeStyleFields(container: HTMLElement, plugin: ChroniclePlugin
 		if (layerDrop) layerDrop.selectEl.options[0].text = `Automatic (layer ${d.layer})`;
 	};
 
-	tipped(container, "Kind of place", "What kind of place it is: a town, a castle, a forest… Sets the pin's colour and icon, and its default size and layer. A title's rank (kingdom, county…) isn't a kind: set it under Tier.")
+	tipped(container, "Kind", "What it is: a town, a castle, an island, a continent… For a region this is its landform. Sets the pin's colour and icon, and its default size and layer. A title's rank (kingdom, county…) isn't a kind: set it under Tier.")
 		.addDropdown((d) => {
 			const cap = (k: string) => k.charAt(0).toUpperCase() + k.slice(1);
 			d.addOption("", "None");

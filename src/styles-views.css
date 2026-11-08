@@ -404,15 +404,18 @@ button.chronicle-dash-stat.is-active {
 	flex-wrap: wrap;
 	gap: 6px 12px;
 }
-.chronicle-dash-card .setting-item-info,
-.chronicle-inspector .setting-item-info {
-	flex: 1 1 140px;
-	min-width: 120px;
+/* No flex-basis: a theme (or Obsidian) may stack these top to bottom, and a basis would become a height. */
+.chronicle-dash-card .setting-item-info:not(#uv-strong),
+.chronicle-inspector .setting-item-info:not(#uv-strong) {
+	flex-grow: 1;
+	flex-basis: auto;
+	min-width: min(120px, 100%);
 	margin-inline-end: 0;
 }
-.chronicle-dash-card .setting-item-control,
-.chronicle-inspector .setting-item-control {
-	flex: 1 1 150px;
+.chronicle-dash-card .setting-item-control:not(#uv-strong),
+.chronicle-inspector .setting-item-control:not(#uv-strong) {
+	flex-grow: 1;
+	flex-basis: auto;
 	min-width: 0;
 	justify-content: flex-end;
 }

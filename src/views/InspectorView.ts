@@ -574,7 +574,7 @@ export class InspectorView extends ItemView {
 		const row = el("div", { cls: "chronicle-insp-actions" }, s);
 		const apply = el("button", { cls: "mod-cta", text: "Apply" }, row);
 		apply.disabled = true;
-		standardFields(s, choice, () => (apply.disabled = false));
+		standardFields(s, choice, () => (apply.disabled = false), { kinds: false });
 		s.appendChild(row);
 		apply.addEventListener("click", () => {
 			const file = this.app.vault.getAbstractFileByPath(e.key);

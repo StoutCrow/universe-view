@@ -20,6 +20,7 @@ const TYPE_SYNONYMS: Record<EntityType, string[]> = {
 		// Every kind of place the Kind of place list offers, so a note marked only that way is still a place.
 		"capital", "port", "harbour", "harbor", "temple", "shrine", "ruin", "ruins", "mountain", "forest", "river", "lake",
 		"sea", "ocean", "desert", "swamp", "valley", "barony", "station",
+		"mountains", "archipelago", "peninsula", "highlands", "plains", "plain", "coast", "marsh", "crater", "canyon", "nebula",
 	],
 	map: ["map", "atlas"],
 };
@@ -40,6 +41,9 @@ export const TAG_TYPES: Record<string, EntityType> = {
 	// The rest of the Kind of place list: picking one marks the note with it, so it must read as a place.
 	capital: "place", port: "place", harbour: "place", harbor: "place", temple: "place", shrine: "place", ruin: "place", ruins: "place",
 	mountain: "place", forest: "place", river: "place", lake: "place", sea: "place", moon: "place", star: "place", station: "place",
+	// Landforms: a region's kind is its landform, so its tag must read as one.
+	mountains: "place", archipelago: "place", peninsula: "place", highlands: "place", valley: "place", plains: "place", plain: "place",
+	desert: "place", coast: "place", marsh: "place", swamp: "place", ocean: "place", crater: "place", canyon: "place", nebula: "place",
 	// Lands within a realm (the realm itself is a group).
 	province: "place", duchy: "place", county: "place", barony: "place", shire: "place", march: "place", district: "place", territory: "place",
 	map: "map",
@@ -370,12 +374,13 @@ export function readCategory(fm: Record<string, unknown>, tags: string[], type: 
 		const low = v.replace(/^#/, "").trim().toLowerCase();
 		if (normalizeType(low) === type && !GENERIC_TAGS.has(low) && !TYPE_SYNONYMS[type].slice(0, 2).includes(low)) return low;
 	}
-	for (const t of tags) {
-		const low = t.replace(/^#/, "").toLowerCase();
-		if (TAG_TYPES[low] === type && !GENERIC_TAGS.has(low)) return low;
-	}
-	return undefined;
+	// The most telling tag: #Region on a continent says less than #Continent.
+	const said = tags.map((t) => t.replace(/^#/, "").toLowerCase()).filter((low) => TAG_TYPES[low] === type && !GENERIC_TAGS.has(low));
+	return said.find((low) => !BROAD_KINDS.has(low)) ?? said[0];
 }
+
+/** Kinds that only say "land": any more particular one (continent, island, city) is the note's kind. */
+const BROAD_KINDS = new Set(["region", "landform", "settlement", "territory", "area"]);
 
 const SIZE_WORDS: Record<string, PinSize> = {
 	tiny: "tiny", xs: "tiny", "extra-small": "tiny",

@@ -1163,19 +1163,19 @@ export default class ChroniclePlugin extends Plugin {
 		const tags = ([] as unknown[]).concat(front.tags ?? []).filter((t) => t !== null && t !== "").map(String);
 		const tagIdx = current ? tags.findIndex((t) => t.replace(/^#/, "").toLowerCase() === current) : -1;
 		const propKey = CATEGORY_KEYS.find((k) => typeof front[k] === "string");
-		if (tagIdx >= 0 && !propKey) {
+		// A tag only says a kind it's a type tag for (#City, #Island; not #Starport): any other kind goes in `kind:`.
+		const tagSays = !!kind && !!type && isKindTag(kind, type);
+		// The tag that says the old kind is renamed or dropped, so a tag and a property never disagree.
+		if (tagIdx >= 0) {
 			const old = tags[tagIdx].replace(/^#/, "");
-			// A tag only says a kind it's a type tag for (#City, not #Starport): any other kind goes in `kind:`.
-			const asTag = kind && type && isKindTag(kind, type);
-			if (asTag) tags[tagIdx] = old[0] === old[0].toUpperCase() ? kind.charAt(0).toUpperCase() + kind.slice(1) : kind;
+			if (tagSays) tags[tagIdx] = old[0] === old[0].toUpperCase() ? kind.charAt(0).toUpperCase() + kind.slice(1) : kind;
 			else tags.splice(tagIdx, 1);
 			if (tags.length) front.tags = tags;
 			else delete front.tags;
-			if (kind && !asTag) front.kind = kind;
-		} else {
-			const k = propKey ?? "kind";
-			if (kind) front[k] = kind;
-			else delete front[k];
+		}
+		if (propKey || !(tagIdx >= 0 && tagSays)) {
+			if (kind) front[propKey ?? "kind"] = kind;
+			else if (propKey) delete front[propKey];
 		}
 		// The kind's tag may have been all that marked the note's type (#City on a place): keep the type.
 		if (type && this.markedType(front) !== type) this.applyType(front, type);

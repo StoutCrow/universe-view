@@ -21,7 +21,7 @@ import { MAX_UNDO, addToStep, changesBetween, readHistory, remember, renameInSte
 import { clearInferred, noteSignature } from "../src/index/derived";
 import { splitSpan } from "../src/index/text";
 import { followPath, moveTarget } from "../src/index/moves";
-import { isKindTag, kindLabel, markedType, typeFromTag } from "../src/index/reader";
+import { isKindTag, kindLabel, markedType, readCategory, typeFromTag } from "../src/index/reader";
 import { kindChoices } from "../src/index/kinds";
 import { timeBoundaries, timeStep } from "../src/index/timesteps";
 import { markPath, shapeFor } from "../src/render/categories";
@@ -1306,6 +1306,9 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(markedType({ tags: ["City"] }, { ...marks, tags: false }), null, "type: tags off");
 	eq(typeFromTag("Title", "", { place: "Title" }), "place", "type: custom type tag");
 	eq([isKindTag("city", "place"), isKindTag("starport", "place"), isKindTag("place", "place"), isKindTag("battle", "place")], [true, false, false, false], "kind: only a specific type tag of the same type is a kind tag");
+	eq(readCategory({}, ["Region", "Region_Gigantic", "Continent"], "place"), "continent", "kind: a continent's kind is continent, not region");
+	eq(readCategory({}, ["Region", "Mountains"], "place"), "mountains", "kind: a landform tag is the kind");
+	eq(readCategory({}, ["Region"], "place"), "region", "kind: just a region");
 	eq([kindLabel("space station"), kindLabel("space_station"), kindLabel(undefined)], ["Space station", "Space station", ""], "kind: read as words");
 	eq(kindChoices(["conflict", "Conflict", "treaty", undefined], "Battle, treaty, birth…").map((c) => `${c.kind}:${c.count}`), ["conflict:2", "treaty:1", "battle:0", "birth:0"], "kind: the vault's own first, then the setting's examples");
 	const bounds = timeBoundaries([{ start: { start: 10, end: 12 }, territories: [{ from: { start: 20, end: 20 }, to: { start: 30, end: 35 } }], names: [{ name: "X", day: 25 }], file: { parent: { start: 99, end: 99 } } }]);
