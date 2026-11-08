@@ -127,10 +127,13 @@
 .uv-terr-overlay { fill: none; stroke: none; pointer-events: none; }
 .uv-terr-overlay.uv-edge-band { stroke: var(--terr-color); stroke-opacity: 0.4; stroke-width: calc(var(--uv-band, 6px) * 2); stroke-linejoin: round; }
 .uv-terr-overlay.uv-edge-double { stroke: var(--background-primary); stroke-opacity: 0.85; stroke-width: calc(var(--uv-band, 6px) * 0.6); }
-.uv-terr-overlay.uv-pat-hatch { fill: url(#uv-pat-hatch); }
-.uv-terr-overlay.uv-pat-dots { fill: url(#uv-pat-dots); }
-.uv-terr-overlay.uv-pat-grain { fill: #000; filter: url(#uv-grain); }
-.uv-terr-overlay.is-tier-hidden { display: none; }
+/* Textures: the land's own colour, darker, through a mask (hatching, dots) or as specks (grain). */
+.uv-terr-texture { stroke: none; pointer-events: none; fill: color-mix(in srgb, var(--terr-color) 55%, #000); fill-opacity: 0.5; }
+.uv-terr-texture.uv-pat-flat { display: none; }
+.uv-terr-texture.uv-pat-hatch { mask: url(#uv-mask-hatch); }
+.uv-terr-texture.uv-pat-dots { mask: url(#uv-mask-dots); }
+.uv-terr-texture.uv-pat-grain { filter: url(#uv-grain); fill-opacity: 0.6; }
+.uv-terr-overlay.is-tier-hidden, .uv-terr-texture.is-tier-hidden { display: none; }
 .uv-terr-overlay.is-tier-merged { stroke: none; }
 .uv-split-line { stroke-dasharray: 8 5; }
 .uv-split-line:not(#uv-strong) { stroke: var(--interactive-accent); }
@@ -390,7 +393,7 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .chronicle-map.uv-strategy .chronicle-territory.is-tier-merged:not(#uv-strong) { stroke-opacity: 0; }
 .chronicle-map.uv-strategy .chronicle-territory.is-tier-outline:not(#uv-strong) { stroke-opacity: 0; }
 .chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):hover:not(#uv-strong) { fill-opacity: calc(0.2 + 0.55 * var(--uv-political, 0)); }
-.chronicle-map.uv-strategy .uv-terr-overlay { opacity: calc(1 - 0.4 * var(--uv-political, 0)); }
+.chronicle-map.uv-strategy .uv-terr-overlay, .chronicle-map.uv-strategy .uv-terr-texture { opacity: calc(1 - 0.4 * var(--uv-political, 0)); }
 /* One border round each realm: a dark line on a light halo, thickest for the top realm. */
 .uv-realm-edge { stroke: color-mix(in srgb, var(--terr-color) 35%, #120d08); stroke-linejoin: round; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(255, 248, 230, 0.75)); }
 .uv-realm-edge.depth-0 { stroke-width: 3.6px; }

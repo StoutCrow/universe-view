@@ -26,11 +26,11 @@ function drawPreview(box: SVGSVGElement, s: TierStyle, split: boolean) {
 		svg("path", { d: VASSAL_LINE, class: "uv-tier-prev-vassal" }, box);
 		return;
 	}
-	const fancy = s.edge === "band" || s.edge === "double" || (s.pattern && s.pattern !== "flat");
-	if (!fancy) return;
+	if (s.pattern && s.pattern !== "flat") svg("path", { d: OUTLINE, class: `uv-terr-texture uv-pat-${s.pattern}` }, box);
+	if (s.edge !== "band" && s.edge !== "double") return;
 	const clip = svg("clipPath", { id: `${id}-clip` }, box.querySelector("defs") ?? box);
 	svg("use", { href: `#${id}` }, clip);
-	const over = svg("path", { d: OUTLINE, class: `uv-terr-overlay uv-edge-${s.edge ?? "plain"} uv-pat-${s.pattern ?? "flat"}`, "clip-path": `url(#${id}-clip)` }, box);
+	const over = svg("path", { d: OUTLINE, class: `uv-terr-overlay uv-edge-${s.edge}`, "clip-path": `url(#${id}-clip)` }, box);
 	over.style.setProperty("--uv-band", `${Math.max(3, s.width * 3)}px`);
 }
 

@@ -1449,6 +1449,18 @@ img.chronicle-territory-icon {
 	border-bottom-color: var(--interactive-accent);
 	font-weight: 600;
 }
+/* In a narrow sidebar every tab still shows: the others drop to their icons, the open one keeps its name. */
+.chronicle-inspector {
+	container-type: inline-size;
+}
+@container (max-width: 380px) {
+	.chronicle-insp-tab:not(.is-active) > span:last-child {
+		display: none;
+	}
+	.chronicle-insp-tab {
+		padding: 6px 8px;
+	}
+}
 .chronicle-insp-body {
 	flex: 1 1 auto;
 	overflow-y: auto;

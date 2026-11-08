@@ -1350,16 +1350,22 @@ export class MapRenderer {
 				let overlay: L.Polygon | undefined;
 				const svgEl = path ? (path as unknown as SVGElement).ownerSVGElement : null;
 				// Made when this area or any realm it can show as has a look (shown whole, a county wears its kingdom's texture).
-				const fancy = (l: ReturnType<typeof styleFor>) => l.edge === "band" || l.edge === "double" || (!!l.pattern && l.pattern !== "flat");
-				const anyLook = fancy(look) || chain.some((k) => {
+				const anyOf = (has: (l: ReturnType<typeof styleFor>) => boolean) => has(look) || chain.some((k) => {
 					const nd = anyTree.nodes.get(k);
-					return fancy(styleFor(this.plugin, tierNumber(nd?.rank, nd?.nature)));
+					return has(styleFor(this.plugin, tierNumber(nd?.rank, nd?.nature)));
 				});
-				if (path && svgEl && anyLook) {
+				// A texture: its own shape over the fill, in the land's colour (no clip needed: it's a fill).
+				let texture: L.Polygon | undefined;
+				if (path && svgEl && anyOf((l) => !!l.pattern && l.pattern !== "flat")) {
+					ensureTerritoryDefs(svgEl);
+					texture = L.polygon(latlngs, { className: `uv-terr-texture uv-pat-${look.pattern ?? "flat"} ${tierCls}`, interactive: false, smoothFactor: 1.5 }).addTo(layer);
+					(texture.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
+				}
+				if (path && svgEl && anyOf((l) => l.edge === "band" || l.edge === "double")) {
 					const n2 = ++this.terrSeq;
 					path.id = `uv-terr-${n2}`;
 					ensureTerritoryDefs(svgEl);
-					overlay = L.polygon(latlngs, { className: `uv-terr-overlay uv-edge-${look.edge ?? "plain"} uv-pat-${look.pattern ?? "flat"} ${tierCls}`, interactive: false, smoothFactor: 1.5 }).addTo(layer);
+					overlay = L.polygon(latlngs, { className: `uv-terr-overlay uv-edge-${look.edge ?? "plain"} ${tierCls}`, interactive: false, smoothFactor: 1.5 }).addTo(layer);
 					const oe = overlay.getElement() as SVGElement | undefined;
 					if (oe) {
 						const clip = createSvg("clipPath");
@@ -1372,7 +1378,7 @@ export class MapRenderer {
 						oe.style.setProperty("--terr-color", color);
 					}
 				}
-				this.areaPolys.push({ owner: e.key, poly, chain, color, points: t.points, shown: shownPts, overlay });
+				this.areaPolys.push({ owner: e.key, poly, chain, color, points: t.points, shown: shownPts, overlay, texture });
 				this.ownLand.add(e.key);
 				const b = poly.getBounds();
 				for (const k of chain) {
@@ -1491,6 +1497,7 @@ export class MapRenderer {
 		/** The border as drawn: roughened when Roughen borders is on (its points stay the editable corners). */
 		shown: [number, number][];
 		overlay?: L.Polygon;
+		texture?: L.Polygon;
 		labelMarker?: L.Marker;
 		/** Where its name goes: in the open (whole), and clear of its sub-lands (split open). */
 		spot?: { p: P2; room: number };
@@ -2261,15 +2268,21 @@ export class MapRenderer {
 			// Shaded by a statistic: the realm it shows as, from light (least) to dark (most).
 			if (this.options.shadeBy) color = this.shade((tiers && shownAs(a.chain, tiers)) || a.owner) ?? color;
 			path.style.setProperty("--terr-color", color);
+			// Its edge and texture are those of the tier it shows as: a county inside a kingdom shown whole wears the kingdom's texture.
+			const asNode = tree?.nodes.get((tiers && shownAs(a.chain, tiers)) || a.owner);
+			const look = styleFor(this.plugin, tierNumber(asNode?.rank, asNode?.nature));
 			const ov = a.overlay?.getElement() as HTMLElement | undefined;
 			if (ov) {
-				// Its edge and texture are those of the tier it shows as: a county inside a kingdom shown whole wears the kingdom's texture.
-				const asNode = tree?.nodes.get((tiers && shownAs(a.chain, tiers)) || a.owner);
-				const look = styleFor(this.plugin, tierNumber(asNode?.rank, asNode?.nature));
-				if (asNode) ov.setAttribute("class", `uv-terr-overlay uv-edge-${look.edge ?? "plain"} uv-pat-${look.pattern ?? "flat"} ${tierClass(asNode?.rank, asNode?.nature)}`);
+				if (asNode) ov.setAttribute("class", `uv-terr-overlay uv-edge-${look.edge ?? "plain"} ${tierClass(asNode?.rank, asNode?.nature)}`);
 				ov.style.setProperty("--terr-color", color);
 				ov.toggleClass("is-tier-hidden", state === "hidden" || state === "outline");
 				ov.toggleClass("is-tier-merged", state === "merged");
+			}
+			const tex = a.texture?.getElement() as HTMLElement | undefined;
+			if (tex) {
+				if (asNode) tex.setAttribute("class", `uv-terr-texture uv-pat-${look.pattern ?? "flat"} ${tierClass(asNode?.rank, asNode?.nature)}`);
+				tex.style.setProperty("--terr-color", color);
+				tex.toggleClass("is-tier-hidden", state === "hidden" || state === "outline");
 			}
 			path.toggleClass("is-tier-hidden", state === "hidden");
 			path.toggleClass("is-tier-merged", state === "merged");
@@ -2820,6 +2833,7 @@ export class MapRenderer {
 			const ll = (on ? a.shown : a.points).map((p) => this.pointToLatLng(p));
 			a.poly.setLatLngs(ll);
 			a.overlay?.setLatLngs(ll);
+			a.texture?.setLatLngs(ll);
 		}
 	}
 

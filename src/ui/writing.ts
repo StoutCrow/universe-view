@@ -6,7 +6,9 @@ import { formatDate, formatSpan } from "../dates/parser";
 import { findKinship, type KinFinding } from "../detect/classify";
 import { continuity } from "../index/validate";
 import { storyPrompts } from "../index/prompts";
-import { linkTarget } from "../index/reader";
+import { kindLabel, linkTarget } from "../index/reader";
+import { settingWords } from "../index/worldsetting";
+import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { presetKinds, relKind } from "../index/relkinds";
@@ -80,7 +82,10 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 			dateRow(dates[0], dates[1]);
 			dateRow(dates[2], dates[3]);
 		}
-		if (!owned) new Setting(box).setName("Kind").setDesc("city, battle, house… (written the way the note marks its kind)").addText((t) => t.setValue(e.category ?? "").onChange((v) => (kind = v.trim().toLowerCase() || null)));
+		if (!owned) new Setting(box).setName("Kind").addText((t) => {
+			t.setPlaceholder(e.type === "place" ? "None" : settingWords(p.settings.worldSetting).hints[e.type] ?? "None").setValue(kindLabel(e.category)).onChange((v) => (kind = v.trim().toLowerCase() || null));
+			new KindSuggest(p.app, t.inputEl, () => kindsFor(p, e.type), (k) => (kind = k));
+		});
 		used.add("kind");
 		const sumKey = keyFor("summary");
 		used.add(sumKey);

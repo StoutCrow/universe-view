@@ -399,22 +399,27 @@ button.chronicle-dash-stat.is-active {
 }
 /* In a narrow card the name keeps its width and the control drops below it, instead of the name
    being squeezed down to a letter per line. */
-.chronicle-dash-card .setting-item {
+.chronicle-dash-card .setting-item,
+.chronicle-inspector .setting-item {
 	flex-wrap: wrap;
 	gap: 6px 12px;
 }
-.chronicle-dash-card .setting-item-info {
+.chronicle-dash-card .setting-item-info,
+.chronicle-inspector .setting-item-info {
 	flex: 1 1 140px;
 	min-width: 120px;
 	margin-inline-end: 0;
 }
-.chronicle-dash-card .setting-item-control {
+.chronicle-dash-card .setting-item-control,
+.chronicle-inspector .setting-item-control {
 	flex: 1 1 150px;
 	min-width: 0;
 	justify-content: flex-end;
 }
 .chronicle-dash-card .setting-item-control > input[type="text"],
-.chronicle-dash-card .setting-item-control > select {
+.chronicle-dash-card .setting-item-control > select,
+.chronicle-inspector .setting-item-control > input[type="text"],
+.chronicle-inspector .setting-item-control > select {
 	min-width: 0;
 	max-width: 100%;
 }
@@ -458,7 +463,8 @@ button.chronicle-dash-stat.is-active {
 }
 .uv-tier-prev-land.is-glow { filter: drop-shadow(0 0 3px var(--interactive-accent)); }
 .uv-tier-prev-land.is-shadow { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55)); }
-.uv-tier-prev .uv-terr-overlay { --terr-color: var(--interactive-accent); }
+.uv-tier-prev .uv-terr-overlay,
+.uv-tier-prev .uv-terr-texture { --terr-color: var(--interactive-accent); }
 .uv-tier-prev-vassal {
 	fill: none;
 	stroke: var(--interactive-accent);

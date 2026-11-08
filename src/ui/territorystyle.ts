@@ -31,12 +31,18 @@ export function ensureTerritoryDefs(svg: SVGSVGElement | null | undefined) {
 	defs.id = "uv-terr-defs";
 	defs.append(
 		...svgMarkup(
-			'<pattern id="uv-pat-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="rgba(0,0,0,0.16)" stroke-width="1.4"/></pattern>' +
-				'<pattern id="uv-pat-dots" patternUnits="userSpaceOnUse" width="7" height="7"><circle cx="2.5" cy="2.5" r="1.1" fill="rgba(0,0,0,0.2)"/></pattern>' +
+			// Textures are masks over a fill in the land's own colour (a pattern can't take a colour from the shape using it).
+			'<pattern id="uv-pat-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#fff" stroke-width="1.6"/></pattern>' +
+				'<pattern id="uv-pat-dots" patternUnits="userSpaceOnUse" width="7" height="7"><circle cx="3.5" cy="3.5" r="1.3" fill="#fff"/></pattern>' +
+				// The mask's area is the shape's own box (the default): a huge fixed area is silently dropped.
+				'<mask id="uv-mask-hatch"><rect x="-100000" y="-100000" width="200000" height="200000" fill="url(#uv-pat-hatch)"/></mask>' +
+				'<mask id="uv-mask-dots"><rect x="-100000" y="-100000" width="200000" height="200000" fill="url(#uv-pat-dots)"/></mask>' +
 				// The blur's area in drawing units, not the line's own box: a box leaves out the stroke's width,
 				// so a straight stretch of border (a flat box) had its glow cut off in blocks.
 				'<filter id="uv-soft" filterUnits="userSpaceOnUse" x="-100000" y="-100000" width="200000" height="200000"><feGaussianBlur stdDeviation="5"/></filter>' +
-				'<filter id="uv-grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0.22"/></feComponentTransfer></filter>',
+				// Grain: noise turned into specks of the shape's own colour.
+				// The noise's own alpha, cut to its top two fifths, keeps the shape's colour as specks.
+				'<filter id="uv-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.45" numOctaves="2" seed="7" result="noise"/><feComponentTransfer in="noise" result="specks"><feFuncA type="discrete" tableValues="0 0 0 1 1"/></feComponentTransfer><feComposite in="SourceGraphic" in2="specks" operator="in"/></filter>',
 		),
 	);
 	svg.prepend(defs);

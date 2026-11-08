@@ -237,7 +237,7 @@ export class InspectorView extends ItemView {
 		if (!have.includes(this.tab)) this.tab = "about";
 		const tabList: [InspectorTab, string, string][] = have.map((id) => (id === "edit" ? [id, this.editLabel(e), "pencil"] : id === "about" ? [id, "About", TYPE_ICONS[e.type]] : [id, TAB_INFO[id][0], TAB_INFO[id][1]]));
 		for (const [id, label, ic] of tabList) {
-			const b = el("button", { cls: "chronicle-insp-tab" + (this.tab === id ? " is-active" : "") }, tabs);
+			const b = el("button", { cls: "chronicle-insp-tab" + (this.tab === id ? " is-active" : ""), attr: { "aria-label": label } }, tabs);
 			icon(el("span", {}, b), ic);
 			el("span", { text: label }, b);
 			b.addEventListener("click", () => {
