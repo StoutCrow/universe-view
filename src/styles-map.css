@@ -358,15 +358,16 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 
 /* ---- Border check panel ---- */
 .uv-check-panel { position: absolute; top: 52px; right: 12px; z-index: 900; width: 330px; max-width: calc(100% - 24px); max-height: calc(100% - 80px); display: flex; flex-direction: column; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); overflow: hidden; }
-.uv-check-head { display: grid; grid-template-columns: 30px 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 8px 12px; border-bottom: 1px solid var(--background-modifier-border); }
-.uv-check-head-icon { width: 30px; height: 30px; border-radius: var(--uv-r-md); display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 15%, transparent); color: var(--text-accent); }
+.uv-check-head { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 8px 12px; border-bottom: 1px solid var(--background-modifier-border); }
+/* The title says what this is; the tinted icon square is dropped. */
+.uv-check-head-icon { display: none; }
 .uv-check-title { font-weight: 600; font-size: var(--font-ui-medium); }
 .uv-check-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); }
 .uv-check-empty { padding: 18px 14px; color: var(--text-muted); }
 .uv-check-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px; border-bottom: 1px solid var(--background-modifier-border); }
-.uv-check-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: var(--uv-r-lg); font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; }
+.uv-check-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: var(--uv-r-md); font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; }
 .uv-check-chip svg { width: 12px; height: 12px; }
-.uv-check-chip.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+.uv-check-chip.is-active { background: var(--background-modifier-active-hover); color: var(--text-normal); font-weight: 600; }
 .uv-check-count { opacity: 0.7; font-variant-numeric: tabular-nums; }
 .uv-check-list { overflow-y: auto; padding: 4px 6px 8px; }
 .uv-check-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 6px; border-radius: var(--uv-r-md); }
