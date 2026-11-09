@@ -546,9 +546,9 @@ export class FamilyTreeRenderer {
 		const step = this.H + this.VG;
 		for (const y of rows) {
 			const gen = Math.round(y / step);
-			svg("rect", { x: b.x - 40, y: y - this.VG / 2 + 6, width: b.width + 80, height: step - 12, rx: 14, class: "uv-gen-band" + (gen === 0 ? " is-root" : Math.abs(gen) % 2 ? " is-odd" : "") }, bands);
+			svg("rect", { x: b.x - 40, y: y - this.VG / 2 + 6, width: b.width + 80, height: step - 12, rx: 6, class: "uv-gen-band" + (gen === 0 ? " is-root" : Math.abs(gen) % 2 ? " is-odd" : "") }, bands);
 			const t = svg("text", { x: b.x - 28, y: y - this.VG / 2 + 22, class: "uv-gen-label" }, bands);
-			t.textContent = generationName(gen, rootName).toUpperCase();
+			t.textContent = generationName(gen, rootName);
 		}
 	}
 
