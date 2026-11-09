@@ -110,9 +110,7 @@
 	min-width: 0;
 }
 .chronicle-legend .chronicle-legend-label > span {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 }
 .chronicle-legend-detail {
 	color: var(--text-faint);

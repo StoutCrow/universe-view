@@ -324,9 +324,7 @@
 .chronicle-ep .chronicle-ep-tile-label {
 	font-size: 0.8em;
 	color: var(--text-muted);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
 }
 .chronicle-ep .chronicle-ep-summary {
 	color: var(--text-muted);
@@ -783,7 +781,7 @@
 .uv-minimap-caption { position: absolute; right: 10px; bottom: 6px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
 /* ---- Inspector: more tabs ---- */
-.chronicle-insp-tabs { overflow-x: auto; scrollbar-width: none; }
+.chronicle-insp-tabs { flex-wrap: wrap; }
 .uv-insp-span { font-size: var(--font-ui-medium); }
 .uv-insp-timeline { display: flex; flex-direction: column; }
 .uv-insp-tl-row { display: grid; grid-template-columns: minmax(90px, max-content) 1fr auto; gap: 8px; padding: 3px 4px; border-radius: var(--uv-r-sm); cursor: pointer; font-size: var(--font-ui-small); }

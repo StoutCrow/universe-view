@@ -61,14 +61,8 @@ body.chronicle-flat {
 .workspace-leaf-content .view-content.chronicle-view {
 	container-type: inline-size;
 }
-/* Narrow panes: chips become icon-only (their label stays as the tooltip). */
+/* Narrow panes keep every chip's label: the toolbar wraps onto more rows, and only the free-text boxes shrink. */
 @container (max-width: 820px) {
-	.chronicle-toolbar .chronicle-chip > span:not(.chronicle-chip-icon) {
-		display: none;
-	}
-	.chronicle-toolbar .chronicle-chip {
-		padding: 0 8px;
-	}
 	.chronicle-toolbar .chronicle-search {
 		width: 130px;
 	}

@@ -74,8 +74,9 @@ button.uv-hub-section {
 	justify-content: flex-start;
 	gap: 11px;
 	width: 100%;
-	height: 36px;
-	padding: 0 10px;
+	height: auto;
+	min-height: 36px;
+	padding: 6px 10px;
 	border-radius: var(--radius-s);
 	border: none;
 	background: transparent;
@@ -103,10 +104,11 @@ button.uv-hub-section.is-active {
 	width: 19px;
 	height: 19px;
 }
+/* A long name wraps to a second line, not an ellipsis. */
 .uv-hub-section-name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	min-width: 0;
+	text-align: left;
+	overflow-wrap: anywhere;
 }
 .uv-hub.is-compact .uv-hub-brand-words,
 .uv-hub.is-compact .uv-hub-section-name {
@@ -160,15 +162,15 @@ button.uv-hub-section.is-moving {
 	flex: 1;
 	gap: 2px;
 	min-width: 0;
-	overflow: auto hidden;
-	scrollbar-width: none;
+	/* Tabs wrap onto a second row when they don't fit, so every name stays in view and nothing scrolls. */
+	flex-wrap: wrap;
 }
 button.uv-hub-tab {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
 	gap: 7px;
-	height: 46px;
+	height: 42px;
 	padding: 0 12px;
 	border: none;
 	border-bottom: 2px solid transparent;

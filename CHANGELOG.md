@@ -34,6 +34,7 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 - Library, Overview, Board and the inspector use sections split by hairlines instead of boxed cards. Headings, tabs and buttons say what they are in words, without an icon each. Plain counts are text, not badges.
 - Overview lists the views as an index, and Board shows its figures in one row.
 - Map tool banners are neutral panels with an accent only on the main button. The legend uses small colour dots, and the border check panel loses its icon square.
+- Tabs and buttons show their whole name: the dashboard's tabs, the inspector's tabs and the toolbars wrap onto another row in a narrow pane, instead of scrolling or dropping their labels.
 - Timeline lane names are plain labels and bars have one even outline; family tree relation tags and generation labels are quiet; org chart logo tiles are neutral. Colours that mean something (types, houses, groups, your file tints) are unchanged.
 
 **Fixes**

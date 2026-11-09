@@ -546,9 +546,7 @@ button.chronicle-ov-tile {
 .chronicle-stat-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
 }
 
 /* ==== Map: pins, legend, territories, tools ================================================== */
@@ -1148,9 +1146,7 @@ button.chronicle-legend-row:hover {
 .chronicle-legend-label {
 	flex: 1;
 	min-width: 0;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	overflow-wrap: anywhere;
 }
 .chronicle-legend-count {
 	color: var(--text-faint);
