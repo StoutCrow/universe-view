@@ -13,7 +13,7 @@ import { chooseWorldSetting } from "./worldsettingui";
 import { renderThemeCards } from "./themecards";
 import { TourModal } from "./Tour";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
-import { MOTIONS, TACTILE_PARTS, applyAppearance } from "../appearance";
+import { MOTIONS, THEMES, TACTILE_PARTS, TACTILE_PRESETS, applyAppearance } from "../appearance";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
 import { WhatsNewModal } from "./WhatsNew";
 import { REL_KINDS, presetKinds, relLabel } from "../index/relkinds";
@@ -42,12 +42,39 @@ function resolveColor(key: string): string {
 
 /** The settings' pages, each holding the sections whose headings start as named here (anything else goes on the first). */
 const PAGES: { id: string; label: string; heads: string[] }[] = [
-	{ id: "appearance", label: "Look & cards", heads: ["World setting", "Appearance", "Views", "About", "Fonts", "Inspector", "Icons", "Hover cards"] },
-	{ id: "notes", label: "Notes", heads: ["Recognising notes", "New notes", "Folder notes", "Writing and families", "Relationships"] },
+	{ id: "appearance", label: "Theme & colours", heads: ["World setting", "Appearance", "Fonts"] },
+	{ id: "surface", label: "Surface & motion", heads: ["Surface", "Tactile style"] },
+	{ id: "views", label: "Views", heads: ["Views"] },
+	{ id: "inspector", label: "Inspector, icons & tips", heads: ["Inspector", "Icons", "Hover cards"] },
+	{ id: "notes", label: "Notes", heads: ["Recognising notes", "New notes", "Folder notes"] },
+	{ id: "families", label: "Families & relationships", heads: ["Writing and families", "Relationships"] },
 	{ id: "time", label: "Time & calendars", heads: ["Timeline", "Calendars"] },
-	{ id: "maps", label: "Maps & realms", heads: ["Maps", "Map look", "Realms and tiers"] },
+	{ id: "maps", label: "Maps", heads: ["Maps", "Map look"] },
+	{ id: "realms", label: "Realms & tiers", heads: ["Realms and tiers"] },
 	{ id: "tools", label: "Map tools", heads: ["Drawing and snapping", "Fill", "Shaping borders"] },
+	{ id: "about", label: "About", heads: ["About"] },
 ];
+
+const PAGE_DESC: Record<string, string> = {
+	appearance: "World setting, theme cards, colours, fonts",
+	surface: "Flat or tactile, its parts and strength, motion, density, corners",
+	views: "Timeline and family tree sizes, tints",
+	inspector: "The inspector, icons, hover cards and tips",
+	notes: "How notes are recognised, created and filed",
+	families: "How people and relationships are written",
+	time: "Timeline and calendars",
+	maps: "Maps and how they look",
+	realms: "Realm tiers and territory styles",
+	tools: "Drawing, snapping, fill and border tools",
+	about: "Version and what's new",
+};
+
+/** What a page's entry shows beside its name, so the current choice is visible without opening it. */
+const PAGE_VALUES: Record<string, (p: ChroniclePlugin) => string> = {
+	appearance: (p) => THEMES.find((t) => t.id === p.settings.theme)?.name ?? "",
+	surface: (p) => (p.settings.surfaceStyle === "tactile" ? "Tactile" : "Flat"),
+	about: (p) => `Version ${p.manifest.version}`,
+};
 
 /** A built row (or block), the blocks that go with it, and whether it has been shown yet. */
 interface Entry {
@@ -100,7 +127,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const pinned = pages.find((p) => p.id === this.pinned);
 		return [
 			...(pinned?.groups ?? []),
-			...pages.filter((p) => p !== pinned).map((p): SettingDefinitionPage => ({ type: "page", name: p.label, desc: p.heads.join(", "), items: p.groups })),
+			...pages.filter((p) => p !== pinned).map((p): SettingDefinitionPage => ({ type: "page", name: p.label, desc: PAGE_DESC[p.id] ?? p.heads.join(", "), displayValue: PAGE_VALUES[p.id] ? () => PAGE_VALUES[p.id](this.plugin) : undefined, items: p.groups })),
 		];
 	}
 
@@ -129,7 +156,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			last = undefined;
 			sections.push({
 				heading,
-				group: { type: "group", heading: heading || undefined, cls: "chronicle-settings", items, extraButtons: help ? [(b) => b.setIcon("info").setTooltip(help)] : undefined },
+				group: { type: "group", heading: heading || undefined, cls: "chronicle-settings", items, extraButtons: help ? [(b) => b.setIcon("info").setTooltip(help)] : undefined, visible: heading === "Tactile style" ? () => this.plugin.settings.surfaceStyle === "tactile" : undefined },
 			});
 		};
 		for (const child of Array.from(box.children) as HTMLElement[]) {
@@ -917,40 +944,6 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			await save();
 		})());
 		new Setting(containerEl)
-			.setName("Surface style")
-			.setDesc("Flat is quiet and follows your Obsidian theme. Tactile gives UniverseView's own tabs, buttons and panels raised keys, folder tabs and inset fields, so they're easy to tell from Obsidian's. It works with every theme.")
-			.addDropdown((d) => d.addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "flat").onChange(async (v) => {
-				s.surfaceStyle = v === "tactile" ? "tactile" : "flat";
-				await save();
-			}));
-		// The tactile style is made of parts, each its own switch; these only matter while Tactile is on.
-		const tactileBox = el("details", { cls: "uv-tactile-parts" }, containerEl);
-		el("summary", { text: "Tactile parts" }, tactileBox);
-		for (const part of TACTILE_PARTS) {
-			new Setting(tactileBox).setName(part.name).setDesc(part.desc).addToggle((t) => t.setValue(!(s.tactileOff ?? []).includes(part.id)).onChange(async (on) => {
-				const off = new Set(s.tactileOff ?? []);
-				if (on) off.delete(part.id);
-				else off.add(part.id);
-				s.tactileOff = [...off];
-				await save();
-			}));
-		}
-		new Setting(tactileBox).setName("Depth").setDesc("How deep the bevels and shadows are.")
-			.addDropdown((d) => d.addOption("subtle", "Subtle").addOption("normal", "Normal").addOption("deep", "Deep").setValue(s.tactileDepth ?? "normal").onChange(async (v) => {
-				s.tactileDepth = v === "subtle" || v === "deep" ? v : "normal";
-				await save();
-			}));
-		new Setting(tactileBox).setName("Folder colour").setDesc("The colour of folders in the Library and the Files panel. Manila by default.")
-			.addColorPicker((c) => c.setValue(s.tactileFolderColor || "#e6c57e").onChange(async (v) => {
-				s.tactileFolderColor = v;
-				await save();
-			}))
-			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to manila").onClick(async () => {
-				s.tactileFolderColor = "";
-				await save();
-				this.update();
-			}));
-		new Setting(containerEl)
 			.setName("Tour")
 			.setDesc("A short walk through what UniverseView does, where you can try on the themes and surface styles.")
 			.addButton((b) => b.setButtonText("Take the tour").onClick(() => new TourModal(this.plugin).open()));
@@ -982,6 +975,15 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			})(evt));
 		}
 
+		new Setting(containerEl).setName("Surface").setHeading();
+		new Setting(containerEl)
+			.setName("Surface style")
+			.setDesc("Flat is quiet and follows your Obsidian theme. Tactile gives UniverseView's own tabs, buttons and panels raised keys, folder tabs and inset fields, so they're easy to tell from Obsidian's. It works with every theme, and its parts are set under Tactile style.")
+			.addDropdown((d) => d.addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "flat").onChange(async (v) => {
+				s.surfaceStyle = v === "tactile" ? "tactile" : "flat";
+				await save();
+				this.update();
+			}));
 		new Setting(containerEl)
 			.setName("Motion")
 			.setDesc("How quickly panels, cards, pins and the map animate. “Off” also applies when your system asks for reduced motion.")
@@ -1012,6 +1014,60 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			.addToggle((t) => t.setValue(!!s.flatStyle).onChange(async (v) => {
 				s.flatStyle = v;
 				await save();
+			}));
+
+		// The tactile style is made of parts, each its own switch; this section only shows while Tactile is on.
+		new Setting(containerEl).setName("Tactile style").setHeading();
+		const offNow = () => s.tactileOff ?? [];
+		const presetNow = () => TACTILE_PRESETS.find((p) => p.off.length === offNow().length && p.off.every((x) => offNow().includes(x)))?.id ?? "custom";
+		new Setting(containerEl)
+			.setName("Parts")
+			.setDesc("Start from a set, then switch single parts on or off below.")
+			.addDropdown((d) => {
+				for (const p of TACTILE_PRESETS) d.addOption(p.id, p.name);
+				d.addOption("custom", "Custom");
+				d.setValue(presetNow()).onChange(async (v) => {
+					const p = TACTILE_PRESETS.find((x) => x.id === v);
+					if (!p) return;
+					s.tactileOff = [...p.off];
+					await save();
+					this.update();
+				});
+			});
+		for (const part of TACTILE_PARTS) {
+			new Setting(containerEl).setName(part.name).setDesc(part.desc).addToggle((t) => t.setValue(!offNow().includes(part.id)).onChange(async (on) => {
+				const off = new Set(offNow());
+				if (on) off.delete(part.id);
+				else off.add(part.id);
+				s.tactileOff = [...off];
+				await save();
+				this.update();
+			}));
+		}
+		new Setting(containerEl)
+			.setName("Strength")
+			.setDesc("How deep the bevels and shadows are. 100% is the default.")
+			.addSlider((sl) => sl.setLimits(20, 220, 5).setDynamicTooltip().setValue(s.tactileStrength ?? ({ subtle: 55, normal: 100, deep: 160 }[s.tactileDepth ?? "normal"])).onChange(async (v) => {
+				s.tactileStrength = v;
+				await save();
+			}))
+			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to 100%").onClick(async () => {
+				s.tactileStrength = undefined;
+				s.tactileDepth = undefined;
+				await save();
+				this.update();
+			}));
+		new Setting(containerEl)
+			.setName("Folder colour")
+			.setDesc("The colour of folders in the Library and the Files panel. Manila by default.")
+			.addColorPicker((c) => c.setValue(s.tactileFolderColor || "#e6c57e").onChange(async (v) => {
+				s.tactileFolderColor = v;
+				await save();
+			}))
+			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to manila").onClick(async () => {
+				s.tactileFolderColor = "";
+				await save();
+				this.update();
 			}));
 
 		// Views: sizes in the timeline and family tree (what the Style Settings plugin used to offer).
@@ -1057,7 +1113,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		tint("Women's tint", () => s.tintFemale, (v) => (s.tintFemale = v), "#d24f8a");
 
 		// About: the version, and every version's changes.
-		;
+		new Setting(containerEl).setName("About").setHeading();
 		new Setting(containerEl)
 			.setName(`Version ${this.plugin.manifest.version}`)
 			.setDesc("What changed in every version, newest first (also the command What's new).")

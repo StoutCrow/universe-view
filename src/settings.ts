@@ -314,6 +314,8 @@ export interface ChronicleSettings {
 	tactileOff?: TactilePart[];
 	/** How deep the bevels and shadows are. */
 	tactileDepth?: "subtle" | "normal" | "deep";
+	/** How strong the tactile bevels and shadows are, in percent (replaces tactileDepth when set). */
+	tactileStrength?: number;
 	/** The colour of folders in the Library and the Files panel; empty is manila. */
 	tactileFolderColor?: string;
 	/** The first-install tour has been offered (or this vault already had settings when it arrived). */

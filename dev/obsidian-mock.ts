@@ -703,23 +703,30 @@ export class PluginSettingTab {
 	display() {
 		this.update();
 	}
+	private openPage?: string;
 	update() {
 		this.settingItems = this.getSettingDefinitions();
-		this.renderItems(this.settingItems);
+		const page = this.settingItems.find((i) => i.type === "page" && i.name === this.openPage);
+		if (page) this.renderItems(page.items ?? [], page.name);
+		else this.renderItems(this.settingItems);
 	}
 	refreshDomState() {}
 	hide() {}
 	private renderItems(items: any[], page?: string) {
 		const box = this.containerEl;
 		box.empty();
+		this.openPage = page;
 		if (page) {
 			box.createEl("button", { text: "‹ Back", cls: "mock-settings-back" }).addEventListener("click", () => this.renderItems(this.settingItems));
 			box.createEl("h2", { text: page });
 		}
 		for (const it of items) {
+			if (it.visible === false || (typeof it.visible === "function" && !it.visible())) continue;
 			if (it.type === "page") {
 				const s = new Setting(box).setName(it.name).setDesc(it.desc ?? "");
 				s.settingEl.addClass("mock-settings-page");
+				const dv = typeof it.displayValue === "function" ? it.displayValue() : it.displayValue;
+				if (dv) s.controlEl.createSpan({ text: dv });
 				s.settingEl.addEventListener("click", () => this.renderItems(it.items ?? [], it.name));
 			} else if (it.type === "group" || it.type === "list") {
 				const g = box.createDiv({ cls: ["setting-group", ...(it.cls ? [it.cls] : [])] });

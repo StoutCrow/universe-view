@@ -13,6 +13,13 @@ export const TACTILE_PARTS: { id: TactilePart; name: string; desc: string }[] = 
 ];
 const DEPTH = { subtle: 0.55, normal: 1, deep: 1.6 };
 
+/** Ready-made sets of parts; the rest are switched off. */
+export const TACTILE_PRESETS: { id: string; name: string; off: TactilePart[] }[] = [
+	{ id: "full", name: "Everything", off: [] },
+	{ id: "controls", name: "Controls only (keys, toolbar, fields, tabs)", off: ["panels", "headings", "icons", "folders"] },
+	{ id: "files", name: "Files only (folders, notes, icons)", off: ["keys", "toolbar", "fields", "tabs", "panels", "headings"] },
+];
+
 export interface ThemeInfo {
 	id: ThemeId;
 	name: string;
@@ -143,7 +150,7 @@ export function applyAppearance(s: ChronicleSettings) {
 	const tactile = s.surfaceStyle === "tactile";
 	body.classList.toggle("uv-tactile", tactile);
 	for (const part of TACTILE_PARTS) body.classList.toggle(`uv-t-${part.id}`, tactile && !(s.tactileOff ?? []).includes(part.id));
-	set("--uv-t-depth", tactile ? String(DEPTH[s.tactileDepth ?? "normal"]) : undefined);
+	set("--uv-t-depth", tactile ? String(s.tactileStrength !== undefined ? Math.max(0.2, Math.min(2.2, s.tactileStrength / 100)) : DEPTH[s.tactileDepth ?? "normal"]) : undefined);
 	set("--uv-t-folder", tactile ? s.tactileFolderColor : undefined);
 	// Map look: the realm border band and rivers.
 	for (const c of Array.from(body.classList)) if (c.startsWith("uv-band-")) body.classList.remove(c);

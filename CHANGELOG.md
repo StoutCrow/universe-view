@@ -2,6 +2,12 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.2.0 — 2026-11-09
+
+### Settings, rearranged
+- The long **Look & cards** page is now smaller pages: Theme & colours, Surface & motion, Views, Inspector icons & tips, and About. Notes split into Notes and Families & relationships, and Maps and Realms & tiers are separate. Pages show their current choice (the theme, Flat or Tactile).
+- **Tactile style** has its own section on Surface & motion, shown only while Tactile is on: a Parts menu (everything, controls only, files only, or custom), a switch for each part, a Strength slider from 20% to 220%, and a folder colour.
+
 ## 2.1.1 — 2026-11-09
 
 ### Add relatives by name
