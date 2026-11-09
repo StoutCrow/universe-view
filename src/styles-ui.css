@@ -1018,13 +1018,16 @@ button.chronicle-ov-tile:hover::after {
 		display: none;
 	}
 }
-.chronicle-icon-btn.is-active,
+.chronicle-icon-btn.is-active {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-normal);
+}
 .chronicle-icon-btn.is-active:hover {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
+	background: var(--background-modifier-border);
+	color: var(--text-normal);
 }
 .chronicle-icon-btn.is-active svg {
-	color: var(--text-on-accent);
+	color: var(--text-normal);
 }
 .chronicle-legend-row.is-off .chronicle-legend-label {
 	text-decoration: line-through;

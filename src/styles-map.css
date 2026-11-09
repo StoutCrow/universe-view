@@ -343,7 +343,6 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 @keyframes uv-battle-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--battle-color, #b03a2e) 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
 .uv-battle-tip .is-title { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .uv-battle.is-latest { animation: none; } }
-.chronicle-toolbar .chronicle-chip.is-active:not(.is-toggle) { border-color: var(--interactive-accent); color: var(--text-accent); }
 .chronicle-toolbar .chronicle-chip .chronicle-chip-count:empty { display: none; }
 
 /* ---- Export: the map as a picture, without the buttons and pop-ups around it ---- */
