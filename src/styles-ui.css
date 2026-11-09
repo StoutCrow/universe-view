@@ -1140,8 +1140,8 @@ button.chronicle-legend-row:hover {
 }
 .chronicle-legend-swatch {
 	flex-shrink: 0;
-	width: 16px;
-	height: 16px;
+	width: 12px;
+	height: 12px;
 	border-radius: 50%;
 	background: var(--pin-color);
 	color: #fff;
@@ -1149,16 +1149,18 @@ button.chronicle-legend-row:hover {
 	align-items: center;
 	justify-content: center;
 	font-size: 9px;
-	box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--pin-color);
-	margin: 2px;
+	/* The colour is the key: a plain dot, no double ring. */
+	box-shadow: none;
+	margin: 2px 4px 2px 2px;
 }
 .chronicle-legend-row.is-off .chronicle-legend-swatch {
 	background: transparent;
 	color: var(--pin-color);
+	box-shadow: inset 0 0 0 1.5px var(--pin-color);
 }
 .chronicle-legend-swatch svg {
-	width: 10px;
-	height: 10px;
+	width: 8px;
+	height: 8px;
 	stroke-width: 2.6;
 }
 .chronicle-legend-label {

@@ -1308,13 +1308,11 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 .chronicle-map.hide-pins .chronicle-pin-wrap {
 	display: none;
 }
+/* A count is a number beside the label, not a badge. */
 .chronicle-chip-count {
-	font-size: 10px;
+	font-size: var(--font-ui-smaller);
 	font-variant-numeric: tabular-nums;
-	padding: 0 6px;
-	border-radius: var(--uv-r-md);
-	background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
-	color: var(--text-accent);
+	color: var(--text-faint);
 }
 .chronicle-icon-btn.is-disabled {
 	opacity: 0.35;
