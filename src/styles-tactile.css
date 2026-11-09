@@ -1,0 +1,315 @@
+/* ==== Tactile style and the tour =================================================================== */
+/* The tactile style is opt-in (Settings → Look & cards → Surface style). It gives UniverseView's own tabs,
+   buttons and panels a physical feel (raised keys, folder tabs, inset fields) so they read as UniverseView
+   at a glance, next to Obsidian's flat ones. Everything below sits behind `body.uv-tactile`, and it is built
+   from the host's colours, so it works with every theme in light and dark. */
+
+body {
+	--uv-t-top: color-mix(in srgb, var(--background-primary) 55%, white);
+	--uv-t-bottom: color-mix(in srgb, var(--background-primary) 86%, var(--text-normal));
+	--uv-t-face: linear-gradient(to bottom, var(--uv-t-top), var(--uv-t-bottom));
+	--uv-t-sunk: linear-gradient(to bottom, color-mix(in srgb, var(--background-primary) 80%, var(--text-normal)), color-mix(in srgb, var(--background-primary) 92%, var(--text-normal)));
+	--uv-t-edge: color-mix(in srgb, var(--text-normal) 24%, transparent);
+	--uv-t-hi: rgba(255, 255, 255, 0.7);
+	--uv-t-lo: rgba(0, 0, 0, 0.16);
+	--uv-t-raised: inset 0 1px 0 var(--uv-t-hi), 0 1px 0 var(--uv-t-lo), 0 2px 3px -1px var(--uv-t-lo);
+	--uv-t-pressed: inset 0 2px 3px var(--uv-t-lo), inset 0 0 0 1px var(--uv-t-edge);
+	--uv-t-inset: inset 0 1px 2px var(--uv-t-lo);
+}
+body.theme-dark {
+	--uv-t-top: color-mix(in srgb, var(--background-primary) 90%, white);
+	--uv-t-bottom: color-mix(in srgb, var(--background-primary) 82%, black);
+	--uv-t-sunk: linear-gradient(to bottom, color-mix(in srgb, var(--background-primary) 70%, black), color-mix(in srgb, var(--background-primary) 88%, black));
+	--uv-t-hi: rgba(255, 255, 255, 0.09);
+	--uv-t-lo: rgba(0, 0, 0, 0.5);
+	--uv-t-edge: color-mix(in srgb, var(--text-normal) 20%, transparent);
+}
+
+/* ---- Keys: chips, icon buttons and the page buttons are raised; on is pressed in ---- */
+body.uv-tactile .chronicle-chip:not(.mod-cta-chip),
+body.uv-tactile .chronicle-icon-btn:not(.mod-cta-icon),
+body.uv-tactile .chronicle-ov-action,
+body.uv-tactile .chronicle-dash-actions button:not(.mod-cta),
+body.uv-tactile .uv-tour-foot button:not(.mod-cta),
+body.uv-tactile .uv-lin-chip {
+	background: var(--uv-t-face);
+	border: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-md);
+	box-shadow: var(--uv-t-raised);
+	color: var(--text-normal);
+}
+body.uv-tactile .chronicle-chip:not(.mod-cta-chip):hover,
+body.uv-tactile .chronicle-icon-btn:not(.mod-cta-icon):hover,
+body.uv-tactile .chronicle-ov-action:hover,
+body.uv-tactile .chronicle-dash-actions button:not(.mod-cta):hover {
+	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-top) 85%, white), var(--uv-t-top));
+}
+body.uv-tactile .chronicle-chip.is-active,
+body.uv-tactile .chronicle-icon-btn.is-active,
+body.uv-tactile .chronicle-chip:not(.mod-cta-chip):active,
+body.uv-tactile .chronicle-icon-btn:not(.mod-cta-icon):active,
+body.uv-tactile .uv-lin-chip.is-active {
+	background: var(--uv-t-sunk);
+	box-shadow: var(--uv-t-pressed);
+	transform: none;
+}
+/* The one main button keeps the accent, with a gloss on top. */
+body.uv-tactile .chronicle-icon-btn.mod-cta-icon,
+body.uv-tactile .chronicle-chip.mod-cta-chip,
+body.uv-tactile .chronicle-dash-actions button.mod-cta,
+body.uv-tactile .uv-tour-foot button.mod-cta {
+	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 60%);
+	border: 1px solid color-mix(in srgb, var(--interactive-accent) 70%, black);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px var(--uv-t-lo);
+}
+
+/* ---- The toolbar: a raised strip ---- */
+body.uv-tactile .chronicle-toolbar {
+	background: var(--uv-t-face);
+	border-bottom: 1px solid var(--uv-t-edge);
+	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 3px -1px var(--uv-t-lo);
+}
+
+/* ---- Fields: recessed ---- */
+body.uv-tactile .chronicle-toolbar .dropdown,
+body.uv-tactile .chronicle-picker input,
+body.uv-tactile .chronicle-toolbar .chronicle-search input,
+body.uv-tactile .chronicle-dash-tree-head .chronicle-search input {
+	background: var(--uv-t-sunk);
+	border: 1px solid var(--uv-t-edge);
+	box-shadow: var(--uv-t-inset);
+}
+
+/* ---- Tabs: folder tabs that sit on the page below them ---- */
+body.uv-tactile .uv-hub-bar {
+	align-items: flex-end;
+	padding-top: 8px;
+	background: var(--uv-t-sunk);
+}
+body.uv-tactile .uv-hub-tabs {
+	gap: 4px;
+}
+body.uv-tactile button.uv-hub-tab,
+body.uv-tactile .chronicle-insp-tab {
+	height: 34px;
+	margin-bottom: -1px;
+	padding: 0 14px;
+	border: 1px solid var(--uv-t-edge);
+	border-bottom: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-lg) var(--uv-r-lg) 0 0;
+	background: var(--uv-t-sunk);
+	box-shadow: inset 0 1px 0 var(--uv-t-hi);
+	color: var(--text-muted);
+}
+body.uv-tactile button.uv-hub-tab:hover,
+body.uv-tactile .chronicle-insp-tab:hover {
+	background: var(--uv-t-face);
+	color: var(--text-normal);
+}
+body.uv-tactile button.uv-hub-tab.is-active,
+body.uv-tactile .chronicle-insp-tab.is-active {
+	position: relative;
+	z-index: 1;
+	background: var(--background-primary);
+	border-bottom-color: var(--background-primary);
+	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 -1px 3px -1px var(--uv-t-lo);
+	color: var(--text-normal);
+}
+body.uv-tactile .chronicle-insp-tabs {
+	gap: 4px;
+	padding: 0 6px;
+	border-bottom: 1px solid var(--uv-t-edge);
+}
+
+/* ---- The big tabs down the side: keys on a panel ---- */
+body.uv-tactile .uv-hub-rail {
+	background: var(--uv-t-sunk);
+	box-shadow: inset -1px 0 0 var(--uv-t-hi);
+}
+body.uv-tactile button.uv-hub-section {
+	background: var(--uv-t-face);
+	border: 1px solid var(--uv-t-edge);
+	box-shadow: var(--uv-t-raised);
+	color: var(--text-normal);
+}
+body.uv-tactile button.uv-hub-section:hover {
+	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-top) 85%, white), var(--uv-t-top));
+}
+body.uv-tactile button.uv-hub-section.is-active {
+	background: var(--uv-t-sunk);
+	box-shadow: var(--uv-t-pressed);
+	font-weight: 700;
+}
+
+/* ---- Panels: raised sheets; the inspector's sections are wells set into the page ---- */
+body.uv-tactile .chronicle-module,
+body.uv-tactile .chronicle-dash-card,
+body.uv-tactile .chronicle-ov-panel {
+	padding: 12px 14px;
+	background: var(--background-primary);
+	border: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-lg);
+	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 0 var(--uv-t-lo), 0 6px 14px -9px var(--uv-t-lo);
+}
+body.uv-tactile .chronicle-module {
+	padding: 0;
+}
+body.uv-tactile .chronicle-inspector .chronicle-insp-section,
+body.uv-tactile .chronicle-ep .chronicle-ep-section {
+	margin: 6px 0;
+	padding: 10px 12px;
+	background: var(--uv-t-sunk);
+	border: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-lg);
+	box-shadow: var(--uv-t-inset);
+}
+body.uv-tactile .chronicle-inspector .chronicle-insp-section:first-child {
+	border-top: 1px solid var(--uv-t-edge);
+}
+body.uv-tactile .uv-id {
+	padding: 10px 12px;
+	background: var(--uv-t-face);
+	border: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-lg);
+	box-shadow: var(--uv-t-raised);
+}
+
+/* ---- Headings are pressed into the surface ---- */
+body.uv-tactile .chronicle-dash-card-title,
+body.uv-tactile .chronicle-ov-panel-head h3,
+body.uv-tactile .chronicle-module-title,
+body.uv-tactile .uv-id-name,
+body.uv-tactile .chronicle-ov-title {
+	text-shadow: 0 1px 0 var(--uv-t-hi);
+}
+
+/* ---- The tour ---- */
+.uv-tour {
+	width: min(680px, 94vw);
+}
+.uv-tour-body {
+	min-height: 200px;
+}
+.uv-tour-body p {
+	margin: 0 0 10px;
+}
+.uv-tour-list {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: 8px 16px;
+	margin: 0 0 12px;
+}
+.uv-tour-list dt {
+	font-weight: 600;
+}
+.uv-tour-list dd {
+	margin: 0;
+	color: var(--text-muted);
+}
+.uv-tour-note {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+.uv-tour-sub {
+	margin: 16px 0 8px;
+	font-size: var(--font-ui-small);
+}
+.uv-tour-body .chronicle-theme-grid {
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 10px;
+	margin: 8px 0 0;
+}
+.uv-tour-styles {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+}
+button.uv-tour-style {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 6px;
+	height: auto;
+	padding: 10px;
+	text-align: left;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--uv-r-lg);
+	background: var(--background-primary);
+	box-shadow: none;
+}
+button.uv-tour-style.is-active {
+	border-color: var(--interactive-accent);
+}
+.uv-tour-style-name {
+	font-weight: 600;
+}
+.uv-tour-style-desc {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	white-space: normal;
+}
+.uv-tour-foot {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+	padding-top: 12px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+.uv-tour-count {
+	margin-right: auto;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+button.uv-tour-skip {
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+/* A small sample of each surface style, drawn on its own so it shows the style whichever one is on. */
+.uv-style-sample {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	padding: 10px 10px 0;
+	height: 64px;
+	border-radius: var(--uv-r-md);
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-size: var(--font-ui-smaller);
+}
+.uv-style-sample .uv-style-tab,
+.uv-style-sample .uv-style-key {
+	display: inline-flex;
+	align-items: center;
+	height: 24px;
+	padding: 0 12px;
+	color: var(--text-normal);
+}
+.uv-style-sample.is-flat .uv-style-tab {
+	border-bottom: 2px solid var(--interactive-accent);
+	font-weight: 600;
+}
+.uv-style-sample.is-flat .uv-style-key {
+	margin-bottom: 8px;
+	border-radius: var(--uv-r-md);
+	background: var(--background-modifier-hover);
+}
+.uv-style-sample.is-tactile .uv-style-tab {
+	height: 28px;
+	margin-bottom: -1px;
+	border: 1px solid var(--uv-t-edge);
+	border-bottom-color: var(--background-primary);
+	border-radius: var(--uv-r-md) var(--uv-r-md) 0 0;
+	background: var(--background-primary);
+	box-shadow: inset 0 1px 0 var(--uv-t-hi);
+}
+.uv-style-sample.is-tactile .uv-style-key {
+	margin-bottom: 8px;
+	border: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-md);
+	background: var(--uv-t-face);
+	box-shadow: var(--uv-t-raised);
+}

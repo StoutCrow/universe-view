@@ -127,6 +127,7 @@ export function applyAppearance(s: ChronicleSettings) {
 	set("--chronicle-female-tint", s.tintFemale);
 	body.classList.toggle("chronicle-gender-tint", !!s.genderTint);
 	body.classList.toggle("chronicle-flat", !!s.flatStyle);
+	body.classList.toggle("uv-tactile", s.surfaceStyle === "tactile");
 	// Map look: the realm border band and rivers.
 	for (const c of Array.from(body.classList)) if (c.startsWith("uv-band-")) body.classList.remove(c);
 	body.classList.add(`uv-band-${s.realmBand ?? "soft"}`);
@@ -135,6 +136,6 @@ export function applyAppearance(s: ChronicleSettings) {
 
 export function clearAppearance() {
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c.startsWith("uv-band-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-band-")) body.classList.remove(c);
 	for (const v of BODY_VARS) body.style.removeProperty(v);
 }

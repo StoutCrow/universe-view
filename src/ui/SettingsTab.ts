@@ -10,8 +10,10 @@ import { TYPE_LABELS, el, glyph, helpTip, icon } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
 import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
 import { chooseWorldSetting } from "./worldsettingui";
+import { renderThemeCards } from "./themecards";
+import { TourModal } from "./Tour";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
-import { MOTIONS, THEMES, applyAppearance } from "../appearance";
+import { MOTIONS, applyAppearance } from "../appearance";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
 import { WhatsNewModal } from "./WhatsNew";
 import { REL_KINDS, presetKinds, relLabel } from "../index/relkinds";
@@ -910,34 +912,21 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const save = () => this.save(false);
 		new Setting(containerEl).setName("Appearance").setHeading();
 		el("p", { cls: "setting-item-description", text: "Themes restyle only UniverseView's views, boards, embeds and cards. Everything else in Obsidian keeps your theme." }, containerEl);
-		const grid = el("div", { cls: "chronicle-theme-grid" }, containerEl);
-		for (const th of THEMES) {
-			const card = el("button", { cls: "chronicle-theme-card" + (s.theme === th.id ? " is-active" : "") }, grid);
-			const preview = el("div", { cls: `chronicle-theme-preview preview-${th.id}` }, card);
-			const [bg, panel, text, accent, ...types] = th.swatches;
-			preview.style.setProperty("--pv-bg", bg);
-			preview.style.setProperty("--pv-panel", panel);
-			preview.style.setProperty("--pv-text", text);
-			preview.style.setProperty("--pv-accent", accent);
-			const bar = el("div", { cls: "chronicle-pv-bar" }, preview);
-			for (let i = 0; i < 3; i++) el("span", {}, bar);
-			const rows = el("div", { cls: "chronicle-pv-rows" }, preview);
-			types.forEach((c, i) => {
-				const r = el("span", { cls: "chronicle-pv-row" }, rows);
-				r.style.setProperty("--pv-c", c);
-				r.style.setProperty("--pv-w", `${[70, 45, 85, 55][i]}%`);
-				r.style.setProperty("--pv-x", `${[4, 30, 12, 38][i]}%`);
-			});
-			el("div", { cls: "chronicle-theme-name", text: th.name }, card);
-			el("div", { cls: "chronicle-theme-for", text: th.forWhat }, card);
-			card.setAttribute("aria-label", th.description);
-			card.addEventListener("click", () => void (async () => {
-				s.theme = th.id;
+		renderThemeCards(containerEl, s.theme, (id) => void (async () => {
+			s.theme = id;
+			await save();
+		})());
+		new Setting(containerEl)
+			.setName("Surface style")
+			.setDesc("Flat is quiet and follows your Obsidian theme. Tactile gives UniverseView's own tabs, buttons and panels raised keys, folder tabs and inset fields, so they're easy to tell from Obsidian's. It works with every theme.")
+			.addDropdown((d) => d.addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "flat").onChange(async (v) => {
+				s.surfaceStyle = v === "tactile" ? "tactile" : "flat";
 				await save();
-				grid.querySelectorAll(".chronicle-theme-card").forEach((c) => c.removeClass("is-active"));
-				card.addClass("is-active");
-			})());
-		}
+			}));
+		new Setting(containerEl)
+			.setName("Tour")
+			.setDesc("A short walk through what UniverseView does, where you can try on the themes and surface styles.")
+			.addButton((b) => b.setButtonText("Take the tour").onClick(() => new TourModal(this.plugin).open()));
 
 		const colors = new Setting(containerEl)
 			.setName("Colors")

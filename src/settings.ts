@@ -308,6 +308,10 @@ export interface ChronicleSettings {
 	tintFemale?: string;
 	genderTint?: boolean;
 	flatStyle?: boolean;
+	/** How UniverseView's own tabs, buttons and panels are drawn: flat (the default), or tactile (raised keys, folder tabs, inset fields) so they're easy to tell from Obsidian's. */
+	surfaceStyle?: SurfaceStyle;
+	/** The first-install tour has been offered (or this vault already had settings when it arrived). */
+	tourSeen?: boolean;
 	/** A hand-drawn wobble on long straight borders, shown only: the notes keep their few editable corners. */
 	roughBorders?: "off" | "light" | "medium" | "strong";
 	/** The territory brush's size (screen pixels across, halved). */
@@ -326,7 +330,8 @@ export interface ChronicleSettings {
 	openEndsToToday: boolean;
 }
 
-export type ThemeId = "obsidian" | "parchment" | "archive" | "starfield" | "scholar" | "atelier";
+export type SurfaceStyle = "flat" | "tactile";
+export type ThemeId ="obsidian" | "parchment" | "archive" | "starfield" | "scholar" | "atelier";
 export type MotionId = "off" | "snappy" | "smooth" | "relaxed" | "bouncy";
 /** What pin and legend colours mean: the realm on top, the direct liege, the holder's house, a group, the kind of place, or one colour ("region" is the old name for "realm"). */
 export type PinColorBy = "realm" | "liege" | "house" | "culture" | "category" | "region" | "type";

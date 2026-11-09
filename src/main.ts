@@ -19,6 +19,7 @@ import { DEFAULT_REGION_WORDS, realmTree, setTierNames, tierWords, tierWordsWith
 import { absorbGaps, untangle } from "./index/merge";
 import { BUILT_IN_PRESETS, applyLook, type MapPreset } from "./ui/mappresets";
 import { WhatsNewModal } from "./ui/WhatsNew";
+import { TourModal } from "./ui/Tour";
 import { compareVersions } from "./index/changelog";
 import { isHouse } from "./render/houses";
 import { setHelpDelay } from "./render/common";
@@ -324,7 +325,7 @@ export default class ChroniclePlugin extends Plugin {
 
 	/**
 	 * After an update, once: what changed since the version you had (Settings → Look & cards → What's
-	 * new). A first install just remembers the version, without a window.
+	 * new). A first install remembers the version and opens the tour instead of a changelog.
 	 */
 	private whatsNewAfterUpdate() {
 		const running = typeof UV_BUILD_VERSION === "string" ? UV_BUILD_VERSION : this.manifest.version;
@@ -333,7 +334,18 @@ export default class ChroniclePlugin extends Plugin {
 		this.settings.lastSeenVersion = running;
 		void this.saveSettings();
 		// A first install opens the dashboard, whose Home page shows the ways to begin.
-		if (!seen) this.app.workspace.onLayoutReady(() => void this.activateView(VIEW_HUB, {}));
+		if (!seen) {
+			const tour = this.settings.tourSeen === false;
+			if (tour) {
+				this.settings.tourSeen = true;
+				void this.saveSettings();
+			}
+			this.app.workspace.onLayoutReady(() => {
+				void this.activateView(VIEW_HUB, {});
+				// A moment after the dashboard, so the look you try on is the one behind the window.
+				if (tour) window.setTimeout(() => new TourModal(this).open(), 800);
+			});
+		}
 		if (!seen || this.settings.showWhatsNew === false || compareVersions(running, seen) <= 0) return;
 		this.app.workspace.onLayoutReady(() => window.setTimeout(() => new WhatsNewModal(this, seen).open(), 1500));
 	}
@@ -384,6 +396,8 @@ export default class ChroniclePlugin extends Plugin {
 		}
 		// 0.26: no default shortcuts (Obsidian's guidelines); anyone already using the plugin keeps them.
 		if (this.settings.suggestedHotkeys === undefined) this.settings.suggestedHotkeys = Object.keys(data).length > 0;
+		// 2.1: the tour opens once, on a first install; anyone with saved settings already has seen enough.
+		if (this.settings.tourSeen === undefined) this.settings.tourSeen = Object.keys(data).length > 0;
 		// 0.18: realms merge into kingdoms sooner when zooming out; 420 px was the old default.
 		if (!data.tierSplitV2) {
 			if (data.tierSplitPx === undefined || data.tierSplitPx === 420) this.settings.tierSplitPx = 760;
@@ -1671,6 +1685,12 @@ export default class ChroniclePlugin extends Plugin {
 			name: "What's new (version history)",
 			icon: "scroll-text",
 			callback: () => new WhatsNewModal(this).open(),
+		});
+		this.addCommand({
+			id: "tour",
+			name: "Take the tour",
+			icon: "compass",
+			callback: () => new TourModal(this).open(),
 		});
 		this.addCommand({
 			id: "map-look-preset",
