@@ -1,7 +1,7 @@
 {
 	"id": "universe-view",
 	"name": "UniverseView",
-	"version": "2.5.0",
+	"version": "2.6.0",
 	"minAppVersion": "1.13.0",
 	"description": "Turn your notes into a living world: timelines, family trees, realms and dynasties, maps with borders, and fantasy calendars. Written entirely by AI (Claude).",
 	"author": "Oli_G",

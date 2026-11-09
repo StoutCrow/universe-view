@@ -132,9 +132,12 @@ export function applyAppearance(s: ChronicleSettings) {
 	const clamp = (v: number | undefined, lo: number, hi: number, d: number) => String(Math.max(lo, Math.min(hi, v ?? d)));
 	set("--uv-map-label-scale", clamp(s.mapLabelScale, 0.5, 2.5, 1));
 	set("--uv-pin-scale", clamp(s.mapPinScale, 0.5, 2.5, 1));
-	for (const c of Array.from(body.classList)) if (c.startsWith("uv-map-labels-") || c.startsWith("uv-border-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("uv-map-labels-") || c.startsWith("uv-map-paper-") || c.startsWith("uv-border-")) body.classList.remove(c);
 	body.classList.add(`uv-map-labels-${s.mapLabelStyle ?? "engraved"}`, `uv-border-${s.territoryBorder ?? "own"}`);
 	body.classList.toggle("uv-map-label-halo", s.mapLabelHalo !== false);
+	if (s.mapPaper) body.classList.add(`uv-map-paper-${s.mapPaper}`);
+	body.classList.toggle("uv-map-frame", !!s.mapFrame);
+	body.classList.toggle("uv-map-compass", !!s.mapCompass);
 	body.classList.toggle("uv-no-region-labels", s.regionLabels === false);
 	body.classList.toggle("uv-insp-compact", s.inspectorDensity === "compact");
 	// Views (Settings → Look & cards → Views): what Style Settings used to offer.
@@ -160,6 +163,6 @@ export function applyAppearance(s: ChronicleSettings) {
 
 export function clearAppearance() {
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-map-frame" || c === "uv-map-compass" || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
 	for (const v of BODY_VARS) body.style.removeProperty(v);
 }

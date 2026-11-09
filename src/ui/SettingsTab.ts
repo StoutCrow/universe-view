@@ -801,14 +801,25 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			s.mapLabelScale = v;
 			await restyle();
 		}));
-		new Setting(containerEl).setName("Lettering").setDesc("How territory names are written.").addDropdown((d) => d.addOptions({ engraved: "Engraved capitals (an old map)", plain: "Plain", italic: "Italic serif" }).setValue(s.mapLabelStyle ?? "engraved").onChange(async (v) => {
-			s.mapLabelStyle = v as "engraved" | "plain" | "italic";
+		new Setting(containerEl).setName("Lettering").setDesc("How territory names are written.").addDropdown((d) => d.addOptions({ engraved: "Engraved capitals (an old map)", plain: "Plain", italic: "Italic serif", calligraphic: "Calligraphic pen script" }).setValue(s.mapLabelStyle ?? "engraved").onChange(async (v) => {
+			s.mapLabelStyle = v as "engraved" | "plain" | "italic" | "calligraphic";
 			await restyle();
 		})).addToggle((t) => t.setTooltip("A soft halo behind names, so they read over busy pictures").setValue(s.mapLabelHalo !== false).onChange(async (v) => {
 			s.mapLabelHalo = v;
 			await restyle();
 		}));
-		new Setting(containerEl).setName("Pin size").setDesc("Every pin, as a multiple of its usual size (each place's own size still applies).").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapPinScale ?? 1).onChange(async (v) => {
+		new Setting(containerEl).setName("Paper").setDesc("A sheet of aged paper over the map: grain, stains and darkened edges.").addDropdown((d) => d.addOptions({ none: "None", parchment: "Parchment", vellum: "Vellum (pale)", sea: "Sea chart (grey-green)" }).setValue(s.mapPaper ?? "none").onChange(async (v) => {
+			s.mapPaper = v === "none" ? undefined : (v as "parchment" | "vellum" | "sea");
+			await restyle();
+		}));
+		new Setting(containerEl).setName("Ruled frame").setDesc("A double ink rule round the map with flourished corners.").addToggle((t) => t.setValue(!!s.mapFrame).onChange(async (v) => {
+			s.mapFrame = v;
+			await restyle();
+		}));
+		new Setting(containerEl).setName("Compass rose").setDesc("A drawn compass in the corner of the map.").addToggle((t) => t.setValue(!!s.mapCompass).onChange(async (v) => {
+			s.mapCompass = v;
+			await restyle();
+		}));		new Setting(containerEl).setName("Pin size").setDesc("Every pin, as a multiple of its usual size (each place's own size still applies).").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapPinScale ?? 1).onChange(async (v) => {
 			s.mapPinScale = v;
 			await restyle();
 		}));

@@ -8,7 +8,10 @@ import { DEFAULT_TIER_STYLES, type TierStyle } from "./tierstyles";
 export interface MapLook {
 	territoryFillScale?: number;
 	territoryBorder?: "own" | "darker" | "ink";
-	mapLabelStyle?: "engraved" | "plain" | "italic";
+	mapLabelStyle?: "engraved" | "plain" | "italic" | "calligraphic";
+	mapPaper?: "parchment" | "vellum" | "sea";
+	mapFrame?: boolean;
+	mapCompass?: boolean;
 	mapLabelHalo?: boolean;
 	mapLabelScale?: number;
 	realmBand?: "off" | "soft" | "strong";
@@ -25,7 +28,7 @@ export interface MapPreset {
 	look: MapLook;
 }
 
-const LOOK_KEYS: (keyof MapLook)[] = ["territoryFillScale", "territoryBorder", "mapLabelStyle", "mapLabelHalo", "mapLabelScale", "realmBand", "roughBorders", "riverWidth", "riverColor", "tierStyles"];
+const LOOK_KEYS: (keyof MapLook)[] = ["territoryFillScale", "territoryBorder", "mapLabelStyle", "mapLabelHalo", "mapLabelScale", "realmBand", "roughBorders", "riverWidth", "riverColor", "tierStyles", "mapPaper", "mapFrame", "mapCompass"];
 
 /** The built-in tiers, each changed by `f` (line, edge, texture, widths). */
 const tiers = (f: (t: TierStyle) => Partial<TierStyle>): TierStyle[] => DEFAULT_TIER_STYLES.map((t) => ({ ...t, ...f(t) }));
@@ -87,6 +90,26 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 			riverWidth: 0.8,
 			riverColor: "#7aa6bf",
 			tierStyles: tiers((t) => ({ edge: "plain", pattern: (t.tier >= 1 && t.tier <= 3 ? "hatch" : "flat"), line: t.tier >= 4 ? "dotted" : t.tier === 3 ? "dashed" : "solid" })),
+		},
+	},
+	{
+		id: "calligraphic",
+		name: "Calligraphic chart",
+		desc: "An inked chart on aged paper: pen-script names, hand-wobbled ink borders, hatched lands, a ruled frame and a compass rose.",
+		look: {
+			territoryFillScale: 0.4,
+			territoryBorder: "ink",
+			mapLabelStyle: "calligraphic",
+			mapLabelHalo: true,
+			mapLabelScale: 1.15,
+			realmBand: "off",
+			roughBorders: "medium",
+			riverWidth: 0.85,
+			riverColor: "#5f8aa3",
+			tierStyles: tiers((t) => ({ edge: "plain", pattern: (t.tier >= 1 && t.tier <= 3 ? "hatch" : "flat"), line: t.tier >= 4 ? "dotted" : t.tier === 3 ? "dashed" : "solid" })),
+			mapPaper: "parchment",
+			mapFrame: true,
+			mapCompass: true,
 		},
 	},
 	{

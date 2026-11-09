@@ -2,6 +2,12 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.6.0 — 2026-11-09
+
+### An inked chart
+- **Calligraphic chart**, a new map look preset (Settings → Maps & realms → Map look): pen-script names, hand-wobbled ink borders, hatched lands, aged paper, a ruled frame and a compass rose.
+- Each part is its own setting, so you can mix them with any look: **Lettering → Calligraphic pen script**, **Paper** (Parchment, Vellum or Sea chart: grain, stains and darkened edges over the map), **Ruled frame** (a double rule with flourished corners) and **Compass rose**. Names use your Map labels font if you set one, else a script font your system has.
+
 ## 2.5.0 — 2026-11-09
 
 ### Toolbars, one pattern

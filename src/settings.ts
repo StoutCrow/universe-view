@@ -192,7 +192,11 @@ export interface ChronicleSettings {
 	/** Map: size of place and territory names (1 = as drawn). */
 	mapLabelScale?: number;
 	/** Map: how territory names are lettered. */
-	mapLabelStyle?: "engraved" | "plain" | "italic";
+	mapLabelStyle?: "engraved" | "plain" | "italic" | "calligraphic";
+	/** The paper a map is drawn on (a skeuomorphic touch over the map), its ruled frame and its compass rose. */
+	mapPaper?: "parchment" | "vellum" | "sea";
+	mapFrame?: boolean;
+	mapCompass?: boolean;
 	/** Map: a halo behind names so they read over busy pictures. */
 	mapLabelHalo?: boolean;
 	/** Map: size of pins (1 = as drawn). */
