@@ -1463,7 +1463,7 @@ button.chronicle-ov-tile:focus-visible .chronicle-ov-tile-title {
 	gap: 6px;
 	font-size: var(--font-ui-small);
 }
-.chronicle-ov-action svg {
+.chronicle-ov-action > span:first-child {
 	display: none;
 }
 .chronicle-ov-badge {
@@ -1495,7 +1495,7 @@ button.chronicle-ov-tile:focus-visible .chronicle-ov-tile-title {
 	margin-bottom: 6px;
 	color: var(--text-muted);
 }
-.chronicle-ov-panel-head svg {
+.chronicle-ov-panel-head > span:first-child {
 	display: none;
 }
 .chronicle-ov-panel-head h3 {
