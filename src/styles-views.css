@@ -351,11 +351,9 @@ button.chronicle-dash-stat.is-active {
 }
 .chronicle-dash-card {
 	min-width: 0;
-	padding: 12px 14px;
-	border-radius: calc(var(--chronicle-radius) + 2px);
-	background: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	box-shadow: var(--chronicle-shadow);
+	/* Sections, not boxes: a hairline on top and the content below it. */
+	padding: 10px 2px 4px;
+	border-top: 1px solid var(--background-modifier-border);
 	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
 }
 .chronicle-dash-card.is-wide {
@@ -378,13 +376,13 @@ button.chronicle-dash-stat.is-active {
 	align-items: center;
 	gap: 7px;
 	margin: 0 0 8px;
-	font-size: var(--font-ui-smaller);
-	font-weight: 700;
-	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+	color: var(--text-normal);
 }
+/* The heading says what the section is; an icon beside it adds nothing. */
 .chronicle-dash-card-icon {
-	display: flex;
-	color: var(--interactive-accent);
+	display: none;
 }
 .chronicle-dash-card-icon svg {
 	width: 14px;

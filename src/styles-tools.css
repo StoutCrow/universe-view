@@ -702,15 +702,16 @@
 	font-variant-numeric: tabular-nums;
 }
 .chronicle-complete-track {
-	height: 8px;
-	margin-top: 3px;
-	border-radius: var(--uv-r-sm);
+	height: 3px;
+	margin-top: 4px;
+	border-radius: 2px;
 	background: var(--background-modifier-border);
 	overflow: hidden;
 }
+/* Unfinished is neutral; green only says "done". */
 .chronicle-complete-bar {
 	height: 100%;
-	background: var(--interactive-accent);
+	background: var(--text-muted);
 	border-radius: var(--uv-r-sm);
 	transition: width var(--chronicle-slow) var(--chronicle-ease);
 }
