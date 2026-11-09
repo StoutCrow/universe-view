@@ -1454,7 +1454,14 @@ img.chronicle-territory-icon {
 .chronicle-inspector {
 	container-type: inline-size;
 }
+/* With room, the word is enough; the icon comes back only when the tabs have to shrink to icons. */
+.chronicle-insp-tab > span:first-child:not(:last-child) {
+	display: none;
+}
 @container (max-width: 380px) {
+	.chronicle-insp-tab > span:first-child:not(:last-child) {
+		display: inline-flex;
+	}
 	.chronicle-insp-tab:not(.is-active) > span:last-child {
 		display: none;
 	}

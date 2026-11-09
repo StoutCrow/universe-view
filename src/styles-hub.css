@@ -378,18 +378,19 @@ button.chronicle-ov-tile .chronicle-ov-tile-icon {
 	font-weight: 600;
 }
 
-/* ---- The inspector, in the dashboard's style: quiet cards, plain headings ---- */
+/* ---- The inspector, in the dashboard's style: hairline sections, plain headings ---- */
 .chronicle-ep .chronicle-ep-section {
-	margin-top: 10px;
-	padding: 10px 12px;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-m);
-	background: var(--background-primary);
+	margin-top: 6px;
+	padding: 10px 0 4px;
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+	background: none;
 	box-shadow: none;
 }
 .chronicle-ep .chronicle-ep-tile {
-	border: 1px solid var(--background-modifier-border);
-	background: transparent;
+	border: none;
+	background: none;
 	box-shadow: none;
 }
 .chronicle-ep-tile-icon {
