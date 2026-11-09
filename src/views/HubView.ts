@@ -226,19 +226,34 @@ export class HubView extends ItemView {
 		return VIEW_HUB;
 	}
 	getDisplayText() {
-		return "UniverseView";
+		// Each dashboard names the page it is on, so several open at once can be told apart.
+		const s = HUB_SECTIONS.find((x) => x.id === this.section);
+		const list = s ? this.visible(s) : [];
+		const id = this.tabs.get(this.section);
+		const m = list.find((x) => x.id === id) ?? list[0];
+		const mode = m?.modeOf ? list.find((x) => x.id === m.modeOf) : undefined;
+		return m ? `UniverseView: ${(mode ?? m).name}` : "UniverseView";
 	}
+
+	/** Where this dashboard is, to open another one on the same page. */
+	place(): { section: string; tab?: string } {
+		return { section: this.section, tab: this.activePane()?.module.id };
+	}
+
+	/** How each page of this dashboard was left, kept with this dashboard (two can show different maps). */
+	private own = new Map<string, unknown>();
 	getIcon() {
 		return LOGO_ICON;
 	}
 
 	getState(): Record<string, unknown> {
-		return { section: this.section, tabs: Object.fromEntries(this.tabs) };
+		return { section: this.section, tabs: Object.fromEntries(this.tabs), views: Object.fromEntries(this.own) };
 	}
 
 	async setState(state: unknown, result: ViewStateResult) {
-		const s = state as { section?: string; tabs?: Record<string, string> } | undefined;
+		const s = state as { section?: string; tabs?: Record<string, string>; views?: Record<string, unknown> } | undefined;
 		if (s?.tabs) this.tabs = new Map(Object.entries(s.tabs));
+		if (s?.views) this.own = new Map(Object.entries(s.views));
 		if (s?.section && HUB_SECTIONS.some((x) => x.id === s.section)) this.section = s.section;
 		if (this.stageEl) this.refresh();
 		await super.setState(state, result);
@@ -282,6 +297,10 @@ export class HubView extends ItemView {
 		const s = this.plugin.settings;
 		const type = view.getViewType();
 		const state = view.getState();
+		if (JSON.stringify(state) !== JSON.stringify(this.own.get(type))) {
+			this.own.set(type, state);
+			this.app.workspace.requestSaveLayout();
+		}
 		if (JSON.stringify(state) === JSON.stringify(s.viewStates?.[type])) return;
 		s.viewStates = { ...s.viewStates, [type]: state };
 		void this.plugin.saveSettings();
@@ -423,6 +442,12 @@ export class HubView extends ItemView {
 			const out = el("button", { cls: "clickable-icon uv-hub-out", attr: { "aria-label": "Open in its own tab" } }, this.barEl);
 			icon(out, "external-link");
 			out.addEventListener("click", () => void this.plugin.activateView(current.id, {}, "tab"));
+			}
+			// Another dashboard beside this one, on the same page: to compare a map and a family tree.
+			{
+				const beside = el("button", { cls: "clickable-icon uv-hub-out", attr: { "aria-label": "Open another dashboard to the right (to compare two pages side by side)" } }, this.barEl);
+				icon(beside, "columns-2");
+				beside.addEventListener("click", () => void this.plugin.openHubBeside("split", { section: section.id, tab: current.id }));
 		}
 		this.show(current);
 	}
@@ -521,6 +546,7 @@ export class HubView extends ItemView {
 		if (tab) this.tabs.set(section, tab);
 		this.app.workspace.requestSaveLayout();
 		this.refresh();
+		(this.leaf as unknown as { updateHeader?: () => void }).updateHeader?.();
 	}
 
 	private show(m: HubModule) {
@@ -553,7 +579,7 @@ export class HubView extends ItemView {
 				host.empty();
 				pane.view = m.view(this.leaf, this.plugin);
 				await pane.view.mount(host);
-				const saved = this.plugin.settings.viewStates?.[m.id];
+				const saved = this.own.get(m.id) ?? this.plugin.settings.viewStates?.[m.id];
 				if (saved) await pane.view.setState(saved, { history: false });
 				pane.view.setWaiting(!host.hasClass("is-active"));
 			} else this.drawPage(host, m);

@@ -614,12 +614,31 @@ export default class ChroniclePlugin extends Plugin {
 
 	// ---- Opening views ---------------------------------------------------------------------------
 
+	/** The dashboard a link should go to: the one you're in, else the one used last (there can be several open). */
+	pickHub(): WorkspaceLeaf | undefined {
+		const { workspace } = this.app;
+		const hubs = workspace.getLeavesOfType(VIEW_HUB);
+		const active = workspace.getActiveViewOfType(HubView)?.leaf;
+		if (active && hubs.includes(active)) return active;
+		const time = (l: WorkspaceLeaf) => (l as unknown as { activeTime?: number }).activeTime ?? 0;
+		return [...hubs].sort((a, b) => time(b) - time(a))[0];
+	}
+
+	/** Another dashboard, in a new tab or beside this one, optionally on a given page (to compare a map and a family tree). */
+	async openHubBeside(where: "tab" | "split" = "split", at?: { section: string; tab?: string }): Promise<WorkspaceLeaf> {
+		const { workspace } = this.app;
+		const leaf = workspace.getLeaf(where);
+		await leaf.setViewState({ type: VIEW_HUB, active: true, state: at ? { section: at.section, tabs: at.tab ? { [at.section]: at.tab } : {} } : {} });
+		await workspace.revealLeaf(leaf);
+		return leaf;
+	}
+
 	/** Opens a view: reusing an open one, or in a new tab / split beside the current one. */
 	async activateView(type: string, state: Record<string, unknown> = {}, where: false | "tab" | "split" = false): Promise<WorkspaceLeaf> {
 		const { workspace } = this.app;
 		// Views live in the dashboard: links, menus and commands open them on their tab there.
 		if (!where && hostedInHub(this, type)) {
-			let hub = workspace.getLeavesOfType(VIEW_HUB)[0];
+			let hub = this.pickHub();
 			if (!hub) {
 				hub = workspace.getLeaf("tab");
 				await hub.setViewState({ type: VIEW_HUB, active: true });
@@ -629,7 +648,7 @@ export default class ChroniclePlugin extends Plugin {
 			await (hub.view as HubView).openModule(type, state);
 			return hub;
 		}
-		let leaf = where ? null : workspace.getLeavesOfType(type)[0];
+		let leaf = where ? null : type === VIEW_HUB ? this.pickHub() ?? null : workspace.getLeavesOfType(type)[0];
 		if (!leaf) leaf = workspace.getLeaf(where === "split" ? "split" : "tab");
 		await leaf.setViewState({ type, active: true, state });
 		await workspace.revealLeaf(leaf);
@@ -1028,6 +1047,7 @@ export default class ChroniclePlugin extends Plugin {
 		const menu = new Menu();
 		for (const v of VIEWS.filter((x) => this.moduleOn(x.type))) menu.addItem((i) => i.setTitle(v.name).setIcon(v.icon).onClick(() => void this.activateView(v.type)));
 		menu.addSeparator();
+		menu.addItem((i) => i.setTitle("Another dashboard to the right").setIcon("columns-2").onClick(() => void this.openHubBeside("split", this.app.workspace.getActiveViewOfType(HubView)?.place())));
 		menu.addItem((i) => i.setTitle("Switch theme…").setIcon("swatch-book").onClick(() => {
 			const r = this.app.workspace.containerEl.getBoundingClientRect();
 			this.showThemeMenu(new MouseEvent("contextmenu", { clientX: r.left + r.width / 2 - 140, clientY: r.top + 120 }));
@@ -1666,6 +1686,8 @@ export default class ChroniclePlugin extends Plugin {
 	}
 
 	private registerCommands() {
+		this.addCommand({ id: "open-hub-tab", name: "Open another dashboard in a new tab", icon: "plus-square", callback: () => void this.openHubBeside("tab") });
+		this.addCommand({ id: "open-hub-split", name: "Open another dashboard to the right", icon: "columns-2", callback: () => void this.openHubBeside("split", this.app.workspace.getActiveViewOfType(HubView)?.place()) });
 		this.addCommand({
 			id: "actions",
 			name: "Actions…",

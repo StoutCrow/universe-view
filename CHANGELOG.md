@@ -2,6 +2,14 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.8.0 — 2026-11-09
+
+### More than one dashboard
+- Open as many dashboards as you like and put them side by side, for example a map in one and a family tree in the other. Use the new **columns** button at the top right of the dashboard (it opens another dashboard to the right, on the page you are on), the actions *Open another dashboard to the right* and *Open another dashboard in a new tab*, or the quick menu.
+- Each dashboard remembers its own pages: two can show different maps, timelines or trees, and they come back that way after a restart. Before, every dashboard shared one saved state.
+- A dashboard's tab is named after its page (*UniverseView: Map*), so several can be told apart.
+- Links from notes and other views open on the dashboard you are in, or else the one you used last, instead of always the first.
+
 ## 2.7.0 — 2026-11-09
 
 ### Reshaping a border
