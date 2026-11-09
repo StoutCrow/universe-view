@@ -2,7 +2,7 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 2.0.1 — not released yet
+## 2.0.1 — 2026-11-09
 
 **One tag scheme**
 - Every tag says one thing, one way: what a note is (`#Place_County`, `#Character_Person`), what it belongs to (`#Group_Nation_United_States`) and facts about it (`#Character_Status_Dead`, `#Place_Size_Small`). The type words are always Character, Group, Place, Event and Map, and every note has one kind tag.
