@@ -185,7 +185,7 @@ Only write each relationship once — UniverseView infers children, siblings, th
 | **Map** | Real-world map (OpenStreetMap by default) or your own image maps. Pins show events per place, the time slider filters by date, and **Trace a journey** draws a person’s path through the places of their events. “Place an existing note” and “Move pins” write coordinates back into the note. |
 | **Calendar** | Your world's calendar as months, a year or what's coming up, with moons, seasons, holidays, birthdays and repeating events; see *Calendars* below. |
 | **Table** | A spreadsheet of one kind of note, edited in place. |
-| **Houses over time** | Houses and dynasties across the generations, with marriages and successions (from the Dynasties toolbar, or ```` ```chronicle-houses ````). |
+| **Houses over time** | Houses and dynasties across the generations, with marriages and successions (from the Dynasties toolbar, or ```` ```universeview-houses ````). |
 
 Every view opens notes on click (Ctrl/Cmd-click for a new tab), shows Page Preview on Ctrl-hover, and has a right-click menu to jump to the same note in the other views.
 
@@ -282,31 +282,33 @@ Rest the pointer on anything in a UniverseView view (timeline items, tree cards,
 
 ## Embedding views in notes
 
+Each embed is named `universeview-` and the view (`universeview-timeline`, `-family`, `-graph`, `-lineage`, `-org`, `-map`, `-calendar`, `-houses`). The older `chronicle-` names still work in notes already written with them.
+
 ````markdown
-```chronicle-timeline
+```universeview-timeline
 folder: Tudors        # optional filters: tags, cultures, people, places, from, to, importance, search
 group: culture
 lifespans: true
 height: 360
 ```
 
-```chronicle-family
+```universeview-family
 root: Henry VIII      # defaults to the current note
 up: 2
 down: 2
 ```
 
-```chronicle-graph
+```universeview-graph
 focus: Aldric Vane
 depth: 2
 types: people, cultures
 ```
 
-```chronicle-lineage
+```universeview-lineage
 folder: Vael
 ```
 
-```chronicle-org
+```universeview-org
 root: Order of the Ash   # defaults to the current note (or every top-level group in `folder:`)
 at: SE 30                # the organisation on that date
 timeline: true
@@ -327,7 +329,7 @@ person: Henry VIII       # a life on one strip: roles, partners, children, place
 folder: Vael             # people alive over time, balance of groups, lifespans, names
 ```
 
-```chronicle-map
+```universeview-map
 map: Vael Map         # or "world"
 trace: Aldric Vane
 color-by: category    # culture | category | region | type
@@ -378,7 +380,7 @@ Settings → UniverseView → Calendars lets you define calendars for your world
 
 A note uses its `calendar:`, then its world's calendar, then the per-folder mapping (`Vael = vaelic`), then the default. The real-world calendar has proper weekdays, the real moon and the solstices and equinoxes.
 
-**The Calendar view** (Ctrl+Alt+C) shows a month as weeks (festival days on their own), a whole year at a glance, or what's *coming up*. Every day shows its moons' phases. Days also show events, events that repeat (give an event `repeat: yearly`, or monthly or weekly), holidays, the start of each season, birthdays (with ages) and story chapters. Click a day for everything on it, double-click to add an event there, and drag an event to another day to move it. **Today** in the world is kept on the world note (or in the settings); the ⏭ and ⏩ buttons move it on by a day or a week, as a campaign goes on. The **converter** shows any date in every calendar, with weekday, season and moons. Embed a calendar with ```` ```chronicle-calendar ```` (`folder:`, `mode: month | year | agenda`, `date:`).
+**The Calendar view** (Ctrl+Alt+C) shows a month as weeks (festival days on their own), a whole year at a glance, or what's *coming up*. Every day shows its moons' phases. Days also show events, events that repeat (give an event `repeat: yearly`, or monthly or weekly), holidays, the start of each season, birthdays (with ages) and story chapters. Click a day for everything on it, double-click to add an event there, and drag an event to another day to move it. **Today** in the world is kept on the world note (or in the settings); the ⏭ and ⏩ buttons move it on by a day or a week, as a campaign goes on. The **converter** shows any date in every calendar, with weekday, season and moons. Embed a calendar with ```` ```universeview-calendar ```` (`folder:`, `mode: month | year | agenda`, `date:`).
 
 ## World notes
 
@@ -407,7 +409,7 @@ Each calendar has a **Current year** (Settings → Calendars; a world note's `to
 ## More views and tools
 
 - **Table** (Ctrl+Alt+E): people, places, events, groups or maps as a spreadsheet. Click a cell to change it: dates are checked as you type, lists of links are written as comma-separated names, and every value goes into the property the note already uses. Sort by any column, filter, and add a column for any other property.
-- **Houses over time** (from the Dynasties toolbar): each house, family, dynasty or clan as a band across time, with its logo. Members' lives sit inside the band; people without a house of their own follow their parents'. Heads of the house are crowned and joined in order of succession. Marriages link the houses with a heart, and cadet branches drop from the house they came from. Embed with ```` ```chronicle-houses ````.
+- **Houses over time** (from the Dynasties toolbar): each house, family, dynasty or clan as a band across time, with its logo. Members' lives sit inside the band; people without a house of their own follow their parents'. Heads of the house are crowned and joined in order of succession. Marriages link the houses with a heart, and cadet branches drop from the house they came from. Embed with ```` ```universeview-houses ````.
 - **Maps through time:** give a map note a list of images with the dates they apply, and the time slider shows each era's map:
   ```yaml
   images:

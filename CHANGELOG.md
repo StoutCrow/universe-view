@@ -7,6 +7,12 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 **A tactile style**
 - Settings → Look & cards → *Surface style*: *Tactile* gives UniverseView's own tabs, buttons, fields and panels a physical feel: raised keys that press in, folder tabs that join the page, inset fields and sunken sections. They're easy to tell from Obsidian's flat ones. It works with every theme, in light and dark. *Flat* stays the default.
 
+- Tactile is made of parts you switch on and off one by one (*Tactile parts*: raised keys, toolbar, inset fields, folder tabs, sheets and wells, pressed headings, icon plates, folders and notes), with a *Depth* of subtle, normal or deep and a colour for folders.
+- In the Library and the Files panel, tactile draws folders as manila folders with a tab and notes as sheets of paper (your file tints still show). Icons come back on small raised plates in headings, tabs and buttons, where the flat style leaves them out.
+
+**Embeds are named UniverseView**
+- Embedded views are now written `universeview-timeline`, `universeview-family`, `-graph`, `-lineage`, `-org`, `-map`, `-calendar` and `-houses`, in the insert commands, the docs and the example vault. The older `chronicle-` names still work in every note already written with them.
+
 **A tour**
 - On a first install, a short tour opens: what UniverseView does, how notes become views, and a step where you try on the themes and surface styles live and keep the one you like. Close it without carrying on and nothing changes. *Settings → Look & cards → Take the tour* (or the command *Take the tour*) brings it back. Anyone who already has UniverseView settings isn't shown it.
 

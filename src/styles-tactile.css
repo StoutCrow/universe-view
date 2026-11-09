@@ -10,8 +10,8 @@ body {
 	--uv-t-face: linear-gradient(to bottom, var(--uv-t-top), var(--uv-t-bottom));
 	--uv-t-sunk: linear-gradient(to bottom, color-mix(in srgb, var(--background-primary) 80%, var(--text-normal)), color-mix(in srgb, var(--background-primary) 92%, var(--text-normal)));
 	--uv-t-edge: color-mix(in srgb, var(--text-normal) 24%, transparent);
-	--uv-t-hi: rgba(255, 255, 255, 0.7);
-	--uv-t-lo: rgba(0, 0, 0, 0.16);
+	--uv-t-hi: rgba(255, 255, 255, calc(0.7 * var(--uv-t-depth, 1)));
+	--uv-t-lo: rgba(0, 0, 0, calc(0.16 * var(--uv-t-depth, 1)));
 	--uv-t-raised: inset 0 1px 0 var(--uv-t-hi), 0 1px 0 var(--uv-t-lo), 0 2px 3px -1px var(--uv-t-lo);
 	--uv-t-pressed: inset 0 2px 3px var(--uv-t-lo), inset 0 0 0 1px var(--uv-t-edge);
 	--uv-t-inset: inset 0 1px 2px var(--uv-t-lo);
@@ -20,77 +20,77 @@ body.theme-dark {
 	--uv-t-top: color-mix(in srgb, var(--background-primary) 90%, white);
 	--uv-t-bottom: color-mix(in srgb, var(--background-primary) 82%, black);
 	--uv-t-sunk: linear-gradient(to bottom, color-mix(in srgb, var(--background-primary) 70%, black), color-mix(in srgb, var(--background-primary) 88%, black));
-	--uv-t-hi: rgba(255, 255, 255, 0.09);
-	--uv-t-lo: rgba(0, 0, 0, 0.5);
+	--uv-t-hi: rgba(255, 255, 255, calc(0.09 * var(--uv-t-depth, 1)));
+	--uv-t-lo: rgba(0, 0, 0, calc(0.5 * var(--uv-t-depth, 1)));
 	--uv-t-edge: color-mix(in srgb, var(--text-normal) 20%, transparent);
 }
 
 /* ---- Keys: chips, icon buttons and the page buttons are raised; on is pressed in ---- */
-body.uv-tactile .chronicle-chip:not(.mod-cta-chip),
-body.uv-tactile .chronicle-icon-btn:not(.mod-cta-icon),
-body.uv-tactile .chronicle-ov-action,
-body.uv-tactile .chronicle-dash-actions button:not(.mod-cta),
-body.uv-tactile .uv-tour-foot button:not(.mod-cta),
-body.uv-tactile .uv-lin-chip {
+body.uv-t-keys .chronicle-chip:not(.mod-cta-chip),
+body.uv-t-keys .chronicle-icon-btn:not(.mod-cta-icon),
+body.uv-t-keys .chronicle-ov-action,
+body.uv-t-keys .chronicle-dash-actions button:not(.mod-cta),
+body.uv-t-keys .uv-tour-foot button:not(.mod-cta),
+body.uv-t-keys .uv-lin-chip {
 	background: var(--uv-t-face);
 	border: 1px solid var(--uv-t-edge);
 	border-radius: var(--uv-r-md);
 	box-shadow: var(--uv-t-raised);
 	color: var(--text-normal);
 }
-body.uv-tactile .chronicle-chip:not(.mod-cta-chip):hover,
-body.uv-tactile .chronicle-icon-btn:not(.mod-cta-icon):hover,
-body.uv-tactile .chronicle-ov-action:hover,
-body.uv-tactile .chronicle-dash-actions button:not(.mod-cta):hover {
+body.uv-t-keys .chronicle-chip:not(.mod-cta-chip):hover,
+body.uv-t-keys .chronicle-icon-btn:not(.mod-cta-icon):hover,
+body.uv-t-keys .chronicle-ov-action:hover,
+body.uv-t-keys .chronicle-dash-actions button:not(.mod-cta):hover {
 	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-top) 85%, white), var(--uv-t-top));
 }
-body.uv-tactile .chronicle-chip.is-active,
-body.uv-tactile .chronicle-icon-btn.is-active,
-body.uv-tactile .chronicle-chip:not(.mod-cta-chip):active,
-body.uv-tactile .chronicle-icon-btn:not(.mod-cta-icon):active,
-body.uv-tactile .uv-lin-chip.is-active {
+body.uv-t-keys .chronicle-chip.is-active,
+body.uv-t-keys .chronicle-icon-btn.is-active,
+body.uv-t-keys .chronicle-chip:not(.mod-cta-chip):active,
+body.uv-t-keys .chronicle-icon-btn:not(.mod-cta-icon):active,
+body.uv-t-keys .uv-lin-chip.is-active {
 	background: var(--uv-t-sunk);
 	box-shadow: var(--uv-t-pressed);
 	transform: none;
 }
 /* The one main button keeps the accent, with a gloss on top. */
-body.uv-tactile .chronicle-icon-btn.mod-cta-icon,
-body.uv-tactile .chronicle-chip.mod-cta-chip,
-body.uv-tactile .chronicle-dash-actions button.mod-cta,
-body.uv-tactile .uv-tour-foot button.mod-cta {
+body.uv-t-keys .chronicle-icon-btn.mod-cta-icon,
+body.uv-t-keys .chronicle-chip.mod-cta-chip,
+body.uv-t-keys .chronicle-dash-actions button.mod-cta,
+body.uv-t-keys .uv-tour-foot button.mod-cta {
 	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 60%);
 	border: 1px solid color-mix(in srgb, var(--interactive-accent) 70%, black);
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px var(--uv-t-lo);
 }
 
 /* ---- The toolbar: a raised strip ---- */
-body.uv-tactile .chronicle-toolbar {
+body.uv-t-toolbar .chronicle-toolbar {
 	background: var(--uv-t-face);
 	border-bottom: 1px solid var(--uv-t-edge);
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 3px -1px var(--uv-t-lo);
 }
 
 /* ---- Fields: recessed ---- */
-body.uv-tactile .chronicle-toolbar .dropdown,
-body.uv-tactile .chronicle-picker input,
-body.uv-tactile .chronicle-toolbar .chronicle-search input,
-body.uv-tactile .chronicle-dash-tree-head .chronicle-search input {
+body.uv-t-fields .chronicle-toolbar .dropdown,
+body.uv-t-fields .chronicle-picker input,
+body.uv-t-fields .chronicle-toolbar .chronicle-search input,
+body.uv-t-fields .chronicle-dash-tree-head .chronicle-search input {
 	background: var(--uv-t-sunk);
 	border: 1px solid var(--uv-t-edge);
 	box-shadow: var(--uv-t-inset);
 }
 
 /* ---- Tabs: folder tabs that sit on the page below them ---- */
-body.uv-tactile .uv-hub-bar {
+body.uv-t-tabs .uv-hub-bar {
 	align-items: flex-end;
 	padding-top: 8px;
 	background: var(--uv-t-sunk);
 }
-body.uv-tactile .uv-hub-tabs {
+body.uv-t-tabs .uv-hub-tabs {
 	gap: 4px;
 }
-body.uv-tactile button.uv-hub-tab,
-body.uv-tactile .chronicle-insp-tab {
+body.uv-t-tabs button.uv-hub-tab,
+body.uv-t-tabs .chronicle-insp-tab {
 	height: 34px;
 	margin-bottom: -1px;
 	padding: 0 14px;
@@ -101,13 +101,13 @@ body.uv-tactile .chronicle-insp-tab {
 	box-shadow: inset 0 1px 0 var(--uv-t-hi);
 	color: var(--text-muted);
 }
-body.uv-tactile button.uv-hub-tab:hover,
-body.uv-tactile .chronicle-insp-tab:hover {
+body.uv-t-tabs button.uv-hub-tab:hover,
+body.uv-t-tabs .chronicle-insp-tab:hover {
 	background: var(--uv-t-face);
 	color: var(--text-normal);
 }
-body.uv-tactile button.uv-hub-tab.is-active,
-body.uv-tactile .chronicle-insp-tab.is-active {
+body.uv-t-tabs button.uv-hub-tab.is-active,
+body.uv-t-tabs .chronicle-insp-tab.is-active {
 	position: relative;
 	z-index: 1;
 	background: var(--background-primary);
@@ -115,47 +115,47 @@ body.uv-tactile .chronicle-insp-tab.is-active {
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 -1px 3px -1px var(--uv-t-lo);
 	color: var(--text-normal);
 }
-body.uv-tactile .chronicle-insp-tabs {
+body.uv-t-tabs .chronicle-insp-tabs {
 	gap: 4px;
 	padding: 0 6px;
 	border-bottom: 1px solid var(--uv-t-edge);
 }
 
 /* ---- The big tabs down the side: keys on a panel ---- */
-body.uv-tactile .uv-hub-rail {
+body.uv-t-tabs .uv-hub-rail {
 	background: var(--uv-t-sunk);
 	box-shadow: inset -1px 0 0 var(--uv-t-hi);
 }
-body.uv-tactile button.uv-hub-section {
+body.uv-t-tabs button.uv-hub-section {
 	background: var(--uv-t-face);
 	border: 1px solid var(--uv-t-edge);
 	box-shadow: var(--uv-t-raised);
 	color: var(--text-normal);
 }
-body.uv-tactile button.uv-hub-section:hover {
+body.uv-t-tabs button.uv-hub-section:hover {
 	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-top) 85%, white), var(--uv-t-top));
 }
-body.uv-tactile button.uv-hub-section.is-active {
+body.uv-t-tabs button.uv-hub-section.is-active {
 	background: var(--uv-t-sunk);
 	box-shadow: var(--uv-t-pressed);
 	font-weight: 700;
 }
 
 /* ---- Panels: raised sheets; the inspector's sections are wells set into the page ---- */
-body.uv-tactile .chronicle-module,
-body.uv-tactile .chronicle-dash-card,
-body.uv-tactile .chronicle-ov-panel {
+body.uv-t-panels .chronicle-module,
+body.uv-t-panels .chronicle-dash-card,
+body.uv-t-panels .chronicle-ov-panel {
 	padding: 12px 14px;
 	background: var(--background-primary);
 	border: 1px solid var(--uv-t-edge);
 	border-radius: var(--uv-r-lg);
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 0 var(--uv-t-lo), 0 6px 14px -9px var(--uv-t-lo);
 }
-body.uv-tactile .chronicle-module {
+body.uv-t-panels .chronicle-module {
 	padding: 0;
 }
-body.uv-tactile .chronicle-inspector .chronicle-insp-section,
-body.uv-tactile .chronicle-ep .chronicle-ep-section {
+body.uv-t-panels .chronicle-inspector .chronicle-insp-section,
+body.uv-t-panels .chronicle-ep .chronicle-ep-section {
 	margin: 6px 0;
 	padding: 10px 12px;
 	background: var(--uv-t-sunk);
@@ -163,10 +163,10 @@ body.uv-tactile .chronicle-ep .chronicle-ep-section {
 	border-radius: var(--uv-r-lg);
 	box-shadow: var(--uv-t-inset);
 }
-body.uv-tactile .chronicle-inspector .chronicle-insp-section:first-child {
+body.uv-t-panels .chronicle-inspector .chronicle-insp-section:first-child {
 	border-top: 1px solid var(--uv-t-edge);
 }
-body.uv-tactile .uv-id {
+body.uv-t-panels .uv-id {
 	padding: 10px 12px;
 	background: var(--uv-t-face);
 	border: 1px solid var(--uv-t-edge);
@@ -175,12 +175,102 @@ body.uv-tactile .uv-id {
 }
 
 /* ---- Headings are pressed into the surface ---- */
-body.uv-tactile .chronicle-dash-card-title,
-body.uv-tactile .chronicle-ov-panel-head h3,
-body.uv-tactile .chronicle-module-title,
-body.uv-tactile .uv-id-name,
-body.uv-tactile .chronicle-ov-title {
+body.uv-t-headings .chronicle-dash-card-title,
+body.uv-t-headings .chronicle-ov-panel-head h3,
+body.uv-t-headings .chronicle-module-title,
+body.uv-t-headings .uv-id-name,
+body.uv-t-headings .chronicle-ov-title {
 	text-shadow: 0 1px 0 var(--uv-t-hi);
+}
+
+/* ---- Icons: each one sits on a small raised plate (the quiet styles drop most icons; tactile keeps them) ---- */
+body.uv-t-icons :is(
+	.chronicle-ov-tile-icon,
+	.chronicle-ov-action > span:first-child,
+	.chronicle-ov-panel-head > span:first-child,
+	.chronicle-dash-card-icon,
+	.chronicle-dash-btn-icon,
+	.chronicle-module-icon,
+	.chronicle-stat-icon,
+	.chronicle-ep-tile-icon,
+	.uv-lin-chip-icon,
+	.chronicle-inspector .chronicle-insp-section-head > span:first-child,
+	.chronicle-ep .chronicle-ep-section-head > span:first-child,
+	.chronicle-insp-tab > span:first-child:not(:last-child),
+	.uv-hub-section-icon
+) {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border: 1px solid var(--uv-t-edge);
+	border-radius: var(--uv-r-md);
+	background: var(--uv-t-face);
+	box-shadow: var(--uv-t-raised);
+	color: var(--text-muted);
+}
+body.uv-t-icons :is(
+	.chronicle-ov-tile-icon,
+	.chronicle-ov-action > span:first-child,
+	.chronicle-ov-panel-head > span:first-child,
+	.chronicle-dash-card-icon,
+	.chronicle-dash-btn-icon,
+	.chronicle-module-icon,
+	.chronicle-stat-icon,
+	.chronicle-ep-tile-icon,
+	.uv-lin-chip-icon,
+	.chronicle-inspector .chronicle-insp-section-head > span:first-child,
+	.chronicle-ep .chronicle-ep-section-head > span:first-child,
+	.chronicle-insp-tab > span:first-child:not(:last-child),
+	.uv-hub-section-icon
+) svg {
+	width: 14px;
+	height: 14px;
+}
+body.uv-t-icons .chronicle-dash-btn-icon,
+body.uv-t-icons .chronicle-ov-action > span:first-child {
+	width: 20px;
+	height: 20px;
+}
+body.uv-t-icons .uv-hub-section-icon {
+	width: 28px;
+	height: 28px;
+}
+body.uv-t-icons .chronicle-stat-icon {
+	margin-bottom: 4px;
+}
+
+/* ---- Folders in the Library and the Files panel: manila folders with a tab; notes are sheets of paper ---- */
+body.uv-t-folders .chronicle-dash-row.is-folder:not(.is-selected):not(.is-drop-target) {
+	position: relative;
+	margin-top: 4px;
+	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-folder, #e6c57e) 34%, var(--background-primary)), color-mix(in srgb, var(--uv-t-folder, #d2a851) 20%, var(--background-primary)));
+	border: 1px solid color-mix(in srgb, #a9822f 45%, transparent);
+	border-radius: 0 var(--uv-r-md) var(--uv-r-md) var(--uv-r-md);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 1px var(--uv-t-lo);
+}
+body.uv-t-folders .chronicle-dash-row.is-folder:not(.is-selected):not(.is-drop-target)::before {
+	content: "";
+	position: absolute;
+	left: -1px;
+	top: -5px;
+	width: 38px;
+	height: 5px;
+	border: 1px solid color-mix(in srgb, #a9822f 45%, transparent);
+	border-bottom: none;
+	border-radius: 5px 5px 0 0;
+	background: color-mix(in srgb, var(--uv-t-folder, #e6c57e) 34%, var(--background-primary));
+	pointer-events: none;
+}
+body.uv-t-folders .chronicle-dash-row.is-folder .chronicle-dash-row-icon {
+	color: color-mix(in srgb, #b8872a 80%, var(--text-normal));
+}
+body.uv-t-folders .chronicle-dash-row.is-file:not(.uv-file-tinted):not(.is-selected) {
+	border-bottom: 1px solid var(--uv-t-edge);
+	border-radius: 0;
+	box-shadow: inset 0 1px 0 var(--uv-t-hi);
 }
 
 /* ---- The tour ---- */

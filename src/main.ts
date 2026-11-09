@@ -102,13 +102,13 @@ const VIEWS: { type: string; name: string; icon: string; key: string }[] = [
 ];
 
 const SNIPPETS: { name: string; text: string }[] = [
-	{ name: "Timeline", text: "```chronicle-timeline\n# folder: World\n# group: culture\n# from: 1200\n# to: 1300\n```" },
-	{ name: "Family tree of this person", text: "```chronicle-family\nup: 2\ndown: 2\n```" },
-	{ name: "Connections around this note", text: "```chronicle-graph\ndepth: 2\n```" },
-	{ name: "Lineage of groups", text: "```chronicle-lineage\n# folder: World\n```" },
-	{ name: "Organisation chart", text: "```chronicle-org\n# root: Organisation name (defaults to this note)\n# at: 1250\ntimeline: true\n```" },
-	{ name: "Map", text: "```chronicle-map\n# map: World Map\n# trace: Person Name\n```" },
-	{ name: "Calendar", text: "```chronicle-calendar\n# folder: World\n# mode: month (or year, agenda)\n```" },
+	{ name: "Timeline", text: "```universeview-timeline\n# folder: World\n# group: culture\n# from: 1200\n# to: 1300\n```" },
+	{ name: "Family tree of this person", text: "```universeview-family\nup: 2\ndown: 2\n```" },
+	{ name: "Connections around this note", text: "```universeview-graph\ndepth: 2\n```" },
+	{ name: "Lineage of groups", text: "```universeview-lineage\n# folder: World\n```" },
+	{ name: "Organisation chart", text: "```universeview-org\n# root: Organisation name (defaults to this note)\n# at: 1250\ntimeline: true\n```" },
+	{ name: "Map", text: "```universeview-map\n# map: World Map\n# trace: Person Name\n```" },
+	{ name: "Calendar", text: "```universeview-calendar\n# folder: World\n# mode: month (or year, agenda)\n```" },
 ];
 
 export default class ChroniclePlugin extends Plugin {

@@ -1,4 +1,17 @@
-import type { ChronicleSettings, MotionId, ThemeId } from "./settings";
+import type { ChronicleSettings, MotionId, TactilePart, ThemeId } from "./settings";
+
+/** The parts of the tactile style, each one switchable on its own. */
+export const TACTILE_PARTS: { id: TactilePart; name: string; desc: string }[] = [
+	{ id: "keys", name: "Raised keys", desc: "Chips and buttons stand up and press in when on." },
+	{ id: "toolbar", name: "Raised toolbar", desc: "The strip of controls along the top of a view." },
+	{ id: "fields", name: "Inset fields", desc: "Search boxes and menus sink into the page." },
+	{ id: "tabs", name: "Folder tabs", desc: "The dashboard's and the inspector's tabs, and the big tabs at the side." },
+	{ id: "panels", name: "Sheets and wells", desc: "Cards and board modules rise; the inspector's sections sink." },
+	{ id: "headings", name: "Pressed headings", desc: "A light edge under headings, as if stamped in." },
+	{ id: "icons", name: "Icon plates", desc: "Icons sit on small raised plates, and come back where the flat style drops them." },
+	{ id: "folders", name: "Folders and notes", desc: "Manila folders with a tab and sheets of paper in the Library and the Files panel." },
+];
+const DEPTH = { subtle: 0.55, normal: 1, deep: 1.6 };
 
 export interface ThemeInfo {
 	id: ThemeId;
@@ -76,7 +89,7 @@ export function motionMs(settings: ChronicleSettings, base: number): number {
 const BODY_VARS = [
 	"--chronicle-user-accent", "--chronicle-user-event", "--chronicle-user-person", "--chronicle-user-culture", "--chronicle-user-place",
 	"--chronicle-user-speed", "--chronicle-ease", "--chronicle-density", "--chronicle-user-radius", "--uv-map-label-scale", "--uv-pin-scale",
-	"--chronicle-tl-row-height", "--chronicle-tl-font-size", "--chronicle-card-width", "--chronicle-card-height", "--chronicle-male-tint", "--chronicle-female-tint", "--uv-river-color",
+	"--chronicle-tl-row-height", "--chronicle-tl-font-size", "--chronicle-card-width", "--chronicle-card-height", "--chronicle-male-tint", "--chronicle-female-tint", "--uv-river-color", "--uv-t-depth", "--uv-t-folder",
 ];
 
 /** Puts the chosen theme, colors, motion and density on <body> as classes and CSS variables. */
@@ -127,7 +140,11 @@ export function applyAppearance(s: ChronicleSettings) {
 	set("--chronicle-female-tint", s.tintFemale);
 	body.classList.toggle("chronicle-gender-tint", !!s.genderTint);
 	body.classList.toggle("chronicle-flat", !!s.flatStyle);
-	body.classList.toggle("uv-tactile", s.surfaceStyle === "tactile");
+	const tactile = s.surfaceStyle === "tactile";
+	body.classList.toggle("uv-tactile", tactile);
+	for (const part of TACTILE_PARTS) body.classList.toggle(`uv-t-${part.id}`, tactile && !(s.tactileOff ?? []).includes(part.id));
+	set("--uv-t-depth", tactile ? String(DEPTH[s.tactileDepth ?? "normal"]) : undefined);
+	set("--uv-t-folder", tactile ? s.tactileFolderColor : undefined);
 	// Map look: the realm border band and rivers.
 	for (const c of Array.from(body.classList)) if (c.startsWith("uv-band-")) body.classList.remove(c);
 	body.classList.add(`uv-band-${s.realmBand ?? "soft"}`);
@@ -136,6 +153,6 @@ export function applyAppearance(s: ChronicleSettings) {
 
 export function clearAppearance() {
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-band-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
 	for (const v of BODY_VARS) body.style.removeProperty(v);
 }

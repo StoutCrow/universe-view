@@ -118,19 +118,23 @@ function filterFrom(plugin: ChroniclePlugin, c: Config): EntityFilter {
 }
 
 export function registerCodeBlocks(plugin: ChroniclePlugin) {
+	// Each embed has two names: `universeview-timeline` (what UniverseView writes and documents) and the older
+	// `chronicle-timeline`, which keeps working in every note already written with it.
 	const reg = (name: string, build: Builder, defaultHeight = 360) => {
-		BUILDERS[name] = build;
-		plugin.registerMarkdownCodeBlockProcessor(name, (source, elx, ctx) => {
-			let config: Config;
-			try {
-				config = parseConfig(source);
-			} catch (err) {
-				showError(elx, (err as Error).message);
-				return;
-			}
-			const height = Number(config.height) > 80 ? Number(config.height) : defaultHeight;
-			ctx.addChild(new ChronicleBlock(elx, plugin, (host) => build(config, host, ctx.sourcePath), height));
-		});
+		for (const alias of [name.replace(/^chronicle-/, "universeview-"), name]) {
+			BUILDERS[alias] = build;
+			plugin.registerMarkdownCodeBlockProcessor(alias, (source, elx, ctx) => {
+				let config: Config;
+				try {
+					config = parseConfig(source);
+				} catch (err) {
+					showError(elx, (err as Error).message);
+					return;
+				}
+				const height = Number(config.height) > 80 ? Number(config.height) : defaultHeight;
+				ctx.addChild(new ChronicleBlock(elx, plugin, (host) => build(config, host, ctx.sourcePath), height));
+			});
+		}
 	};
 
 	reg("chronicle-timeline", (c, host) => {

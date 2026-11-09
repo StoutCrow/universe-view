@@ -6,22 +6,22 @@ tags: [overview]
 
 Dates here use the **Vaelic Reckoning** (see Settings → Chronicle → Calendars).
 
-```chronicle-timeline
+```universeview-timeline
 folder: Vael
 group: culture
 ```
 
-```chronicle-map
+```universeview-map
 map: Vael Map
 trace: Aldric Vane
 ```
 
-```chronicle-graph
+```universeview-graph
 focus: Aldric Vane
 depth: 2
 ```
 
-```chronicle-org
+```universeview-org
 folder: Vael
 height: 560
 ```

@@ -13,7 +13,7 @@ import { chooseWorldSetting } from "./worldsettingui";
 import { renderThemeCards } from "./themecards";
 import { TourModal } from "./Tour";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
-import { MOTIONS, applyAppearance } from "../appearance";
+import { MOTIONS, TACTILE_PARTS, applyAppearance } from "../appearance";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
 import { WhatsNewModal } from "./WhatsNew";
 import { REL_KINDS, presetKinds, relLabel } from "../index/relkinds";
@@ -922,6 +922,33 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			.addDropdown((d) => d.addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "flat").onChange(async (v) => {
 				s.surfaceStyle = v === "tactile" ? "tactile" : "flat";
 				await save();
+			}));
+		// The tactile style is made of parts, each its own switch; these only matter while Tactile is on.
+		const tactileBox = el("details", { cls: "uv-tactile-parts" }, containerEl);
+		el("summary", { text: "Tactile parts" }, tactileBox);
+		for (const part of TACTILE_PARTS) {
+			new Setting(tactileBox).setName(part.name).setDesc(part.desc).addToggle((t) => t.setValue(!(s.tactileOff ?? []).includes(part.id)).onChange(async (on) => {
+				const off = new Set(s.tactileOff ?? []);
+				if (on) off.delete(part.id);
+				else off.add(part.id);
+				s.tactileOff = [...off];
+				await save();
+			}));
+		}
+		new Setting(tactileBox).setName("Depth").setDesc("How deep the bevels and shadows are.")
+			.addDropdown((d) => d.addOption("subtle", "Subtle").addOption("normal", "Normal").addOption("deep", "Deep").setValue(s.tactileDepth ?? "normal").onChange(async (v) => {
+				s.tactileDepth = v === "subtle" || v === "deep" ? v : "normal";
+				await save();
+			}));
+		new Setting(tactileBox).setName("Folder colour").setDesc("The colour of folders in the Library and the Files panel. Manila by default.")
+			.addColorPicker((c) => c.setValue(s.tactileFolderColor || "#e6c57e").onChange(async (v) => {
+				s.tactileFolderColor = v;
+				await save();
+			}))
+			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to manila").onClick(async () => {
+				s.tactileFolderColor = "";
+				await save();
+				this.update();
 			}));
 		new Setting(containerEl)
 			.setName("Tour")

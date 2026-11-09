@@ -6,24 +6,24 @@ tags: [overview]
 
 All views below are live: edit any note and they update.
 
-```chronicle-timeline
+```universeview-timeline
 folder: Tudors
 group: culture
 lifespans: true
 ```
 
-```chronicle-family
+```universeview-family
 root: Henry VIII
 up: 2
 down: 1
 ```
 
-```chronicle-map
+```universeview-map
 folder: Tudors
 trace: Henry VIII
 ```
 
-```chronicle-lineage
+```universeview-lineage
 folder: Tudors
 ```
 
