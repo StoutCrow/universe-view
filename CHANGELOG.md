@@ -2,6 +2,15 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.9.0 — 2026-11-09
+
+### Briefer settings
+- **Modules** is one list of switches, three to a row, with what each does on hover, and the three resets in a single line.
+- **About** shows the version history right on the page, newest open, instead of a button that opens it.
+- **Notes**: the five *Older tag* rows are one row, and the five folder-and-template rows are one small table (Kind, Folder, Template).
+- **Kinds of place**: the Colour, Pin and Layer columns are narrower, and *From the kind* is now *Auto*, so the table fits without wide empty selects.
+- Fixed: *Actions…* and an arrow in two notices showed garbled characters since 2.4.0.
+
 ## 2.8.0 — 2026-11-09
 
 ### More than one dashboard

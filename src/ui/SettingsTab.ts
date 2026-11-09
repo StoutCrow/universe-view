@@ -1,5 +1,5 @@
 import { pluginEnabled } from "../internals";
-import { App, Notice, PluginSettingTab, Setting, debounce, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
+import { App, Component, Notice, PluginSettingTab, Setting, debounce, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import type { CalendarDef } from "../types";
@@ -15,7 +15,7 @@ import { TourModal } from "./Tour";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
 import { MOTIONS, THEMES, TACTILE_PARTS, TACTILE_PRESETS, applyAppearance } from "../appearance";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
-import { WhatsNewModal } from "./WhatsNew";
+import { builtInChangelog, renderHistory } from "./WhatsNew";
 import { REL_KINDS, presetKinds, relLabel } from "../index/relkinds";
 import { CalendarEditorModal } from "./CalendarEditor";
 import { TidyModal } from "./tidy";
@@ -112,6 +112,9 @@ export class ChronicleSettingTab extends PluginSettingTab {
 	/** The page opened from a view's settings button, shown first until the settings close. */
 	private pinned?: string;
 
+	/** Owns the rendered version history while the settings are open. */
+	private history = new Component();
+
 	/** The rows built for the current definitions, each shown once (see show()). */
 	private entries: Entry[] = [];
 
@@ -148,6 +151,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 	hide() {
 		this.pinned = undefined;
+		this.history.unload();
 		super.hide();
 	}
 
@@ -391,33 +395,43 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		if (s.typeStyle === "tag") {
 			new Setting(containerEl)
 				.setName("Tag scheme")
-				.setDesc("New notes get one tag for what they are (#Character_Person, #Place_County), one per thing they belong to (#Group_Nation_United_States) and one per fact (#Character_Status_Dead, #Place_Size_Small). Older tags still work; this moves them over after a review.")
+				.setDesc("One tag for what a note is (#Character_Person), one per thing it belongs to, one per fact. Older tags still work; this moves them over after a review.")
 				.addButton((b) => b.setButtonText("Move tags…").onClick(() => new NormaliseTagsModal(this.plugin, true).open()));
+			// The older tags, read from notes tagged before the scheme: one row, not five.
+			const olderRow = new Setting(containerEl).setName("Older tags").setDesc("Read from notes tagged before the scheme (#Character, #Region); new notes don't get them.");
+			olderRow.settingEl.addClass("uv-compact-fields");
 			for (const type of ENTITY_TYPES) {
-				new Setting(containerEl)
-					.setName(`Older tag for ${TYPE_LABELS[type].toLowerCase()} notes`)
-					.setDesc(type === ENTITY_TYPES[0] ? "Read from notes tagged before the tag scheme (#Character, #Region); new notes don't get it." : "")
-					.addText((t) => t.setPlaceholder(type).setValue(s.typeTags[type]).onChange(async (v) => {
-						if (!v.trim()) return;
-						s.typeTags[type] = v.trim().replace(/^#/, "");
-						await this.save(false);
-					}).inputEl.addClass("chronicle-tag-input"));
+				const wrap = el("label", { cls: "uv-mini-field" }, olderRow.controlEl);
+				el("span", { text: TYPE_LABELS[type] }, wrap);
+				const input = el("input", { cls: "chronicle-tag-input", attr: { type: "text", placeholder: type } }, wrap);
+				input.value = s.typeTags[type];
+				input.addEventListener("change", () => void (async () => {
+					if (!input.value.trim()) return;
+					s.typeTags[type] = input.value.trim().replace(/^#/, "");
+					await this.save(false);
+				})());
 			}
 		}
+		// Where new notes go, and the template each starts from: one small table.
+		const where = new Setting(containerEl).setName("Folders and templates").setDesc("The folder each kind of note goes in, and an optional template note (Templater syntax runs if Templater is installed).");
+		where.settingEl.addClass("uv-setting-stack");
+		const grid = el("div", { cls: "uv-newnote-grid" }, where.settingEl);
+		for (const h of ["", "Folder", "Template"]) el("span", { cls: "uv-newnote-head", text: h }, grid);
 		for (const type of ENTITY_TYPES) {
-			new Setting(containerEl)
-				.setName(`${TYPE_LABELS[type]} notes`)
-				.setDesc("Folder · optional template note (Templater syntax is run if Templater is installed)")
-				.addText((t) => t.setPlaceholder("Folder").setValue(s.newNoteFolders[type]).onChange(async (v) => {
-					s.newNoteFolders[type] = v.trim();
-					await this.save(false);
-				}))
-				.addText((t) => t.setPlaceholder("Templates/Person.md").setValue(s.templates[type]).onChange(async (v) => {
-					s.templates[type] = v.trim();
-					await this.save(false);
-				}));
-		}
-		new Setting(containerEl)
+			el("span", { cls: "uv-newnote-type", text: TYPE_LABELS[type] }, grid);
+			const folder = el("input", { attr: { type: "text", placeholder: "Folder" } }, grid);
+			folder.value = s.newNoteFolders[type] ?? "";
+			folder.addEventListener("change", () => void (async () => {
+				s.newNoteFolders[type] = folder.value.trim();
+				await this.save(false);
+			})());
+			const tpl = el("input", { attr: { type: "text", placeholder: "Templates/Person.md" } }, grid);
+			tpl.value = s.templates[type] ?? "";
+			tpl.addEventListener("change", () => void (async () => {
+				s.templates[type] = tpl.value.trim();
+				await this.save(false);
+			})());
+		}		new Setting(containerEl)
 			.setName("Sidebar button for every view")
 			.setDesc("Off: only the UniverseView star. Takes effect after reloading Obsidian.")
 			.addToggle((t) => t.setValue(s.ribbonViews).onChange(async (v) => {
@@ -711,15 +725,15 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				s.fadeAreaPx = v;
 				await this.save();
 			}));
-		const sizes = (): [string, string][] => [["", "From the kind"], ["tiny", "Tiny"], ["small", "Small"], ["medium", "Medium"], ["large", "Large"], ["huge", "Huge"]];
-		const layers = (): [string, string][] => [["", "From the kind"], ["1", "1 · always"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5 · zoomed in"]];
+		const sizes = (): [string, string][] => [["", "Auto"], ["tiny", "Tiny"], ["small", "Small"], ["medium", "Medium"], ["large", "Large"], ["huge", "Huge"]];
+		const layers = (): [string, string][] => [["", "Auto"], ["1", "1 · always"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5 · zoomed in"]];
 		const placeKindRows = [...parseMapCategories(s.mapCategories)].map(([kind, c]) => ({ kind, color: c.color, icon: c.icon ?? "", size: c.size ?? "", layer: c.layer ? String(c.layer) : "" }));
-		const placeKinds = this.rows(containerEl, "Kinds of place", "Pin colour, icon, size and map layer for each kind of place (from a place's `kind:` or a tag like #City). Icons are Lucide names (lucide.dev) or emoji; a note's own `icon:` or `logo:` wins. Layer 1 is always shown, higher layers appear as you zoom in.", [
+		const placeKinds = this.rows(containerEl, "Kinds of place", "Colour, icon, pin size and layer for each kind (a place's `kind:` or a tag like #City). Icons are Lucide names or emoji; a note's own `icon:` wins. Auto takes size and layer from the kind's built-in; layer 1 always shows, higher layers appear as you zoom in.", [
 			{ key: "kind", label: "Kind", kind: "text", width: "1.2fr", placeholder: "city" },
-			{ key: "color", label: "Colour", kind: "color", width: "90px" },
+			{ key: "color", label: "Colour", kind: "color", width: "64px" },
 			{ key: "icon", label: "Icon", kind: "icon", width: "1.3fr", placeholder: "building-2" },
-			{ key: "size", label: "Pin size", kind: "select", options: sizes, width: "1fr" },
-			{ key: "layer", label: "Layer", kind: "select", options: layers, width: "1fr" },
+			{ key: "size", label: "Pin", kind: "select", options: sizes, width: "86px" },
+			{ key: "layer", label: "Layer", kind: "select", options: layers, width: "104px" },
 		], placeKindRows, async (rows) => {
 			s.mapCategories = rows.filter((r) => String(r.kind ?? "").trim()).map((r) => `${String(r.kind).trim().toLowerCase()} = ${[r.color, r.icon, r.size, r.layer ? `layer ${r.layer}` : ""].filter(Boolean).join(", ")}`).join("\n");
 			await this.save(false);
@@ -819,7 +833,8 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Compass rose").setDesc("A drawn compass in the corner of the map.").addToggle((t) => t.setValue(!!s.mapCompass).onChange(async (v) => {
 			s.mapCompass = v;
 			await restyle();
-		}));		new Setting(containerEl).setName("Pin size").setDesc("Every pin, as a multiple of its usual size (each place's own size still applies).").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapPinScale ?? 1).onChange(async (v) => {
+		}));
+		new Setting(containerEl).setName("Pin size").setDesc("Every pin, as a multiple of its usual size (each place's own size still applies).").addSlider((sl) => sl.setLimits(0.5, 2, 0.05).setValue(s.mapPinScale ?? 1).onChange(async (v) => {
 			s.mapPinScale = v;
 			await restyle();
 		}));
@@ -1144,17 +1159,19 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		// About: the version, and every version's changes.
 		new Setting(containerEl).setName("About").setHeading();
 		new Setting(containerEl)
-			.setName(`Version ${this.plugin.manifest.version}`)
-			.setDesc("What changed in every version, newest first (also the action What's new).")
-			.addButton((b) => b.setButtonText("Version history").onClick(() => new WhatsNewModal(this.plugin).open()));
-		new Setting(containerEl)
 			.setName("Show what's new after an update")
 			.setDesc("Once, after UniverseView updates: what changed since the version you had.")
 			.addToggle((t) => t.setValue(s.showWhatsNew !== false).onChange(async (v) => {
 				s.showWhatsNew = v;
 				await save();
 			}));
-
+		// Every version, newest first, right here (there is nothing else on this page to click through to).
+		el("h4", { cls: "uv-history-head", text: `Version ${this.plugin.manifest.version}: what changed in every version` }, containerEl);
+		const history = el("div", { cls: "uv-whatsnew-list" }, containerEl);
+		this.history.unload();
+		this.history = new Component();
+		this.history.load();
+		renderHistory(this.app, history, builtInChangelog(), this.history, 1);
 		// Fonts: any font installed on your computer, or one of the suggestions; empty keeps the theme's.
 		const fontsHead = new Setting(containerEl).setName("Fonts").setHeading();
 		helpTip(fontsHead.nameEl, "Type a font's name (any font installed on your computer) or pick a suggestion. Leave it empty to use the UniverseView theme's font, or Obsidian's.");

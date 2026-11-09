@@ -902,7 +902,7 @@ export default class ChroniclePlugin extends Plugin {
 			this.settings.savedViews = list.sort((a, b) => a.name.localeCompare(b.name));
 			void this.saveSettings().then(() => {
 				const link = `obsidian://universe-view?vault=${encodeURIComponent(this.app.vault.getName())}&view=${encodeURIComponent(name)}`;
-				clickNotice(`Saved “${name}”. Open it from Actionsâ€¦ â†’ “Open a saved view”, or click here to copy a link to put in a note.`, 10000, () => {
+				clickNotice(`Saved “${name}”. Open it from Actions… → “Open a saved view”, or click here to copy a link to put in a note.`, 10000, () => {
 					void navigator.clipboard?.writeText(`[${name}](${link})`);
 					new Notice("Copied a link to the view.");
 				});

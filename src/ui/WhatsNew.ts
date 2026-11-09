@@ -1,4 +1,4 @@
-import { Component, MarkdownRenderer, Modal } from "obsidian";
+import { Component, MarkdownRenderer, Modal, type App } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { compareVersions, parseChangelog, type ChangelogEntry } from "../index/changelog";
 
@@ -8,6 +8,19 @@ declare const UV_CHANGELOG: string | undefined;
 /** The changelog built into this copy of UniverseView (empty when it was built without one). */
 export function builtInChangelog(): ChangelogEntry[] {
 	return typeof UV_CHANGELOG === "string" ? parseChangelog(UV_CHANGELOG) : [];
+}
+
+/** Each version as a folded section (the first few open), its notes rendered. Shared by the window and the About settings. */
+export function renderHistory(app: App, host: HTMLElement, entries: ChangelogEntry[], component: Component, open: number) {
+	entries.forEach((e, n) => {
+		const sec = host.createEl("details", { cls: "uv-whatsnew-entry" });
+		if (n < open) sec.open = true;
+		const sum = sec.createEl("summary");
+		sum.createSpan({ cls: "uv-whatsnew-version", text: e.version });
+		if (e.date) sum.createSpan({ cls: "uv-whatsnew-date", text: e.date });
+		const body = sec.createDiv({ cls: "uv-whatsnew-body markdown-rendered" });
+		void MarkdownRenderer.render(app, e.body, body, "", component);
+	});
 }
 
 /**
@@ -37,16 +50,7 @@ export class WhatsNewModal extends Modal {
 		if (since && shown.length) contentEl.createEl("p", { cls: "uv-whatsnew-sub", text: `Since ${since}, the version you had before.` });
 		if (!shown.length) contentEl.createEl("p", { cls: "uv-whatsnew-sub", text: all.length ? "Nothing new since you last looked." : "This copy was built without its version history." });
 		const list = contentEl.createDiv({ cls: "uv-whatsnew-list" });
-		for (const e of shown) {
-			const sec = list.createEl("details", { cls: "uv-whatsnew-entry" });
-			// The newest (or the only few) open; older ones folded, so a long history stays readable.
-			if (shown.indexOf(e) < (since ? 6 : 1)) sec.open = true;
-			const sum = sec.createEl("summary");
-			sum.createSpan({ cls: "uv-whatsnew-version", text: e.version });
-			if (e.date) sum.createSpan({ cls: "uv-whatsnew-date", text: e.date });
-			const body = sec.createDiv({ cls: "uv-whatsnew-body markdown-rendered" });
-			void MarkdownRenderer.render(this.app, e.body, body, "", this.component);
-		}
+		renderHistory(this.app, list, shown, this.component, since ? 6 : 1);
 		const foot = contentEl.createDiv({ cls: "uv-whatsnew-foot" });
 		if (since) foot.createEl("button", { text: "Full version history" }).addEventListener("click", () => this.render());
 		foot.createEl("button", { cls: "mod-cta", text: "Close" }).addEventListener("click", () => this.close());

@@ -620,28 +620,35 @@ export class HubView extends ItemView {
 	}
 
 	modulesInto(host: HTMLElement) {
-		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves this dashboard, the ribbon and the actions list. Your notes aren't touched." }, host);
-		el("h3", { cls: "uv-hub-group", text: "Layout" }, host);
-		new Setting(host).setName("Big tabs").setDesc("Drag them to move them, or right-click one to move, hide or show tabs.").addButton((b) => b.setButtonText("Reset tabs").onClick(() => void this.resetTabs()));
-		new Setting(host).setName("Views").setDesc("Each view keeps its filters, layers and focus for next time. The arrow at the top right resets the one you're on; this resets them all.").addButton((b) => b.setButtonText("Reset all views").onClick(() => void this.resetViews()));
-		new Setting(host).setName("Cards").setDesc("Every page's card layout goes back as it came. Customise a page from its toolbar.").addButton((b) => b.setButtonText("Reset all cards").onClick(() => {
+		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves the dashboard, the ribbon and the actions list. Notes aren't touched." }, host);
+		// Resets, in one row.
+		const resets = el("div", { cls: "uv-mod-resets" }, host);
+		const reset = (label: string, tip: string, run: () => void) => {
+			const b = el("button", { text: label, title: tip }, resets);
+			b.addEventListener("click", run);
+		};
+		reset("Reset tabs", "Big tabs back in their first order and shown. Drag them to move, or right-click one to hide or show.", () => void this.resetTabs());
+		reset("Reset all views", "Every view forgets its filters, layers and focus. The arrow at the top right resets only the one you are on.", () => void this.resetViews());
+		reset("Reset all cards", "Every page's card layout goes back as it came. Customise a page from its toolbar.", () => {
 			this.plugin.settings.cardLayouts = undefined;
 			void this.plugin.saveSettings().then(() => this.plugin.index.requestRebuild());
-		}));
+		});
+		// Every page as one switch: name beside it, what it does on hover.
+		const list = el("div", { cls: "uv-mod-list" }, host);
 		for (const s of HUB_SECTIONS) {
 			const mods = s.modules.filter((m) => !m.fixed);
 			if (!mods.length) continue;
-			el("h3", { cls: "uv-hub-group", text: s.name }, host);
-			const grid = el("div", { cls: "uv-hub-modules" }, host);
+			const group = el("div", { cls: "uv-mod-group" }, list);
+			el("h3", { cls: "uv-mod-head", text: s.name }, group);
 			for (const m of mods) {
-				const row = new Setting(grid).setName(m.name).setDesc(m.desc).addToggle((t) => t.setValue(this.plugin.moduleOn(m.id)).onChange((v) => {
-					void this.plugin.setModule(m.id, v).then(() => this.refreshTabsOnly());
-				}));
-				row.settingEl.addClass("uv-hub-module");
+				const row = el("label", { cls: "uv-mod", title: m.desc }, group);
+				el("span", { cls: "uv-mod-name", text: m.name }, row);
+				const box = el("input", { cls: "uv-switch", attr: { type: "checkbox" } }, row);
+				box.checked = this.plugin.moduleOn(m.id);
+				box.addEventListener("change", () => void this.plugin.setModule(m.id, box.checked).then(() => this.refreshTabsOnly()));
 			}
 		}
 	}
-
 	/** Tabs change, but the page you're on (the switches) stays. */
 	private refreshTabsOnly() {
 		for (const [id, p] of this.panes) {
