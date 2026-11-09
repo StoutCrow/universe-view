@@ -2,6 +2,14 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.3.0 — 2026-11-09
+
+### Fewer settings tabs
+- Settings now has five tabs: Look & cards, Notes & families, Time & calendars, Maps & realms and About. The larger ones hold sub-tabs (for example Look & cards: Theme & colours, Surface & motion, Views, Inspector & icons). The dashboard's Settings tab and Obsidian's own settings window use the same layout.
+
+### Tactile reaches the file explorer
+- In the Library and the Files panel, Tactile now sinks the search box, sets the tree in a tray, puts the file icons on plates and presses the selected row in, each following its own part switch.
+
 ## 2.2.1 — 2026-11-09
 
 ### Fixed

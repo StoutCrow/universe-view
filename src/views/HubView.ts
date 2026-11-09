@@ -2,6 +2,7 @@ import { ItemView, Menu, Notice, Platform, Setting, debounce, setIcon, type View
 import type ChroniclePlugin from "../main";
 import { runCommand } from "../internals";
 import { el, icon } from "../render/common";
+import { SETTINGS_GROUPS, pageLabel } from "../ui/SettingsTab";
 import { dragToReorder } from "../ui/cardlayout";
 import { renderWorldStats } from "../render/stats";
 import type { ChronicleView } from "./base";
@@ -69,6 +70,27 @@ const actions = (list: Action[]) => (host: HTMLElement, hub: HubView) => {
 };
 
 const settingsPage = (id: string) => (host: HTMLElement, hub: HubView) => hub.settingsInto(id, host);
+
+/** The sub-tab last open in each settings tab that has several pages. */
+const subTab = new Map<string, string>();
+
+/** A settings tab: its page, or a row of sub-tabs over the page picked. */
+const settingsGroup = (gid: string) => (host: HTMLElement, hub: HubView) => {
+	const g = SETTINGS_GROUPS.find((x) => x.id === gid);
+	if (!g) return;
+	if (g.pages.length === 1) return hub.settingsInto(g.pages[0], host);
+	const bar = el("div", { cls: "uv-subtabs" }, host);
+	const body = el("div", { cls: "uv-subtab-body" }, host);
+	const show = (id: string) => {
+		subTab.set(gid, id);
+		bar.querySelectorAll("button").forEach((b) => b.toggleClass("is-on", b.dataset.page === id));
+		body.empty();
+		hub.settingsInto(id, body);
+	};
+	for (const id of g.pages) el("button", { cls: "uv-subtab", text: pageLabel(id), attr: { "data-page": id } }, bar).addEventListener("click", () => show(id));
+	const cur = subTab.get(gid);
+	show(cur && g.pages.includes(cur) ? cur : g.pages[0]);
+};
 
 export const HUB_SECTIONS: HubSection[] = [
 	{
@@ -169,17 +191,11 @@ export const HUB_SECTIONS: HubSection[] = [
 	{
 		id: "settings", name: "Settings", icon: "settings", modules: [
 			{ id: "set-modules", name: "Modules", icon: "toggle-right", desc: "", fixed: true, draw: (host, hub) => hub.modulesInto(host) },
-			{ id: "set-look", name: "Theme & colours", icon: "palette", desc: "", fixed: true, draw: settingsPage("appearance") },
-			{ id: "set-surface", name: "Surface & motion", icon: "layers", desc: "", fixed: true, draw: settingsPage("surface") },
-			{ id: "set-views", name: "Views", icon: "layout-dashboard", desc: "", fixed: true, draw: settingsPage("views") },
-			{ id: "set-inspector", name: "Inspector & icons", icon: "panel-right", desc: "", fixed: true, draw: settingsPage("inspector") },
-			{ id: "set-notes", name: "Notes", icon: "file-text", desc: "", fixed: true, draw: settingsPage("notes") },
-			{ id: "set-families", name: "Families", icon: "users-round", desc: "", fixed: true, draw: settingsPage("families") },
-			{ id: "set-time", name: "Time & calendars", icon: "calendar-days", desc: "", fixed: true, draw: settingsPage("time") },
-			{ id: "set-maps", name: "Maps", icon: "map", desc: "", fixed: true, draw: settingsPage("maps") },
-			{ id: "set-realms", name: "Realms & tiers", icon: "crown", desc: "", fixed: true, draw: settingsPage("realms") },
-			{ id: "set-tools", name: "Map tools", icon: "pencil-ruler", desc: "", fixed: true, draw: settingsPage("tools") },
-			{ id: "set-about", name: "About", icon: "info", desc: "", fixed: true, draw: settingsPage("about") },
+			{ id: "set-look", name: "Look & cards", icon: "palette", desc: "", fixed: true, draw: settingsGroup("look") },
+			{ id: "set-notes", name: "Notes & families", icon: "file-text", desc: "", fixed: true, draw: settingsGroup("notes") },
+			{ id: "set-time", name: "Time & calendars", icon: "calendar-days", desc: "", fixed: true, draw: settingsGroup("time") },
+			{ id: "set-maps", name: "Maps & realms", icon: "map", desc: "", fixed: true, draw: settingsGroup("maps") },
+			{ id: "set-about", name: "About", icon: "info", desc: "", fixed: true, draw: settingsGroup("about") },
 		],
 	},
 ];

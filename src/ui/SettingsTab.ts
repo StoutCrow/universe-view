@@ -45,15 +45,26 @@ const PAGES: { id: string; label: string; heads: string[] }[] = [
 	{ id: "appearance", label: "Theme & colours", heads: ["World setting", "Appearance", "Fonts"] },
 	{ id: "surface", label: "Surface & motion", heads: ["Surface", "Tactile style"] },
 	{ id: "views", label: "Views", heads: ["Views"] },
-	{ id: "inspector", label: "Inspector, icons & tips", heads: ["Inspector", "Icons", "Hover cards"] },
+	{ id: "inspector", label: "Inspector & icons", heads: ["Inspector", "Icons", "Hover cards"] },
 	{ id: "notes", label: "Notes", heads: ["Recognising notes", "New notes", "Folder notes"] },
-	{ id: "families", label: "Families & relationships", heads: ["Writing and families", "Relationships"] },
+	{ id: "families", label: "Families", heads: ["Writing and families", "Relationships"] },
 	{ id: "time", label: "Time & calendars", heads: ["Timeline", "Calendars"] },
 	{ id: "maps", label: "Maps", heads: ["Maps", "Map look"] },
 	{ id: "realms", label: "Realms & tiers", heads: ["Realms and tiers"] },
 	{ id: "tools", label: "Map tools", heads: ["Drawing and snapping", "Fill", "Shaping borders"] },
 	{ id: "about", label: "About", heads: ["About"] },
 ];
+
+/** The settings in the top tabs and, inside the larger ones, sub-tabs: shared by the settings window and the dashboard. */
+export const SETTINGS_GROUPS: { id: string; label: string; icon: string; pages: string[] }[] = [
+	{ id: "look", label: "Look & cards", icon: "palette", pages: ["appearance", "surface", "views", "inspector"] },
+	{ id: "notes", label: "Notes & families", icon: "file-text", pages: ["notes", "families"] },
+	{ id: "time", label: "Time & calendars", icon: "calendar-days", pages: ["time"] },
+	{ id: "maps", label: "Maps & realms", icon: "map", pages: ["maps", "realms", "tools"] },
+	{ id: "about", label: "About", icon: "info", pages: ["about"] },
+];
+
+export const pageLabel = (id: string) => PAGES.find((p) => p.id === id)?.label ?? id;
 
 const PAGE_DESC: Record<string, string> = {
 	appearance: "World setting, theme cards, colours, fonts",
@@ -127,7 +138,11 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const pinned = pages.find((p) => p.id === this.pinned);
 		return [
 			...(pinned?.groups ?? []),
-			...pages.filter((p) => p !== pinned).map((p): SettingDefinitionPage => ({ type: "page", name: p.label, desc: PAGE_DESC[p.id] ?? p.heads.join(", "), displayValue: PAGE_VALUES[p.id] ? () => PAGE_VALUES[p.id](this.plugin) : undefined, items: p.groups })),
+			...SETTINGS_GROUPS.map((g): SettingDefinitionPage => {
+				const sub = g.pages.map((id) => pages.find((p) => p.id === id)).filter((p): p is (typeof pages)[number] => !!p && p !== pinned).map((p): SettingDefinitionPage => ({ type: "page", name: p.label, desc: PAGE_DESC[p.id] ?? p.heads.join(", "), displayValue: PAGE_VALUES[p.id] ? () => PAGE_VALUES[p.id](this.plugin) : undefined, items: p.groups }));
+				if (!sub.length) return { type: "page", name: g.label, items: [] };
+				return sub.length === 1 ? { ...sub[0], name: g.label } : { type: "page", name: g.label, desc: sub.map((x) => x.name).join(", "), items: sub };
+			}).filter((p) => p.items?.length),
 		];
 	}
 
