@@ -920,8 +920,10 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	z-index: 1000;
 	padding: 6px 14px;
 	border-radius: var(--uv-r-md);
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
+	/* A tool's banner floats over the map like a menu: neutral, with the accent kept for its one primary action. */
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
 	font-size: var(--font-ui-small);
 	box-shadow: var(--shadow-s);
 	pointer-events: none;

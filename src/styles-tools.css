@@ -151,8 +151,8 @@
 	border: 2px solid transparent;
 }
 .chronicle-map-banner.has-actions button.chronicle-note-swatch.is-active {
-	border-color: var(--text-on-accent);
-	box-shadow: 0 0 0 2px var(--interactive-accent);
+	border-color: var(--text-normal);
+	box-shadow: 0 0 0 2px var(--background-primary);
 }
 .chronicle-pin-wrap.is-clustered {
 	display: none;

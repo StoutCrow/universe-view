@@ -816,7 +816,7 @@ button.chronicle-ov-tile:hover::after {
 	align-items: center;
 	gap: 6px 12px;
 	padding: 6px 0 2px;
-	border-top: 1px solid color-mix(in srgb, var(--text-on-accent) 25%, transparent);
+	border-top: 1px solid var(--background-modifier-border);
 }
 .chronicle-fill-control {
 	display: inline-flex;
@@ -826,7 +826,7 @@ button.chronicle-ov-tile:hover::after {
 }
 .chronicle-fill-control input[type="range"] {
 	width: 110px;
-	accent-color: var(--text-on-accent);
+	accent-color: var(--interactive-accent);
 }
 .chronicle-fill-value {
 	min-width: 2ch;
@@ -838,8 +838,8 @@ button.chronicle-ov-tile:hover::after {
 	font-size: var(--font-ui-smaller);
 	border-radius: var(--uv-r-md);
 	padding: 0 24px 0 10px;
-	background-color: color-mix(in srgb, var(--text-on-accent) 18%, transparent);
-	color: var(--text-on-accent);
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
 	border: none;
 	box-shadow: none;
 }
@@ -857,12 +857,12 @@ button.chronicle-ov-tile:hover::after {
 }
 .chronicle-map-banner.has-actions button.chronicle-banner-toggle {
 	background: transparent;
-	border: 1px solid color-mix(in srgb, var(--text-on-accent) 45%, transparent);
+	border: 1px solid var(--background-modifier-border);
 }
 .chronicle-map-banner.has-actions button.chronicle-banner-toggle.is-active {
-	background: var(--text-on-accent);
-	color: var(--interactive-accent);
-	border-color: transparent;
+	background: var(--background-modifier-active-hover);
+	color: var(--text-normal);
+	border-color: var(--background-modifier-border-hover);
 }
 .chronicle-map-banner.has-actions button.chronicle-banner-toggle.is-active::before {
 	content: "✓ ";
@@ -1057,14 +1057,20 @@ button.chronicle-ov-tile:hover::after {
 	padding: 0 12px;
 	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
-	background: color-mix(in srgb, var(--text-on-accent) 18%, transparent);
-	color: var(--text-on-accent);
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
 	box-shadow: none;
 	flex-shrink: 0;
 }
+.chronicle-map-banner.has-actions button:hover {
+	background: var(--background-modifier-active-hover);
+}
 .chronicle-map-banner.has-actions button.mod-cta {
-	background: var(--text-on-accent);
-	color: var(--interactive-accent);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+.chronicle-map-banner.has-actions button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
 }
 .chronicle-legend {
 	min-width: 170px;
