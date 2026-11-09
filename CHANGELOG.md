@@ -2,6 +2,16 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.7.0 — 2026-11-09
+
+### Reshaping a border
+- **Shared corners now stay shared.** A corner added on a border that two lands share is added to both, a corner removed from a shared border is removed from both, and a corner you drop on a neighbour's corner or border joins it (the neighbour gets the corner too), so the border stays matched when you move it later. Before, only the land you were editing got the new corner and the border split.
+- **Clearer corners.** Corners grow when you point at them and have a larger grab area; a corner shared with a neighbour is a diamond; the dots between corners are small **+** marks. The banner is a single short line.
+- **Undo, redo and reset while reshaping** (buttons, or Ctrl+Z and Ctrl+Shift+Z), including the neighbours' corners.
+- **Double-click the border** to add a corner right there, not only at the middle of a side.
+- **Keyboard:** the arrow keys nudge the picked corners (or the one under the pointer; Shift for bigger steps) and Delete removes them.
+- The *Move shared corners together* switch is always there, and a corner you join to a neighbour counts too.
+
 ## 2.6.0 — 2026-11-09
 
 ### An inked chart

@@ -587,3 +587,16 @@ body.uv-map-compass .chronicle-map:not(.is-embedded) .chronicle-map-canvas::afte
 	opacity: 0.62;
 	background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-50 -50 100 100' fill='none' stroke='%234a3318' stroke-width='1.2'><circle r='44'/><circle r='40' stroke-width='.6'/><path d='M0 -48 L7 -7 L48 0 L7 7 L0 48 L-7 7 L-48 0 L-7 -7Z' fill='%234a331822'/><path d='M0 -36 L5 -5 L36 0 L5 5 L0 36 L-5 5 L-36 0 L-5 -5Z' transform='rotate(45)' fill='%234a331833' stroke-width='.8'/><path d='M0 -48 L7 -7 L0 0 Z M0 48 L-7 7 L0 0 Z' fill='%234a3318'/><circle r='2.2' fill='%234a3318'/><text y='-52' x='0' text-anchor='middle' font-family='serif' font-size='11' fill='%234a3318' stroke='none'>N</text></svg>") center / contain no-repeat;
 }
+
+/* ---- Editing a border: clearer corners ---- */
+.chronicle-vertex.is-handle { cursor: grab; transition: transform 0.12s ease; }
+.chronicle-vertex.is-handle:active { cursor: grabbing; }
+.chronicle-vertex.is-handle::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; }
+.chronicle-vertex.is-handle:hover { transform: translate(-50%, -50%) scale(1.25); }
+/* A corner shared with a neighbour is a diamond, so it reads apart from a corner of its own. */
+.chronicle-vertex.is-handle.is-shared { border-radius: 2px; transform: translate(-50%, -50%) rotate(45deg); }
+.chronicle-vertex.is-handle.is-shared:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.25); }
+/* A small plus between corners: click it to add a corner. */
+.chronicle-vertex.is-mid { display: grid; place-items: center; opacity: 0.5; }
+.chronicle-vertex.is-mid::before { content: "+"; font: 700 11px/1 var(--font-interface); color: var(--terr-color, var(--interactive-accent)); }
+.chronicle-vertex.is-mid:hover { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }

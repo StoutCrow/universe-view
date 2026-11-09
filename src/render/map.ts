@@ -176,6 +176,14 @@ interface WaterMask {
 	oy: number;
 }
 
+/** Distance in pixels from a point to the segment a-b. */
+function segmentDistance(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+	const dx = bx - ax;
+	const dy = by - ay;
+	const t = dx || dy ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy))) : 0;
+	return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
 /** Where a point snapped: onto a neighbour (which one, and how far along its border) or onto water. */
 interface SnapAt {
 	ll: L.LatLng;
@@ -4123,6 +4131,174 @@ export class MapRenderer {
 				nb.poly?.setLatLngs(nb.pts);
 			}
 		};
+		// ---- Shared corners: adding, removing and joining corners keeps neighbours' borders matched ----
+		const targetAreas = isRoute ? [] : this.drawnAreas.filter((a) => !(a.key === owner!.key && a.n === n));
+		const ensureNeighbour = (a: { key: string; n: number; points: Pt[] }) => {
+			const id = `${a.key}|${a.n}`;
+			let nb = neighbours.get(id);
+			if (!nb) {
+				nb = { key: a.key, n: a.n, pts: a.points.map((q) => this.pointToLatLng(q)), poly: this.areaPolys.find((x) => x.points === a.points)?.poly, moved: false };
+				neighbours.set(id, nb);
+			}
+			return { id, nb };
+		};
+		/** A neighbour gained (+1) or lost (-1) a corner at j: every link into it past there moves along. */
+		const shiftLinks = (id: string, j: number, delta: 1 | -1) => {
+			for (const list of linked.values()) for (const l of list) if (l.area === id && (delta > 0 ? l.j >= j : l.j > j)) l.j += delta;
+		};
+		const px = (ll: L.LatLng) => map.latLngToContainerPoint(ll);
+		/** Puts a new corner at `at` in this shape; where both ends of that edge are corners a neighbour shares, it gets the corner too. */
+		const insertCorner = (at: number, ll: L.LatLng) => {
+			const count = pts.length;
+			const la = linked.get((at - 1 + count) % count) ?? [];
+			const lb = linked.get(at % count) ?? [];
+			pts.splice(at, 0, ll);
+			reindex(at, 1);
+			if (!together) return;
+			for (const x of la) {
+				const y = lb.find((l) => l.area === x.area);
+				const nb = neighbours.get(x.area);
+				if (!y || !nb) continue;
+				const m = nb.pts.length;
+				const ins = y.j === (x.j + 1) % m ? x.j + 1 : x.j === (y.j + 1) % m ? y.j + 1 : -1;
+				if (ins < 0) continue;
+				nb.pts.splice(ins, 0, ll);
+				shiftLinks(x.area, ins, 1);
+				linked.set(at, [...(linked.get(at) ?? []), { area: x.area, j: ins }]);
+				nb.moved = true;
+				nb.poly?.setLatLngs(nb.pts);
+			}
+		};
+		/** Takes a corner out of this shape, and out of the neighbours that share it (so the border stays matched). */
+		const removeCorner = (i: number): boolean => {
+			if (pts.length <= (isRoute ? 2 : 3)) return false;
+			if (together) {
+				for (const l of linked.get(i) ?? []) {
+					const nb = neighbours.get(l.area);
+					if (!nb || nb.pts.length <= 3) continue;
+					nb.pts.splice(l.j, 1);
+					shiftLinks(l.area, l.j, -1);
+					nb.moved = true;
+					nb.poly?.setLatLngs(nb.pts);
+				}
+			}
+			pts.splice(i, 1);
+			reindex(i, -1);
+			return true;
+		};
+		/** A corner dropped on a neighbour's corner or border becomes shared with it (the border gets the corner too). */
+		const joinTo = (i: number, s: SnapAt | null) => {
+			if (!together || !s || s.shape === undefined || (s.kind !== "vertex" && s.kind !== "edge")) return;
+			const a = targetAreas[s.shape];
+			if (!a) return;
+			const { id, nb } = ensureNeighbour(a);
+			if ((linked.get(i) ?? []).some((l) => l.area === id)) return;
+			const here = px(pts[i]);
+			const dist = (q: L.LatLng) => Math.hypot(px(q).x - here.x, px(q).y - here.y);
+			if (s.kind === "vertex") {
+				let best = -1;
+				nb.pts.forEach((q, j) => {
+					if (dist(q) < 2 && (best < 0 || dist(q) < dist(nb.pts[best]))) best = j;
+				});
+				if (best >= 0) linked.set(i, [...(linked.get(i) ?? []), { area: id, j: best }]);
+				return;
+			}
+			let at = -1;
+			let bestD = 14;
+			for (let x = 0; x < nb.pts.length; x++) {
+				const p = px(nb.pts[x]);
+				const q = px(nb.pts[(x + 1) % nb.pts.length]);
+				const d = segmentDistance(here.x, here.y, p.x, p.y, q.x, q.y);
+				if (d < bestD) [at, bestD] = [x, d];
+			}
+			if (at < 0) return;
+			nb.pts.splice(at + 1, 0, pts[i]);
+			shiftLinks(id, at + 1, 1);
+			linked.set(i, [...(linked.get(i) ?? []), { area: id, j: at + 1 }]);
+			nb.moved = true;
+			nb.poly?.setLatLngs(nb.pts);
+		};
+		// ---- Undo and redo while editing ----
+		type EditState = { pts: L.LatLng[]; nbs: [string, L.LatLng[], boolean][]; linked: [number, { area: string; j: number }[]][] };
+		const take = (): EditState => ({
+			pts: [...pts],
+			nbs: [...neighbours].map(([id, nb]) => [id, [...nb.pts], nb.moved]),
+			linked: [...linked].map(([k, v]) => [k, v.map((l) => ({ ...l }))]),
+		});
+		const put = (s: EditState) => {
+			pts.splice(0, pts.length, ...s.pts);
+			for (const [id, nb] of neighbours) {
+				if (!s.nbs.some(([i]) => i === id)) {
+					const a = this.drawnAreas.find((x) => `${x.key}|${x.n}` === id);
+					if (a) nb.pts = a.points.map((q) => this.pointToLatLng(q));
+					nb.moved = false;
+					nb.poly?.setLatLngs(nb.pts);
+				}
+			}
+			for (const [id, p, moved] of s.nbs) {
+				const a = this.drawnAreas.find((x) => `${x.key}|${x.n}` === id);
+				const nb = neighbours.get(id) ?? (a ? ensureNeighbour(a).nb : undefined);
+				if (!nb) continue;
+				nb.pts = [...p];
+				nb.moved = moved;
+				nb.poly?.setLatLngs(nb.pts);
+			}
+			linked.clear();
+			for (const [k, v] of s.linked) linked.set(k, v.map((l) => ({ ...l })));
+			selected.clear();
+		};
+		const initial = take();
+		const past: EditState[] = [];
+		const future: EditState[] = [];
+		const record = () => {
+			past.push(take());
+			if (past.length > 100) past.shift();
+			future.length = 0;
+		};
+		const undo = () => {
+			const s = past.pop();
+			if (!s) return;
+			future.push(take());
+			put(s);
+			redraw();
+		};
+		const redo = () => {
+			const s = future.pop();
+			if (!s) return;
+			past.push(take());
+			put(s);
+			redraw();
+		};
+		const reset = () => {
+			if (!past.length) return;
+			record();
+			put(initial);
+			redraw();
+		};
+		let hovered = -1;
+		let lastNudge = 0;
+		/** Moves the picked corners (or the one under the pointer) by screen pixels. */
+		const nudge = (dx: number, dy: number) => {
+			const which = selected.size ? [...selected] : hovered >= 0 ? [hovered] : [];
+			if (!which.length) return false;
+			if (Date.now() - lastNudge > 700) record();
+			lastNudge = Date.now();
+			for (const k of which) {
+				const p = px(pts[k]);
+				moveCorner(k, map.containerPointToLatLng(L.point(p.x + dx, p.y + dy)));
+			}
+			redraw();
+			return true;
+		};
+		const removePicked = () => {
+			const which = selected.size ? [...selected] : hovered >= 0 ? [hovered] : [];
+			if (!which.length) return false;
+			record();
+			for (const k of which.sort((a, b) => b - a)) removeCorner(k);
+			hovered = -1;
+			redraw();
+			return true;
+		};
 		const save = () => {
 			const points = pts.map((ll) => this.fromLatLng(ll));
 			this.endMode();
@@ -4154,7 +4330,14 @@ export class MapRenderer {
 				});
 				let start: L.LatLng | undefined;
 				let starts: Map<number, L.LatLng> | undefined;
+				let snappedTo: SnapAt | null = null;
+				h.on("mouseover", () => (hovered = i));
+				h.on("mouseout", () => {
+					if (hovered === i) hovered = -1;
+				});
 				h.on("dragstart", () => {
+					record();
+					snappedTo = null;
 					start = pts[i];
 					starts = selected.has(i) ? new Map([...selected].map((k) => [k, pts[k]])) : undefined;
 				});
@@ -4169,19 +4352,21 @@ export class MapRenderer {
 					}
 					const s = this.snapLatLng(h.getLatLng(), targets, (evt as L.LeafletEvent & { originalEvent?: MouseEvent }).originalEvent, !isRoute);
 					ghost(s);
+					snappedTo = s;
 					if (s) h.setLatLng(s.ll);
 					moveCorner(i, h.getLatLng());
 					shape.setLatLngs(pts);
 				});
 				h.on("dragend", () => {
 					ghost(null);
+					if (!starts) joinTo(i, snappedTo);
 					redraw();
 				});
 				h.on("contextmenu", (evt: L.LeafletMouseEvent) => {
 					L.DomEvent.stop(evt);
 					if (pts.length <= (isRoute ? 2 : 3)) return;
-					pts.splice(i, 1);
-					reindex(i, -1);
+					record();
+					removeCorner(i);
 					redraw();
 				});
 				// A route has no segment from its last point back to the first.
@@ -4194,41 +4379,76 @@ export class MapRenderer {
 				L.marker(mid, { icon: L.divIcon({ html: md, className: "chronicle-vertex-wrap", iconSize: [0, 0] }) })
 					.on("click", (evt: L.LeafletMouseEvent) => {
 						L.DomEvent.stop(evt);
-						pts.splice(i + 1, 0, mid);
-						reindex(i + 1, 1);
+						record();
+						insertCorner(i + 1, mid);
 						redraw();
 					})
 					.addTo(handles);
 			});
 		};
 		this.beginMode("edit", (evt) => {
+			const mod = evt.ctrlKey || evt.metaKey;
+			const step = evt.shiftKey ? 10 : 1;
 			if (evt.key === "Escape") this.endMode();
 			else if (evt.key === "Enter") save();
-			else return;
+			else if (mod && evt.key.toLowerCase() === "z") (evt.shiftKey ? redo : undo)();
+			else if (mod && evt.key.toLowerCase() === "y") redo();
+			else if (evt.key === "Delete" || evt.key === "Backspace") {
+				if (!removePicked()) return;
+			} else if (evt.key.startsWith("Arrow")) {
+				const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[evt.key] ?? [0, 0];
+				if (!nudge(d[0], d[1])) return;
+			} else return;
+			evt.preventDefault();
 			evt.stopPropagation();
 		});
 		this.root.addClass("is-editing");
+		// Double-click the border to add a corner right there (shared with a neighbour where the border is shared).
+		shape.on("dblclick", (evt: L.LeafletMouseEvent) => {
+			const c = map.latLngToContainerPoint(evt.latlng);
+			let at = -1;
+			let bestD = 12;
+			let proj: L.LatLng | undefined;
+			const last = isRoute ? pts.length - 1 : pts.length;
+			for (let x = 0; x < last; x++) {
+				const a = px(pts[x]);
+				const b = px(pts[(x + 1) % pts.length]);
+				const d = segmentDistance(c.x, c.y, a.x, a.y, b.x, b.y);
+				if (d >= bestD) continue;
+				const len2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2 || 1;
+				const t = Math.max(0, Math.min(1, ((c.x - a.x) * (b.x - a.x) + (c.y - a.y) * (b.y - a.y)) / len2));
+				[at, bestD, proj] = [x, d, map.containerPointToLatLng(L.point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t))];
+			}
+			if (at < 0 || !proj) return;
+			L.DomEvent.stop(evt);
+			record();
+			insertCorner(at + 1, proj);
+			redraw();
+		});
 		const buttons: { label: string; cta?: boolean; run: () => void }[] = [
+			{ label: "Undo", run: undo },
+			{ label: "Redo", run: redo },
+			{ label: "Reset", run: reset },
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Save", cta: true, run: save },
 		];
 		// Shared borders move together by default; a neighbour's corners can be left where they are.
 		// Shared borders move together by default: a switch leaves the neighbours' corners where they are.
 		const sharedSwitch = (b: HTMLElement) => {
-			if (!linked.size) return;
+			if (isRoute) return;
 			const sw = el("label", { cls: "uv-banner-switch", attr: { "aria-label": "Corners shared with a neighbour move both borders" } }, b);
 			const box = el("input", { attr: { type: "checkbox" } }, sw);
 			box.checked = together;
 			el("span", { cls: "uv-banner-switch-track" }, sw);
-			el("span", { cls: "uv-banner-switch-text", text: `Move shared corners together (${linked.size})` }, sw);
+			el("span", { cls: "uv-banner-switch-text", text: "Move shared corners together" }, sw);
 			box.addEventListener("change", () => {
 				together = box.checked;
 				redraw();
 			});
 		};
 		this.showBanner(isRoute
-			? `Editing ${line ? name : `${name}'s route`}: drag points · click a midpoint to add one · right-click a point to remove it`
-			: `Editing ${name}: drag corners (they snap to neighbours; Alt stops it) · Shift-click to pick several, then drag one · click a midpoint to add a corner · right-click one to remove it`, buttons, (b) => {
+			? `Editing ${line ? name : `${name}'s route`}: drag a point · click a + to add one · right-click removes · Ctrl+Z undoes`
+			: `Editing ${name}: drag a corner · click a + to add one · right-click removes · Shift-click picks several · Ctrl+Z undoes · a corner dropped on a neighbour's border becomes shared`, buttons, (b) => {
 			sharedSwitch(b);
 			if (!isRoute) this.waterSwitch(b);
 		});
