@@ -28,10 +28,18 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 **Maps and looks**
 - Textures take each land's colour; the inspector fits a narrow sidebar; the map, family tree and org chart no longer flash while they redraw, and the time slider redraws only when something changes.
 
+**A quieter design**
+- One set of corner sizes (small, medium, large) follows the Radius setting everywhere, and the default is smaller. Pills are gone from buttons, chips and badges.
+- Selected buttons and chips are a plain fill, not an accent block, and the check mark on switched-on buttons is gone. The accent colour is kept for the one main action in a view, a current moment and links.
+- Library, Overview, Board and the inspector use sections split by hairlines instead of boxed cards. Headings, tabs and buttons say what they are in words, without an icon each. Plain counts are text, not badges.
+- Overview lists the views as an index, and Board shows its figures in one row.
+- Map tool banners are neutral panels with an accent only on the main button. The legend uses small colour dots, and the border check panel loses its icon square.
+- Timeline lane names are plain labels and bars have one even outline; family tree relation tags and generation labels are quiet; org chart logo tiles are neutral. Colours that mean something (types, houses, groups, your file tints) are unchanged.
+
 **Fixes**
 - Undo puts back only what a step changed, follows renamed notes, and survives a restart. Occupation shows everywhere.
 - Stale inferred links clear, date ranges split one way everywhere, and saving a note's text alone no longer redraws every view.
-- A first run with a sample world, and calmer toolbars across every view.
+- A first run with a sample world.
 
 ## 2.0.0 — 2026-11-06
 UniverseView is now one dashboard for your whole world. This brings together everything from 1.3 to 1.8, listed in full below.
