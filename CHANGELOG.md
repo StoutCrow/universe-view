@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.1.1 — 2026-11-09
+
+### Add relatives by name
+- The family tree's toolbar, a card's right-click menu and the inspector have **Add relatives by name…**: pick parents, children, partners or siblings and type one name per line. No notes are made. Each name becomes a link on a note you already have, and the tree draws it as a card marked *Not created yet*; click it to write it up when there is something to say. A name that matches someone in the vault links to them, and names already linked aren't added twice.
+
 ## 2.1.0 — 2026-11-09
 
 **A tactile style**

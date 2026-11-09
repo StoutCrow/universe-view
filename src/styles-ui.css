@@ -1360,3 +1360,13 @@ textarea.chronicle-mono {
 	transition: none;
 	user-select: none;
 }
+.uv-rel-kinds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+.uv-rel-names {
+	width: 100%;
+	resize: vertical;
+}

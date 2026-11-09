@@ -29,6 +29,7 @@ import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { dropEmptyProperties, quickAddFrontmatter, withFields } from "../src/import/quickadd";
+import { addLinks, parseNames } from "../src/index/relatives";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
@@ -1346,6 +1347,16 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		const front: Record<string, unknown> = { lifespan: null, birthplace: "", allies: [], mentors: [null, " "], reign: undefined, gender: "female", parents: ["[[Bea]]"], tags: ["Character_Person"], born: 0, alive: false };
 		dropEmptyProperties(front);
 		eq(front, { gender: "female", parents: ["[[Bea]]"], tags: ["Character_Person"], born: 0, alive: false }, "creator: empty properties are dropped, filled and zero/false ones stay");
+	}
+	// Adding relatives by name: links only, no notes.
+	eq(parseNames("Anna\n- [[Bert|B]]\n  \nanna; Carl"), ["Anna", "Bert", "Carl"], "relatives: names split, unwrapped, repeats dropped");
+	{
+		const front: Record<string, unknown> = { child: "[[Anna]]" };
+		eq(addLinks(front, ["children", "child"], "children", ["[[anna]]", "[[Bert]]"]), 1, "relatives: a link already there isn't added twice");
+		eq(front, { child: ["[[Anna]]", "[[Bert]]"] }, "relatives: the spelling the note already uses is kept");
+		const blank: Record<string, unknown> = {};
+		addLinks(blank, ["parents"], "parents", ["[[Cy]]"]);
+		eq(blank, { parents: ["[[Cy]]"] }, "relatives: a new list is made when there isn't one");
 	}
 	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Siege", type: "event" }, { date: "1200", war: "The War", importance: "5" })), { date: "1200", war: "[[The War]]", importance: 5 }, "creator: an event's form");

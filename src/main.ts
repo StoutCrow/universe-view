@@ -20,6 +20,7 @@ import { absorbGaps, untangle } from "./index/merge";
 import { BUILT_IN_PRESETS, applyLook, type MapPreset } from "./ui/mappresets";
 import { WhatsNewModal } from "./ui/WhatsNew";
 import { TourModal } from "./ui/Tour";
+import { AddRelativesModal } from "./ui/AddRelatives";
 import { compareVersions } from "./index/changelog";
 import { isHouse } from "./render/houses";
 import { setHelpDelay } from "./render/common";
@@ -1957,6 +1958,7 @@ export default class ChroniclePlugin extends Plugin {
 		if (e.type === "place" || e.type === "map" || e.places.length || e.birthPlace) item("Show on map", "map", () => void this.openMap(e.key));
 		item("Show connections", "waypoints", () => void this.openNetwork(e.key));
 		item("Show in UniverseView dashboard", "panels-top-left", () => void this.openDashboard(e.key));
+		if (e.type === "person") item("Add relatives by name…", "users-round", () => new AddRelativesModal(this, e).open());
 		if (e.type === "person") item("Add child…", "baby", () => this.createEntityPrompt({ type: "person", parents: [e.name] }));
 		if (e.type === "place") item("Add event here…", "calendar-plus", () => this.createEntityPrompt({ type: "event", places: [e.name] }));
 		item("Change icon…", "smile-plus", () => changeNoteIcon(this, file));

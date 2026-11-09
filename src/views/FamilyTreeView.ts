@@ -3,6 +3,7 @@ import { DEFAULT_FAMILY_OPTIONS, FamilyOptions, FamilyTreeRenderer } from "../re
 import { FanChartRenderer, TimeTreeRenderer } from "../render/treecharts";
 import { dropdown, iconButton, toggleChip } from "../render/common";
 import { ChronicleView } from "./base";
+import { AddRelativesModal } from "../ui/AddRelatives";
 
 export const VIEW_FAMILY = "chronicle-family";
 
@@ -208,7 +209,12 @@ export class FamilyTreeView extends ChronicleView {
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoomBy(1 / 1.25));
 			iconButton(right, "zoom-in", "Zoom in", () => this.renderer?.zoomBy(1.25));
 			iconButton(right, "maximize", "Fit tree", () => this.renderer?.fit());
-			iconButton(right, "user-round-plus", "New person", () => this.plugin.createEntityPrompt({ type: "person" }), "mod-cta-icon");
+			iconButton(right, "users-round", "Add relatives by name to the centre person (no notes made)", () => {
+					const root = this.plugin.index.get(this.options.root);
+					if (root) new AddRelativesModal(this.plugin, root).open();
+					else new Notice("Pick a person at the centre first.");
+				});
+				iconButton(right, "user-round-plus", "New person", () => this.plugin.createEntityPrompt({ type: "person" }), "mod-cta-icon");
 		});
 	}
 

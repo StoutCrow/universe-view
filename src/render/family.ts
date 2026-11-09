@@ -1,4 +1,5 @@
 import { Platform } from "obsidian";
+import { AddRelativesModal } from "../ui/AddRelatives";
 import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import { formatDate, yearsBetween } from "../dates/parser";
@@ -648,7 +649,8 @@ export class FamilyTreeRenderer {
 				extra: (menu) => {
 					if (e && n.key !== this.options.root)
 						menu.addItem((i) => i.setTitle("Centre tree here").setIcon("locate-fixed").onClick(() => this.recenter(n.key)));
-					if (kids) menu.addItem((i) => i.setTitle(this.options.collapsed?.includes(n.key) ? "Unfold this branch" : "Fold this branch").setIcon("fold-vertical").onClick(() => this.toggleFold(n.key)));
+					if (e) menu.addItem((i) => i.setTitle("Add relatives by name…").setIcon("users-round").onClick(() => new AddRelativesModal(this.plugin, e).open()));
+						if (kids) menu.addItem((i) => i.setTitle(this.options.collapsed?.includes(n.key) ? "Unfold this branch" : "Fold this branch").setIcon("fold-vertical").onClick(() => this.toggleFold(n.key)));
 					if (e) {
 						menu.addItem((i) =>
 							i.setTitle("Add child").setIcon("baby").onClick(() => this.plugin.createEntityPrompt({ type: "person", parents: [e.name] })),
