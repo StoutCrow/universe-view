@@ -347,7 +347,7 @@ button.chronicle-ov-tile:hover::after {
 	position: absolute;
 	display: flex;
 	flex-direction: column;
-	border-radius: calc(var(--chronicle-radius) + 4px);
+	border-radius: var(--uv-r-lg);
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	box-shadow: var(--chronicle-shadow);
@@ -359,7 +359,7 @@ button.chronicle-ov-tile:hover::after {
 		width var(--chronicle-med) var(--chronicle-ease), height var(--chronicle-med) var(--chronicle-ease);
 }
 .chronicle-module:hover {
-	border-color: color-mix(in srgb, var(--interactive-accent) 35%, var(--background-modifier-border));
+	border-color: var(--background-modifier-border-hover);
 }
 .chronicle-module.is-dragging {
 	z-index: 20;
@@ -386,7 +386,6 @@ button.chronicle-ov-tile:hover::after {
 	flex-shrink: 0;
 	padding: 0 6px 0 4px;
 	border-bottom: 1px solid var(--background-modifier-border);
-	background: color-mix(in srgb, var(--background-secondary) 45%, var(--background-primary));
 	cursor: grab;
 	user-select: none;
 	touch-action: none;
@@ -399,6 +398,10 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-module-icon {
 	display: flex;
 	color: var(--text-faint);
+}
+/* A module's title says what it is; the icon beside it is dropped. */
+.chronicle-module-icon {
+	display: none;
 }
 .chronicle-module-grip {
 	opacity: 0;
@@ -537,24 +540,23 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-stats {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-	gap: 10px;
+	gap: 0;
 	min-height: 100%;
 	align-content: center;
 }
+/* Figures in one row, split by hairlines: no boxes, no icons. */
 .chronicle-stat {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 0 10px;
-	align-items: center;
-	padding: 8px 10px;
-	border-radius: var(--chronicle-radius);
-	background: color-mix(in srgb, var(--background-secondary) 60%, transparent);
+	display: block;
+	padding: 2px 16px;
+	border-left: 1px solid var(--background-modifier-border);
 	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
 }
+.chronicle-stat:first-child {
+	border-left: none;
+	padding-left: 4px;
+}
 .chronicle-stat-icon {
-	grid-row: span 2;
-	display: flex;
-	color: var(--text-accent);
+	display: none;
 }
 .chronicle-stat-icon svg {
 	width: 22px;
