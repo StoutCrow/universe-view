@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.2.1 — 2026-11-09
+
+### Fixed
+- The dashboard's Settings tab showed only part of the old Look & cards page after the 2.2.0 split. It now has a tab for each new page (Theme & colours, Surface & motion, Views, Inspector & icons, Notes, Families, Time & calendars, Maps, Realms & tiers, Map tools, About), and the Tactile style section shows there too while Tactile is on.
+
 ## 2.2.0 — 2026-11-09
 
 ### Settings, rearranged

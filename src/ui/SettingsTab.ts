@@ -276,12 +276,15 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const box = el("div", { cls: "chronicle-settings" }, host);
 		this.build(box);
 		let page = PAGES[0].id;
+		let hidden = false;
 		for (const child of Array.from(box.children)) {
 			if (child.hasClass("setting-item-heading")) {
 				const name = child.querySelector(".setting-item-name")?.textContent ?? "";
 				page = (PAGES.find((p) => p.heads.some((h) => name.startsWith(h))) ?? PAGES[0]).id;
+				// The tactile section only shows while Tactile is on.
+				hidden = name === "Tactile style" && this.plugin.settings.surfaceStyle !== "tactile";
 			}
-			if (page !== id) child.remove();
+			if (page !== id || hidden) child.remove();
 		}
 	}
 

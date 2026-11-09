@@ -169,11 +169,17 @@ export const HUB_SECTIONS: HubSection[] = [
 	{
 		id: "settings", name: "Settings", icon: "settings", modules: [
 			{ id: "set-modules", name: "Modules", icon: "toggle-right", desc: "", fixed: true, draw: (host, hub) => hub.modulesInto(host) },
-			{ id: "set-look", name: "Look & cards", icon: "palette", desc: "", fixed: true, draw: settingsPage("appearance") },
+			{ id: "set-look", name: "Theme & colours", icon: "palette", desc: "", fixed: true, draw: settingsPage("appearance") },
+			{ id: "set-surface", name: "Surface & motion", icon: "layers", desc: "", fixed: true, draw: settingsPage("surface") },
+			{ id: "set-views", name: "Views", icon: "layout-dashboard", desc: "", fixed: true, draw: settingsPage("views") },
+			{ id: "set-inspector", name: "Inspector & icons", icon: "panel-right", desc: "", fixed: true, draw: settingsPage("inspector") },
 			{ id: "set-notes", name: "Notes", icon: "file-text", desc: "", fixed: true, draw: settingsPage("notes") },
+			{ id: "set-families", name: "Families", icon: "users-round", desc: "", fixed: true, draw: settingsPage("families") },
 			{ id: "set-time", name: "Time & calendars", icon: "calendar-days", desc: "", fixed: true, draw: settingsPage("time") },
-			{ id: "set-maps", name: "Maps & realms", icon: "map", desc: "", fixed: true, draw: settingsPage("maps") },
+			{ id: "set-maps", name: "Maps", icon: "map", desc: "", fixed: true, draw: settingsPage("maps") },
+			{ id: "set-realms", name: "Realms & tiers", icon: "crown", desc: "", fixed: true, draw: settingsPage("realms") },
 			{ id: "set-tools", name: "Map tools", icon: "pencil-ruler", desc: "", fixed: true, draw: settingsPage("tools") },
+			{ id: "set-about", name: "About", icon: "info", desc: "", fixed: true, draw: settingsPage("about") },
 		],
 	},
 ];
