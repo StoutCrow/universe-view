@@ -12,10 +12,8 @@
 }
 .chronicle-calendar-inline {
 	margin: 8px 0 16px;
-	padding: 12px 14px;
-	border-radius: var(--radius-l);
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-secondary);
+	padding: 12px 0 0;
+	border-top: 1px solid var(--background-modifier-border);
 }
 .chronicle-calendar-inline:not(#uv-strong) {
 	width: auto;
@@ -37,8 +35,9 @@
 /* What's new: one fold per version, the newest open. */
 .uv-whatsnew { width: min(720px, 92vw); }
 .uv-whatsnew-sub { color: var(--text-muted); margin-top: 0; }
-.uv-whatsnew-list { max-height: 62vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-.uv-whatsnew-entry { border: 1px solid var(--background-modifier-border); border-radius: var(--chronicle-radius, 8px); padding: 6px 12px; background: var(--background-secondary); }
+.uv-whatsnew-list { max-height: 62vh; overflow-y: auto; display: flex; flex-direction: column; }
+.uv-whatsnew-entry { border-top: 1px solid var(--background-modifier-border); padding: 6px 0; }
+.uv-whatsnew-entry:first-child { border-top: none; }
 .uv-whatsnew-entry > summary { cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 4px 0; list-style: none; }
 .uv-whatsnew-entry > summary::-webkit-details-marker { display: none; }
 .uv-whatsnew-entry > summary::before { content: '▸'; color: var(--text-faint); transition: transform var(--chronicle-fast, 120ms); }
