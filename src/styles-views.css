@@ -1006,12 +1006,13 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 .chronicle-org-logo-box {
 	cursor: pointer;
 }
+/* The logo space is neutral; only the monogram and the card's top edge carry the group's colour. */
 .chronicle-org-logo-bg {
-	fill: color-mix(in srgb, var(--item-color) 16%, var(--background-primary));
+	fill: var(--background-modifier-hover);
 }
 .chronicle-org-logo-ring {
 	fill: none;
-	stroke: color-mix(in srgb, var(--item-color) 45%, var(--background-modifier-border));
+	stroke: var(--background-modifier-border);
 	stroke-width: 1.5;
 	transition: stroke var(--chronicle-fast) var(--chronicle-ease);
 }

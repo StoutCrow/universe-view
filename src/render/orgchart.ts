@@ -676,12 +676,12 @@ export class OrgChartRenderer {
 		const color = o.color ?? cultureColor(this.plugin, o.key);
 		const g = svg("g", { class: "chronicle-org-card" + (n.depth === 0 ? " is-top" : ""), transform: `translate(${n.x},${n.y})`, "data-key": o.key }, parent);
 		g.setAttribute("style", `--item-color: ${color}; --i: ${this.nodes.indexOf(n) % 20}`);
-		svg("rect", { x: 0, y: 0, width: CARD_W, height: n.h, rx: 12, class: "chronicle-org-card-bg" }, g);
-		svg("rect", { x: 0, y: 0, width: CARD_W, height: 6, rx: 3, class: "chronicle-org-card-band" }, g);
+		svg("rect", { x: 0, y: 0, width: CARD_W, height: n.h, rx: 6, class: "chronicle-org-card-bg" }, g);
+		svg("rect", { x: 0, y: 0, width: CARD_W, height: 3, rx: 1.5, class: "chronicle-org-card-band" }, g);
 
 		// The logo area: the group's sigil, or a monogram with a prompt to add one.
 		const logoBox = svg("g", { class: "chronicle-org-logo-box", transform: `translate(14,${(HEAD_H - LOGO) / 2 + 3})` }, g);
-		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 10, class: "chronicle-org-logo-bg" }, logoBox);
+		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 6, class: "chronicle-org-logo-bg" }, logoBox);
 		const logo = resourceUrl(this.plugin, o.logo ?? o.image);
 		if (logo) {
 			svg("image", { href: logo, x: 0, y: 0, width: LOGO, height: LOGO, preserveAspectRatio: "xMidYMid meet", "clip-path": "url(#chronicle-org-logo-clip)", class: "chronicle-org-logo" }, logoBox);
@@ -692,7 +692,7 @@ export class OrgChartRenderer {
 			const plus = svg("text", { x: LOGO / 2, y: LOGO / 2 + 6, "text-anchor": "middle", class: "chronicle-org-logo-add" }, logoBox);
 			plus.textContent = "+ logo";
 		}
-		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 10, class: "chronicle-org-logo-ring" }, logoBox);
+		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 6, class: "chronicle-org-logo-ring" }, logoBox);
 		svg("title", {}, logoBox).textContent = logo ? `${o.name}'s logo: click to change it` : `Add a logo for ${o.name} (a sigil, crest or flag image)`;
 		logoBox.addEventListener("click", (evt) => {
 			evt.stopPropagation();
