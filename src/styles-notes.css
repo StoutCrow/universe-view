@@ -10,7 +10,7 @@
 .uv-creator-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .uv-creator-head h3 { margin: 0; font-size: var(--font-ui-medium); font-weight: 600; }
 .uv-creator .uv-quickadd-chips { gap: 4px; }
-.uv-creator .uv-quickadd-chip { border-radius: 8px; }
+.uv-creator .uv-quickadd-chip { border-radius: var(--uv-r-md); }
 .uv-creator .uv-quickadd-chip.is-active { background: var(--background-modifier-hover); border-color: var(--background-modifier-border-hover); }
 .uv-creator .chronicle-dash-problem:empty, .uv-quickadd-warn:empty, .uv-creator-hint:empty { display: none; }
 .uv-creator-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
@@ -25,7 +25,7 @@
 .uv-creator-tags { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; margin-top: 12px; }
 .uv-creator-tag-list { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .uv-creator-tag-list input { flex: 1 1 96px; min-width: 96px; height: 26px; }
-button.uv-creator-tag { height: 26px; padding: 0 8px; border: 1px solid var(--background-modifier-border); border-radius: 8px; background: transparent; box-shadow: none; font-size: var(--font-ui-smaller); color: var(--text-normal); cursor: pointer; }
+button.uv-creator-tag { height: 26px; padding: 0 8px; border: 1px solid var(--background-modifier-border); border-radius: var(--uv-r-md); background: transparent; box-shadow: none; font-size: var(--font-ui-smaller); color: var(--text-normal); cursor: pointer; }
 button.uv-creator-tag.is-new { border-style: dashed; }
 button.uv-creator-tag:disabled { background: var(--background-modifier-hover); cursor: default; opacity: 1; }
 button.uv-creator-tag.is-off { color: var(--text-faint); text-decoration: line-through; }
@@ -35,18 +35,18 @@ button.uv-creator-tag.is-off { color: var(--text-faint); text-decoration: line-t
 
 /* ---- Quick add ---- */
 .uv-quickadd .uv-quickadd-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.uv-quickadd-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; border: 1px solid var(--background-modifier-border); }
+.uv-quickadd-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--uv-r-md); font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; border: 1px solid var(--background-modifier-border); }
 .uv-quickadd-chip svg { width: 14px; height: 14px; }
 .uv-quickadd-chip.is-active { background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); border-color: var(--interactive-accent); color: var(--text-normal); }
 .uv-quickadd .chronicle-quickadd-input { width: 100%; font-size: 1.05em; }
 .uv-quickadd-examples { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 10px; font-size: var(--font-ui-smaller); }
 .uv-quickadd-examples a { color: var(--text-faint); cursor: pointer; text-decoration: none; }
 .uv-quickadd-examples a:hover { color: var(--text-accent); }
-.uv-quickadd-card { border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 10px 12px; background: var(--background-secondary); min-height: 3em; }
+.uv-quickadd-card { border: 1px solid var(--background-modifier-border); border-radius: var(--uv-r-lg); padding: 10px 12px; background: var(--background-secondary); min-height: 3em; }
 .uv-quickadd-card.is-empty { display: none; }
 .uv-quickadd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .uv-quickadd-icon svg { width: 18px; height: 18px; color: var(--interactive-accent); }
-.uv-quickadd-type { font-size: var(--font-ui-smaller); color: var(--text-muted); padding: 1px 8px; border-radius: 999px; background: var(--background-modifier-hover); }
+.uv-quickadd-type { font-size: var(--font-ui-smaller); color: var(--text-muted); padding: 1px 8px; border-radius: var(--uv-r-md); background: var(--background-modifier-hover); }
 .uv-quickadd-warn { font-size: var(--font-ui-smaller); color: var(--color-orange); }
 .uv-quickadd-rows { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: var(--font-ui-small); }
 .uv-quickadd-key { color: var(--text-muted); }

@@ -135,7 +135,7 @@
 .leaflet-tooltip.chronicle-map-line-label {
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	font-size: 11px;
 	box-shadow: none;
 }
@@ -173,7 +173,7 @@
 	min-width: 32px;
 	height: 32px;
 	padding: 0 6px;
-	border-radius: 16px;
+	border-radius: var(--uv-r-lg);
 	font-weight: 700;
 	font-size: 13px;
 	color: var(--text-on-accent);
@@ -383,7 +383,7 @@
 	max-height: 220px;
 	object-fit: cover;
 	margin: 8px 0;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 }
 .chronicle-facts-rows {
 	display: grid;
@@ -464,7 +464,7 @@
 	z-index: 2;
 	min-width: 150px;
 	padding: 6px 8px;
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	font-size: 11px;
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
@@ -495,7 +495,7 @@
 	display: inline-block;
 	width: 10px;
 	height: 3px;
-	border-radius: 2px;
+	border-radius: var(--uv-r-sm);
 	flex-shrink: 0;
 }
 .chronicle-stat-legend {
@@ -583,7 +583,7 @@
 .chronicle-name-chip {
 	display: flex;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	overflow: hidden;
 }
 .chronicle-name-chip button {
@@ -614,7 +614,7 @@
 }
 .chronicle-quickadd-preview {
 	padding: 8px 10px;
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	background: var(--background-secondary);
 }
 .chronicle-quickadd-preview:empty {
@@ -632,7 +632,7 @@
 .chronicle-prompt-card {
 	padding: 10px 12px;
 	margin: 8px 0;
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	border: 1px solid var(--background-modifier-border);
 	border-left: 3px solid var(--interactive-accent);
 }
@@ -648,7 +648,7 @@
 	padding: 8px 10px;
 	margin: 8px 0;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 }
 .chronicle-dupe-reason {
 	font-size: var(--font-ui-smaller);
@@ -704,14 +704,14 @@
 .chronicle-complete-track {
 	height: 8px;
 	margin-top: 3px;
-	border-radius: 4px;
+	border-radius: var(--uv-r-sm);
 	background: var(--background-modifier-border);
 	overflow: hidden;
 }
 .chronicle-complete-bar {
 	height: 100%;
 	background: var(--interactive-accent);
-	border-radius: 4px;
+	border-radius: var(--uv-r-sm);
 	transition: width var(--chronicle-slow) var(--chronicle-ease);
 }
 .chronicle-complete-bar.is-done {
@@ -733,7 +733,7 @@ button.chronicle-dash-tool {
 	text-align: left;
 	background: transparent;
 	box-shadow: none;
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 }
 button.chronicle-dash-tool:hover {
 	background: var(--background-modifier-hover);
@@ -770,7 +770,7 @@ button.chronicle-dash-tool:hover {
 }
 .chronicle-inline {
 	padding: 0 4px;
-	border-radius: 4px;
+	border-radius: var(--uv-r-sm);
 	background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
 	color: var(--text-normal);
 	font-variant-numeric: tabular-nums;
@@ -886,7 +886,7 @@ button.chronicle-dash-tool:hover {
 	transform: translateX(-50%);
 	z-index: 900;
 	padding: 4px 12px;
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-small);
 	font-weight: 600;
 	background: color-mix(in srgb, var(--background-primary) 88%, transparent);
@@ -977,7 +977,7 @@ button.chronicle-dash-tool:hover {
 	position: absolute;
 	z-index: 20;
 	padding: 3px 9px;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
 	font-weight: 600;
 	white-space: nowrap;
@@ -1354,7 +1354,7 @@ img.chronicle-territory-icon {
 	font-size: 0.6em;
 	font-weight: 700;
 	padding: 0 0.45em;
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	color: var(--text-on-accent);
 	background: var(--terr-color);
 	letter-spacing: 0;
@@ -1415,7 +1415,7 @@ img.chronicle-territory-icon {
 .chronicle-insp-pending {
 	margin-top: 8px;
 	padding: 6px 8px;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
 	background: color-mix(in srgb, var(--color-yellow, #d9a33a) 18%, transparent);
 }
@@ -1544,7 +1544,7 @@ img.chronicle-territory-icon {
 }
 .chronicle-rows-row {
 	padding: 3px;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 }
 .chronicle-rows-row:hover {
 	background: var(--background-modifier-hover);
@@ -1646,7 +1646,7 @@ img.chronicle-territory-icon {
 .chronicle-cal-ed-preview {
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 10px;
+	border-radius: var(--uv-r-lg);
 	padding: 10px 12px;
 }
 .chronicle-cal-ed-preview-head {
@@ -1677,7 +1677,7 @@ img.chronicle-territory-icon {
 	gap: 2px;
 	font-size: 11px;
 	padding: 3px 0;
-	border-radius: 4px;
+	border-radius: var(--uv-r-sm);
 	background: var(--background-primary);
 }
 .chronicle-cal-ed-day.is-festival {

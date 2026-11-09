@@ -42,7 +42,7 @@
 .chronicle-toolbar .dropdown,
 .chronicle-picker input,
 .chronicle-toolbar .chronicle-search input {
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	transition: box-shadow var(--chronicle-fast) var(--chronicle-ease), border-color var(--chronicle-fast) var(--chronicle-ease);
 }
 .chronicle-chip,
@@ -67,7 +67,7 @@
 	color: var(--text-on-accent);
 }
 .chronicle-icon-btn {
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 }
 
 /* Display font for names and titles (themes change it). */
@@ -119,7 +119,7 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-ov-tile:nth-child(5) { --tile: var(--chronicle-culture-color); }
 .chronicle-ov-tile:nth-child(6) { --tile: var(--chronicle-place-color); }
 .chronicle-ov-tile-icon {
-	border-radius: 12px;
+	border-radius: var(--uv-r-lg);
 	background: transparent;
 	color: var(--text-muted);
 }
@@ -131,7 +131,7 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-ov-list li {
 	padding: calc(5px * var(--chronicle-density)) 4px;
 	margin: 0 -4px;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
 	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
 }
@@ -139,7 +139,7 @@ button.chronicle-ov-tile:hover::after {
 	background: var(--background-modifier-hover);
 }
 .chronicle-ov-action {
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 }
 
 /* ---- Family tree, timeline, graph, embeds ---- */
@@ -300,7 +300,7 @@ button.chronicle-ov-tile:hover::after {
 }
 .chronicle-hc-excerpt.is-loading {
 	height: 2.6em;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	background: linear-gradient(90deg, var(--background-modifier-hover), transparent, var(--background-modifier-hover));
 	background-size: 200% 100%;
 	animation: chronicle-shimmer 1.2s linear infinite;
@@ -313,7 +313,7 @@ button.chronicle-ov-tile:hover::after {
 }
 .chronicle-hc-tag {
 	padding: 0 7px;
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	font-size: 11px;
 	background: var(--background-modifier-hover);
 	color: var(--text-muted);
@@ -521,7 +521,7 @@ button.chronicle-ov-tile:hover::after {
 	color: var(--text-muted);
 	background: var(--background-secondary);
 	padding: 8px 10px;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	white-space: pre-wrap;
 }
 .chronicle-module-help summary {
@@ -697,7 +697,7 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-vertex.is-handle {
 	width: 12px;
 	height: 12px;
-	border-radius: 3px;
+	border-radius: var(--uv-r-sm);
 	cursor: move;
 }
 .chronicle-vertex.is-mid {
@@ -725,7 +725,7 @@ button.chronicle-ov-tile:hover::after {
 	background: var(--background-primary);
 	color: var(--text-normal);
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	box-shadow: var(--shadow-s);
 	font-weight: var(--font-semibold);
 	font-variant-numeric: tabular-nums;
@@ -778,7 +778,7 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-snap-ghost.is-edge {
 	width: 12px;
 	height: 12px;
-	border-radius: 3px;
+	border-radius: var(--uv-r-sm);
 	transform: translate(-50%, -50%) rotate(45deg);
 }
 /* Timeline by category: a swatch of the category's colour on each lane and in the Categories menu. */
@@ -836,7 +836,7 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-map-banner select.chronicle-fill-select {
 	height: 26px;
 	font-size: var(--font-ui-smaller);
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	padding: 0 24px 0 10px;
 	background-color: color-mix(in srgb, var(--text-on-accent) 18%, transparent);
 	color: var(--text-on-accent);
@@ -934,7 +934,7 @@ button.chronicle-ov-tile:hover::after {
 	background: repeating-linear-gradient(45deg, var(--item-color) 0 2px, color-mix(in srgb, var(--item-color) 22%, var(--background-primary)) 2px 6px);
 }
 .chronicle-tl-item.uv-shape-hatch .chronicle-tl-bar,
-.chronicle-tl-item.uv-shape-square .chronicle-tl-bar { border-radius: 2px; }
+.chronicle-tl-item.uv-shape-square .chronicle-tl-bar { border-radius: var(--uv-r-sm); }
 .chronicle-tl-item.uv-shape-arrow .chronicle-tl-bar,
 .chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar,
 .chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar,
@@ -1040,7 +1040,7 @@ button.chronicle-ov-tile:hover::after {
 	width: max-content;
 	max-width: calc(100% - 120px);
 	padding: 5px 5px 5px 14px;
-	border-radius: 18px;
+	border-radius: var(--uv-r-lg);
 	line-height: 1.3;
 	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
 }
@@ -1052,7 +1052,7 @@ button.chronicle-ov-tile:hover::after {
 .chronicle-map-banner.has-actions button {
 	height: 26px;
 	padding: 0 12px;
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
 	background: color-mix(in srgb, var(--text-on-accent) 18%, transparent);
 	color: var(--text-on-accent);
@@ -1125,7 +1125,7 @@ button.chronicle-legend-row {
 	gap: 8px;
 	width: 100%;
 	padding: 3px 6px;
-	border-radius: 6px;
+	border-radius: var(--uv-r-md);
 	cursor: pointer;
 	transition: background-color var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease);
 }
@@ -1208,7 +1208,7 @@ button.chronicle-theme-card {
 	flex-direction: column;
 	gap: 3px;
 	padding: 8px 8px 10px;
-	border-radius: 14px;
+	border-radius: var(--uv-r-lg);
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-primary);
 	cursor: pointer;
@@ -1226,7 +1226,7 @@ button.chronicle-theme-card.is-active {
 	position: relative;
 	height: 82px;
 	margin-bottom: 4px;
-	border-radius: 9px;
+	border-radius: var(--uv-r-md);
 	overflow: hidden;
 	background: var(--pv-bg);
 	border: 1px solid rgba(128, 128, 128, 0.22);
@@ -1242,7 +1242,7 @@ button.chronicle-theme-card.is-active {
 .chronicle-pv-bar span {
 	width: 16px;
 	height: 5px;
-	border-radius: 3px;
+	border-radius: var(--uv-r-sm);
 	background: color-mix(in srgb, var(--pv-text) 25%, transparent);
 }
 .chronicle-pv-bar span:first-child {
@@ -1259,7 +1259,7 @@ button.chronicle-theme-card.is-active {
 	height: 8px;
 	width: var(--pv-w);
 	margin-left: var(--pv-x);
-	border-radius: 4px;
+	border-radius: var(--uv-r-sm);
 	background: color-mix(in srgb, var(--pv-c) 32%, var(--pv-bg));
 	border-left: 3px solid var(--pv-c);
 }
@@ -1300,7 +1300,7 @@ button.chronicle-theme-card.is-active {
 	gap: 6px;
 	padding: 3px 8px 3px 3px;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
 	cursor: pointer;
 }

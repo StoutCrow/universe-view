@@ -14,7 +14,11 @@ body {
 	--chronicle-tl-font-size: 12px;
 	--chronicle-card-width: 180px;
 	--chronicle-card-height: 64px;
-	--chronicle-radius: var(--chronicle-user-radius, var(--chronicle-theme-radius, 10px));
+	--chronicle-radius: var(--chronicle-user-radius, var(--chronicle-theme-radius, 6px));
+	/* Radius scale: small (tags, inputs inside rows), medium (buttons, chips, rows), large (cards, sheets). They follow the Radius setting. */
+	--uv-r-sm: calc(var(--chronicle-radius) * 0.65);
+	--uv-r-md: var(--chronicle-radius);
+	--uv-r-lg: calc(var(--chronicle-radius) + 4px);
 	--chronicle-shadow: none;
 	--chronicle-shadow-lift: none;
 	--chronicle-grid: var(--background-modifier-border);
@@ -135,7 +139,7 @@ body.chronicle-flat {
 	gap: 5px;
 	height: 28px;
 	padding: 0 10px;
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-small);
 	background: transparent;
 	color: var(--text-muted);
@@ -599,7 +603,7 @@ body.chronicle-flat {
 /* The person at the centre stands out. */
 .uv-card-html.is-root .chronicle-card { box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 45%, transparent), var(--chronicle-shadow-lift, 0 6px 18px rgba(0, 0, 0, 0.18)); }
 /* What each person is to the centre, as a tag on the card's top edge. */
-.uv-card-rel { position: absolute; left: 10px; top: -9px; z-index: 1; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; line-height: 15px; color: var(--text-on-accent); background: color-mix(in srgb, var(--interactive-accent) 85%, var(--background-primary)); pointer-events: none; }
+.uv-card-rel { position: absolute; left: 10px; top: -9px; z-index: 1; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 7px; border-radius: var(--uv-r-md); font-size: 10px; font-weight: 600; letter-spacing: 0.02em; line-height: 15px; color: var(--text-on-accent); background: color-mix(in srgb, var(--interactive-accent) 85%, var(--background-primary)); pointer-events: none; }
 .uv-card-rel.is-marriage { color: var(--text-muted); background: var(--background-secondary); border: 1px solid var(--background-modifier-border); line-height: 13px; }
 /* Hovering someone: the line of people linking them to the centre stays bright, the rest fade. */
 .chronicle-family.is-tracing .uv-card-html:not(.is-on-path):not(.is-root) { opacity: 0.35; }
@@ -611,7 +615,7 @@ body.chronicle-flat {
 .uv-gen-label { fill: var(--text-faint); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; }
 .uv-couple-ring { fill: var(--text-muted); stroke: var(--background-primary); stroke-width: 2; }
 .uv-couple-ring.is-ended { fill: var(--background-primary); stroke: var(--text-muted); stroke-width: 1.5; }
-.uv-family-note { position: absolute; left: 12px; bottom: calc(var(--uv-bottom-inset, 0px) + 12px); z-index: 2; padding: 6px 10px; border-radius: 8px; font-size: var(--font-ui-smaller); color: var(--text-muted); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); }
+.uv-family-note { position: absolute; left: 12px; bottom: calc(var(--uv-bottom-inset, 0px) + 12px); z-index: 2; padding: 6px 10px; border-radius: var(--uv-r-md); font-size: var(--font-ui-smaller); color: var(--text-muted); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); }
 /* No hover on a touch screen: the fold toggles stay in sight. */
 .is-mobile .chronicle-card-fold { opacity: 1; }
 .chronicle-edge {
@@ -915,7 +919,7 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	transform: translateX(-50%);
 	z-index: 1000;
 	padding: 6px 14px;
-	border-radius: 999px;
+	border-radius: var(--uv-r-md);
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	font-size: var(--font-ui-small);
@@ -981,7 +985,7 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	top: calc(50% - var(--dot) / 2 - 9px);
 	min-width: 16px;
 	padding: 0 4px;
-	border-radius: 8px;
+	border-radius: var(--uv-r-md);
 	background: var(--background-primary);
 	color: var(--text-normal);
 	border: 1px solid var(--pin-color);
@@ -1233,7 +1237,7 @@ g.is-dimmed .chronicle-net-link.is-lit {
 	align-items: center;
 	gap: 2px;
 	padding: 1px 4px 1px 8px;
-	border-radius: 10px;
+	border-radius: var(--uv-r-lg);
 	background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
 	color: var(--text-accent);
 	font-size: var(--font-ui-smaller);
@@ -1405,7 +1409,7 @@ button.chronicle-ov-tile:focus-visible {
 .chronicle-ov-tile-icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
+	border-radius: var(--uv-r-lg);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1438,7 +1442,7 @@ button.chronicle-ov-tile:focus-visible {
 .chronicle-ov-tile-foot kbd {
 	font-size: 10px;
 	padding: 1px 5px;
-	border-radius: 4px;
+	border-radius: var(--uv-r-sm);
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-secondary);
 	color: var(--text-muted);
@@ -1463,7 +1467,7 @@ button.chronicle-ov-tile:focus-visible {
 .chronicle-ov-badge {
 	min-width: 18px;
 	padding: 0 5px;
-	border-radius: 9px;
+	border-radius: var(--uv-r-md);
 	background: var(--color-orange);
 	color: #fff;
 	font-size: 11px;
@@ -1686,7 +1690,7 @@ button.chronicle-ov-tile:focus-visible {
 .chronicle-badge {
 	font-size: var(--font-ui-smaller);
 	padding: 2px 8px;
-	border-radius: 10px;
+	border-radius: var(--uv-r-lg);
 	background: var(--background-modifier-hover);
 	color: var(--text-muted);
 }
@@ -1720,7 +1724,7 @@ button.chronicle-ov-tile:focus-visible {
 	.is-mobile .chronicle-cal.has-side .chronicle-cal-side { display: none; }
 }
 /* The report shown when a map doesn't appear. */
-.uv-map-report { position: absolute; left: 12px; right: 12px; top: 12px; z-index: 950; padding: 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-smaller); }
+.uv-map-report { position: absolute; left: 12px; right: 12px; top: 12px; z-index: 950; padding: 12px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-smaller); }
 .uv-map-report-title { font-weight: 600; font-size: var(--font-ui-small); margin-bottom: 6px; }
-.uv-map-report pre { white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; margin: 0 0 8px; padding: 8px; border-radius: 6px; background: var(--background-secondary); font-size: 11px; user-select: text; -webkit-user-select: text; }
+.uv-map-report pre { white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; margin: 0 0 8px; padding: 8px; border-radius: var(--uv-r-md); background: var(--background-secondary); font-size: 11px; user-select: text; -webkit-user-select: text; }
 .uv-map-report-actions { display: flex; gap: 8px; flex-wrap: wrap; }

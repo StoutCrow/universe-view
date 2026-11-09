@@ -164,7 +164,7 @@
 /* ---- A realm picked on the map ---- */
 .chronicle-territory.is-picked { filter: drop-shadow(0 0 6px var(--terr-color)); }
 .chronicle-territory.is-picked:not(#uv-strong) { stroke-width: 3.5px; stroke-opacity: 1; fill-opacity: 0.38; }
-.uv-map-picked { position: absolute; left: 56px; top: 12px; z-index: 1000; min-width: 200px; max-width: min(340px, calc(100% - 80px)); padding: 8px 10px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--terr-color); box-shadow: var(--shadow-s); }
+.uv-map-picked { position: absolute; left: 56px; top: 12px; z-index: 1000; min-width: 200px; max-width: min(340px, calc(100% - 80px)); padding: 8px 10px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--terr-color); box-shadow: var(--shadow-s); }
 .uv-map-picked-head { display: flex; align-items: center; gap: 6px; }
 .uv-map-picked-head strong { font-family: var(--chronicle-font-display, inherit); }
 .uv-map-picked-head .clickable-icon { margin-left: auto; }
@@ -175,12 +175,12 @@
 
 /* ---- Realm statistics and shading ---- */
 .uv-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
-.uv-stat { padding: 6px 8px; border-radius: 8px; background: var(--background-secondary); }
+.uv-stat { padding: 6px 8px; border-radius: var(--uv-r-md); background: var(--background-secondary); }
 .uv-stat-value { font-weight: 600; font-variant-numeric: tabular-nums; }
 .uv-stat-label { font-size: var(--font-ui-smaller); color: var(--text-muted); }
-.uv-shade-legend { position: absolute; right: 12px; bottom: 26px; z-index: 1000; width: 170px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--background-primary) 90%, transparent); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); font-size: var(--font-ui-smaller); }
+.uv-shade-legend { position: absolute; right: 12px; bottom: 26px; z-index: 1000; width: 170px; padding: 6px 10px; border-radius: var(--uv-r-md); background: color-mix(in srgb, var(--background-primary) 90%, transparent); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); font-size: var(--font-ui-smaller); }
 .uv-shade-title { color: var(--text-muted); margin-bottom: 4px; }
-.uv-shade-ramp { height: 8px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary)), var(--interactive-accent)); }
+.uv-shade-ramp { height: 8px; border-radius: var(--uv-r-sm); background: linear-gradient(90deg, color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary)), var(--interactive-accent)); }
 .uv-shade-ends { display: flex; justify-content: space-between; margin-top: 2px; font-variant-numeric: tabular-nums; }
 /* ---- Touch screens: bigger targets, no hover-only controls ---- */
 @media (pointer: coarse) {
@@ -205,7 +205,7 @@
 /* ---- Colour import ---- */
 .uv-cimport-list { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
 .uv-cimport-row { display: grid; grid-template-columns: 28px 110px 1fr 14px; gap: 8px; align-items: center; }
-.uv-cimport-swatch { width: 28px; height: 22px; border-radius: 5px; border: 1px solid var(--background-modifier-border); }
+.uv-cimport-swatch { width: 28px; height: 22px; border-radius: var(--uv-r-sm); border: 1px solid var(--background-modifier-border); }
 .uv-cimport-share { font-size: var(--font-ui-smaller); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .uv-cimport-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--background-modifier-border); }
 .uv-cimport-opt { display: flex; gap: 6px; align-items: center; font-size: var(--font-ui-small); }
@@ -213,7 +213,7 @@
 .uv-sheet { width: min(460px, 94vw); }
 .uv-sheet .modal-title { padding-bottom: 0; }
 .uv-sheet-head { display: flex; align-items: center; gap: 10px; font-size: 1.05em; }
-.uv-sheet-icon { width: 34px; height: 34px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 16%, var(--background-secondary)); color: var(--interactive-accent); }
+.uv-sheet-icon { width: 34px; height: 34px; flex: none; border-radius: var(--uv-r-lg); display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 16%, var(--background-secondary)); color: var(--interactive-accent); }
 .uv-sheet-icon.is-danger { background: color-mix(in srgb, var(--color-red) 14%, var(--background-secondary)); color: var(--color-red); }
 .uv-sheet-icon svg { width: 18px; height: 18px; }
 .uv-sheet-intro { margin: 6px 0 12px; color: var(--text-muted); font-size: var(--font-ui-small); line-height: 1.45; }
@@ -228,10 +228,10 @@
 .uv-sheet-hint { grid-column: 2; font-size: var(--font-ui-smaller); color: var(--text-faint); min-height: 1.1em; }
 .uv-sheet-hint.is-ok { color: var(--color-green); }
 .uv-sheet-hint.is-bad { color: var(--color-orange); }
-.uv-sheet-segments { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--background-modifier-hover); gap: 2px; }
-.uv-sheet-segment { height: 26px; padding: 0 10px; border-radius: 6px; background: transparent; box-shadow: none; font-size: var(--font-ui-small); }
+.uv-sheet-segments { display: inline-flex; padding: 2px; border-radius: var(--uv-r-md); background: var(--background-modifier-hover); gap: 2px; }
+.uv-sheet-segment { height: 26px; padding: 0 10px; border-radius: var(--uv-r-md); background: transparent; box-shadow: none; font-size: var(--font-ui-small); }
 .uv-sheet-segment.is-active { background: var(--background-primary); }
-.uv-sheet-preview { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 8px 10px; border-radius: 8px; font-size: var(--font-ui-small); background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary)); border: 1px solid color-mix(in srgb, var(--interactive-accent) 20%, transparent); }
+.uv-sheet-preview { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 8px 10px; border-radius: var(--uv-r-md); font-size: var(--font-ui-small); background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary)); border: 1px solid color-mix(in srgb, var(--interactive-accent) 20%, transparent); }
 .uv-sheet-preview.is-problem { background: color-mix(in srgb, var(--color-orange) 9%, var(--background-secondary)); border-color: color-mix(in srgb, var(--color-orange) 30%, transparent); }
 .uv-sheet-preview.is-empty { display: none; }
 .uv-sheet-preview svg { width: 14px; height: 14px; flex: none; margin-top: 2px; color: var(--interactive-accent); }
@@ -240,13 +240,13 @@
 @media (max-width: 480px) { .uv-sheet-field { grid-template-columns: 1fr; } .uv-sheet-hint { grid-column: 1; } }
 
 /* ---- Inspector: Borders card ---- */
-.uv-borders-map { border-radius: 8px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); overflow: hidden; }
+.uv-borders-map { border-radius: var(--uv-r-md); background: var(--background-primary); border: 1px solid var(--background-modifier-border); overflow: hidden; }
 .uv-borders-map-head { display: flex; align-items: center; gap: 6px; padding: 5px 8px; font-size: var(--font-ui-smaller); font-weight: 600; color: var(--text-muted); background: var(--background-modifier-hover); }
 .uv-borders-map-head svg { width: 12px; height: 12px; }
 .uv-borders-count { margin-left: auto; font-weight: normal; color: var(--text-faint); }
 .uv-border-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-top: 1px solid var(--background-modifier-border); }
 .uv-border-row:first-of-type { border-top: none; }
-.uv-border-swatch { width: 14px; height: 14px; flex: none; border-radius: 4px; background: color-mix(in srgb, var(--terr-color) 30%, transparent); border: 2px solid var(--terr-color); }
+.uv-border-swatch { width: 14px; height: 14px; flex: none; border-radius: var(--uv-r-sm); background: color-mix(in srgb, var(--terr-color) 30%, transparent); border: 2px solid var(--terr-color); }
 .uv-border-info { flex: 1; min-width: 0; }
 .uv-border-when { font-size: var(--font-ui-small); font-weight: 500; }
 .uv-border-sub { font-size: var(--font-ui-smaller); color: var(--text-faint); }
@@ -261,7 +261,7 @@
 
 /* ---- Map tool banners: same look as the sheets, with a real switch ---- */
 .chronicle-map-banner { box-shadow: var(--shadow-s); }
-.chronicle-map-banner:not(#uv-strong) { border-radius: 12px; }
+.chronicle-map-banner:not(#uv-strong) { border-radius: var(--uv-r-lg); }
 .uv-banner-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: var(--font-ui-small); padding: 3px 10px 3px 4px; border-radius: 999px; color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }
 .uv-banner-switch input { position: absolute; opacity: 0; pointer-events: none; }
 .uv-banner-switch-track { position: relative; width: 30px; height: 17px; border-radius: 999px; background: color-mix(in srgb, currentColor 30%, transparent); transition: background 150ms ease; flex: none; }
@@ -272,9 +272,9 @@
 .uv-banner-switch input:focus-visible + .uv-banner-switch-track { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
 
 /* ---- Territory editor: one bar of tools for an area ---- */
-.uv-terr-editor { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 1000; max-width: calc(100% - 24px); padding: 8px 10px 10px; border-radius: 14px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--terr-color); box-shadow: var(--shadow-l, 0 8px 24px rgba(0, 0, 0, 0.18)); }
+.uv-terr-editor { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 1000; max-width: calc(100% - 24px); padding: 8px 10px 10px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--terr-color); box-shadow: var(--shadow-l, 0 8px 24px rgba(0, 0, 0, 0.18)); }
 .uv-terr-editor-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: var(--font-ui-small); }
-.uv-terr-editor-swatch { width: 12px; height: 12px; border-radius: 4px; background: color-mix(in srgb, var(--terr-color) 35%, transparent); border: 2px solid var(--terr-color); }
+.uv-terr-editor-swatch { width: 12px; height: 12px; border-radius: var(--uv-r-sm); background: color-mix(in srgb, var(--terr-color) 35%, transparent); border: 2px solid var(--terr-color); }
 .uv-terr-editor-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); }
 .uv-terr-editor-close { margin-left: auto; padding: 2px 4px; }
 .uv-terr-editor-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
@@ -282,7 +282,7 @@
 .uv-terr-editor-group:first-child { border-left: none; padding-left: 0; }
 .uv-terr-editor-group-label { font-size: var(--font-ui-smaller); color: var(--text-faint); padding-left: 2px; }
 .uv-terr-editor-buttons { display: flex; gap: 3px; }
-.uv-terr-tool { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 64px; height: 54px; padding: 4px 2px; border-radius: 9px; background: transparent; box-shadow: none; border: 1px solid transparent; color: var(--text-normal); font-size: 11px; cursor: pointer; }
+.uv-terr-tool { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 64px; height: 54px; padding: 4px 2px; border-radius: var(--uv-r-md); background: transparent; box-shadow: none; border: 1px solid transparent; color: var(--text-normal); font-size: 11px; cursor: pointer; }
 .uv-terr-tool:hover { background: color-mix(in srgb, var(--terr-color) 12%, var(--background-secondary)); border-color: color-mix(in srgb, var(--terr-color) 35%, transparent); }
 .uv-terr-tool:active { transform: translateY(1px); }
 .uv-terr-tool-icon { display: flex; }
@@ -328,8 +328,8 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .chronicle-map.is-tool .chronicle-territory.uv-split-piece:not(#uv-strong) { pointer-events: auto; }
 /* The territory editor sits along the bottom: the map's bottom controls (legend, scale) lift above it. */
 .has-terr-editor .leaflet-bottom { bottom: 112px; transition: bottom 150ms ease; }
-.uv-banner-segments { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, currentColor 14%, transparent); }
-.uv-banner-segment { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 7px; background: transparent; box-shadow: none; color: inherit; font-size: var(--font-ui-small); }
+.uv-banner-segments { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--uv-r-md); background: color-mix(in srgb, currentColor 14%, transparent); }
+.uv-banner-segment { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: var(--uv-r-md); background: transparent; box-shadow: none; color: inherit; font-size: var(--font-ui-small); }
 .uv-banner-segment svg { width: 13px; height: 13px; }
 .uv-banner-segment.is-active { background: var(--background-primary); color: var(--text-normal); }
 /* ---- Wars and battles ---- */
@@ -358,19 +358,19 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .chronicle-exporting .uv-battle.is-latest { animation: none; }
 
 /* ---- Border check panel ---- */
-.uv-check-panel { position: absolute; top: 52px; right: 12px; z-index: 900; width: 330px; max-width: calc(100% - 24px); max-height: calc(100% - 80px); display: flex; flex-direction: column; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); overflow: hidden; }
+.uv-check-panel { position: absolute; top: 52px; right: 12px; z-index: 900; width: 330px; max-width: calc(100% - 24px); max-height: calc(100% - 80px); display: flex; flex-direction: column; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); overflow: hidden; }
 .uv-check-head { display: grid; grid-template-columns: 30px 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 8px 12px; border-bottom: 1px solid var(--background-modifier-border); }
-.uv-check-head-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 15%, transparent); color: var(--text-accent); }
+.uv-check-head-icon { width: 30px; height: 30px; border-radius: var(--uv-r-md); display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--interactive-accent) 15%, transparent); color: var(--text-accent); }
 .uv-check-title { font-weight: 600; font-size: var(--font-ui-medium); }
 .uv-check-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); }
 .uv-check-empty { padding: 18px 14px; color: var(--text-muted); }
 .uv-check-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px; border-bottom: 1px solid var(--background-modifier-border); }
-.uv-check-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 12px; font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; }
+.uv-check-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: var(--uv-r-lg); font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; }
 .uv-check-chip svg { width: 12px; height: 12px; }
 .uv-check-chip.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
 .uv-check-count { opacity: 0.7; font-variant-numeric: tabular-nums; }
 .uv-check-list { overflow-y: auto; padding: 4px 6px 8px; }
-.uv-check-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 6px; border-radius: 8px; }
+.uv-check-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 6px; border-radius: var(--uv-r-md); }
 .uv-check-row:hover { background: var(--background-modifier-hover); }
 .uv-check-row-icon { color: var(--text-muted); padding-top: 1px; }
 .uv-check-row-icon svg { width: 15px; height: 15px; }
@@ -435,7 +435,7 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 @media (prefers-reduced-motion: no-preference) { .uv-realm-name { transition: opacity 200ms ease; } }
 
 /* A phone with no copy of a huge map picture yet: why, over the map. */
-.uv-picture-note { position: absolute; top: 52px; left: 12px; right: 12px; z-index: 900; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); line-height: 1.4; }
+.uv-picture-note { position: absolute; top: 52px; left: 12px; right: 12px; z-index: 900; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); line-height: 1.4; }
 .uv-picture-note > span:first-child { color: var(--text-muted); padding-top: 2px; }
 .uv-picture-note > span:nth-child(2) { flex: 1; }
 
