@@ -189,6 +189,14 @@ export function withFields(q: QuickAdd, fields: Partial<Record<keyof QuickAdd, s
 	return { ...q, ...fields } as QuickAdd;
 }
 
+/** Removes properties with nothing in them (blank, null, an empty list), so a note keeps only what was written. */
+export function dropEmptyProperties(front: Record<string, unknown>) {
+	for (const k of Object.keys(front)) {
+		const v = front[k];
+		if (v === null || v === undefined || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && !v.some((x) => x !== null && x !== undefined && String(x).trim() !== ""))) delete front[k];
+	}
+}
+
 /** The properties a parsed quick-add line becomes. */
 export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]`): Record<string, unknown> {
 	const fm: Record<string, unknown> = {};

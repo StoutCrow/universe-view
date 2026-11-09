@@ -509,7 +509,7 @@ export class QuickCreator {
 		if (tags.length) fm.tags = tags;
 		else delete fm.tags;
 		if (kind) fm.__kind = kind;
-		return p.createEntityNote(fileName(q.name), folder, fm, q.type, p.settings.quickAddOpen === true);
+		return p.createEntityNote(fileName(q.name), folder, fm, q.type, p.settings.quickAddOpen === true, true);
 	}
 
 	private async make(keepGoing: boolean) {

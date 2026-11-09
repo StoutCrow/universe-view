@@ -60,6 +60,7 @@ import { exportWorldBook } from "./ui/worldbook";
 import { exportWebsite } from "./ui/website";
 import type { SavedView } from "./settings";
 import { buildGedcom } from "./import/gedcom-export";
+import { dropEmptyProperties } from "./import/quickadd";
 import { HoverCards } from "./ui/HoverCard";
 import { THEMES, applyAppearance, clearAppearance } from "./appearance";
 import { suggestWorldSetting } from "./ui/worldsettingui";
@@ -1044,7 +1045,8 @@ export default class ChroniclePlugin extends Plugin {
 		return undefined;
 	}
 
-	async createEntityNote(name: string, folder: string, fm: Record<string, unknown>, type: EntityType, open = true): Promise<TFile> {
+	/** `filledOnly`: the note keeps only the properties that have something in them, whether they came from a template or from the presets. */
+	async createEntityNote(name: string, folder: string, fm: Record<string, unknown>, type: EntityType, open = true, filledOnly = false): Promise<TFile> {
 		const { vault } = this.app;
 		const dir = normalizePath(folder.trim() || "/");
 		if (dir !== "/" && !vault.getAbstractFileByPath(dir)) await vault.createFolder(dir);
@@ -1085,8 +1087,10 @@ export default class ChroniclePlugin extends Plugin {
 			if (typeof fm.__kind === "string" && fm.__kind) this.setKindMark(front, undefined, fm.__kind);
 			// One kind tag per type: a real kind replaces the default one applyType gave it.
 			if (Array.isArray(front.tags)) front.tags = tidyKinds(front.tags.map(String), this.settings.tagPrefix.replace(/^#/, "").replace(/\/$/, ""));
+			// The Quick creator writes what was typed: a property the template left blank goes too. (The presets below are skipped for it.)
+			if (filledOnly) dropEmptyProperties(front);
 			// Relationship properties ready to fill in, unless the template has them under another name.
-			if (this.settings.presetRelations && (type === "person" || type === "culture")) {
+			if (!filledOnly && this.settings.presetRelations && (type === "person" || type === "culture")) {
 				const have = new Set(Object.keys(front).map((k) => relKind(k)?.key ?? k.toLowerCase()));
 				for (const k of presetKinds(type, this.index.worldFor(dir === "/" ? "" : dir)?.presets[type] || this.settings.relationPresets[type])) {
 					if (!have.has(relKind(k)?.key ?? k.toLowerCase())) front[k] = [];

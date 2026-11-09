@@ -28,7 +28,7 @@ import { markPath, shapeFor } from "../src/render/categories";
 import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
-import { quickAddFrontmatter, withFields } from "../src/import/quickadd";
+import { dropEmptyProperties, quickAddFrontmatter, withFields } from "../src/import/quickadd";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
@@ -1342,6 +1342,11 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 
 	// The creator's form lands in the note's properties.
 	const typedLine = { name: "Ann", type: "person" as const, places: [], participants: [], cultures: [], parents: [], leaders: [], tags: [], unknown: [] };
+	{
+		const front: Record<string, unknown> = { lifespan: null, birthplace: "", allies: [], mentors: [null, " "], reign: undefined, gender: "female", parents: ["[[Bea]]"], tags: ["Character_Person"], born: 0, alive: false };
+		dropEmptyProperties(front);
+		eq(front, { gender: "female", parents: ["[[Bea]]"], tags: ["Character_Person"], born: 0, alive: false }, "creator: empty properties are dropped, filled and zero/false ones stay");
+	}
 	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Siege", type: "event" }, { date: "1200", war: "The War", importance: "5" })), { date: "1200", war: "[[The War]]", importance: 5 }, "creator: an event's form");
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Guild", type: "culture" }, { cultures: ["Crown"] })), { "parent-cultures": ["[[Crown]]"] }, "creator: a group's parent");

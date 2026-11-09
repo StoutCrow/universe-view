@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.0.2 — not released yet
+
+**Fixes**
+- A note made with the Quick creator keeps only the properties that have something in them. Blank ones from your template and the empty relationship lists (allies, rivals…) are no longer written, so it matches a note you wrote by hand. Notes made another way keep their template as before.
+
 ## 2.0.1 — 2026-11-09
 
 **One tag scheme**
