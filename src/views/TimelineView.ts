@@ -1,7 +1,8 @@
 import { Menu, type ViewStateResult } from "obsidian";
 import { DEFAULT_TIMELINE_OPTIONS, TimelineGroup, TimelineOptions, TimelineRenderer } from "../render/timeline";
-import { dropdown, el, icon, iconButton } from "../render/common";
+import { el, icon, iconButton } from "../render/common";
 import { EntityPickerModal } from "../ui/suggest";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import type { TimeRange } from "../render/timelinerows";
 import { ChronicleView } from "./base";
 
@@ -65,38 +66,45 @@ export class TimelineView extends ChronicleView {
 				o.filter.search = v || undefined;
 				this.update();
 			});
-			this.scopePicker(left, o.filter.folder, (v) => {
-				o.filter.folder = v;
-				o.calendar = undefined;
-				this.fillToolbar();
-				this.update();
-			});
-			const groups: [TimelineGroup, string][] = [
-				["none", "No grouping"],
-				["category", "By category"],
-				["realm", "By realm"],
-				["culture", "By group"],
-				["place", "By place"],
-				["person", "By person"],
-				["tag", "By tag"],
-				["type", "By kind"],
-			];
-			dropdown(left, groups, o.group, (v) => {
-				o.group = v as TimelineGroup;
-				this.update();
-			}, "Group lanes");
-			const cals = this.plugin.calendars.all();
-			if (cals.length > 1) {
-				const current = o.calendar ?? this.plugin.index.dominantCalendar(o.filter.folder);
-				dropdown(left, cals.map((c) => [c.id, c.name] as [string, string]), current, (v) => {
-					o.calendar = v;
+				const groups: [TimelineGroup, string][] = [
+					["none", "No grouping"],
+					["category", "By category"],
+					["realm", "By realm"],
+					["culture", "By group"],
+					["place", "By place"],
+					["person", "By person"],
+					["tag", "By tag"],
+					["type", "By kind"],
+				];
+				this.scopePicker(left, o.filter.folder, (v) => {
+					o.filter.folder = v;
+					o.calendar = undefined;
+					this.fillToolbar();
 					this.update();
-				}, "Calendar");
-			}
-			dropdown(left, [["0", "All events"], ["3", "Importance 3+"], ["4", "Importance 4+"], ["5", "Key events only"]], String(o.filter.minImportance ?? 0), (v) => {
-				o.filter.minImportance = +v || undefined;
-				this.update();
-			}, "Importance");
+				});
+				optionsButton(left, () => {
+					const list: OptionEntry[] = [];
+					list.push({ type: "choice", label: "Group lanes", options: groups, get: () => o.group, set: (v) => { o.group = v as TimelineGroup; this.update(); } });
+					const cals = this.plugin.calendars.all();
+					if (cals.length > 1) {
+						list.push({
+							type: "choice", label: "Calendar", options: cals.map((c) => [c.id, c.name] as [string, string]), get: () => o.calendar ?? this.plugin.index.dominantCalendar(o.filter.folder), set: (v) => { o.calendar = v; this.update(); },
+						});
+					}
+					list.push({
+						type: "choice", label: "Importance", options: [["0", "All events"], ["3", "3 and up"], ["4", "4 and up"], ["5", "Key events only"]], get: () => String(o.filter.minImportance ?? 0), set: (v) => { o.filter.minImportance = +v || undefined; this.update(); },
+					});
+					list.push({ type: "action", label: "Shorter rows (Alt + scroll)", icon: "chevrons-down-up", run: () => this.renderer?.zoomRows(1 / 1.25) });
+					list.push({ type: "action", label: "Taller rows (Alt + scroll)", icon: "chevrons-up-down", run: () => this.renderer?.zoomRows(1.25) });
+					list.push({
+						type: "action", label: "History as one person knew it…", icon: "eye", run: () => new EntityPickerModal(this.plugin, ["person"], (p) => {
+							o.pov = p.key;
+							this.fillToolbar();
+							this.update();
+						}, "History as who knew it?").open(),
+					});
+					return list;
+				});
 			const chips = this.group();
 			// What's on the timeline, in one menu (a count shows how many are on), like the map's overlays.
 			type Layer = [keyof TimelineOptions, string, string, string, boolean];
@@ -180,33 +188,23 @@ export class TimelineView extends ChronicleView {
 				}
 				menu.showAtMouseEvent(evt);
 			});
-			// Fog of war: history as one person knew it.
-			const pov = el("button", { cls: "chronicle-chip chronicle-overlay-btn" + (o.pov ? " is-active" : ""), attr: { title: "Show only what one person ever learns about, in their lifetime" } }, chips);
-			icon(el("span", { cls: "chronicle-chip-icon" }, pov), "eye");
-			el("span", { text: o.pov ? `Seen by ${this.plugin.index.get(o.pov)?.name ?? o.pov}` : "Seen by everyone" }, pov);
-			pov.addEventListener("click", (evt) => {
-				const pick = () => new EntityPickerModal(this.plugin, ["person"], (p) => {
-					o.pov = p.key;
-					this.fillToolbar();
-					this.update();
-				}, "History as who knew it?").open();
-				if (!o.pov) return pick();
-				const menu = new Menu();
-				menu.addItem((i) => i.setTitle("Someone else…").setIcon("eye").onClick(pick));
-				menu.addItem((i) => i.setTitle("Everyone (show it all)").setIcon("eye-off").onClick(() => {
-					o.pov = undefined;
-					this.fillToolbar();
-					this.update();
-				}));
-				menu.showAtMouseEvent(evt);
-			});
+				// Fog of war: shown only while on (it is set from Options), so it can be seen and turned off.
+				if (o.pov) {
+					const pov = el("button", { cls: "chronicle-chip chronicle-overlay-btn is-active", attr: { title: "History as this person knew it: click to show everything again" } }, chips);
+					icon(el("span", { cls: "chronicle-chip-icon" }, pov), "eye");
+					el("span", { text: `Seen by ${this.plugin.index.get(o.pov)?.name ?? o.pov}` }, pov);
+					icon(el("span", { cls: "chronicle-chip-icon" }, pov), "x");
+					pov.addEventListener("click", () => {
+						o.pov = undefined;
+						this.fillToolbar();
+						this.update();
+					});
+				}
 
 			this.spacer();
 			const right = this.group();
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoom(1 / 1.5));
 			iconButton(right, "zoom-in", "Zoom in", () => this.renderer?.zoom(1.5));
-			iconButton(right, "chevrons-down-up", "Shorter rows (Alt + scroll)", () => this.renderer?.zoomRows(1 / 1.25));
-			iconButton(right, "chevrons-up-down", "Taller rows (Alt + scroll)", () => this.renderer?.zoomRows(1.25));
 			iconButton(right, "maximize", "Fit everything", () => this.renderer?.fit(true));
 			iconButton(right, "plus", "New event (or double-click the timeline)", () => this.plugin.createEntityPrompt({ type: "event", scope: o.filter.folder || undefined }), "mod-cta-icon");
 		});

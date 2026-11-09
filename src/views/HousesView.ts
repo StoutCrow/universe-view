@@ -1,6 +1,7 @@
 import type { ViewStateResult } from "obsidian";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { DEFAULT_HOUSES_OPTIONS, GROUP_KINDS, HousesOptions, HousesRenderer } from "../render/houses";
-import { iconButton, toggleChip } from "../render/common";
+import { iconButton } from "../render/common";
 import { ChronicleView } from "./base";
 
 export const VIEW_HOUSES = "chronicle-houses";
@@ -55,16 +56,10 @@ export class HousesView extends ChronicleView {
 				o.folder = v;
 				this.update();
 			});
-			const look = this.group();
-			toggleChip(look, "By descent", "git-fork", o.descent, (v) => {
-				o.descent = v;
-				this.update();
-			}).setAttribute("title", "People without a house of their own count in their parents' house");
-			toggleChip(look, "All groups", "flag", o.all, (v) => {
-				o.all = v;
-				this.update();
-			}).setAttribute("title", "Show every group, not just houses, families, dynasties and clans");
-			this.spacer();
+			optionsButton(left, () => [
+				{ type: "toggle", label: "By descent (people without a house count in their parents')", get: () => !!o.descent, set: (v) => { o.descent = v; this.update(); } },
+				{ type: "toggle", label: "All groups, not just houses and clans", get: () => !!o.all, set: (v) => { o.all = v; this.update(); } },
+			] satisfies OptionEntry[]);			this.spacer();
 			const right = this.group();
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoomBy(1 / 1.25));
 			iconButton(right, "zoom-in", "Zoom in", () => this.renderer?.zoomBy(1.25));

@@ -1,9 +1,10 @@
 import { Modal, Setting, type ViewStateResult } from "obsidian";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import type ChroniclePlugin from "../main";
 import { CalendarOptions, CalendarRenderer, DEFAULT_CALENDAR_OPTIONS, moonIcon, type CalendarMode } from "../render/calendar";
 import { convertDay, moonPhase, phaseName, seasonOf } from "../dates/calendars";
 import { formatDay } from "../dates/parser";
-import { dropdown, el, iconButton, toggleChip } from "../render/common";
+import { dropdown, el, iconButton } from "../render/common";
 import { ChronicleView } from "./base";
 
 export const VIEW_CALENDAR = "chronicle-calendar";
@@ -86,12 +87,6 @@ export class CalendarView extends ChronicleView {
 				this.fillToolbar();
 				this.update();
 			});
-			const cals = this.plugin.calendars.all().map((c) => [c.id, c.name] as [string, string]);
-			dropdown(left, [["", "World's calendar"], ...cals], o.calendar ?? "", (v) => {
-				o.calendar = v || undefined;
-				o.year = o.month = undefined;
-				this.update();
-			}, "Calendar");
 			this.modeSelect = dropdown(left, [["month", "Month"], ["week", "Week"], ["year", "Year"], ["agenda", "Coming up"]], o.mode, (v) => {
 				o.mode = v as CalendarMode;
 				this.update();
@@ -99,31 +94,17 @@ export class CalendarView extends ChronicleView {
 			const time = this.group();
 			iconButton(time, "skip-forward", "Move today on by a day", () => void this.advance(1));
 			iconButton(time, "fast-forward", "Move today on by a week (or 7 days)", () => void this.advance(this.renderer?.cal().weekdays.length || 7));
-			const look = this.group();
-			toggleChip(look, "Moons", "moon", o.moons, (v) => {
-				o.moons = v;
-				this.update();
-			});
-			toggleChip(look, "Holidays", "party-popper", o.holidays, (v) => {
-				o.holidays = v;
-				this.update();
-			});
-			toggleChip(look, "Birthdays", "cake", o.birthdays, (v) => {
-				o.birthdays = v;
-				this.update();
-			});
-			toggleChip(look, "Anniversaries", "history", o.anniversaries !== false, (v) => {
-				o.anniversaries = v;
-				this.update();
-			});
-			toggleChip(look, "Story", "book-open", o.story, (v) => {
-				o.story = v;
-				this.update();
-			});
-			this.spacer();
+			optionsButton(left, () => [
+				{ type: "choice", label: "Calendar", options: [["", "World's calendar"], ...this.plugin.calendars.all().map((c) => [c.id, c.name] as [string, string])], get: () => o.calendar ?? "", set: (v) => { o.calendar = v || undefined; o.year = o.month = undefined; this.update(); } },
+				{ type: "toggle", label: "Moons", get: () => !!o.moons, set: (v) => { o.moons = v; this.update(); } },
+				{ type: "toggle", label: "Holidays", get: () => !!o.holidays, set: (v) => { o.holidays = v; this.update(); } },
+				{ type: "toggle", label: "Birthdays", get: () => !!o.birthdays, set: (v) => { o.birthdays = v; this.update(); } },
+				{ type: "toggle", label: "Anniversaries", get: () => o.anniversaries !== false, set: (v) => { o.anniversaries = v; this.update(); } },
+				{ type: "toggle", label: "Story dates", get: () => !!o.story, set: (v) => { o.story = v; this.update(); } },
+				{ type: "action", label: "Convert a date between calendars", icon: "arrow-left-right", run: () => new ConvertModal(this.plugin, this.renderer?.cal().id, this.options.selected ?? this.renderer?.today()).open() },
+				{ type: "action", label: "World settings: calendar, today, travel speeds", icon: "globe", run: () => this.plugin.editWorld(o.folder ?? "") },
+			] satisfies OptionEntry[]);			this.spacer();
 			const right = this.group();
-			iconButton(right, "arrow-left-right", "Convert a date between calendars", () => new ConvertModal(this.plugin, this.renderer?.cal().id, this.options.selected ?? this.renderer?.today()).open());
-			iconButton(right, "globe", "World settings: calendar, today, map, travel speeds…", () => this.plugin.editWorld(o.folder ?? ""));
 			iconButton(right, "plus", "New event", () => this.plugin.createEntityPrompt({ type: "event", scope: o.folder || undefined, calendar: this.renderer?.cal().id }), "mod-cta-icon");
 		});
 	}

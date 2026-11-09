@@ -1370,3 +1370,67 @@ textarea.chronicle-mono {
 	width: 100%;
 	resize: vertical;
 }
+
+/* ---- The Options panel every view's toolbar has ---- */
+.uv-options {
+	position: fixed;
+	z-index: var(--layer-menu, 65);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 240px;
+	max-width: min(340px, calc(100vw - 16px));
+	max-height: min(70vh, 520px);
+	overflow-y: auto;
+	padding: 6px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--uv-r-md);
+	box-shadow: var(--shadow-s);
+}
+.uv-options-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 30px;
+	padding: 2px 8px;
+	border-radius: var(--uv-r-sm);
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+.uv-options-row:hover {
+	background: var(--background-modifier-hover);
+}
+.uv-options-row .dropdown {
+	max-width: 160px;
+}
+.uv-options-action {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	min-height: 30px;
+	padding: 2px 8px;
+	font-size: var(--font-ui-small);
+	text-align: left;
+	color: var(--text-muted);
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+}
+.uv-options-action:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+.uv-options-action:first-of-type {
+	margin-top: 4px;
+}
+.uv-options-btn[aria-expanded="true"] {
+	background: var(--background-modifier-hover);
+}
+body.uv-t-panels .uv-options {
+	background: var(--uv-t-face);
+	border-color: var(--uv-t-edge);
+	box-shadow: var(--uv-t-raised);
+}

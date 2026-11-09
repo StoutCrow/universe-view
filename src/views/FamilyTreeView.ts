@@ -1,7 +1,8 @@
 import { Notice, TFile, ViewStateResult } from "obsidian";
 import { DEFAULT_FAMILY_OPTIONS, FamilyOptions, FamilyTreeRenderer } from "../render/family";
 import { FanChartRenderer, TimeTreeRenderer } from "../render/treecharts";
-import { dropdown, iconButton, toggleChip } from "../render/common";
+import { dropdown, iconButton } from "../render/common";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { ChronicleView } from "./base";
 import { AddRelativesModal } from "../ui/AddRelatives";
 
@@ -136,74 +137,41 @@ export class FamilyTreeView extends ChronicleView {
 				this.fillToolbar();
 				this.app.workspace.requestSaveLayout();
 			}, "Layout");
-			left.createEl("button", { cls: "chronicle-chip", text: "How related?", attr: { title: "Work out how two people are related" } }).addEventListener("click", () => this.plugin.openKinship(o.root));
-			// Find someone in a big tree without losing your place.
-			const findBox = this.group();
-			const finder = this.entityPicker(findBox, ["person"], undefined, "Find in this tree…", (k) => {
-				if (!k) return;
-				this.find(k);
-				finder.value = "";
-			});
-			if (o.collapsed?.length && (o.layout ?? "tree") === "tree") {
-				const b = findBox.createEl("button", { cls: "chronicle-chip", text: `Unfold all (${o.collapsed.length})`, attr: { title: "Show every folded branch again" } });
-				b.addEventListener("click", () => {
-					o.collapsed = [];
-					this.update();
-					this.fillToolbar();
+				// Find someone in a big tree without losing your place.
+				const findBox = this.group();
+				const finder = this.entityPicker(findBox, ["person"], undefined, "Find in this tree…", (k) => {
+					if (!k) return;
+					this.find(k);
+					finder.value = "";
 				});
-			}
-			const chips = this.group();
-			if (o.layout === "everyone") {
-				// Everyone related: how far out from the person, and whether partners' families come too.
-				const stepBox = this.group("chronicle-labelled");
-				stepBox.createSpan({ text: "Steps", cls: "chronicle-toolbar-label" });
-				const steps: [string, string][] = [["1", "1 · parents, children"], ["2", "2 · grandparents, siblings"], ["3", "3 · aunts, uncles, nieces"], ["4", "4 · first cousins"], ["6", "6 · second cousins"], ["99", "Everyone"]];
-				dropdown(stepBox, steps, String(o.steps ?? 3), (v) => {
-					o.steps = +v;
-					this.update();
-				}, "How many parent or child links out from them");
-				toggleChip(chips, "In-laws", "heart-handshake", !!o.inLaws, (v) => {
-					o.inLaws = v;
-					this.update();
-				});
-			} else if ((o.layout ?? "tree") === "tree" || o.layout === "fan" || o.layout === "time") {
-				const gens = [0, 1, 2, 3, 4, 5, 6].map((n) => [String(n), String(n)] as [string, string]);
-				if (o.layout !== "time") {
-					const upBox = this.group("chronicle-labelled");
-					upBox.createSpan({ text: "Ancestors", cls: "chronicle-toolbar-label" });
-					dropdown(upBox, gens, String(o.up), (v) => {
-						o.up = +v;
-						this.update();
-					}, "Generations of ancestors");
-				}
-				if (o.layout !== "fan") {
-					const downBox = this.group("chronicle-labelled");
-					downBox.createSpan({ text: "Descendants", cls: "chronicle-toolbar-label" });
-					dropdown(downBox, gens, String(o.down), (v) => {
-						o.down = +v;
-						this.update();
-					}, "Generations of descendants");
-				}
-				if ((o.layout ?? "tree") === "tree")
-					toggleChip(chips, "Siblings", "users-round", o.siblings, (v) => {
-						o.siblings = v;
-						this.update();
+				const layout = o.layout ?? "tree";
+				optionsButton(left, () => {
+					const gens = [0, 1, 2, 3, 4, 5, 6].map((n) => [String(n), String(n)] as [string, string]);
+					const list: OptionEntry[] = [];
+					if (layout === "everyone") {
+						const steps: [string, string][] = [["1", "1 · parents, children"], ["2", "2 · grandparents, siblings"], ["3", "3 · aunts, uncles, nieces"], ["4", "4 · first cousins"], ["6", "6 · second cousins"], ["99", "Everyone"]];
+						list.push({ type: "choice", label: "How far out", options: steps, get: () => String(o.steps ?? 3), set: (v) => { o.steps = +v; this.update(); } });
+						list.push({ type: "toggle", label: "In-laws", get: () => !!o.inLaws, set: (v) => { o.inLaws = v; this.update(); } });
+					} else {
+						if (layout !== "time") list.push({ type: "choice", label: "Generations of ancestors", options: gens, get: () => String(o.up), set: (v) => { o.up = +v; this.update(); } });
+						if (layout !== "fan") list.push({ type: "choice", label: "Generations of descendants", options: gens, get: () => String(o.down), set: (v) => { o.down = +v; this.update(); } });
+						if (layout === "tree") list.push({ type: "toggle", label: "Siblings", get: () => o.siblings, set: (v) => { o.siblings = v; this.update(); } });
+					}
+					if (layout === "tree" || layout === "everyone") list.push({ type: "toggle", label: "Relationships on cards", get: () => o.relations !== false, set: (v) => { o.relations = v; this.update(); } });
+					list.push({
+						type: "toggle", label: "Follow the active note", get: () => this.follow, set: (v) => {
+							this.follow = v;
+							this.app.workspace.requestSaveLayout();
+							const f = v ? this.app.workspace.getActiveFile() : null;
+							const e = f && this.plugin.index.get(f.path);
+							if (e?.type === "person") this.setRoot(e.key);
+						},
 					});
-			}
-			if ((o.layout ?? "tree") === "tree" || o.layout === "everyone")
-				toggleChip(chips, "Relationships", "tag", o.relations !== false, (v) => {
-					o.relations = v;
-					this.update();
+					if (o.collapsed?.length && layout === "tree") list.push({ type: "action", label: `Unfold all branches (${o.collapsed.length})`, icon: "unfold-vertical", run: () => { o.collapsed = []; this.update(); } });
+					list.push({ type: "action", label: "How are two people related?", icon: "git-compare", run: () => this.plugin.openKinship(o.root) });
+					return list;
 				});
-			toggleChip(chips, "Follow active note", "link", this.follow, (v) => {
-				this.follow = v;
-				this.app.workspace.requestSaveLayout();
-				if (v) {
-					const f = this.app.workspace.getActiveFile();
-					const e = f && this.plugin.index.get(f.path);
-					if (e?.type === "person") this.setRoot(e.key);
-				}
-			});
+
 			this.spacer();
 			const right = this.group();
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoomBy(1 / 1.25));

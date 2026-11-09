@@ -1,6 +1,7 @@
 import type { ViewStateResult } from "obsidian";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { DEFAULT_ORG_OPTIONS, OrgChartRenderer, OrgOptions, type OrgMode } from "../render/orgchart";
-import { dropdown, iconButton, toggleChip } from "../render/common";
+import { dropdown, iconButton } from "../render/common";
 import { ChronicleView, TimeSlider } from "./base";
 import { VIEW_HOUSES } from "./HousesView";
 
@@ -102,28 +103,13 @@ export class OrgChartView extends ChronicleView {
 				},
 				["culture", "person"],
 			);
-			const look = this.group();
-			toggleChip(look, "Members", "users", o.members, (v) => {
-				o.members = v;
-				this.update();
-			});
-			toggleChip(look, "Group ties", "handshake", o.relations !== false, (v) => {
-				o.relations = v;
-				this.update();
-			});
-			toggleChip(look, "People ties", "share-2", o.ties !== false, (v) => {
-				o.ties = v;
-				this.update();
-			});
-			toggleChip(look, "Timeline", "gantt-chart", o.timeline, (v) => {
-				o.timeline = v;
-				this.update();
-			});
-			dropdown(look, [["1", "1 level"], ["2", "2 levels"], ["3", "3 levels"], ["4", "4 levels"], ["8", "All levels"]], String(o.depth), (v) => {
-				o.depth = Number(v);
-				this.update();
-			}, "How many levels down");
-			this.spacer();
+			optionsButton(left, () => [
+				{ type: "choice", label: "Levels shown", options: [["1", "1 level"], ["2", "2 levels"], ["3", "3 levels"], ["4", "4 levels"], ["8", "All levels"]], get: () => String(o.depth), set: (v) => { o.depth = Number(v); this.update(); } },
+				{ type: "toggle", label: "Members", get: () => !!o.members, set: (v) => { o.members = v; this.update(); } },
+				{ type: "toggle", label: "Group ties", get: () => o.relations !== false, set: (v) => { o.relations = v; this.update(); } },
+				{ type: "toggle", label: "People ties", get: () => o.ties !== false, set: (v) => { o.ties = v; this.update(); } },
+				{ type: "toggle", label: "Timeline", get: () => !!o.timeline, set: (v) => { o.timeline = v; this.update(); } },
+			] satisfies OptionEntry[]);			this.spacer();
 			const right = this.group();
 			// Rearranging happens in one place: the realm tree, where titles and houses drag to a new liege.
 			if (mode !== "orgs") iconButton(right, "list-tree", "Rearrange in the realm tree (drag a title to a new liege, a house to a new parent)", () => void this.plugin.openRealms(o.root));

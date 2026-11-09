@@ -2,6 +2,13 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.5.0 — 2026-11-09
+
+### Toolbars, one pattern
+- Every view's toolbar now reads the same way: on the left what you are looking at (mode, search, folder, subject), then one **Options** button, and on the right zoom out, zoom in, fit and New.
+- **Options** holds the switches and number boxes that used to crowd the bar: the family tree's generations, siblings, relationships and follow; the timeline's grouping, calendar, importance, row height and *seen by one person*; the connections view's steps, names, link drawing and fading; the org chart's levels and ties; the lineage, calendar and houses views' switches. One-off actions (How are two people related?, Convert a date, World settings) sit at the bottom of the same panel.
+- When a view is showing something you would not guess from its look, such as history as one person knew it, a chip shows it and clears it.
+
 ## 2.4.0 — 2026-11-09
 
 ### One list of actions

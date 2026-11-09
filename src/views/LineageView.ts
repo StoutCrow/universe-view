@@ -1,6 +1,7 @@
 import type { ViewStateResult } from "obsidian";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { LineageOptions, LineageRenderer } from "../render/lineage";
-import { dropdown, iconButton, toggleChip } from "../render/common";
+import { dropdown, iconButton } from "../render/common";
 import { GROUP_KINDS, type GroupKind } from "../render/houses";
 import type { TimeRange } from "../render/timelinerows";
 import { ChronicleView } from "./base";
@@ -78,20 +79,11 @@ export class LineageView extends ChronicleView {
 				o.focus = k;
 				this.update();
 			});
-			const look = this.group();
-			toggleChip(look, "By kind", "rows-3", o.group !== "none", (v) => {
-				o.group = v ? "kind" : "none";
-				this.update();
-			});
-			toggleChip(look, "Events", "diamond", o.events !== false, (v) => {
-				o.events = v;
-				this.update();
-			});
-			toggleChip(look, "Leaders", "crown", o.leaders !== false, (v) => {
-				o.leaders = v;
-				this.update();
-			});
-			this.spacer();
+			optionsButton(left, () => [
+				{ type: "toggle", label: "Rows by kind", get: () => o.group !== "none", set: (v) => { o.group = v ? "kind" : "none"; this.update(); } },
+				{ type: "toggle", label: "Events", get: () => o.events !== false, set: (v) => { o.events = v; this.update(); } },
+				{ type: "toggle", label: "Leaders", get: () => o.leaders !== false, set: (v) => { o.leaders = v; this.update(); } },
+			] satisfies OptionEntry[]);			this.spacer();
 			const right = this.group();
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoomBy(1 / 1.25));
 			iconButton(right, "zoom-in", "Zoom in", () => this.renderer?.zoomBy(1.25));

@@ -68,8 +68,6 @@ const actions = (list: Action[]) => (host: HTMLElement, hub: HubView) => {
 	}
 };
 
-const settingsPage = (id: string) => (host: HTMLElement, hub: HubView) => hub.settingsInto(id, host);
-
 /** The sub-tab last open in each settings tab that has several pages. */
 const subTab = new Map<string, string>();
 
