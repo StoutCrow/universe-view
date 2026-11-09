@@ -1371,9 +1371,11 @@ g.is-dimmed .chronicle-net-link.is-lit {
 }
 .chronicle-ov-tiles {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-	gap: 12px;
+	/* The views, as an index: a name, one line on what it shows, the shortcut. No cards. */
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 0 32px;
 	margin-bottom: 16px;
+	border-top: 1px solid var(--background-modifier-border);
 }
 button.chronicle-ov-tile {
 	/* Not styled as a button. */
@@ -1396,27 +1398,26 @@ button.chronicle-ov-tile {
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
-	padding: 14px 16px;
-	border-radius: calc(var(--chronicle-radius) + 2px);
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
+	gap: 3px;
+	padding: 12px 2px;
+	border-radius: 0;
+	border: none;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: none;
 	cursor: pointer;
-	transition: border-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
 }
 button.chronicle-ov-tile:hover,
 button.chronicle-ov-tile:focus-visible {
-	border-color: var(--interactive-accent);
+	border-color: var(--background-modifier-border);
 }
-.chronicle-ov-tile-icon {
-	width: 36px;
-	height: 36px;
-	border-radius: var(--uv-r-lg);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+button.chronicle-ov-tile:hover .chronicle-ov-tile-title,
+button.chronicle-ov-tile:focus-visible .chronicle-ov-tile-title {
 	color: var(--text-accent);
+}
+/* The name says which view it is; no icon tile. */
+.chronicle-ov-tile-icon {
+	display: none;
 }
 .chronicle-ov-tile-icon svg {
 	width: 20px;
@@ -1463,8 +1464,7 @@ button.chronicle-ov-tile:focus-visible {
 	font-size: var(--font-ui-small);
 }
 .chronicle-ov-action svg {
-	width: 15px;
-	height: 15px;
+	display: none;
 }
 .chronicle-ov-badge {
 	min-width: 18px;
@@ -1482,10 +1482,11 @@ button.chronicle-ov-tile:focus-visible {
 	gap: 14px;
 }
 .chronicle-ov-panel {
-	border: 1px solid var(--background-modifier-border);
-	border-radius: calc(var(--chronicle-radius) + 2px);
-	padding: 12px 14px 8px;
-	background: var(--background-primary);
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+	padding: 10px 2px 8px;
+	background: none;
 }
 .chronicle-ov-panel-head {
 	display: flex;
@@ -1495,18 +1496,21 @@ button.chronicle-ov-tile:focus-visible {
 	color: var(--text-muted);
 }
 .chronicle-ov-panel-head svg {
-	width: 16px;
-	height: 16px;
+	display: none;
 }
 .chronicle-ov-panel-head h3 {
 	margin: 0;
 	flex: 1;
 	font-size: var(--font-ui-small);
-	color: var(--text-muted);
+	font-weight: 600;
+	color: var(--text-normal);
 }
 .chronicle-ov-more {
 	font-size: var(--font-ui-smaller);
 	cursor: pointer;
+	color: var(--text-muted);
+}
+.chronicle-ov-more:hover {
 	color: var(--text-accent);
 }
 .chronicle-ov-list {

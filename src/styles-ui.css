@@ -96,37 +96,12 @@ button.chronicle-ov-tile,
 .chronicle-ov-panel {
 	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
 }
+/* The view index has no colour per row and no lift on hover: the row's name turns accent, that is all. */
 button.chronicle-ov-tile {
-	--tile: var(--chronicle-accent);
 	position: relative;
-	overflow: hidden;
-	border-radius: calc(var(--chronicle-radius) + 4px);
-	transition: border-color var(--chronicle-med) var(--chronicle-ease), transform var(--chronicle-med) var(--chronicle-ease),
-		box-shadow var(--chronicle-med) var(--chronicle-ease);
 }
-
-button.chronicle-ov-tile:hover,
-button.chronicle-ov-tile:focus-visible {
-	border-color: color-mix(in srgb, var(--tile) 60%, var(--background-modifier-border));
-	box-shadow: var(--chronicle-shadow-lift);
-}
-button.chronicle-ov-tile:hover::after {
-	opacity: 1;
-}
-.chronicle-ov-tile:nth-child(2) { --tile: var(--chronicle-event-color); }
-.chronicle-ov-tile:nth-child(3) { --tile: var(--chronicle-person-color); }
-.chronicle-ov-tile:nth-child(4) { --tile: var(--color-cyan, var(--chronicle-accent)); }
-.chronicle-ov-tile:nth-child(5) { --tile: var(--chronicle-culture-color); }
-.chronicle-ov-tile:nth-child(6) { --tile: var(--chronicle-place-color); }
-.chronicle-ov-tile-icon {
-	border-radius: var(--uv-r-lg);
-	background: transparent;
-	color: var(--text-muted);
-}
-
 .chronicle-ov-panel {
-	border-radius: calc(var(--chronicle-radius) + 4px);
-	box-shadow: var(--chronicle-shadow);
+	box-shadow: none;
 }
 .chronicle-ov-list li {
 	padding: calc(5px * var(--chronicle-density)) 4px;
