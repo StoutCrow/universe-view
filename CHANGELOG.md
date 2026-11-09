@@ -2,7 +2,7 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 2.1.0 — not released yet
+## 2.1.0 — 2026-11-09
 
 **A tactile style**
 - Settings → Look & cards → *Surface style*: *Tactile* gives UniverseView's own tabs, buttons, fields and panels a physical feel: raised keys that press in, folder tabs that join the page, inset fields and sunken sections. They're easy to tell from Obsidian's flat ones. It works with every theme, in light and dark. *Flat* stays the default.
