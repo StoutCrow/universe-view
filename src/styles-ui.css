@@ -984,10 +984,9 @@ button.chronicle-ov-tile {
 	height: 13px;
 	stroke-width: 3;
 }
+/* "On" is said once, by the fill; a check mark as well says it twice. */
 .chronicle-chip.is-active .chronicle-chip-check {
-	width: 13px;
-	margin-left: 0;
-	opacity: 1;
+	display: none;
 }
 /* Narrow toolbars hide chip labels; the fill alone shows the state there. */
 @container (max-width: 820px) {
