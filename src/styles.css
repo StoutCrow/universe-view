@@ -430,8 +430,8 @@ body.chronicle-flat {
 	margin: 6px 0 0 8px;
 	padding: 2px 8px;
 	border-radius: var(--radius-s);
+	/* A lane's name is a label, not a button: the background only keeps it legible over bars, with no outline. */
 	background: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
 	font-size: var(--font-ui-smaller);
 	font-weight: var(--font-semibold);
 	cursor: default;
@@ -493,11 +493,11 @@ body.chronicle-flat {
 	display: flex;
 	align-items: center;
 	height: 100%;
-	min-width: 4px;
+	min-width: 5px;
 	border-radius: calc(var(--chronicle-radius) * 0.75);
 	background: color-mix(in srgb, var(--item-color) 22%, var(--background-primary));
-	border: 1px solid color-mix(in srgb, var(--item-color) 70%, transparent);
-	border-left: 3px solid var(--item-color);
+	/* One even hairline all round: no thick coloured edge on one side. */
+	border: 1px solid color-mix(in srgb, var(--item-color) 85%, transparent);
 	overflow: hidden;
 }
 .chronicle-tl-label.is-inside {
