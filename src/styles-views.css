@@ -335,8 +335,9 @@ button.chronicle-dash-stat.is-active {
 	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-small);
 }
+/* Each action is named; an icon on every one of them adds nothing. */
 .chronicle-dash-btn-icon {
-	display: flex;
+	display: none;
 }
 .chronicle-dash-btn-icon svg {
 	width: 14px;
@@ -592,6 +593,7 @@ button.chronicle-dash-rel {
 	justify-content: flex-start;
 	text-align: left;
 	background: transparent;
+	border: none;
 	box-shadow: none;
 	font-size: var(--font-ui-small);
 	color: var(--text-normal);
