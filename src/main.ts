@@ -2,7 +2,7 @@ import { metadataEvents, templater } from "./internals";
 import { UndoHistoryModal } from "./ui/undohistory";
 import type { DrawHow } from "./views/MapView";
 import { TodayView, VIEW_TODAY } from "./views/TodayView";
-import { Editor, addIcon, FuzzySuggestModal, ItemView, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Hotkey, type Modifier } from "obsidian";
+import { Editor, addIcon, FuzzySuggestModal, ItemView, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Command, type Hotkey, type Modifier } from "obsidian";
 
 // iPhones and iPads before iOS 15.4 have no structuredClone; everything UniverseView copies with it is plain data.
 if (typeof window.structuredClone !== "function") {
@@ -84,6 +84,9 @@ import { addBodyToStep, addToStep, changesBetween, readHistory, splitBody, remem
 /** Every view, with its ribbon icon and default hotkey (Ctrl/Cmd + Alt + key; changeable in Settings → Hotkeys). */
 /** This build's version, written in by esbuild.config.mjs (absent in the test harness). */
 declare const UV_BUILD_VERSION: string | undefined;
+
+/** The commands kept in Obsidian's command palette (everything else is under "Actions…"). */
+const PALETTE_COMMANDS = new Set(["open-hub", "actions", "quick-menu", "quick-add", "new-note", "inspector", "undo", "jump-to"]);
 
 const VIEWS: { type: string; name: string; icon: string; key: string }[] = [
 	{ type: VIEW_HUB, name: "Dashboard", icon: LOGO_ICON, key: "U" },
@@ -880,7 +883,7 @@ export default class ChroniclePlugin extends Plugin {
 			this.settings.savedViews = list.sort((a, b) => a.name.localeCompare(b.name));
 			void this.saveSettings().then(() => {
 				const link = `obsidian://universe-view?vault=${encodeURIComponent(this.app.vault.getName())}&view=${encodeURIComponent(name)}`;
-				clickNotice(`Saved “${name}”. Open it from the command “Open a saved view”, or click here to copy a link to put in a note.`, 10000, () => {
+				clickNotice(`Saved “${name}”. Open it from Actionsâ€¦ â†’ “Open a saved view”, or click here to copy a link to put in a note.`, 10000, () => {
 					void navigator.clipboard?.writeText(`[${name}](${link})`);
 					new Notice("Copied a link to the view.");
 				});
@@ -1630,7 +1633,60 @@ export default class ChroniclePlugin extends Plugin {
 		return f ? this.index.get(f.path) : undefined;
 	}
 
+	/**
+	 * Every action UniverseView offers, by id. Only PALETTE_COMMANDS and commands that need an editor are put
+	 * in Obsidian's command palette; the rest are run from "Actions…", the quick menu and the dashboard's Tools.
+	 */
+	readonly actions = new Map<string, Command>();
+
+	addCommand(command: Command): Command {
+		this.actions.set(command.id, command);
+		if (PALETTE_COMMANDS.has(command.id) || command.editorCallback || command.editorCheckCallback) return super.addCommand(command);
+		return command;
+	}
+
+	/** Runs an action by id; false when it needs something that isn't there (a current note, say). */
+	runAction(id: string): boolean {
+		const c = this.actions.get(id);
+		if (!c) return false;
+		if (c.callback) {
+			c.callback();
+			return true;
+		}
+		if (c.checkCallback?.(true)) {
+			c.checkCallback(false);
+			return true;
+		}
+		return false;
+	}
+
+	/** The actions that can run now, for the picker. */
+	availableActions(): Command[] {
+		return [...this.actions.values()].filter((c) => !c.editorCallback && !c.editorCheckCallback && (c.callback || c.checkCallback?.(true)));
+	}
+
 	private registerCommands() {
+		this.addCommand({
+			id: "actions",
+			name: "Actions…",
+			icon: "list-checks",
+			callback: () => {
+				const list = this.availableActions().filter((c) => c.id !== "actions");
+				const picker = new (class extends FuzzySuggestModal<Command> {
+					getItems() {
+						return list;
+					}
+					getItemText(c: Command) {
+						return c.name;
+					}
+					onChooseItem(c: Command) {
+						c.callback ? c.callback() : c.checkCallback?.(false);
+					}
+				})(this.app);
+				picker.setPlaceholder("Find an action: new note, export, check data, open timeline…");
+				picker.open();
+			},
+		});
 		for (const v of VIEWS) {
 			this.addCommand({
 				id: `open-${v.type.replace("chronicle-", "")}`,

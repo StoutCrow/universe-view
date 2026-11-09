@@ -1,6 +1,5 @@
 import { ItemView, Menu, Notice, Platform, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import type ChroniclePlugin from "../main";
-import { runCommand } from "../internals";
 import { el, icon } from "../render/common";
 import { SETTINGS_GROUPS, pageLabel } from "../ui/SettingsTab";
 import { dragToReorder } from "../ui/cardlayout";
@@ -582,7 +581,7 @@ export class HubView extends ItemView {
 	}, 400, true);
 
 	run(id: string) {
-		if (!runCommand(this.app, `${this.plugin.manifest.id}:${id}`)) new Notice("Open a note first: this works on the current note.");
+		if (!this.plugin.runAction(id)) new Notice("Open a note first: this works on the current note.");
 	}
 
 	settingsInto(page: string, host: HTMLElement) {
@@ -597,7 +596,7 @@ export class HubView extends ItemView {
 	}
 
 	modulesInto(host: HTMLElement) {
-		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves this dashboard, the ribbon and the command list. Your notes aren't touched." }, host);
+		el("p", { cls: "uv-hub-lead", text: "Switch off what you don't use: it leaves this dashboard, the ribbon and the actions list. Your notes aren't touched." }, host);
 		el("h3", { cls: "uv-hub-group", text: "Layout" }, host);
 		new Setting(host).setName("Big tabs").setDesc("Drag them to move them, or right-click one to move, hide or show tabs.").addButton((b) => b.setButtonText("Reset tabs").onClick(() => void this.resetTabs()));
 		new Setting(host).setName("Views").setDesc("Each view keeps its filters, layers and focus for next time. The arrow at the top right resets the one you're on; this resets them all.").addButton((b) => b.setButtonText("Reset all views").onClick(() => void this.resetViews()));

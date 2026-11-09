@@ -1134,7 +1134,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("About").setHeading();
 		new Setting(containerEl)
 			.setName(`Version ${this.plugin.manifest.version}`)
-			.setDesc("What changed in every version, newest first (also the command What's new).")
+			.setDesc("What changed in every version, newest first (also the action What's new).")
 			.addButton((b) => b.setButtonText("Version history").onClick(() => new WhatsNewModal(this.plugin).open()));
 		new Setting(containerEl)
 			.setName("Show what's new after an update")

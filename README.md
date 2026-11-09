@@ -81,7 +81,7 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Looks**: six themes, light and dark, and every view embeddable in a note.
 - **Fits your vault**: reads Charted Roots, tag-typed vaults, lifespans like `1262 - 1294 C.E.`, and your own property names. Everything it changes can be undone.
 
-What changed in each version is in the [changelog](CHANGELOG.md), and inside UniverseView: after an update a *What's new* window shows what changed since the version you had, and the command *What's new (version history)* (or Settings → Look & cards → About) shows every version.
+What changed in each version is in the [changelog](CHANGELOG.md), and inside UniverseView: after an update a *What's new* window shows what changed since the version you had, and the action *What's new (version history)* (or Settings → Look & cards → About) shows every version.
 
 ## Installing
 
@@ -144,7 +144,7 @@ image: "[[vael-map.png]]"
 
 Only write each relationship once — UniverseView infers children, siblings, the other side of a partnership, members of a culture and events at a place.
 
-3. Click the **star** in the ribbon to open the dashboard, or use the command palette (“UniverseView: Open timeline”, …).
+3. Click the **star** in the ribbon to open the dashboard, or use the command palette: "UniverseView: Actions..." finds every view and action by name.
 
 ## Opening the views
 
@@ -170,7 +170,7 @@ Only write each relationship once — UniverseView infers children, siblings, th
   | D | Detect types & relationships |
 
 - **Right-click** a note, a link, a tab or inside the editor: *Show on timeline*, *Show family tree*, *Show on map*, *Show connections*, *Add child…*, *Add event here…*. Right-click a **folder** for its overview, timeline, map or graph.
-- **Command palette:** type “UniverseView”. Every view also has an “Open … to the right” command, and right-clicking a tile on the overview offers *Open in new tab*, *Open to the right* and *Add to board*.
+- **Command palette:** type “UniverseView”. A few commands live in the palette itself (the dashboard, the quick menu, New note, Quick creator, the inspector, Undo and Jump to). **Actions...** opens a searchable list of everything else: every view, export, check and tool. The dashboard's Tools tab offers the same actions as cards. Right-clicking a tile on the overview offers *Open in new tab*, *Open to the right* and *Add to board*.
 
 ## Views
 
@@ -207,7 +207,7 @@ The **Board** (Ctrl+Alt+B) is a dashboard of modules you arrange yourself: timel
 
 ## Themes and appearance
 
-Settings → UniverseView → **Appearance**, or the command *Switch theme*. Themes restyle only UniverseView's views, boards, embeds, hover cards and dialogs; the rest of Obsidian keeps your theme. Each has a light and a dark variant (Starfield is always dark).
+Settings → UniverseView → **Appearance**, or the action *Switch theme*. Themes restyle only UniverseView's views, boards, embeds, hover cards and dialogs; the rest of Obsidian keeps your theme. Each has a light and a dark variant (Starfield is always dark).
 
 | Theme | Made for |
 |---|---|
@@ -242,7 +242,7 @@ Rest the pointer on anything in a UniverseView view (timeline items, tree cards,
 - **Fill land / sea** (the Fill tool's first choice, like a paint bucket): click land and all the land joined to it fills, whatever is drawn on it — hills, forests, names, shading — up to the coast, rivers and other territories. Click the sea or a lake and the water fills instead. *Cross rivers* carries on over rivers to the land beyond; *Close small gaps* stops it leaking through a faint stretch of river or a hairline between two lands. *Fill same colour* is the old fill, by the picture's colours.
 - **Simplify** (a territory's tools, under *Shape*): fewer corners where they barely change the border, so it's quicker to edit; real detail such as a jagged coast stays. *Strength* sets how far off the line (on screen) a corner may sit and still go, with the corner count previewed before you save. Corners shared with a neighbour go from its border too, so borders stay matched; where a neighbour has corners of its own along the edge, those stay. Pairs well with *Roughen borders*.
 - **Territory panel shortcuts:** with a territory's panel open and no tool running, one key starts a tool — R Reshape, S Simplify, E Expand, B Brush, G Grow, F Fill, X Split, T Route, C Check, D Dates (each button's tip shows its key); Esc closes the panel.
-- **Map look: switch preset** (command palette) switches the whole map look without opening settings.
+- **Map look: switch preset** (Actionsâ€¦) switches the whole map look without opening settings.
 - **Look presets** (Settings → Maps & realms → Map look): a whole look for maps and territories in one go — *Standard*, *Grand strategy* (bold political colour and strong border glow, like Crusader Kings or Europa Universalis), *Old atlas* (ink borders, faint wash, parchment grain), *Hand-drawn fantasy* (wobbly ink, hatching, italic names), *Clean political* (flat strong colour, crisp lines) and *Terrain first* (barely any fill, so a painted map shows). Each sets fills, border colour, lettering, the border band, roughness, rivers and every tier's style. *Save this look* keeps your own settings as a preset to switch back to.
 - **Strategy look, grand-strategy style:** from afar realms are solid political colour; close up the fill all but disappears so the drawn map shows, and each realm (and the tier below) keeps a soft band of its colour just inside its border, fading inwards.
 - **Rivers** (routes of the river kind) are drawn as water: the course smoothed into curves and widened into a blue ribbon between darker banks, narrow at the source (the first point you drew) and broadening towards the mouth (the last). It widens as you zoom in, like the land; a short stream stays narrow.

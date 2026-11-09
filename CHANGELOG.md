@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.4.0 — 2026-11-09
+
+### One list of actions
+- Obsidian's command palette used to list 59 UniverseView commands. It now keeps eight (Dashboard, Actions…, the quick menu, New note, Quick creator, the inspector, Undo, Jump to) plus the commands that edit the open note. **Actions…** opens a searchable list of everything else: every view, export, check and tool, and the dashboard's Tools tab runs the same actions. Hotkeys you set on a command that left the palette no longer fire: put them on Actions… or run it from there.
+
 ## 2.3.0 — 2026-11-09
 
 ### Fewer settings tabs

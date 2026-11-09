@@ -361,7 +361,7 @@ export class ExplorerView extends ChronicleView {
 			el("span", { cls: "chronicle-dash-rel-note", text: i.message }, row);
 			row.addEventListener("click", () => this.select(i.key, false));
 		}
-		if (issues.length > 12) el("div", { cls: "chronicle-dash-muted", text: `+ ${issues.length - 12} more (command “Check data”)` }, pb);
+		if (issues.length > 12) el("div", { cls: "chronicle-dash-muted", text: `+ ${issues.length - 12} more (Actionsâ€¦ â†’ “Check data”)` }, pb);
 
 		// Recent edits
 		const recent = this.plugin.index.all().sort((a, b) => b.file.stat.mtime - a.file.stat.mtime).slice(0, 10);
