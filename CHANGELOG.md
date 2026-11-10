@@ -2,7 +2,12 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 2.10.0 — not released yet
+## 3.0.0 — 2026-11-10
+
+The look of UniverseView is now yours to build, maps are lighter and steadier, and the plugin shows which build is running.
+
+### Version and build number
+- The side tabs and Settings → About show the running version and a **build number** that goes up with every commit (a "+" marks a build from changes not yet committed).
 
 ### Looks: buttons, tabs, edges, icons, headings, fonts
 - Each theme brings its own **buttons, tabs, edges, icons and headings** (listed on its card); a switch under the theme cards turns that off. Pick your own in Settings → Look → Surface & motion from cards that show each style live. They apply with the Tactile surface on or off.

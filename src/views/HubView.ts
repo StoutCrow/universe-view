@@ -1,4 +1,5 @@
 import { ItemView, Menu, Notice, Platform, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { buildLabel } from "../version";
 import type ChroniclePlugin from "../main";
 import { el, icon } from "../render/common";
 import { SETTINGS_GROUPS, pageLabel } from "../ui/SettingsTab";
@@ -422,6 +423,8 @@ export class HubView extends ItemView {
 				void this.saveTabs();
 			});
 		}
+		// Which build is running: the version, and a build number that goes up with every commit.
+		el("div", { cls: "uv-hub-version", text: buildLabel(this.plugin.manifest.version).short, title: buildLabel(this.plugin.manifest.version).long }, this.railEl);
 		const section = sections.find((s) => s.id === this.section)!;
 		const mods = this.visible(section);
 		const wanted = this.tabs.get(section.id);

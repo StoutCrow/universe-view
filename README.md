@@ -8,6 +8,14 @@ Turn ordinary notes into **timelines, family trees, maps, calendars, organisatio
 
 Your notes stay plain Markdown: UniverseView only reads properties (frontmatter, and Dataview inline fields if you use Dataview), and writes back only when you edit through it.
 
+## New in 3.0
+
+**A look you can build.** Every theme now brings its own buttons, tabs, panel edges, icon weight and heading style (Parchment: outlined buttons, folder tabs, ornate corner brackets and a flourish under its title; Starfield: glowing buttons and capitals; Scholar: ruled buttons and small-caps headings). Settings → Look → Surface & motion shows each style as a live card, so you can swap any of them, add a font pair, and copy the whole look to another vault.
+
+**Lighter maps.** *Simplify* is tried on first, with the old outline dashed and nothing saved until you press Apply, and it can run on every area at once. *Simplify as I draw* thins what Fill, Brush and Expand make. *Grow* has a live preview. *Roughen borders* now draws a shared border as one line, so it never overlaps a neighbour.
+
+**Steadier everywhere.** Controls keep a fixed width, so the Options panel and toolbar no longer jump when a value changes, and hover cards open reliably. The side tabs and the About page show the running version and a build number that rises with every commit.
+
 ## New in 2.0
 
 **One home for your whole world.** The star button opens UniverseView in a single tab, with big tabs down the side (Home, People, Groups, Places, Time, Library, Tools, Settings) and smaller tabs along the top.
@@ -217,6 +225,15 @@ Settings → UniverseView → **Appearance**, or the action *Switch theme*. Them
 | **Starfield** | Science fiction: deep-space navy, neon glow, a star field behind every view |
 | **Scholar** | History and research: crisp paper white, navy and burgundy, fine rules |
 | **Atelier** | Novels and story planning: frosted glass, soft gradients, pastels |
+
+Beyond the theme itself, **Settings → Look → Surface & motion** has a card grid for each of these, and a switch ("Themes set buttons, tabs, edges, icons and headings") that decides whether the theme chooses them for you:
+
+- **Buttons**: Quiet, Outlined, Filled, Pill, Stamp, Glow, Ruled.
+- **Tabs**: Underline, Folder, Segmented, Plain, Block, Glow, Rule.
+- **Edges** (panels, menus, hover cards, the line under each toolbar): Clean, Double rule, Ornate, Stitched, Hand-drawn (optionally a different wobble on every frame), Cut corners, Ledger.
+- **Icons**: Light, Regular, Bold. **Headings**: Plain, Ruled, Flourish, Small caps, Capitals.
+- **Fonts**: seven heading-and-body pairs from fonts already on your device (nothing is downloaded).
+- **Copy look / Paste look** moves your whole look to another vault.
 
 You can also override the **accent and type colors** and choose the **motion** (Off, Snappy, Smooth, Relaxed, Bouncy; your system's reduced-motion setting is respected), **density**, **corner radius** and a **flat style**. Under *Views* are the timeline's row height and label size, the family tree's card size and gender tints — everything the Style Settings plugin used to offer, so it's no longer needed.
 

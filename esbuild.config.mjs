@@ -2,12 +2,22 @@ import esbuild from "esbuild";
 import process from "process";
 import fs from "fs";
 import { builtinModules } from "node:module";
+import { execSync } from "node:child_process";
 
 const prod = process.argv[2] === "production";
 
 // Obsidian only loads styles.css, so Leaflet's stylesheet is concatenated in front of ours.
 // The button, tab, edge and font styles are written once against <body> (with @@ marking "not inside a preview");
 // the settings' preview cards get the same rules against .uv-pv, so they are always drawn by the real styles.
+function buildInfo() {
+	const git = (cmd) => execSync(`git ${cmd}`, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+	try {
+		return { build: Number(git("rev-list --count HEAD")), dirty: git("status --porcelain").length > 0, at: new Date().toISOString() };
+	} catch {
+		return { build: 0, dirty: false, at: new Date().toISOString() };
+	}
+}
+
 function looks() {
 	const src = fs.readFileSync("src/styles-looks.css", "utf8").replace(/^\uFEFF/, "");
 	const forBody = src.replace(/@@/g, ":not(.uv-pv *)");
@@ -65,6 +75,8 @@ const context = await esbuild.context({
 	// disk while the old code keeps running, so the update check can't go by the manifest alone.
 	// The changelog goes into the code too, for the What's new panel: the history travels with the plugin.
 	define: {
+		// The build number is the commit count, so it goes up on its own; "dirty" marks a build made from uncommitted changes.
+		UV_BUILD_INFO: JSON.stringify(buildInfo()),
 		UV_BUILD_VERSION: JSON.stringify(JSON.parse(fs.readFileSync("manifest.json", "utf8")).version),
 		UV_CHANGELOG: JSON.stringify(fs.readFileSync("CHANGELOG.md", "utf8")),
 	},

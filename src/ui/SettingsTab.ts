@@ -1,4 +1,5 @@
 import { pluginEnabled } from "../internals";
+import { buildLabel } from "../version";
 import { App, Component, Notice, PluginSettingTab, Setting, debounce, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
@@ -88,7 +89,7 @@ const PAGE_DESC: Record<string, string> = {
 const PAGE_VALUES: Record<string, (p: ChroniclePlugin) => string> = {
 	appearance: (p) => THEMES.find((t) => t.id === p.settings.theme)?.name ?? "",
 	surface: (p) => (p.settings.surfaceStyle === "tactile" ? "Tactile" : "Flat"),
-	about: (p) => `Version ${p.manifest.version}`,
+	about: (p) => buildLabel(p.manifest.version).short,
 };
 
 /** A built row (or block), the blocks that go with it, and whether it has been shown yet. */
@@ -1237,7 +1238,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				await save();
 			}));
 		// Every version, newest first, right here (there is nothing else on this page to click through to).
-		el("h4", { cls: "uv-history-head", text: `Version ${this.plugin.manifest.version}: what changed in every version` }, containerEl);
+		el("h4", { cls: "uv-history-head", text: `Version ${buildLabel(this.plugin.manifest.version).long}: what changed in every version` }, containerEl);
 		const history = el("div", { cls: "uv-whatsnew-list" }, containerEl);
 		this.history.unload();
 		this.history = new Component();
