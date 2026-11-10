@@ -1,7 +1,7 @@
 import { ItemView, Menu, Notice, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { QuickCreator } from "../ui/QuickCreator";
 import type ChroniclePlugin from "../main";
-import { el, entityColor, helpTip, icon, TYPE_ICONS } from "../render/common";
+import { el, entityColor, helpTip, icon, tuckDescriptions, TYPE_ICONS } from "../render/common";
 import type { Entity, EntityType } from "../types";
 import { chainOf, holdingsOf } from "../index/realms";
 import { GROUP_KINDS, groupKind } from "../render/houses";
@@ -55,7 +55,10 @@ export class InspectorView extends ItemView {
 	}
 	async setState(state: unknown, result: ViewStateResult) {
 		const s = state as { key?: string; tab?: InspectorTab | "realm"; locked?: boolean } | undefined;
-		if (s?.tab) this.tab = s.tab;
+		if (s?.tab) {
+			this.tab = s.tab;
+			this.explicitTab = true;
+		}
 		if (s?.locked !== undefined) this.locked = s.locked;
 		if (s?.key) this.show(s.key, true);
 		await super.setState(state, result);
@@ -110,8 +113,16 @@ export class InspectorView extends ItemView {
 		}
 	}
 
+	/** A tab was asked for (by a menu or a saved layout): it wins over the one remembered for this kind of note. */
+	private explicitTab = false;
+
 	/** Shows a note, whatever was showing. */
 	show(key: string, quiet = false) {
+		// Each kind of note opens on the tab you last used for it (people on Person, places on Place…).
+		const type = this.plugin.index.get(key)?.type;
+		const remembered = type ? this.plugin.settings.inspectorTabByType?.[type] : undefined;
+		if (!this.explicitTab && remembered) this.tab = remembered as InspectorTab;
+		this.explicitTab = false;
 		this.creator = undefined;
 		this.key = key;
 		this.editor = undefined;
@@ -154,6 +165,7 @@ export class InspectorView extends ItemView {
 			});
 		}
 		this.tab = "edit";
+		this.explicitTab = true;
 		this.show(path);
 	}
 
@@ -185,6 +197,7 @@ export class InspectorView extends ItemView {
 		this.lastShown = here;
 		const tops = same ? [this.contentEl.scrollTop, this.bodyEl?.scrollTop ?? 0] : [0, 0];
 		this.draw();
+		tuckDescriptions(this.bodyEl);
 		this.foldable();
 		this.contentEl.scrollTop = tops[0];
 		if (this.bodyEl) this.bodyEl.scrollTop = tops[1];
@@ -244,6 +257,9 @@ export class InspectorView extends ItemView {
 				if (this.tab === id) return;
 				void this.flushEdits().then(() => {
 					this.tab = id;
+					const types = (this.plugin.settings.inspectorTabByType ??= {});
+					types[e.type] = id;
+					void this.plugin.saveSettings();
 					this.editor = undefined;
 					this.app.workspace.requestSaveLayout();
 					this.render();
@@ -282,6 +298,21 @@ export class InspectorView extends ItemView {
 		const status = el("span", { cls: "chronicle-insp-status", text: "Changes save as you make them" }, bar);
 		const undo = el("button", { cls: "is-hidden", text: "Undo" }, bar);
 		undo.addEventListener("click", () => void this.plugin.undo());
+		// Blank properties a template left behind: one click clears them (and Undo brings them back).
+		const file = this.app.vault.getAbstractFileByPath(e.key);
+		const blanks = file instanceof TFile ? this.plugin.emptyCountOf(file) : 0;
+		if (file instanceof TFile && blanks) {
+			const tidy = el("button", { text: `Remove ${blanks} blank`, attr: { title: "Remove the empty properties (a name with nothing after it, or an empty list) from this note" } }, bar);
+			tidy.addEventListener("click", () => void this.plugin.tidyEmptyProperties([file]).then((r) => new Notice(`Removed ${r.props} blank propert${r.props === 1 ? "y" : "ies"}. Undo brings them back.`)));
+		}
+		// Redo sits beside it, so a click on Undo that was a slip is one click to take back.
+		const redo = el("button", { text: "Redo" }, bar);
+		redo.toggleClass("is-hidden", !this.plugin.redoLabel);
+		redo.addEventListener("click", () => {
+			void this.plugin.redo();
+			redo.addClass("is-hidden");
+		});
+		this.registerEvent(this.app.workspace.on("chronicle:history-changed" as "quit", () => redo.toggleClass("is-hidden", !this.plugin.redoLabel)));
 		let timer = 0;
 		const flush = async () => {
 			window.clearTimeout(timer);

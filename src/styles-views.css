@@ -1524,3 +1524,9 @@ button.uv-card-add.is-down { left: 50%; bottom: -10px; margin-left: -10px; }
 button.uv-card-add.is-side { right: -10px; top: 50%; margin-top: -10px; }
 .uv-card-html:hover button.uv-card-add { opacity: 1; pointer-events: auto; }
 button.uv-card-add:hover { color: var(--text-on-accent); background: var(--interactive-accent); border-color: var(--interactive-accent); }
+/* A row the tree has just revealed */
+@keyframes uv-reveal { from { background: color-mix(in srgb, var(--interactive-accent) 35%, transparent); } to { background: transparent; } }
+.chronicle-dash-row.is-revealed { animation: uv-reveal 1.5s ease-out; }
+/* The family tree card the arrow keys are on */
+.uv-card-html.is-kb .chronicle-card { box-shadow: 0 0 0 3px var(--interactive-accent); }
+.chronicle-family:focus-visible { outline: none; }

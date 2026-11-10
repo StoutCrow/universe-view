@@ -1467,8 +1467,8 @@ body.uv-t-panels .uv-options {
 .chronicle-toolbar .dropdown {
 	box-sizing: border-box;
 	flex: none;
-	width: 148px;
-	max-width: 148px;
+	width: 180px;
+	max-width: 180px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -1498,4 +1498,41 @@ body.uv-t-panels .uv-options {
 .chronicle-time-label {
 	min-width: 7ch;
 	text-align: right;
+}
+/* Undo history: what was just undone, ahead of the list, with Redo. */
+.uv-history-undone { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border); }
+.uv-history-undone-head { margin-bottom: 6px; font-size: var(--font-ui-small); color: var(--text-muted); }
+.uv-history-row.is-undone .uv-history-label { color: var(--text-muted); text-decoration: line-through; }
+/* A group heading inside an Options panel (the map has many options, in groups). */
+.uv-options-heading {
+	margin: 8px 8px 2px;
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+}
+.uv-options-heading:first-child { margin-top: 2px; }
+.uv-chip-caret { display: inline-flex; margin-left: -2px; opacity: 0.6; }
+.uv-chip-caret svg { width: 12px; height: 12px; }
+/* The map's toolbar: the cluster of tools stays together at the right, wherever the toolbar wraps. */
+.chronicle-toolbar .uv-map-tools:not(#uv-strong) {
+	flex: 0 1 auto;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	margin-left: auto;
+	padding-left: 0;
+	border-left: none;
+	row-gap: 6px;
+}
+.chronicle-toolbar .uv-map-tools > .chronicle-toolbar-group { flex-wrap: nowrap; }
+.chronicle-toolbar .uv-map-tools > .chronicle-toolbar-group + .chronicle-toolbar-group:not(#uv-strong) { padding-left: 10px; border-left: 1px solid var(--background-modifier-border); }
+/* Shortcuts window and the tidy-empty window */
+.uv-shortcuts-head { margin: 14px 0 6px; font-size: var(--font-ui-small); color: var(--text-muted); }
+.uv-shortcuts-head:first-of-type { margin-top: 0; }
+.uv-shortcuts-list { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; align-items: baseline; font-size: var(--font-ui-small); }
+.uv-shortcuts-list kbd { justify-self: start; white-space: nowrap; }
+.uv-tidy-status { min-height: 1.4em; font-variant-numeric: tabular-nums; }
+/* A narrow map toolbar: the tool chips keep their icons and lose their words (the tooltip still says what each is), so it wraps to fewer rows. */
+@container (max-width: 900px) {
+	.chronicle-toolbar .uv-map-tools .chronicle-chip > span:not(.chronicle-chip-icon):not(.uv-chip-caret) { display: none; }
+	.chronicle-toolbar .uv-map-tools .chronicle-chip { padding-left: 8px; padding-right: 8px; }
 }

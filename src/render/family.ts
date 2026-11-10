@@ -4,7 +4,7 @@ import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import { formatDate, yearsBetween } from "../dates/parser";
 import { PanZoom } from "./panzoom";
-import { bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
+import { bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
 import { holdingsOf } from "../index/realms";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
 import { relationship, type KinGraph } from "../index/kinship";
@@ -112,6 +112,12 @@ export class FamilyTreeRenderer {
 			onChange: (t) => (this.cardBox.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.k})`),
 		});
 		this.root.toggleClass("is-touch", Platform.isMobile);
+		// Arrow keys walk from card to card, Enter centres the tree on the one marked, Esc lets go.
+		if (!embedded) {
+			this.root.tabIndex = 0;
+			this.root.setAttribute("aria-label", "Family tree: arrow keys move between people, Enter centres the tree on one");
+			this.root.addEventListener("keydown", (evt) => this.onKey(evt));
+		}
 		if (embedded) {
 			const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.3));
@@ -569,6 +575,7 @@ export class FamilyTreeRenderer {
 		this.cardEls[n.id] = card;
 		if (!this.slotsByKey.has(n.key)) this.slotsByKey.set(n.key, []);
 		this.slotsByKey.get(n.key)!.push(slot);
+		if (n.key === this.kbKey) slot.addClass("is-kb");
 		// What they are to the person at the centre, as a tag on the card's top edge.
 		const rel = e && !n.root && this.options.relations !== false ? relationship(this.kin(), this.options.root!, n.key) : null;
 		if (rel) el("span", { cls: "uv-card-rel" + (rel.blood ? "" : " is-marriage"), text: rel.label.charAt(0).toUpperCase() + rel.label.slice(1) }, slot);
@@ -691,7 +698,59 @@ export class FamilyTreeRenderer {
 		relativeMenu(menu, this.plugin, { key, name });
 		menu.addSeparator();
 		menu.addItem((i) => i.setTitle("Write up as a note…").setIcon("file-plus").onClick(() => this.plugin.createEntityPrompt({ type: "person", name: titleCase(name) })));
+		// Removing comes last, set apart, in red.
+		menu.addSeparator();
+		warningItem(menu, "Forget this relative", "trash-2", () => this.plugin.forgetRelative(key, name));
 		menu.showAtMouseEvent(evt);
+	}
+
+	/** The person the keyboard has landed on. */
+	private kbKey?: string;
+
+	private onKey(evt: KeyboardEvent) {
+		if (evt.ctrlKey || evt.metaKey || evt.altKey || (evt.target as Element)?.closest?.("input, textarea")) return;
+		const here = this.kbKey ?? this.options.root;
+		const cur = this.nodes.find((n) => n.key === here) ?? this.nodes[0];
+		if (!cur) return;
+		if (evt.key === "Escape") {
+			this.markKey(undefined);
+			return;
+		}
+		if (evt.key === "Enter") {
+			evt.preventDefault();
+			if (this.plugin.index.get(cur.key) && cur.key !== this.options.root) this.recenter(cur.key);
+			return;
+		}
+		const dir = ({ ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] } as Record<string, [number, number]>)[evt.key];
+		if (!dir) return;
+		evt.preventDefault();
+		// The nearest card that way: distance along the arrow, and twice the distance off it.
+		let best: CardNode | undefined;
+		let score = Infinity;
+		for (const n of this.nodes) {
+			if (n.id === cur.id || n.key === cur.key) continue;
+			const dx = n.x - cur.x;
+			const dy = n.y - cur.y;
+			const along = dx * dir[0] + dy * dir[1];
+			if (along <= 1) continue;
+			const s = along + 2 * Math.abs(dx * dir[1] - dy * dir[0]);
+			if (s < score) [best, score] = [n, s];
+		}
+		if (best) this.markKey(best.key, true);
+	}
+
+	/** Marks a card as the keyboard's, and pans to it if it is out of view. */
+	private markKey(key: string | undefined, reveal = false) {
+		this.kbKey = key;
+		this.root.querySelectorAll(".uv-card-html.is-kb").forEach((s) => s.removeClass("is-kb"));
+		if (!key) return;
+		for (const s of this.slotsByKey.get(key) ?? []) s.addClass("is-kb");
+		const n = this.nodes.find((x) => x.key === key);
+		const slot = this.slotsByKey.get(key)?.[0];
+		if (!reveal || !n || !slot) return;
+		const box = this.root.getBoundingClientRect();
+		const r = slot.getBoundingClientRect();
+		if (r.left < box.left + 20 || r.right > box.right - 20 || r.top < box.top + 20 || r.bottom > box.bottom - 20) this.pz.centerOn(n.x + this.W / 2, n.y + this.H / 2);
 	}
 
 	private kinCache?: KinGraph;

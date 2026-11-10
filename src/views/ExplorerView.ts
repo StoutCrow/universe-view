@@ -140,6 +140,7 @@ export class ExplorerView extends ChronicleView {
 	}
 
 	private undoBtn?: HTMLElement;
+	private redoBtn?: HTMLElement;
 
 	private applyLayout() {
 		this.statsEl.toggle(!this.state.hideStats);
@@ -186,6 +187,10 @@ export class ExplorerView extends ChronicleView {
 		this.undoBtn.toggleClass("is-disabled", !label);
 		this.undoBtn.setAttribute("aria-label", label ? `Undo: ${label}` : "Nothing to undo");
 		this.undoBtn.title = label ? `Undo: ${label} (Ctrl+Alt+Z)` : "Nothing to undo";
+		const redo = this.plugin.redoLabel;
+		this.redoBtn?.toggleClass("is-disabled", !redo);
+		if (this.redoBtn) this.redoBtn.title = redo ? `Redo: ${redo} (Ctrl+Alt+Y)` : "Nothing to redo";
+		this.redoBtn?.setAttribute("aria-label", this.redoBtn.title);
 	}
 
 	private save() {
@@ -251,7 +256,13 @@ export class ExplorerView extends ChronicleView {
 			});
 			this.spacer();
 			const right = this.group();
+			iconButton(right, "locate", "Reveal the open note in the tree", () => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file) new Notice("No note is open.");
+				else if (!this.tree.reveal(file.path)) new Notice("That note is hidden by the filters or the search here.");
+			});
 			this.undoBtn = iconButton(right, "undo-2", "Undo", () => void this.plugin.undo());
+			this.redoBtn = iconButton(right, "redo-2", "Redo", () => void this.plugin.redo());
 			this.syncUndo();
 			iconButton(right, "plus", "New note", () => this.plugin.createEntityPrompt({ scope: this.scopeOfSelection() }), "mod-cta-icon");
 		});

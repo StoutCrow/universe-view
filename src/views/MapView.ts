@@ -7,6 +7,7 @@ import { tierName } from "../index/realms";
 import { Menu, Notice, ViewStateResult } from "obsidian";
 import { DEFAULT_MAP_OPTIONS, MapMode, MapOptions, MapRenderer, paintModes, WORLD_MAP } from "../render/map";
 import { dropdown, el, icon, iconButton, setPressed, toggleChip } from "../render/common";
+import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { GROUP_KINDS } from "../render/houses";
 import { relOne } from "../index/relkinds";
 import type { PinColorBy } from "../settings";
@@ -25,6 +26,9 @@ export class MapView extends ChronicleView {
 	private slider?: TimeSlider;
 	private placing = false;
 	private placeBtn?: HTMLElement;
+	/** The last tool picked from a menu, so one click repeats it. */
+	private lastTool?: { icon: string; text: string; start: () => void };
+	private repeatBtn?: HTMLElement;
 	private banner?: HTMLElement;
 	private toolButtons = new Map<MapMode, HTMLElement>();
 
@@ -267,6 +271,26 @@ export class MapView extends ChronicleView {
 	}
 
 	/** Tool buttons stay filled while their tool is running. */
+	private rememberTool(ic: string, text: string, start: () => void) {
+		this.lastTool = { icon: ic, text, start };
+		this.syncRepeat();
+	}
+
+	/** The "Again" chip: shows the last tool by name, hidden until one has been used. */
+	private syncRepeat() {
+		const b = this.repeatBtn;
+		if (!b) return;
+		const t = this.lastTool;
+		b.toggleClass("is-hidden", !t);
+		if (!t) return;
+		const name = t.text.split(/ \(|: /)[0];
+		b.empty();
+		icon(el("span", { cls: "chronicle-chip-icon" }, b), t.icon);
+		el("span", { text: `Again: ${name.length > 26 ? `${name.slice(0, 25)}…` : name}` }, b);
+		b.title = `Repeat: ${t.text}`;
+		b.setAttribute("aria-label", b.title);
+	}
+
 	private syncToolButtons() {
 		const mode = this.renderer?.currentMode ?? "none";
 		// Several tools share a menu button: it's lit if any of them is running.
@@ -300,6 +324,7 @@ export class MapView extends ChronicleView {
 	}
 
 	private undoBtn?: HTMLElement;
+	private redoBtn?: HTMLElement;
 
 	private syncUndo() {
 		if (!this.undoBtn) return;
@@ -307,6 +332,10 @@ export class MapView extends ChronicleView {
 		this.undoBtn.toggleClass("is-disabled", !label);
 		this.undoBtn.title = label ? `Undo: ${label} (Ctrl+Alt+Z)` : "Nothing to undo";
 		this.undoBtn.setAttribute("aria-label", this.undoBtn.title);
+		const redo = this.plugin.redoLabel;
+		this.redoBtn?.toggleClass("is-disabled", !redo);
+		if (this.redoBtn) this.redoBtn.title = redo ? `Redo: ${redo} (Ctrl+Alt+Y)` : "Nothing to redo";
+		this.redoBtn?.setAttribute("aria-label", this.redoBtn.title);
 	}
 
 	private placeAt(pos: [number, number]) {
@@ -398,140 +427,51 @@ export class MapView extends ChronicleView {
 				},
 				["event", "place", "culture"],
 			);
-			const look = this.group();
-			// The map mode, as strategy maps have: what the lands are coloured by.
-			const paint = o.paint ?? "realm";
-			const current = paintModes().find(([k]) => k === paint)!;
-			const modeBtn = el("button", { cls: "chronicle-chip chronicle-overlay-btn uv-mode-btn", attr: { "aria-haspopup": "menu", title: `Map mode: ${current[3]}` } }, look);
-			icon(el("span", { cls: "chronicle-chip-icon" }, modeBtn), current[2]);
-			el("span", { text: current[1] }, modeBtn);
-			modeBtn.addEventListener("click", (evt) => {
-				const menu = new Menu();
-				menu.addItem((i) => i.setTitle("Map mode").setDisabled(true));
-				for (const [k, label, ic, desc] of paintModes())
-					menu.addItem((i) => {
-						i.setTitle(label).setIcon(ic).setChecked(k === paint).onClick(() => {
-							o.paint = k;
-							this.fillToolbar();
-							this.update();
-						});
-						(i as unknown as { dom?: HTMLElement }).dom?.setAttribute("title", desc);
-					});
-				menu.showAtMouseEvent(evt);
-			});
-			// How the map is coloured, in one menu: pins, realms, and which tier of realms shows.
-			const colorBy: [string, string][] = [["realm", "By realm"], ["liege", `By ${relOne("liege")}`], ["house", `By ${GROUP_KINDS.house.label.toLowerCase()}`], ["culture", "By group"], ["category", "By kind"], ["type", "One colour"]];
-			const shades: [string, string][] = [["", "Their own colours"], ...STAT_NAMES.map(([k, l]) => [k, `Shaded by ${l.toLowerCase()}`] as [string, string])];
-			const tierLevels: [string, string][] = [["", "By zoom"], ...[1, 2, 3, 4, 5].map((t): [string, string] => [String(t), tierName(t, true)]), ["9", "Every land"]];
-			const lookBtn = el("button", { cls: "chronicle-chip chronicle-overlay-btn", attr: { "aria-haspopup": "menu", title: "Pin colours, realm colours and realm tiers" } }, look);
-			icon(el("span", { cls: "chronicle-chip-icon" }, lookBtn), "palette");
-			el("span", { text: "Look" }, lookBtn);
-			const lookSub = el("span", { cls: "chronicle-chip-count" }, lookBtn);
-			const syncLook = () => {
-				const by = o.colorBy ?? this.plugin.settings.pinColorBy;
-				const bits = [colorBy.find(([k]) => k === (by === "region" ? "realm" : by))?.[1], o.shadeBy ? "shaded" : "", o.tierLevel ? tierLevels.find(([k]) => k === String(o.tierLevel))?.[1] : ""].filter(Boolean);
-				lookSub.setText(bits.join(" · ").toLowerCase());
+				// Everything on the right stays together, however the toolbar wraps: how it is drawn (one Options panel, as in every
+			// other view), then tools in labelled menus so each says what it is for, then undo and the rest.
+			const cluster = this.group("uv-map-tools");
+			const subgroup = () => el("div", { cls: "chronicle-toolbar-group" }, cluster);
+			optionsButton(subgroup(), () => this.lookOptions());
+			const tools = subgroup();
+			type Tool = [MapMode | undefined, string, string, () => void];
+			const labelled = (parent: HTMLElement, iconName: string, label: string, title: string, menu: boolean) => {
+				const b = el("button", { cls: "chronicle-chip" + (menu ? " chronicle-tool-menu" : ""), attr: { title, "aria-label": title } }, parent);
+				icon(el("span", { cls: "chronicle-chip-icon" }, b), iconName);
+				el("span", { text: label }, b);
+				if (menu) icon(el("span", { cls: "uv-chip-caret" }, b), "chevron-down");
+				return b;
 			};
-			syncLook();
-			lookBtn.addEventListener("click", (evt) => {
-				const menu = new Menu();
-				const section = (title: string, list: [string, string][], current: string, pick: (v: string) => void) => {
-					menu.addItem((i) => i.setTitle(title).setDisabled(true));
-					for (const [v, label] of list) menu.addItem((i) => i.setTitle(label).setChecked(v === current).onClick(() => {
-						pick(v);
-						syncLook();
-						this.update();
-					}));
-				};
-				section("Map style", [["strategy", "Strategy: solid realms, bold borders, names across the land"], ["atlas", "Atlas: light colours, every area outlined and named"]], o.style ?? "strategy", (v) => (o.style = v as "strategy" | "atlas"));
-				menu.addSeparator();
-				const by = o.colorBy ?? this.plugin.settings.pinColorBy;
-				section("Pin colours", colorBy, by === "region" ? "realm" : by, (v) => {
-					o.colorBy = v as PinColorBy;
-					o.hidden = [];
-				});
-				menu.addSeparator();
-				section("Realm colours", shades, o.shadeBy ?? "", (v) => (o.shadeBy = (v || undefined) as StatKey | undefined));
-				menu.addSeparator();
-				section("Realm tiers", tierLevels, o.tierLevel ? String(o.tierLevel) : "", (v) => (o.tierLevel = v ? Number(v) : undefined));
-				menu.showAtMouseEvent(evt);
-			});
-			// What's drawn on the map, in one menu (a count shows how many are on).
-			const overlays: [keyof MapOptions, string, string, string][] = [
-				["showPins", "Places", "map-pin", "Pins for places"],
-				["showLabels", "Place names", "type", "Names next to the pins"],
-				["showTerritories", "Territories", "hexagon", "Painted realms and regions"],
-				["tiers", "Realm tiers", "layers-3", `Realms show whole from afar and split into their ${tierName(3, true).toLowerCase()} and ${tierName(4, true).toLowerCase()} as you zoom in (or double-click them); a click picks one`],
-				["fadeSmall", "Fade small areas when zoomed out", "eye-off", "Without realm tiers: provinces and small regions fade away when zoomed out (size in Settings)"],
-				["showRoutes", "Routes", "route", "Roads, rivers and sea lanes"],
-				["heatmap", "Event heat map", "flame", "A glow where events happened (follows the time slider)"],
-				["showMovements", "Campaigns and migrations", "move-right", "Arrows for wars, campaigns, migrations and voyages across several places"],
-				["showWars", "Battles", "swords", "Crossed swords where battles were fought, coloured by who won, joined by their war's campaign (follows the time slider)"],
-				["showNotes", "Map notes", "sticky-note", "Your sticky notes, arrows and lines"],
-				["useLayers", "Zoom layers", "layers", "Small places appear as you zoom in"],
-				["cluster", "Group crowded pins", "group", "When zoomed out, pins close together merge into a numbered bubble"],
-				["photoPins", "Photos in pins", "image", "Places with a picture show it in their pin"],
-			];
-			const isOn = (k: keyof MapOptions) => (k === "heatmap" || k === "photoPins" ? !!o[k] : o[k] !== false);
-			const ovBtn = el("button", { cls: "chronicle-chip chronicle-overlay-btn", attr: { "aria-haspopup": "menu", title: "Choose what's shown on the map" } }, look);
-			const ovIcon = el("span", { cls: "chronicle-chip-icon" }, ovBtn);
-			icon(ovIcon, "layers");
-			el("span", { text: "Overlays" }, ovBtn);
-			const ovCount = el("span", { cls: "chronicle-chip-count" }, ovBtn);
-			const syncCount = () => ovCount.setText(`${overlays.filter(([k]) => isOn(k)).length}/${overlays.length}`);
-			syncCount();
-			ovBtn.addEventListener("click", (evt) => {
-				const menu = new Menu();
-				for (const [k, label, ic, desc] of overlays) {
-					menu.addItem((i) => {
-						i.setTitle(label).setIcon(ic).setChecked(isOn(k)).onClick(() => {
-							(o as unknown as Record<string, boolean>)[k] = !isOn(k);
-							syncCount();
-							this.update();
-						});
-						(i as unknown as { dom?: HTMLElement }).dom?.setAttribute("title", desc);
-					});
-				}
-				menu.showAtMouseEvent(evt);
-			});
-			toggleChip(look, "With events only", "filter", o.onlyWithEvents, (v) => {
-				o.onlyWithEvents = v;
-				this.update();
-			});
-			this.spacer();
-			const tools = this.group();
-			// Tools come in three menus, so the toolbar stays short. A menu's button is lit while one of
-			// its tools runs; clicking it then stops that tool.
-			type Tool = [MapMode, string, string, () => void];
-			const menuButton = (iconName: string, label: string, items: (Tool | false)[]) => {
+			// A menu button is lit while one of its tools runs; clicking it then stops that tool.
+			const menuButton = (iconName: string, label: string, title: string, items: (Tool | false)[]) => {
 				const list = items.filter((x): x is Tool => !!x);
-				const b = iconButton(tools, iconName, label, (evt) => {
-					const running = list.find(([m]) => this.renderer?.currentMode === m);
+				const b = labelled(tools, iconName, label, title, true);
+				b.addEventListener("click", (evt) => {
+					const running = list.find(([m]) => m && this.renderer?.currentMode === m);
 					if (running) return this.renderer?.endMode();
 					const menu = new Menu();
 					for (const [, ic, text, start] of list) menu.addItem((i) => i.setTitle(text).setIcon(ic).onClick(() => {
 						if (this.placing) this.setPlacing(false);
+						this.rememberTool(ic, text, start);
 						start();
 					}));
 					menu.showAtMouseEvent(evt);
 				});
-				b.addClass("chronicle-tool-menu");
-				for (const [m] of list) this.toolButtons.set(m, b);
+				for (const [m] of list) if (m) this.toolButtons.set(m, b);
 			};
 			this.toolButtons.clear();
 			const image = o.map !== WORLD_MAP;
 			const pickPlace = (title: string, run: (key: string, name: string) => void) => new EntityPickerModal(this.plugin, ["place"], (p) => run(p.key, p.name), title).open();
-			iconButton(tools, "palette", "Land painter: pick a land, paint, pick the next", () => this.renderer?.togglePainter());
-			menuButton("pencil-ruler", "Draw: territories, routes, map notes", [
+			menuButton("pencil-ruler", "Draw", "Draw: land painter, territories, routes, map notes", [
+				[undefined, "palette", "Land painter: pick a land, paint, pick the next", () => this.renderer?.togglePainter()],
 				["paint", "paintbrush", "Paint a territory (click corners or drag)", () => this.paint("paint")],
 				image && ["fill", "paint-bucket", "Fill a territory from the image's coasts and borders", () => this.paint("fill")],
-				image && ["import", "palette", "Import borders from a coloured political map", () => void this.renderer?.importColours()],
+				image && ["import", "image-down", "Import borders from a coloured political map", () => void this.renderer?.importColours()],
 				["route", "route", "Draw a road, river or sea lane", () => new EntityPickerModal(this.plugin, undefined, (e) => this.renderer?.startRoute(e.key), "Whose route? (a realm's road, a trade company, a person's journey…)").open()],
 				["notes", "sticky-note", "Map notes: sticky notes, arrows and lines", () => this.renderer?.startAnnotate()],
 				["erase", "box-select", "Erase in a box: take lines, notes and painted areas off the map", () => this.renderer?.startErase()],
 				["check", "shield-check", "Check borders: overlaps, gaps, stray pieces…", () => this.renderer?.checkBorders(!this.renderer.checkingBorders)],
 			]);
-			menuButton("navigation", "Travel: measure, plan a journey, how far in a day", [
+			menuButton("navigation", "Travel", "Travel: measure, plan a journey, how far in a day", [
 				["measure", "ruler", "Measure distance and travel time", () => this.renderer?.startMeasure()],
 				["journey", "navigation", "Plan a journey along roads, rivers and sea lanes", () => pickPlace("Journey from which place?", (k) => this.renderer?.journeyFrom(k))],
 				["rings", "radar", "Rings of 1, 3, 7 and 14 days' travel around a place", () => pickPlace("Rings around which place?", (k, name) => {
@@ -540,17 +480,24 @@ export class MapView extends ChronicleView {
 					else new Notice(`${name} isn't on this map.`);
 				})],
 			]);
-			if (image) menuButton("scan-search", "From the image: coasts, roads and rivers, borders", [
+			if (image) menuButton("scan-search", "From image", "From the image: coasts, roads and rivers, borders", [
 				["coast", "waves", "Find coasts and save them as areas or lines", () => void this.renderer?.startCoast()],
 				["trace", "spline", "Trace roads and rivers as routes", () => void this.renderer?.startTraceLines()],
 				["borders", "land-plot", "Borders from seats: share the land between groups", () => void this.renderer?.startBorders()],
-			]);			const cmp = iconButton(tools, "columns-2", "Compare: a second map beside this one (another map, or another date)", () => {
-				this.toggleCompare(!this.compare);
-				setPressed(cmp, !!this.compare);
+			]);
+			// One click to use the last tool again (the menus above stay for choosing another).
+			this.repeatBtn = labelled(tools, "rotate-cw", "Again", "Repeat the last tool", false);
+			this.repeatBtn.addEventListener("click", () => {
+				if (this.renderer?.currentMode && this.renderer.currentMode !== "none") return this.renderer.endMode();
+				if (this.placing) this.setPlacing(false);
+				this.lastTool?.start();
 			});
-			setPressed(cmp, !!this.compare);
-			this.placeBtn = iconButton(tools, "map-pin-plus", "Put an existing place on the map", () => this.setPlacing(!this.placing));
-			const move = iconButton(tools, "move", "Move pins (drag them, positions are saved)", () => {
+			this.syncRepeat();
+			const pins = subgroup();
+			this.placeBtn = labelled(pins, "map-pin-plus", "Place pin", "Put an existing place on the map: click where it goes", false);
+			this.placeBtn.addEventListener("click", () => this.setPlacing(!this.placing));
+			const move = labelled(pins, "move", "Move pins", "Move pins: drag them, positions are saved", false);
+			move.addEventListener("click", () => {
 				o.editable = !o.editable;
 				setPressed(move, o.editable);
 				// Marker drag state is fixed at creation, so rebuild the pins.
@@ -558,11 +505,52 @@ export class MapView extends ChronicleView {
 			});
 			setPressed(move, o.editable);
 			this.syncToolButtons();
-			this.undoBtn = iconButton(tools, "undo-2", "Undo", () => void this.plugin.undo());
+			const end = subgroup();
+			this.undoBtn = iconButton(end, "undo-2", "Undo", () => void this.plugin.undo());
+			this.redoBtn = iconButton(end, "redo-2", "Redo", () => void this.plugin.redo());
 			this.syncUndo();
-			iconButton(tools, "maximize", "Fit everything", () => this.renderer?.fit());
-			iconButton(tools, "plus", "New place", () => this.plugin.createEntityPrompt({ type: "place", map: o.map !== WORLD_MAP ? idx.get(o.map)?.name : undefined }), "mod-cta-icon");
+			iconButton(end, "maximize", "Fit everything", () => this.renderer?.fit());
+			iconButton(end, "plus", "New place", () => this.plugin.createEntityPrompt({ type: "place", map: o.map !== WORLD_MAP ? idx.get(o.map)?.name : undefined }), "mod-cta-icon");
 		});
+	}
+
+	/** The Options panel: map mode and style, colours, and what is drawn, in groups. */
+	private lookOptions(): OptionEntry[] {
+		const o = this.options;
+		const colorBy: [string, string][] = [["realm", "By realm"], ["liege", `By ${relOne("liege")}`], ["house", `By ${GROUP_KINDS.house.label.toLowerCase()}`], ["culture", "By group"], ["category", "By kind"], ["type", "One colour"]];
+		const shades: [string, string][] = [["", "Their own colours"], ...STAT_NAMES.map(([k, l]) => [k, `Shaded by ${l.toLowerCase()}`] as [string, string])];
+		const tierLevels: [string, string][] = [["", "By zoom"], ...[1, 2, 3, 4, 5].map((t): [string, string] => [String(t), tierName(t, true)]), ["9", "Every land"]];
+		const overlays: [keyof MapOptions, string, string][] = [
+			["showPins", "Places", "Pins for places"],
+			["showLabels", "Place names", "Names next to the pins"],
+			["showTerritories", "Territories", "Painted realms and regions"],
+			["tiers", "Realm tiers", `Realms show whole from afar and split into their ${tierName(3, true).toLowerCase()} and ${tierName(4, true).toLowerCase()} as you zoom in (or double-click them); a click picks one`],
+			["fadeSmall", "Fade small areas when zoomed out", "Without realm tiers: provinces and small regions fade away when zoomed out (size in Settings)"],
+			["showRoutes", "Routes", "Roads, rivers and sea lanes"],
+			["heatmap", "Event heat map", "A glow where events happened (follows the time slider)"],
+			["showMovements", "Campaigns and migrations", "Arrows for wars, campaigns, migrations and voyages across several places"],
+			["showWars", "Battles", "Crossed swords where battles were fought, coloured by who won, joined by their war's campaign (follows the time slider)"],
+			["showNotes", "Map notes", "Your sticky notes, arrows and lines"],
+			["useLayers", "Zoom layers", "Small places appear as you zoom in"],
+			["cluster", "Group crowded pins", "When zoomed out, pins close together merge into a numbered bubble"],
+			["photoPins", "Photos in pins", "Places with a picture show it in their pin"],
+		];
+		const isOn = (k: keyof MapOptions) => (k === "heatmap" || k === "photoPins" ? !!o[k] : o[k] !== false);
+		const by = o.colorBy ?? this.plugin.settings.pinColorBy;
+		return [
+			{ type: "heading", label: "Map" },
+			{ type: "choice", label: "Map mode", options: paintModes().map(([k, label]) => [k, label] as [string, string]), get: () => o.paint ?? "realm", set: (v) => { o.paint = v as MapOptions["paint"]; this.update(); }, hint: "What the lands are coloured by" },
+			{ type: "choice", label: "Map style", options: [["strategy", "Strategy"], ["atlas", "Atlas"]], get: () => o.style ?? "strategy", set: (v) => { o.style = v as "strategy" | "atlas"; this.update(); }, hint: "Strategy: solid realms, bold borders, names across the land. Atlas: light colours, every area outlined and named" },
+			{ type: "heading", label: "Colours" },
+			{ type: "choice", label: "Pins", options: colorBy, get: () => (by === "region" ? "realm" : by), set: (v) => { o.colorBy = v as PinColorBy; o.hidden = []; this.update(); } },
+			{ type: "choice", label: "Realms", options: shades, get: () => o.shadeBy ?? "", set: (v) => { o.shadeBy = (v || undefined) as StatKey | undefined; this.update(); } },
+			{ type: "choice", label: "Realm tiers", options: tierLevels, get: () => (o.tierLevel ? String(o.tierLevel) : ""), set: (v) => { o.tierLevel = v ? Number(v) : undefined; this.update(); } },
+			{ type: "heading", label: "Show on the map" },
+			...overlays.map(([k, label, hint]): OptionEntry => ({ type: "toggle", label, hint, get: () => isOn(k), set: (v) => { (o as unknown as Record<string, boolean>)[k] = v; this.update(); } })),
+			{ type: "toggle", label: "Only places with events", get: () => !!o.onlyWithEvents, set: (v) => { o.onlyWithEvents = v; this.update(); } },
+			{ type: "heading", label: "View" },
+			{ type: "toggle", label: "Compare with a second map", get: () => !!this.compare, set: (v) => this.toggleCompare(v), hint: "A second map beside this one: another map, or another date" },
+		];
 	}
 
 	private paint(how: "paint" | "fill") {

@@ -40,11 +40,34 @@ export class UndoHistoryModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 		const steps = this.plugin.undoSteps();
+		const undone = this.plugin.redoList();
 		el("p", { cls: "uv-sheet-intro", text: "UniverseView's changes to your notes' properties, newest first (the last 50). Undo one, or go back to any point: everything after it is undone too. Typing in a note is undone with Obsidian's own undo." }, contentEl);
+		// What was just undone, with Redo: first, so a slip is one click to take back.
+		if (undone.length) {
+			const box = el("div", { cls: "uv-history-undone" }, contentEl);
+			el("div", { cls: "uv-history-undone-head", text: `Undone (${undone.length}): redo brings back` }, box);
+			undone.forEach((s, i) => {
+				const row = el("div", { cls: "uv-history-row is-undone" + (i === 0 ? " is-latest" : "") }, box);
+				el("span", { cls: "uv-history-dot" }, row);
+				const main = el("div", { cls: "uv-history-main" }, row);
+				el("div", { cls: "uv-history-label", text: s.label }, main);
+				const sub = el("div", { cls: "uv-history-sub" }, main);
+				for (const path of s.paths.slice(0, 3)) {
+					const f = this.app.vault.getAbstractFileByPath(path);
+					el("span", { text: f instanceof TFile ? f.basename : path.split("/").pop() ?? path }, sub);
+					el("span", { text: " · " }, sub);
+				}
+				const b = el("button", { cls: i === 0 ? "mod-cta" : "", text: i === 0 ? "Redo" : `Redo up to here (${i + 1})` }, row);
+				b.addEventListener("click", () => {
+					b.disabled = true;
+					void this.plugin.redoMany(i + 1);
+				});
+			});
+		}
 		if (!steps.length) {
 			const empty = el("div", { cls: "uv-history-empty" }, contentEl);
 			icon(el("span", {}, empty), "check-circle-2");
-			el("span", { text: "Nothing to undo yet." }, empty);
+			el("span", { text: undone.length ? "Nothing left to undo." : "Nothing to undo yet." }, empty);
 			return;
 		}
 		const list = el("div", { cls: "uv-history-list" }, contentEl);

@@ -2,7 +2,7 @@ import { metadataEvents, templater } from "./internals";
 import { UndoHistoryModal } from "./ui/undohistory";
 import type { DrawHow } from "./views/MapView";
 import { TodayView, VIEW_TODAY } from "./views/TodayView";
-import { Editor, addIcon, FuzzySuggestModal, ItemView, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Command, type Hotkey, type Modifier } from "obsidian";
+import { Editor, addIcon, FuzzySuggestModal, ItemView, Keymap, Menu, Notice, Platform, Plugin, SuggestModal, TFile, TFolder, WorkspaceLeaf, debounce, getAllTags, normalizePath, type Command, type Hotkey, type Modifier } from "obsidian";
 
 // iPhones and iPads before iOS 15.4 have no structuredClone; everything UniverseView copies with it is plain data.
 if (typeof window.structuredClone !== "function") {
@@ -54,7 +54,11 @@ import { InspectorView, VIEW_INSPECTOR } from "./views/InspectorView";
 import { HubView, LOGO_ICON, LOGO_SVG, VIEW_HUB, hostedInHub } from "./views/HubView";
 import { FilesPanelView, VIEW_FILES, explorerButton } from "./views/FilesPanelView";
 import { EntityPickerModal } from "./ui/suggest";
-import { TextPrompt } from "./ui/TextPrompt";
+import { ConfirmPrompt, TextPrompt } from "./ui/TextPrompt";
+import { TidyEmptyModal } from "./ui/TidyEmpty";
+import { ShortcutsModal } from "./ui/ShortcutsModal";
+import { dropEmpty, emptyKeys } from "./index/emptyprops";
+import { forgetKin, kinLines } from "./index/relatives";
 import { KinshipModal, KnowledgeModal, NamesModal, SuccessionModal } from "./ui/people";
 import { ContinuityModal, LiveSuggestions, PromptsModal, SuggestionsModal, inlineHelpers, suggestionsFor } from "./ui/writing";
 import { CleanupModal, CompletenessModal, ContradictionsModal, DuplicatesModal, OrphansModal } from "./ui/tidying";
@@ -79,14 +83,14 @@ import { ChronicleSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
 import type { EntityFilter } from "./types";
 import { asText } from "./index/text";
-import { addBodyToStep, addToStep, changesBetween, readHistory, splitBody, remember, renameInSteps, restoreFront, writeHistory, type UndoStep } from "./index/undo";
+import { addBodyToStep, addToStep, changesBetween, readHistory, splitBody, remember, renameInSteps, restoreFront, writeHistory, type UndoNote, type UndoStep } from "./index/undo";
 
 /** Every view, with its ribbon icon and default hotkey (Ctrl/Cmd + Alt + key; changeable in Settings → Hotkeys). */
 /** This build's version, written in by esbuild.config.mjs (absent in the test harness). */
 declare const UV_BUILD_VERSION: string | undefined;
 
 /** The commands kept in Obsidian's command palette (everything else is under "Actions…"). */
-const PALETTE_COMMANDS = new Set(["open-hub", "actions", "quick-menu", "quick-add", "new-note", "inspector", "undo", "jump-to"]);
+const PALETTE_COMMANDS = new Set(["open-hub", "actions", "quick-menu", "quick-add", "new-note", "inspector", "undo", "redo", "jump-to"]);
 
 const VIEWS: { type: string; name: string; icon: string; key: string }[] = [
 	{ type: VIEW_HUB, name: "Dashboard", icon: LOGO_ICON, key: "U" },
@@ -186,8 +190,8 @@ export default class ChroniclePlugin extends Plugin {
 		// (any of them can be hidden by right-clicking the ribbon).
 		for (const v of VIEWS) {
 			if (v.type !== VIEW_HUB && !this.settings.ribbonViews) continue;
-			const label = v.type === VIEW_HUB ? "UniverseView" : `UniverseView: ${v.name.toLowerCase()}`;
-			const button = this.addRibbonIcon(v.icon, label, () => void this.activateView(v.type));
+			const label = v.type === VIEW_HUB ? "UniverseView (Ctrl+click: another dashboard)" : `UniverseView: ${v.name.toLowerCase()}`;
+			const button = this.addRibbonIcon(v.icon, label, (evt) => void (v.type === VIEW_HUB ? this.dashboardClick(evt) : this.activateView(v.type)));
 			this.ribbonButtons.set(v.type, button);
 			button.toggle(this.moduleOn(v.type));
 		}
@@ -624,6 +628,19 @@ export default class ChroniclePlugin extends Plugin {
 		return [...hubs].sort((a, b) => time(b) - time(a))[0];
 	}
 
+	/**
+	 * The dashboard button and hotkey. They show the dashboard you used last; from inside a dashboard they open another in a
+	 * new tab on the same page, and with Ctrl/Cmd held they always do (Ctrl+Alt: beside this one). So there can be as many
+	 * as you like, each with its own page.
+	 */
+	async dashboardClick(evt?: MouseEvent | KeyboardEvent) {
+		const mod = evt ? Keymap.isModEvent(evt) : false;
+		const here = this.app.workspace.getActiveViewOfType(HubView);
+		if (mod === "split") await this.openHubBeside("split", here?.place());
+		else if (mod || here) await this.openHubBeside("tab", here?.place());
+		else await this.activateView(VIEW_HUB);
+	}
+
 	/** Another dashboard, in a new tab or beside this one, optionally on a given page (to compare a map and a family tree). */
 	async openHubBeside(where: "tab" | "split" = "split", at?: { section: string; tab?: string }): Promise<WorkspaceLeaf> {
 		const { workspace } = this.app;
@@ -1043,7 +1060,7 @@ export default class ChroniclePlugin extends Plugin {
 		window.setTimeout(() => (leaf.view as MapView).draw?.(key, how, n, mapKey), 80);
 	}
 
-	private showViewMenu(evt?: MouseEvent, pos?: { x: number; y: number }) {
+	showViewMenu(evt?: MouseEvent, pos?: { x: number; y: number }) {
 		const menu = new Menu();
 		for (const v of VIEWS.filter((x) => this.moduleOn(x.type))) menu.addItem((i) => i.setTitle(v.name).setIcon(v.icon).onClick(() => void this.activateView(v.type)));
 		menu.addSeparator();
@@ -1239,14 +1256,28 @@ export default class ChroniclePlugin extends Plugin {
 	private get historyPath() {
 		return `${this.manifest.dir}/undo-history.json`;
 	}
-	private saveHistorySoon = debounce(() => void this.app.vault.adapter.write(this.historyPath, writeHistory(this.history)).catch((err) => console.error("UniverseView: couldn't save the undo history", err)), 1500, true);
+	private get redoPath() {
+		return `${this.manifest.dir}/redo-history.json`;
+	}
+	private saveHistorySoon = debounce(() => {
+		const adapter = this.app.vault.adapter;
+		const fail = (err: unknown) => console.error("UniverseView: couldn't save the undo history", err);
+		void adapter.write(this.historyPath, writeHistory(this.history)).catch(fail);
+		void adapter.write(this.redoPath, writeHistory(this.redoSteps)).catch(fail);
+	}, 1500, true);
 
 	private async loadHistory() {
 		if (!(await this.app.vault.adapter.exists(this.historyPath))) return;
 		this.history = [...readHistory(await this.app.vault.adapter.read(this.historyPath)), ...this.history];
+		// What was undone survives a restart too, so Redo still works after one.
+		if (await this.app.vault.adapter.exists(this.redoPath)) this.redoSteps = [...readHistory(await this.app.vault.adapter.read(this.redoPath)), ...this.redoSteps];
 	}
 
-	private historyChanged() {
+	/** What was undone, newest undone last: Redo takes the last one back. Any new edit clears it. */
+	private redoSteps: UndoStep[] = [];
+
+	private historyChanged(fromHistory = false) {
+		if (!fromHistory) this.redoSteps.length = 0;
 		this.app.workspace.trigger("chronicle:history-changed");
 		this.saveHistorySoon();
 	}
@@ -1300,23 +1331,38 @@ export default class ChroniclePlugin extends Plugin {
 
 	/** Undoes the last count steps, newest first. */
 	async undoMany(count: number) {
-		for (let i = 0; i < count && this.history.length; i++) await this.undo();
+		let done = 0;
+		for (let i = 0; i < count && this.history.length; i++) {
+			await this.undo(true);
+			done++;
+		}
+		if (done) clickNotice(`Undid ${done} change${done === 1 ? "" : "s"}. Click here to redo ${done === 1 ? "it" : "them"}.`, 10000, () => void this.redoMany(done));
 	}
 
 	get undoLabel(): string | undefined {
 		return this.history[this.history.length - 1]?.label;
 	}
 
-	/** Puts back the properties of the notes changed by the last UniverseView edit. */
-	async undo() {
-		const step = this.history.pop();
-		if (!step) {
-			new Notice("Nothing to undo.");
-			return;
-		}
+	/** What Redo would put back next. */
+	get redoLabel(): string | undefined {
+		return this.redoSteps[this.redoSteps.length - 1]?.label;
+	}
+
+	/** The undone changes, in the order Redo takes them back (the one just undone first). */
+	redoList(): { label: string; at: number; paths: string[] }[] {
+		return [...this.redoSteps].reverse().map((s) => ({ label: s.label, at: s.at, paths: s.notes.map((n) => n.path) }));
+	}
+
+	/**
+	 * Applies a step: puts back what it changed (properties, and text if it is as the step left it) and returns the step
+	 * that would put things as they were just now, which is what Redo (or Undo, after a Redo) runs.
+	 */
+	private async applyStep(step: UndoStep): Promise<{ inverse: UndoStep; missed: string[] }> {
 		const missed: string[] = [];
+		const inverse: UndoStep = { label: step.label, at: Date.now(), notes: [] };
 		for (const n of [...step.notes].reverse()) {
 			const f = this.app.vault.getAbstractFileByPath(n.path);
+			const back: UndoNote = { path: n.path, before: {} };
 			try {
 				if (!(f instanceof TFile)) throw new Error("note not found");
 				// The text goes back only if it's as the step left it: later writing is never overwritten.
@@ -1329,16 +1375,103 @@ export default class ChroniclePlugin extends Plugin {
 						kept = true;
 						return front + body.before;
 					});
-					if (!kept) missed.push(n.path.split("/").pop() ?? n.path);
+					if (kept) back.body = { before: body.after, after: body.before };
+					else missed.push(n.path.split("/").pop() ?? n.path);
 				}
-				if (Object.keys(n.before).length) await this.app.fileManager.processFrontMatter(f, (front: Record<string, unknown>) => restoreFront(front, n.before));
+				if (Object.keys(n.before).length) {
+					await this.app.fileManager.processFrontMatter(f, (front: Record<string, unknown>) => {
+						back.before = restoreFront(front, n.before);
+					});
+				}
+				if (Object.keys(back.before).length || back.body) inverse.notes.push(back);
 			} catch (err) {
 				console.error("UniverseView: couldn't undo", n.path, err);
 				missed.push(n.path.split("/").pop() ?? n.path);
 			}
 		}
-		new Notice(missed.length ? `Undid: ${step.label}, except in ${missed.join(", ")}. Those notes couldn't be changed.` : `Undid: ${step.label}`);
-		this.historyChanged();
+		return { inverse, missed };
+	}
+
+	/** Puts back the properties of the notes changed by the last UniverseView edit; the notice offers Redo. */
+	async undo(quiet = false) {
+		const step = this.history.pop();
+		if (!step) {
+			new Notice("Nothing to undo.");
+			return;
+		}
+		const { inverse, missed } = await this.applyStep(step);
+		if (inverse.notes.length) this.redoSteps.push(inverse);
+		if (missed.length) new Notice(`Undid: ${step.label}, except in ${missed.join(", ")}. Those notes couldn't be changed.`);
+		else if (!quiet) clickNotice(`Undid: ${step.label}. Click here to redo it.`, 8000, () => void this.redo());
+		this.historyChanged(true);
+	}
+
+	/** Takes back the change just undone (and the one before it, when called again). */
+	async redo(quiet = false) {
+		const step = this.redoSteps.pop();
+		if (!step) {
+			new Notice("Nothing to redo.");
+			return;
+		}
+		const { inverse, missed } = await this.applyStep(step);
+		if (inverse.notes.length) remember(this.history, inverse);
+		if (missed.length) new Notice(`Redid: ${step.label}, except in ${missed.join(", ")}. Those notes couldn't be changed.`);
+		else if (!quiet) new Notice(`Redid: ${step.label}`);
+		this.historyChanged(true);
+	}
+
+	/** Redoes the next count undone changes. */
+	async redoMany(count: number) {
+		let done = 0;
+		for (let i = 0; i < count && this.redoSteps.length; i++) {
+			await this.redo(true);
+			done++;
+		}
+		if (done) new Notice(`Redid ${done} change${done === 1 ? "" : "s"}.`);
+	}
+	/** How many blank properties a note has (read from Obsidian's cache, so it is quick). */
+	emptyCountOf(file: TFile): number {
+		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		return fm ? emptyKeys(fm).length : 0;
+	}
+
+	/** Removes blank properties from these notes as one undo step; returns how many notes and properties changed. */
+	async tidyEmptyProperties(files: TFile[]): Promise<{ notes: number; props: number }> {
+		const todo = files.filter((f) => this.emptyCountOf(f) > 0);
+		let props = 0;
+		await this.undoGroup("Remove empty properties", async () => {
+			for (const f of todo) await this.editFrontmatter(f, (front) => void (props += dropEmpty(front).length), "Remove empty properties");
+		});
+		return { notes: todo.length, props };
+	}
+
+	/** Takes a relative with no note out of the tree: out of every note's family lines and links to them, as one undo step. */
+	forgetRelative(key: string, name: string) {
+		const notes = this.index.notesMentioning(key);
+		new ConfirmPrompt(this, `Forget ${name}?`, `${name} has no note, so this only removes them from the family lines and links on ${notes.length} note${notes.length === 1 ? "" : "s"}. Anyone who was only linked through them leaves the tree too. Undo brings them back.`, "Forget", () => {
+			const aliases = buildFieldAliases(this.settings.fieldAliases);
+			const linkName = (v: unknown) => String(v).replace(/^\s*\[\[|\]\]\s*$/g, "").split("|")[0].split("/").pop()?.trim().toLowerCase();
+			void this.undoGroup(`Forget ${name}`, async () => {
+				for (const e of notes) {
+					const f = this.app.vault.getAbstractFileByPath(e.key);
+					if (!(f instanceof TFile)) continue;
+					await this.editFrontmatter(f, (front) => {
+						for (const prop of ["relatives", "kin"]) {
+							if (!(prop in front)) continue;
+							const next = forgetKin(kinLines(front[prop]), name);
+							if (next.length) front[prop] = next;
+							else delete front[prop];
+						}
+						for (const field of [...aliases.parents, ...aliases.children, ...aliases.partners]) {
+							const v = front[field];
+							if (!Array.isArray(v)) continue;
+							const kept = v.filter((x) => linkName(x) !== name.toLowerCase());
+							if (kept.length !== v.length) front[field] = kept;
+						}
+					}, `Forget ${name}`);
+				}
+			}).then(() => new Notice(`${name} is out of the tree. Undo brings them back.`));
+		}).open();
 	}
 
 	/** Adds `parent` to the parents list of the person note `childKey`. */
@@ -1717,7 +1850,7 @@ export default class ChroniclePlugin extends Plugin {
 				...this.keys(["Mod", "Alt"], v.key),
 				checkCallback: (checking) => {
 					if (!this.moduleOn(v.type)) return false;
-					if (!checking) void this.activateView(v.type);
+					if (!checking) void (v.type === VIEW_HUB ? this.dashboardClick() : this.activateView(v.type));
 					return true;
 				},
 			});
@@ -1896,6 +2029,25 @@ export default class ChroniclePlugin extends Plugin {
 			icon: "undo-2",
 			...this.keys(["Mod", "Alt"], "Z"),
 			callback: () => void this.undo(),
+		});
+		this.addCommand({
+			id: "redo",
+			name: "Redo the change just undone",
+			icon: "redo-2",
+			...this.keys(["Mod", "Alt"], "Y"),
+			callback: () => void this.redo(),
+		});
+		this.addCommand({
+			id: "tidy-empty-properties",
+			name: "Remove empty properties (this note, a folder or the vault)",
+			icon: "eraser",
+			callback: () => new TidyEmptyModal(this).open(),
+		});
+		this.addCommand({
+			id: "shortcuts",
+			name: "Shortcuts: every key and click it knows",
+			icon: "keyboard",
+			callback: () => new ShortcutsModal(this).open(),
 		});
 		this.addCommand({
 			id: "undo-history",

@@ -43,12 +43,18 @@ export function splitBody(text: string): [string, string] {
 	return m ? [m[0], text.slice(m[0].length)] : ["", text];
 }
 
-/** Puts back what a step changed, leaving everything else on the note as it now stands. */
-export function restoreFront(front: Record<string, unknown>, before: Record<string, unknown>) {
+/**
+ * Puts back what a step changed, leaving everything else on the note as it now stands. Returns what was there instead
+ * (undefined for a property that was not), which is exactly what Redo has to put back.
+ */
+export function restoreFront(front: Record<string, unknown>, before: Record<string, unknown>): Record<string, unknown> {
+	const was: Record<string, unknown> = {};
 	for (const [k, v] of Object.entries(before)) {
+		was[k] = structuredClone(front[k]);
 		if (v === undefined) delete front[k];
 		else front[k] = structuredClone(v);
 	}
+	return was;
 }
 
 export function remember(history: UndoStep[], step: UndoStep) {

@@ -7,7 +7,7 @@ import type { CalendarDef } from "../types";
 import { DEFAULT_FIELD_ALIASES, DEFAULT_SETTINGS, parseMapCategories, parseMappingLines } from "../settings";
 import { CustomCalendar } from "../dates/calendars";
 import { formatDay } from "../dates/parser";
-import { TYPE_LABELS, el, glyph, helpTip, icon } from "../render/common";
+import { TYPE_LABELS, el, glyph, helpTip, icon, tuckDescriptions } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
 import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
 import { chooseWorldSetting } from "./worldsettingui";
@@ -228,6 +228,8 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			row.addClass("uv-setting-with-extra");
 			row.append(...e.extras);
 		}
+		// Long explanations wait behind a "?" (and the name) instead of filling the page.
+		tuckDescriptions(row);
 	}
 
 	/** Map tools: how drawing, snapping, Fill and the border tools behave (each tool's banner changes these too). */

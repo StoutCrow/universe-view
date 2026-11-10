@@ -1,4 +1,5 @@
-import { Menu, type ViewStateResult } from "obsidian";
+import { Menu, Notice, type ViewStateResult } from "obsidian";
+import { TextPrompt } from "../ui/TextPrompt";
 import { DEFAULT_TIMELINE_OPTIONS, TimelineGroup, TimelineOptions, TimelineRenderer } from "../render/timeline";
 import { el, icon, iconButton } from "../render/common";
 import { EntityPickerModal } from "../ui/suggest";
@@ -203,6 +204,18 @@ export class TimelineView extends ChronicleView {
 
 			this.spacer();
 			const right = this.group();
+			iconButton(right, "calendar-search", "Go to a date, or to today", (evt) => {
+				const cal = o.calendar ?? this.plugin.index.dominantCalendar(o.filter.folder);
+				const today = this.plugin.todayFor(o.filter.folder ?? "", cal);
+				const menu = new Menu();
+				if (today !== undefined) menu.addItem((i) => i.setTitle("Today").setIcon("calendar-check").onClick(() => this.jumpTo(today)));
+				menu.addItem((i) => i.setTitle("A date…").setIcon("calendar-search").onClick(() => new TextPrompt(this.plugin, "Go to which date? (in this calendar, e.g. 1215 or 12 March 1215)", "", (v) => {
+					const d = this.plugin.parseDate(v, cal);
+					if (d) this.jumpTo(d.start);
+					else new Notice(`Couldn't read "${v}" as a date in this calendar.`);
+				}).open()));
+				menu.showAtMouseEvent(evt);
+			});
 			iconButton(right, "zoom-out", "Zoom out", () => this.renderer?.zoom(1 / 1.5));
 			iconButton(right, "zoom-in", "Zoom in", () => this.renderer?.zoom(1.5));
 			iconButton(right, "maximize", "Fit everything", () => this.renderer?.fit(true));
@@ -212,6 +225,12 @@ export class TimelineView extends ChronicleView {
 
 	timeRange() {
 		return this.renderer?.range;
+	}
+
+	/** Puts a day in the middle of the view, at the zoom it has now. */
+	private jumpTo(day: number) {
+		const r = this.renderer?.range;
+		if (r) this.renderer?.showRange({ ...r, center: day });
 	}
 
 	showTimeRange(r: TimeRange) {

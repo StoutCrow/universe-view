@@ -1,4 +1,5 @@
 import { UndoHistoryModal } from "../ui/undohistory";
+import { ShortcutsModal } from "../ui/ShortcutsModal";
 import { ItemView, Menu, WorkspaceLeaf, debounce } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { EntityType } from "../types";
@@ -98,6 +99,7 @@ export abstract class ChronicleView extends ItemView {
 			menu.addItem((i) => i.setTitle("Save this view…").setIcon("bookmark-plus").onClick(() => this.plugin.saveCurrentView(this)));
 			if (this.exportable) menu.addItem((i) => i.setTitle("Export as an image or PDF…").setIcon("image-down").onClick(() => exportMenu(this.plugin, this.body, this.getDisplayText(), evt, this.exportExtras())));
 			menu.addItem((i) => i.setTitle("Settings for this view").setIcon("settings").onClick(() => this.plugin.openSettings(this.settingsTab)));
+			menu.addItem((i) => i.setTitle("Shortcuts…").setIcon("keyboard").onClick(() => new ShortcutsModal(this.plugin).open()));
 			menu.showAtMouseEvent(evt);
 		});
 	}

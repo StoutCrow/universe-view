@@ -623,3 +623,6 @@ body.is-mobile .uv-hub-page {
 	text-overflow: ellipsis;
 }
 .uv-hub.is-compact .uv-hub-version { display: none; }
+/* The logo at the top of the side tabs is a button now. */
+button.uv-hub-logo { padding: 0; border: none; background: transparent; box-shadow: none; cursor: pointer; }
+button.uv-hub-logo:hover { background: var(--background-modifier-hover); }

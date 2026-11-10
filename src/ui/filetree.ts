@@ -441,6 +441,19 @@ export class FileTree {
 		s.expanded = [...set];
 	}
 
+	/** Shows the note in the tree: opens the folders above it, picks it, scrolls it to the middle and flashes it. */
+	reveal(path: string): boolean {
+		this.pick(path, false);
+		this.render();
+		this.hooks.changed();
+		const row = Array.from(this.list.querySelectorAll<HTMLElement>(".chronicle-dash-row")).find((r) => r.dataset.path === path);
+		if (!row) return false;
+		row.scrollIntoView({ block: "center" });
+		row.addClass("is-revealed");
+		window.setTimeout(() => row.removeClass("is-revealed"), 1600);
+		return true;
+	}
+
 	scrollToPicked() {
 		this.list.querySelector(".is-selected")?.scrollIntoView({ block: "nearest" });
 	}

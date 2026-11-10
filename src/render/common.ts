@@ -317,6 +317,37 @@ export function clickNotice(message: string, duration: number, onClick: () => vo
 	return new Notice(createFragment((f) => f.createDiv({ text: message }).addEventListener("click", onClick)), duration);
 }
 
+/**
+ * Long explanations under a setting's name clutter the page: each one moves behind a "?" beside the name, and shows
+ * when the pointer rests on the "?" or on the name itself. Short ones, and any with a link or control in them, stay.
+ * (Obsidian's settings search reads the definitions, so a hidden description is still searched.)
+ */
+export function tuckDescriptions(root: HTMLElement, max = 64) {
+	for (const desc of Array.from(root.querySelectorAll<HTMLElement>(".setting-item-info > .setting-item-description"))) {
+		if (desc.hasClass("is-tucked") || desc.querySelector("a, button, input, select, textarea")) continue;
+		const name = desc.parentElement?.querySelector<HTMLElement>(":scope > .setting-item-name");
+		if (!name) continue;
+		const copy = desc.cloneNode(true) as HTMLElement;
+		copy.querySelectorAll("code").forEach((c) => c.replaceWith(`\`${c.textContent ?? ""}\``));
+		const text = (copy.textContent ?? "").trim();
+		if (text.length <= max) continue;
+		desc.addClass("is-tucked");
+		const q = helpTip(name, text);
+		// The name opens it too, so the whole label is the target.
+		name.addClass("has-tucked-help");
+		name.addEventListener("mouseenter", () => q.dispatchEvent(new Event("mouseenter")));
+		name.addEventListener("mouseleave", () => q.dispatchEvent(new Event("mouseleave")));
+	}
+}
+
+/** Copies a link to a note, written the way Obsidian writes one (short when the name is unique, with the folder when not). */
+export function copyLink(plugin: ChroniclePlugin, key: string) {
+	const file = plugin.app.vault.getAbstractFileByPath(key);
+	if (!(file instanceof TFile)) return;
+	const link = plugin.app.fileManager.generateMarkdownLink(file, "");
+	void navigator.clipboard?.writeText(link).then(() => new Notice(`Copied ${link}`));
+}
+
 /** A menu entry in red, for removing things. */
 export function warningItem(menu: Menu, title: string, iconName: string, run: () => void) {
 	menu.addItem((i) => {
@@ -407,6 +438,7 @@ export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseE
 				if (file instanceof TFile) void plugin.app.workspace.getLeaf("split").openFile(file);
 			}),
 		);
+		menu.addItem((i) => i.setTitle("Copy link").setIcon("link").onClick(() => copyLink(plugin, key)));
 		if (opts.top) {
 			menu.addSeparator();
 			opts.top(menu);

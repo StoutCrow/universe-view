@@ -181,6 +181,8 @@ export interface ChronicleSettings {
 	suggestedHotkeys?: boolean;
 	/** Inspector: the tab a note opens on. */
 	inspectorDefaultTab?: string;
+	/** The tab each kind of note last opened on in the inspector (people on Person, places on Place…). */
+	inspectorTabByType?: Record<string, string>;
 	/** Inspector: tabs left out (timeline, map, links, note). */
 	inspectorHiddenTabs?: string[];
 	/** Inspector: comfortable or compact spacing. */

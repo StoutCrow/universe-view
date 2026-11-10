@@ -924,3 +924,16 @@ body.uv-no-region-labels .chronicle-territory-label.is-region { display: none; }
 .uv-quickadd-links { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; padding-left: 52px; margin-top: 2px; }
 .uv-quickadd-links .chronicle-linkchip { font-size: var(--font-ui-smaller); }
 .chronicle-linkchip.is-batch { border: 1px dashed var(--interactive-accent); color: var(--text-accent); background: transparent; }
+/* Inspector wells keep their text off the edge: the sunken sections (Sheets and wells) always have room inside. */
+body.uv-t-panels .chronicle-inspector :is(.chronicle-insp-section, .chronicle-ep-section):not(#uv-strong) {
+	padding-left: 14px;
+	padding-right: 14px;
+}
+/* A field row is often drawn as a well (by the theme or the tactile style) and had no room inside it: its text sat
+   on the edge. Padding goes inside the row and a matching negative margin keeps the text lined up with the headings. */
+.chronicle-inspector .chronicle-insp-section .setting-item:not(#uv-strong) {
+	margin-left: -10px;
+	margin-right: -10px;
+	padding-left: 10px;
+	padding-right: 10px;
+}

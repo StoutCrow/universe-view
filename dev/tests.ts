@@ -29,7 +29,8 @@ import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { dropEmptyProperties, quickAddFrontmatter, withFields } from "../src/import/quickadd";
-import { addKinChildren, addKinPartner, addLinks, kinLines, parseKin, parseNames } from "../src/index/relatives";
+import { addKinChildren, addKinPartner, addLinks, forgetKin, kinLines, parseKin, parseNames } from "../src/index/relatives";
+import { dropEmpty, emptyKeys } from "../src/index/emptyprops";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
@@ -1389,6 +1390,17 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		eq([addKinChildren(lines, ["Carol"], ["Frank"]), lines[1]], [1, "Carol > Frank"], "kin: a relative with no note gets a line of their own");
 		eq([addKinPartner(lines, "Bob", "mary"), addKinPartner(lines, "Gwen", "Hal"), lines[2]], [0, 1, "Gwen + Hal"], "kin: partners already tied by a line are not added twice");
 	}	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");
+	{
+		const lines = ["Bob + Mary > Carol, Dan", "Carol + Eric > Frank", "Gwen + Hal"];
+		eq(forgetKin(lines, "carol"), ["Bob + Mary > Dan", "Eric > Frank", "Gwen + Hal"], "kin: forgetting someone takes them off every line, keeping the rest");
+		eq(forgetKin(["Gwen + Hal", "Ann > Ben"], "Gwen"), ["Ann > Ben"], "kin: a couple left with one person and no children goes");
+		eq(forgetKin(["Ann > Ben"], "Ben"), [], "kin: a parent left with no children goes");
+	}
+	{
+		const front: Record<string, unknown> = { tags: ["a"], aliases: null, reign: "", allies: [], mentors: [null, " "], born: 0, alive: false, gender: "female", position: { start: 1 } };
+		eq(emptyKeys(front), ["aliases", "reign", "allies", "mentors"], "empty properties: blank, empty lists and lists of blanks are found; zero and false are not");
+		eq([dropEmpty(front).length, Object.keys(front)], [4, ["tags", "born", "alive", "gender", "position"]], "empty properties: they go, the rest stays");
+	}
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Siege", type: "event" }, { date: "1200", war: "The War", importance: "5" })), { date: "1200", war: "[[The War]]", importance: 5 }, "creator: an event's form");
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Guild", type: "culture" }, { cultures: ["Crown"] })), { "parent-cultures": ["[[Crown]]"] }, "creator: a group's parent");
 
@@ -1452,6 +1464,12 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	const handEdited: Record<string, unknown> = { a: 2, b: [1], added: true, born: "1200" };
 	restoreFront(handEdited, changes);
 	eq(handEdited, { a: 1, b: [1], born: "1200", gone: "x" }, "undo: a property typed by hand since stays");
+	// Redo: what undo replaced is exactly what puts it back.
+	const edited: Record<string, unknown> = { a: 2, b: [1], added: true, born: "1200" };
+	const redo = restoreFront(edited, changes);
+	eq(redo, { a: 2, gone: undefined, added: true }, "redo: undo reports what it replaced, undefined for what was missing");
+	restoreFront(edited, redo);
+	eq(edited, { a: 2, b: [1], born: "1200", added: true }, "redo: running it again brings the edit back exactly");
 	const step = { label: "s", at: 0, notes: [] as { path: string; before: Record<string, unknown> }[] };
 	addToStep(step, "A.md", { a: 1 });
 	addToStep(step, "A.md", { a: 2, b: 3 });

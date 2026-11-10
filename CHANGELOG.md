@@ -2,6 +2,27 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 3.2.0 — 2026-11-10
+
+Redo, the map's one Options panel, and a batch of small quality-of-life fixes.
+
+### Small things
+- **Remove empty properties**: the blank ones a template leaves behind (liases:, eign:, llies: []). A command (*Remove empty properties*) for this note, its folder or every UniverseView note, with a count first, and a *Remove N blank* button in the inspector. One undo step.
+- **Forget a relative**: right-click a *Not created yet* card to take them out of the family lines and links (asks first; Undo brings them back).
+- **Shortcuts**: one window (command *Shortcuts*, or ⋯ → Shortcuts…) listing every key and click.
+- **Again**: the map toolbar remembers the last tool you chose from Draw, Travel or From image and offers it as one click.
+- **Copy link** is in every note's right-click menu (written the way Obsidian writes a link).
+- The inspector opens each kind of note on the tab you last used for it: people on Person, places on Place.
+- **Long explanations wait behind a ?** Under a setting's name, the grey explanation now shows when you rest on the ? or on the name itself, instead of filling the page. Short ones, and any with a link, stay. The same in the inspector's fields.
+- **Reveal the open note**: a button in the Library and the Files panel opens the folders above it, scrolls it into view and flashes it.
+- **Go to a date, or to today**, from the timeline's toolbar.
+- **As many dashboards as you like**: the star button and the dashboard hotkey show the one you used last, but from inside a dashboard they open another in a new tab on the same page. Ctrl/Cmd+click always opens another; Ctrl+Alt+click opens it beside this one.
+- **The logo at the top of the dashboard's side tabs is a button**: click for Home, Ctrl/Cmd+click for another dashboard, right-click for the dashboard menu (views, theme, new note, check data).
+- **Arrow keys in the family tree** move between cards, Enter centres the tree on the one marked, Esc lets go.
+
+### Redo
+- **Redo** takes back what you just undid. The notice after every undo is clickable ("Click here to redo it"); there is a Redo button beside Undo in the inspector, the Library and the map, a *Redo the change just undone* command (Ctrl+Alt+Y), and the Undo history lists what was undone, with a Redo for each. Making a new change clears what could be redone. What was undone is kept across a restart.
+
 ## 3.1.0 — 2026-11-10
 
 Relatives of relatives, one right-click menu, and Alt+click for the inspector.

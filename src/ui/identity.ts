@@ -1,10 +1,10 @@
 import { revealInExplorer } from "../internals";
-import { Notice, TFile } from "obsidian";
+import { TFile } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import { formatSpan } from "../dates/parser";
 import { tierLabel } from "../index/realms";
-import { TYPE_ICONS, TYPE_LABELS, el, entityColor, glyph, icon, openEntity, resourceUrl } from "../render/common";
+import { TYPE_ICONS, TYPE_LABELS, copyLink, el, entityColor, glyph, icon, openEntity, resourceUrl } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { isFolderNote } from "./foldernotes";
 import { changeNoteIcon, noteIcons } from "./icons";
@@ -107,7 +107,7 @@ export function identityHeader(p: ChroniclePlugin, parent: HTMLElement, e: Entit
 	if (node) act("crown", "Realm tree", () => void p.openOrgChart(e.key));
 	act("waypoints", "Connections", () => void p.openNetwork(e.key));
 	act("link", "Copy a link to it", () => {
-		void navigator.clipboard?.writeText(`[[${e.name}]]`).then(() => new Notice(`Copied [[${e.name}]]`));
+		copyLink(p, e.key);
 	});
 	act("folder-open", "Show in the file explorer", () => {
 		const f = p.app.vault.getAbstractFileByPath(e.path);

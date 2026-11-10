@@ -70,3 +70,7 @@
 .uv-newnote-type { font-size: var(--font-ui-small); color: var(--text-normal); padding-right: 8px; }
 .uv-newnote-grid input { width: 100%; }
 .uv-history-head { margin: 18px 0 6px; font-size: var(--font-ui-small); font-weight: var(--font-semibold); color: var(--text-muted); }
+/* Explanations tucked behind a "?": the description is hidden, and the name shows the help when hovered. */
+.setting-item-description.is-tucked { display: none; }
+.setting-item-name.has-tucked-help { cursor: help; }
+.setting-item-name .chronicle-help { margin-left: 6px; }

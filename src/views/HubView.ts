@@ -1,4 +1,4 @@
-import { ItemView, Menu, Notice, Platform, Setting, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { ItemView, Keymap, Menu, Notice, Platform, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { buildLabel } from "../version";
 import type ChroniclePlugin from "../main";
 import { el, icon } from "../render/common";
@@ -400,7 +400,18 @@ export class HubView extends ItemView {
 		if (!sections.some((s) => s.id === this.section)) this.section = sections[0].id;
 		this.railEl.empty();
 		const brand = el("div", { cls: "uv-hub-brand" }, this.railEl);
-		setIcon(el("span", { cls: "uv-hub-logo" }, brand), LOGO_ICON);
+		// The logo is a button: Home; Ctrl/Cmd+click another dashboard (Ctrl+Alt beside this one); right-click the dashboard menu.
+		const logo = el("button", { cls: "uv-hub-logo clickable-icon", attr: { "aria-label": "Home. Ctrl+click for another dashboard, right-click for the menu", title: "Home. Ctrl+click for another dashboard, right-click for the menu" } }, brand);
+		setIcon(logo, LOGO_ICON);
+		logo.addEventListener("click", (evt) => {
+			const mod = Keymap.isModEvent(evt);
+			if (mod) void this.plugin.openHubBeside(mod === "split" ? "split" : "tab", this.place());
+			else this.go(HUB_SECTIONS[0].id);
+		});
+		logo.addEventListener("contextmenu", (evt) => {
+			evt.preventDefault();
+			this.plugin.showViewMenu(evt);
+		});
 		const words = el("div", { cls: "uv-hub-brand-words" }, brand);
 		el("div", { cls: "uv-hub-name", text: "UniverseView" }, words);
 		el("div", { cls: "uv-hub-vault", text: this.app.vault.getName() }, words);

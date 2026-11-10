@@ -8,7 +8,7 @@ import { LIST_INFO, ListKind, kinCount, listRows, renderList } from "../render/p
 import { VIEW_DASHBOARD } from "./DashboardView";
 import { ValidateModal } from "../ui/ValidateModal";
 import { DetectModal } from "../ui/DetectModal";
-import { SAMPLE_FOLDER, addSampleWorld, sampleBlurb } from "../ui/sample";
+import { addSampleWorld, sampleBlurb } from "../ui/sample";
 import { CardLayout } from "../ui/cardlayout";
 import { ChronicleView } from "./base";
 import { VIEW_TIMELINE } from "./TimelineView";

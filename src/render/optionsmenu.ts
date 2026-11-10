@@ -2,8 +2,9 @@ import { el, icon } from "./common";
 
 /** One line in a view's Options panel. */
 export type OptionEntry =
-	| { type: "toggle"; label: string; get: () => boolean; set: (v: boolean) => void }
-	| { type: "choice"; label: string; options: [string, string][]; get: () => string; set: (v: string) => void }
+	| { type: "heading"; label: string }
+	| { type: "toggle"; label: string; get: () => boolean; set: (v: boolean) => void; hint?: string }
+	| { type: "choice"; label: string; options: [string, string][]; get: () => string; set: (v: string) => void; hint?: string }
 	| { type: "action"; label: string; icon?: string; run: () => void };
 
 let open: { close: () => void } | undefined;
@@ -26,6 +27,10 @@ export function optionsButton(parent: HTMLElement, entries: () => OptionEntry[],
 		open?.close();
 		const pop = el("div", { cls: "uv-options chronicle-scope", attr: { role: "dialog", "aria-label": "Options" } }, document.body);
 		for (const e of entries()) {
+			if (e.type === "heading") {
+				el("div", { cls: "uv-options-heading", text: e.label }, pop);
+				continue;
+			}
 			if (e.type === "action") {
 				const b = el("button", { cls: "uv-options-action" }, pop);
 				if (e.icon) icon(el("span", { cls: "chronicle-chip-icon" }, b), e.icon);
@@ -36,7 +41,7 @@ export function optionsButton(parent: HTMLElement, entries: () => OptionEntry[],
 				});
 				continue;
 			}
-			const row = el("label", { cls: "uv-options-row" }, pop);
+			const row = el("label", { cls: "uv-options-row", title: e.hint }, pop);
 			el("span", { cls: "uv-options-label", text: e.label }, row);
 			if (e.type === "toggle") {
 				const box = el("input", { cls: "uv-options-check", attr: { type: "checkbox" } }, row);

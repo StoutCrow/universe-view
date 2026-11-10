@@ -746,6 +746,11 @@ export class EntityIndex extends Events {
 		return this.ghostNames.get(key);
 	}
 
+	/** Every note that mentions a relative with no note: in its own family fields, or in its `relatives:` lines. */
+	notesMentioning(key: string): Entity[] {
+		return [...this.entities.values()].filter((e) => e.type === "person" && ([...e.parents, ...e.children, ...e.partners.map((p) => p.ref)].some((r) => r.key === key) || this.kinKeys.get(e.key)?.has(key)));
+	}
+
 	/** The note that talks about a relative with no note, where new lines about them are written: one that lists them, or whose family lines name them. */
 	kinAnchor(key: string): Entity | undefined {
 		for (const e of this.entities.values()) {

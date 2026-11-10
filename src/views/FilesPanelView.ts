@@ -1,4 +1,4 @@
-import { TFile, debounce, setIcon, type ViewStateResult } from "obsidian";
+import { Notice, TFile, debounce, setIcon, type ViewStateResult } from "obsidian";
 import type ChroniclePlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import { TYPE_ICONS, TYPE_LABELS, el, iconButton, openEntity, setPressed } from "../render/common";
@@ -85,6 +85,13 @@ export class FilesPanelView extends ChronicleView {
 		}));
 	}
 
+	/** Finds the note you are reading in the tree. */
+	private revealOpen() {
+		const file = this.app.workspace.getActiveFile();
+		if (!file) new Notice("No note is open.");
+		else if (!this.tree.reveal(file.path)) new Notice("That note is hidden by the filters or the search here.");
+	}
+
 	private refresh() {
 		this.fillToolbar();
 		this.tree.render();
@@ -103,6 +110,7 @@ export class FilesPanelView extends ChronicleView {
 		}
 		this.spacer();
 		const tools = this.group();
+		iconButton(tools, "locate", "Reveal the open note in the tree", () => this.revealOpen());
 		const only = iconButton(tools, "filter", "UniverseView notes only", () => {
 			this.state.onlyChronicle = !this.state.onlyChronicle;
 			this.refresh();
