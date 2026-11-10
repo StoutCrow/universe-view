@@ -1,6 +1,10 @@
 // Roughened borders: a hand-drawn wobble added to long straight edges when a territory is shown.
-// Only the drawing changes; the note keeps its few editable corners. Each edge's wobble depends on
-// its two ends alone (whichever way round it runs), so neighbours that share an edge wobble together.
+// Only the drawing changes; the note keeps its few editable corners.
+//
+// The wobble is a smooth noise field over the map, the same for every land: a point is pushed by what the
+// field says at that spot, and by less the nearer it is to any corner. Two lands sharing a border (even
+// when one has a corner in the middle of it that the other lacks) therefore draw the very same line, so
+// the wobble never opens a gap or overlaps a neighbour.
 
 type P2 = [number, number];
 
@@ -16,38 +20,82 @@ function noise(seed: number): number {
 	return ((h >>> 0) / 4294967296) * 2 - 1;
 }
 
-const seedOf = (a: P2, b: P2) => noise(Math.round(a[0] * 100) * 73856093 ^ Math.round(a[1] * 100) * 19349663 ^ Math.round(b[0] * 100) * 83492791 ^ Math.round(b[1] * 100) * 2654435761) * 2147483647;
-
-/** The wobbled corners strictly between a and b; none for an edge shorter than minLen. */
-export function roughEdge(a: P2, b: P2, amount: number, minLen: number): P2[] {
-	if (amount <= 0 || Math.hypot(b[0] - a[0], b[1] - a[1]) < minLen) return [];
-	// Always worked out from the lesser end, so both lands sharing the edge get the same line.
-	const flip = a[0] > b[0] || (a[0] === b[0] && a[1] > b[1]);
-	const [p, q] = flip ? [b, a] : [a, b];
-	const step = minLen / 2;
-	const out: P2[] = [];
-	const split = (p: P2, q: P2, seed: number, depth: number) => {
-		const dx = q[0] - p[0];
-		const dy = q[1] - p[1];
-		const len = Math.hypot(dx, dy);
-		if (len < step || depth > 10) return;
-		const off = noise(seed) * amount * len;
-		const m: P2 = [(p[0] + q[0]) / 2 - (dy / len) * off, (p[1] + q[1]) / 2 + (dx / len) * off];
-		split(p, m, (Math.imul(seed, 31) + 7) | 0, depth + 1);
-		out.push(m);
-		split(m, q, (Math.imul(seed, 31) + 13) | 0, depth + 1);
-	};
-	split(p, q, seedOf(p, q) | 0, 0);
-	return flip ? out.reverse() : out;
+/** Smooth value noise in [-1, 1] at a point of the field. */
+function value(x: number, y: number): number {
+	const xi = Math.floor(x);
+	const yi = Math.floor(y);
+	const u = x - xi;
+	const v = y - yi;
+	const su = u * u * (3 - 2 * u);
+	const sv = v * v * (3 - 2 * v);
+	const at = (i: number, j: number) => noise(Math.imul(i, 73856093) ^ Math.imul(j, 19349663));
+	const top = at(xi, yi) + (at(xi + 1, yi) - at(xi, yi)) * su;
+	const bottom = at(xi, yi + 1) + (at(xi + 1, yi + 1) - at(xi, yi + 1)) * su;
+	return top + (bottom - top) * sv;
 }
 
-/** A closed ring with its long edges roughened; short edges (a traced coast, say) stay as they are. */
-export function roughenRing(ring: P2[], amount: number, minLen: number): P2[] {
+/** Two layers of the field: broad bends and finer wiggles. */
+const field = (x: number, y: number) => value(x, y) * 0.68 + value(x * 2.7 + 11.3, y * 2.7 - 4.1) * 0.32;
+
+/** How far a point is from the nearest corner of any land, up to `radius`. */
+export type CornerDistance = (p: P2) => number;
+
+/** Looks up the distance to the nearest corner among all these rings (a grid, so it stays quick on big maps). */
+export function cornerDistance(rings: P2[][], radius: number): CornerDistance {
+	const grid = new Map<string, P2[]>();
+	const cell = (v: number) => Math.floor(v / radius);
+	for (const ring of rings) {
+		for (const p of ring) {
+			const k = `${cell(p[0])},${cell(p[1])}`;
+			const list = grid.get(k);
+			if (list) list.push(p);
+			else grid.set(k, [p]);
+		}
+	}
+	return (p) => {
+		let best = radius;
+		const ci = cell(p[0]);
+		const cj = cell(p[1]);
+		for (let i = ci - 1; i <= ci + 1; i++) {
+			for (let j = cj - 1; j <= cj + 1; j++) {
+				for (const q of grid.get(`${i},${j}`) ?? []) best = Math.min(best, Math.hypot(q[0] - p[0], q[1] - p[1]));
+			}
+		}
+		return best;
+	};
+}
+
+/** The reach of a corner's hold on the line: how far along a border from a corner the wobble builds up. */
+export const holdRadius = (minLen: number) => minLen * 4;
+
+/**
+ * A closed ring with its long edges roughened; short edges (a traced coast, say) stay as they are.
+ * `near` says how far any point is from the nearest corner of every land drawn, so shared borders agree;
+ * without it only this ring's own corners count.
+ */
+export function roughenRing(ring: P2[], amount: number, minLen: number, near?: CornerDistance): P2[] {
 	if (amount <= 0 || ring.length < 3) return ring;
+	const hold = holdRadius(minLen);
+	const dist = near ?? cornerDistance([ring], hold);
+	const wave = minLen * 12;
+	const amp = amount * wave;
+	const step = minLen / 2;
 	const out: P2[] = [];
 	for (let i = 0; i < ring.length; i++) {
-		out.push(ring[i]);
-		out.push(...roughEdge(ring[i], ring[(i + 1) % ring.length], amount, minLen));
+		const a = ring[i];
+		const b = ring[(i + 1) % ring.length];
+		out.push(a);
+		const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+		if (len < minLen) continue;
+		const count = Math.ceil(len / step);
+		for (let k = 1; k < count; k++) {
+			const t = k / count;
+			const x = a[0] + (b[0] - a[0]) * t;
+			const y = a[1] + (b[1] - a[1]) * t;
+			const d = Math.min(1, dist([x, y]) / hold);
+			const w = d * d * (3 - 2 * d);
+			out.push([x + field(x / wave, y / wave) * amp * w, y + field(x / wave + 57.3, y / wave - 31.7) * amp * w]);
+		}
 	}
 	return out;
 }

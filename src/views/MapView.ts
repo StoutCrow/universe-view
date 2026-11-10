@@ -1,5 +1,5 @@
 import { warSpan } from "../index/wars";
-import { growSheet } from "../ui/territoryactions";
+
 /** What a territory tool started from elsewhere does. */
 export type DrawHow = "paint" | "split" | "edit" | "grow" | "borders";
 import { STAT_NAMES, type StatKey } from "../index/realmstats";
@@ -243,7 +243,7 @@ export class MapView extends ChronicleView {
 			if (!r || !e) return;
 			if (how === "split") r.startSplit(key);
 			else if (how === "edit") r.startEdit(key, n);
-			else if (how === "grow") growSheet(this.plugin, e, (px) => void r.closeGaps(key, n, px));
+			else if (how === "grow") r.startGrow(key, n);
 			else if (how === "borders") r.bordersFrom(e, n);
 			else r.startPaint(key);
 		}, 600);

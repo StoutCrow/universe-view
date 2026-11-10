@@ -2,6 +2,24 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 2.10.0 — not released yet
+
+### Looks: buttons, tabs, edges, icons, headings, fonts
+- Each theme brings its own **buttons, tabs, edges, icons and headings** (listed on its card); a switch under the theme cards turns that off. Pick your own in Settings → Look → Surface & motion from cards that show each style live. They apply with the Tactile surface on or off.
+- Seven button styles (Quiet, Outlined, Filled, Pill, Stamp, Glow, Ruled), seven tab styles (Underline, Folder, Segmented, Plain, Block, Glow, Rule), seven edges (Clean, Double rule, Ornate, Stitched, Hand-drawn, Cut corners, Ledger), three icon weights, five heading marks and seven font pairs built from fonts already on the device.
+- **Hand-drawn** edges can be random: every frame gets its own wobble (optional).
+- Parchment has a paper grain and a flourish under its title. *Copy look* and *Paste look* share a whole look between vaults.
+- Controls keep a fixed width, so changing a value no longer resizes the Options panel or the toolbar. Kerning is on and figures are tabular.
+
+### Maps
+- **Roughen borders** no longer overlaps neighbours: the wobble is one field over the map, so a shared border is drawn as one line.
+- **Simplify** is tried on first (old outline dashed, nothing saved until Apply) and can run on every area at once. *Simplify as I draw* thins what Fill, Brush and Expand make, keeping shared corners.
+- **Grow** is a banner tool with a slider and a live preview.
+- Reshaping outlines the lands that move with a shared border and names them; the choice is remembered.
+
+### Fixed
+- Hover cards sometimes did not open: leaving one item and entering another quickly cancelled the new card. They also open on the Library and Files panel rows reliably, and a scroll no longer cancels a card on its way.
+
 ## 2.9.0 — 2026-11-09
 
 ### Briefer settings

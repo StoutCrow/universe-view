@@ -8,7 +8,7 @@ import { everyoneLayout, generationName } from "../src/index/kinlayout";
 import { categoryColor, categoryOf } from "../src/render/categories";
 import { absorbGaps, brushShape, cutFrom, mergeInto, pocketsBetween, tidyRing, untangle } from "../src/index/merge";
 import { alongRing, traceMask } from "../src/render/follow";
-import { ROUGHNESS, roughEdge, roughenRing } from "../src/index/rough";
+import { ROUGHNESS, cornerDistance, holdRadius, roughenRing } from "../src/index/rough";
 import { simplifyShared } from "../src/index/simplify";
 import { ribbon, smoothLine } from "../src/index/ribbon";
 import { landFill } from "../src/render/landfill";
@@ -902,11 +902,28 @@ eq(["Province", "Duchy", "Region_Medium", "Realm", "Nation_United_States"].map((
 	const b: [number, number][] = [[100, 0], [200, 0], [200, 100], [100, 100]];
 	const ra = roughenRing(a, ROUGHNESS.medium, 10);
 	const rb = roughenRing(b, ROUGHNESS.medium, 10);
-	// a runs down x=100 from (100,0); b runs up it from (100,100): the same corners, reversed.
-	const edgeA = roughEdge([100, 0], [100, 100], ROUGHNESS.medium, 10);
-	const edgeB = roughEdge([100, 100], [100, 0], ROUGHNESS.medium, 10);
-	eq([edgeA.length > 4, JSON.stringify(edgeA) === JSON.stringify([...edgeB].reverse())], [true, true], "roughen: a shared edge gets the same wobble from either side");
-	eq([ra.length > a.length, rb.length > b.length, a.every((p) => ra.some((q) => q[0] === p[0] && q[1] === p[1]))], [true, true, true], "roughen: every editable corner is kept, wobble added between");
+	// b has an extra corner in the middle of the border it shares with a: the two must still draw one line.
+	const b2: [number, number][] = [[100, 0], [200, 0], [200, 100], [100, 100], [100, 40]];
+	const near = cornerDistance([a, b2], holdRadius(10));
+	const sa = roughenRing(a, ROUGHNESS.medium, 10, near);
+	const sb = roughenRing(b2, ROUGHNESS.medium, 10, near);
+	const segDist = (p: [number, number], poly: [number, number][]) => {
+		let best = Infinity;
+		for (let i = 0; i + 1 < poly.length; i++) {
+			const [x1, y1] = poly[i];
+			const [x2, y2] = poly[i + 1];
+			const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2 || 1;
+			const t = Math.max(0, Math.min(1, ((p[0] - x1) * (x2 - x1) + (p[1] - y1) * (y2 - y1)) / l2));
+			best = Math.min(best, Math.hypot(p[0] - (x1 + t * (x2 - x1)), p[1] - (y1 + t * (y2 - y1))));
+		}
+		return best;
+	};
+	// a's ring runs (100,0), the wobble down x=100, then (100,100): take that stretch in order.
+	const iA = sa.findIndex((p) => p[0] === 100 && p[1] === 0);
+	const iA2 = sa.findIndex((p) => p[0] === 100 && p[1] === 100);
+	const stretchA = sa.slice(iA, iA2 + 1);
+	const stretchB = sb.filter((p) => p[0] > 60 && p[0] < 140 && p[1] > 2 && p[1] < 98);
+	eq([stretchA.length > 8, stretchB.length > 8, stretchB.every((p) => segDist(p, stretchA) < 1.2)], [true, true, true], "roughen: a shared border draws one line even where one land has an extra corner");	eq([ra.length > a.length, rb.length > b.length, a.every((p) => ra.some((q) => q[0] === p[0] && q[1] === p[1]))], [true, true, true], "roughen: every editable corner is kept, wobble added between");
 	eq(Math.abs(Math.abs(ringArea(ra)) - 10000) < 2500, true, "roughen: the land stays about the same size");
 	const coast: [number, number][] = [[0, 0], [4, 1], [8, 0], [8, 4], [4, 5], [0, 4]];
 	eq(roughenRing(coast, ROUGHNESS.strong, 10), coast, "roughen: short, already-detailed edges are left alone");
@@ -928,6 +945,9 @@ eq(["Province", "Duchy", "Region_Medium", "Realm", "Nation_United_States"].map((
 	eq([res2.ring.some(([x, y]) => x === 99.8 && y === 60), res2.ring.some(([x, y]) => x === 100.3 && y === 40)], [true, true], "simplify: corners next to a neighbour's own corner are kept");
 	const island: [number, number][] = [[0, 0], [50, 0.5], [100, 0], [100, 100], [50, 99.5], [0, 100]];
 	eq(simplifyShared(island, [], 2).ring.length, 4, "simplify: a lone island is simplified whole");
+	// While drawing, only this border changes: every corner a neighbour shares stays, and the neighbour is untouched.
+	const kept = simplifyShared(a, [b], 2, true);
+	eq([kept.others[0], shared(kept.ring), kept.ring.length], [null, 6, a.length], "simplify: keepShared keeps every corner a neighbour shares and leaves the neighbour alone");
 }
 // ---- What's new: the changelog read into versions ----
 {

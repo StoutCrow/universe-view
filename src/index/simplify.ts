@@ -16,9 +16,10 @@ export interface Simplified {
 /**
  * Drops corners of `ring` that lie within `tol` of the line through the corners kept either side.
  * A corner is kept where the neighbours it's shared with change, or where a neighbour's border has
- * corners of its own between it and the next (so both sides would no longer match).
+ * corners of its own between it and the next (so both sides would no longer match). With keepShared, every corner a
+ * neighbour shares stays, so nothing but this border changes.
  */
-export function simplifyShared(ring: P2[], others: P2[][], tol: number): Simplified {
+export function simplifyShared(ring: P2[], others: P2[][], tol: number, keepShared = false): Simplified {
 	const same: Simplified = { ring, others: others.map(() => null) };
 	if (ring.length <= 4 || tol <= 0) return same;
 	const mine = new Set(ring.map(keyOf));
@@ -31,7 +32,7 @@ export function simplifyShared(ring: P2[], others: P2[][], tol: number): Simplif
 			if (!mine.has(k)) return;
 			owners.set(k, [...(owners.get(k) ?? []), j]);
 			// The neighbour's corners either side must be shared too, or its border would part from ours.
-			if (!mine.has(keyOf(o[(i + o.length - 1) % o.length])) || !mine.has(keyOf(o[(i + 1) % o.length]))) pinned.add(k);
+			if (keepShared || !mine.has(keyOf(o[(i + o.length - 1) % o.length])) || !mine.has(keyOf(o[(i + 1) % o.length]))) pinned.add(k);
 		});
 	});
 	const sig = ring.map((p) => (owners.get(keyOf(p)) ?? []).join(","));

@@ -298,6 +298,10 @@ export interface ChronicleSettings {
 	fillTolerance?: number;
 	/** Simplify's starting strength (screen pixels a corner may sit off the line). */
 	simplifyPx?: number;
+	/** How far (screen pixels) a corner may sit off the line and be dropped while making borders (fill, brush, expand); 0 keeps every corner. */
+	makeSimplifyPx?: number;
+	/** How wide a gap (screen pixels) the Grow tool closes. */
+	growPx?: number;
 	/** Strategy look: the soft band of colour inside realm borders. */
 	realmBand?: "off" | "soft" | "strong";
 	/** Rivers drawn as water: width as a multiple of the usual, and the water's colour. */
@@ -314,6 +318,24 @@ export interface ChronicleSettings {
 	flatStyle?: boolean;
 	/** How UniverseView's own tabs, buttons and panels are drawn: flat (the default), or tactile (raised keys, folder tabs, inset fields) so they're easy to tell from Obsidian's. */
 	surfaceStyle?: SurfaceStyle;
+	/** The theme brings its own buttons, tabs, edges, icons and headings (default); off gives the plain ones. */
+	themeStyles?: boolean;
+	/** Button look; unset follows the theme. */
+	buttonStyle?: ButtonStyle;
+	/** Tab look; unset follows the theme. */
+	tabStyle?: TabStyle;
+	/** Edge of panels, modules and menus; unset follows the theme. */
+	edgeStyle?: EdgeStyle;
+	/** Heading and body font pair; unset keeps the theme's fonts. */
+	fontStyle?: FontStyle;
+	/** Reshaping a border moves the corners a neighbour shares with it (default); off leaves the neighbours where they are. */
+	moveSharedBorders?: boolean;
+	/** The Hand-drawn edge gets a different random wobble on every frame. */
+	sketchRandom?: boolean;
+	/** Icon stroke weight; unset follows the theme. */
+	iconStyle?: IconStyle;
+	/** How headings are marked; unset follows the theme. */
+	headingStyle?: HeadingStyle;
 	/** Parts of the tactile style switched off (the rest stay on). */
 	tactileOff?: TactilePart[];
 	/** How deep the bevels and shadows are. */
@@ -343,6 +365,12 @@ export interface ChronicleSettings {
 }
 
 export type SurfaceStyle = "flat" | "tactile";
+export type ButtonStyle = "quiet" | "outlined" | "filled" | "pill" | "stamp" | "glow" | "ruled";
+export type TabStyle = "underline" | "folder" | "segmented" | "plain" | "block" | "glow" | "rule";
+export type EdgeStyle = "clean" | "double" | "ornate" | "stitched" | "sketch" | "chamfer" | "ledger";
+export type FontStyle = "book" | "chancery" | "blackletter" | "humanist" | "modern" | "technical" | "typewriter";
+export type IconStyle = "light" | "regular" | "bold";
+export type HeadingStyle = "plain" | "ruled" | "flourish" | "smallcaps" | "capitals";
 export type TactilePart = "keys" | "toolbar" | "fields" | "tabs" | "panels" | "headings" | "icons" | "folders";
 export type ThemeId ="obsidian" | "parchment" | "archive" | "starfield" | "scholar" | "atelier";
 export type MotionId = "off" | "snappy" | "smooth" | "relaxed" | "bouncy";

@@ -1378,8 +1378,8 @@ textarea.chronicle-mono {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	min-width: 240px;
-	max-width: min(340px, calc(100vw - 16px));
+	/* One fixed width: a different selected value never resizes the panel or its rows. */
+	width: min(320px, calc(100vw - 16px));
 	max-height: min(70vh, 520px);
 	overflow-y: auto;
 	padding: 6px;
@@ -1402,8 +1402,27 @@ textarea.chronicle-mono {
 .uv-options-row:hover {
 	background: var(--background-modifier-hover);
 }
-.uv-options-row .dropdown {
-	max-width: 160px;
+/* Two columns: the label takes what is left, the control has a fixed column. */
+.uv-options-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.uv-options-row .dropdown,
+.uv-options-row input[type="number"],
+.uv-options-row input[type="text"] {
+	flex: none;
+	box-sizing: border-box;
+	width: 132px;
+	max-width: 132px;
+	text-overflow: ellipsis;
+	text-align: left;
+}
+.uv-options-row .uv-options-check {
+	flex: none;
+	margin: 0 4px 0 auto;
 }
 .uv-options-action {
 	display: flex;
@@ -1433,4 +1452,50 @@ body.uv-t-panels .uv-options {
 	background: var(--uv-t-face);
 	border-color: var(--uv-t-edge);
 	box-shadow: var(--uv-t-raised);
+}
+/* ==== Stable type and fixed control widths =====================================================
+   Kerning on, figures tabular, so changing a value never moves its neighbours. Controls get a
+   fixed width and clip with an ellipsis instead of growing to fit their current text. */
+.chronicle-view.chronicle-scope,
+.chronicle-scope .uv-options,
+.chronicle-hovercard {
+	font-kerning: normal;
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: "kern" 1, "tnum" 1;
+	text-rendering: optimizeLegibility;
+}
+.chronicle-toolbar .dropdown {
+	box-sizing: border-box;
+	flex: none;
+	width: 148px;
+	max-width: 148px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.chronicle-toolbar .chronicle-search,
+.chronicle-picker {
+	flex: none;
+}
+.chronicle-toolbar input[type="number"] {
+	box-sizing: border-box;
+	width: 72px;
+	text-align: right;
+}
+.chronicle-toolbar .chronicle-chip,
+.chronicle-toolbar .chronicle-icon-btn {
+	flex: none;
+}
+.chronicle-chip > span:not(.chronicle-chip-icon):not(.chronicle-chip-check):not(.chronicle-chip-count) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.chronicle-chip-count {
+	display: inline-block;
+	min-width: 2ch;
+	text-align: right;
+}
+.chronicle-time-label {
+	min-width: 7ch;
+	text-align: right;
 }

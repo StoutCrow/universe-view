@@ -600,3 +600,7 @@ body.uv-map-compass .chronicle-map:not(.is-embedded) .chronicle-map-canvas::afte
 .chronicle-vertex.is-mid { display: grid; place-items: center; opacity: 0.5; }
 .chronicle-vertex.is-mid::before { content: "+"; font: 700 11px/1 var(--font-interface); color: var(--terr-color, var(--interactive-accent)); }
 .chronicle-vertex.is-mid:hover { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+/* Reshaping: the lands whose shared corners move with the one being edited. */
+.chronicle-territory.is-linked { stroke: var(--interactive-accent); stroke-width: 3; stroke-dasharray: 8 5; fill-opacity: 0.3; }
+/* Simplify and Grow, tried on: the outline as it is now stays under the new one, dashed. */
+.uv-simplify-orig { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; opacity: 0.85; pointer-events: none; }

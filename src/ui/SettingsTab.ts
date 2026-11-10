@@ -11,9 +11,13 @@ import { GROUP_KINDS } from "../render/houses";
 import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
 import { chooseWorldSetting } from "./worldsettingui";
 import { renderThemeCards } from "./themecards";
+import { previewButtons, previewEdges, previewFonts, previewHeadings, previewIcons, previewTabs, stylePicker } from "./stylepicker";
 import { TourModal } from "./Tour";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
-import { MOTIONS, THEMES, TACTILE_PARTS, TACTILE_PRESETS, applyAppearance } from "../appearance";
+import { BUTTON_STYLES, EDGE_STYLES, FONT_STYLES, HEADING_STYLES, ICON_STYLES, MOTIONS, looksOf, TAB_STYLES, THEMES, TACTILE_PARTS, TACTILE_PRESETS, applyAppearance } from "../appearance";
+
+/** The settings a copied look carries. */
+const LOOK_KEYS = ["theme", "colors", "fontUi", "fontDisplay", "fontMap", "themeStyles", "buttonStyle", "tabStyle", "edgeStyle", "fontStyle", "iconStyle", "headingStyle", "sketchRandom", "surfaceStyle", "tactileOff", "tactileDepth", "tactileStrength", "motion", "density", "radius"] as const;
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
 import { builtInChangelog, renderHistory } from "./WhatsNew";
 import { REL_KINDS, presetKinds, relLabel } from "../index/relkinds";
@@ -988,6 +992,13 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			await save();
 		})());
 		new Setting(containerEl)
+			.setName("Themes set buttons, tabs, edges, icons and headings")
+			.setDesc("On: each theme brings its own button, tab, edge, icon and heading styles (listed on its card). Off: they stay plain, and only your own picks below apply.")
+			.addToggle((tg) => tg.setValue(s.themeStyles !== false).onChange(async (v) => {
+				s.themeStyles = v ? undefined : false;
+				await save();
+				this.update();
+			}));		new Setting(containerEl)
 			.setName("Tour")
 			.setDesc("A short walk through what UniverseView does, where you can try on the themes and surface styles.")
 			.addButton((b) => b.setButtonText("Take the tour").onClick(() => new TourModal(this.plugin).open()));
@@ -1027,6 +1038,66 @@ export class ChronicleSettingTab extends PluginSettingTab {
 				s.surfaceStyle = v === "tactile" ? "tactile" : "flat";
 				await save();
 				this.update();
+			}));
+		const th = looksOf(s);
+		const own = s.themeStyles === false ? "Plain set" : `${th.name}'s own`;
+		const pick = (title: string, desc: string, build: () => void) => {
+			new Setting(containerEl).setName(title).setDesc(desc);
+			build();
+		};
+		pick("Buttons", "How chips and icon buttons are drawn. “Theme” keeps the look the chosen theme brings.", () => stylePicker(containerEl, {
+			choices: BUTTON_STYLES, value: s.buttonStyle, themeChoice: { id: th.buttons, name: "Theme", note: own }, preview: previewButtons,
+			onPick: (id) => void (async () => { s.buttonStyle = id as typeof s.buttonStyle; await save(); })(),
+		}));
+		pick("Tabs", "The dashboard's, the inspector's and the settings' tabs.", () => stylePicker(containerEl, {
+			choices: TAB_STYLES, value: s.tabStyle, themeChoice: { id: th.tabs, name: "Theme", note: own }, preview: previewTabs,
+			onPick: (id) => void (async () => { s.tabStyle = id as typeof s.tabStyle; await save(); })(),
+		}));
+		pick("Edges", "The border of panels, modules, menus and hover cards.", () => stylePicker(containerEl, {
+			choices: EDGE_STYLES, value: s.edgeStyle, themeChoice: { id: th.edges, name: "Theme", note: own }, preview: previewEdges,
+			onPick: (id) => void (async () => { s.edgeStyle = id as typeof s.edgeStyle; await save(); })(),
+		}));
+		new Setting(containerEl)
+			.setName("Vary the hand-drawn edge")
+			.setDesc("Every frame gets its own random wobble, so no two are alike (new ones too). Applies when the edge is Hand-drawn; off keeps one shared wobble.")
+			.addToggle((tg) => tg.setValue(s.sketchRandom === true).onChange(async (v) => {
+				s.sketchRandom = v ? true : undefined;
+				await save();
+			}));		pick("Icons", "The stroke weight of UniverseView's icons.", () => stylePicker(containerEl, {
+			choices: ICON_STYLES, value: s.iconStyle, themeChoice: { id: th.icons, name: "Theme", note: own }, preview: previewIcons,
+			onPick: (id) => void (async () => { s.iconStyle = id as typeof s.iconStyle; await save(); })(),
+		}));
+		pick("Headings", "How titles and group names are marked: dashboard titles, panel headings and timeline group labels.", () => stylePicker(containerEl, {
+			choices: HEADING_STYLES, value: s.headingStyle, themeChoice: { id: th.headings, name: "Theme", note: own }, preview: previewHeadings,
+			onPick: (id) => void (async () => { s.headingStyle = id as typeof s.headingStyle; await save(); })(),
+		}));		pick("Fonts", "A heading and body pair from fonts already on your device. “Theme” keeps the theme's fonts; the boxes under Fonts below still override.", () => stylePicker(containerEl, {
+			choices: FONT_STYLES, value: s.fontStyle, themeChoice: { id: "theme", name: "Theme", note: "The theme's own fonts" }, preview: previewFonts,
+			onPick: (id) => void (async () => { s.fontStyle = id as typeof s.fontStyle; await save(); })(),
+		}));		new Setting(containerEl)
+			.setName("Share this look")
+			.setDesc("Copy the theme, colors, fonts, buttons, tabs, surface, motion and density as text, or paste a look copied from another vault.")
+			.addButton((b) => b.setButtonText("Copy look").onClick(async () => {
+				const look: Record<string, unknown> = {};
+				for (const k of LOOK_KEYS) if (s[k] !== undefined) look[k] = s[k];
+				await navigator.clipboard.writeText(JSON.stringify({ universeviewLook: 1, ...look }));
+				new Notice("Look copied.");
+			}))
+			.addButton((b) => b.setButtonText("Paste look").onClick(async () => {
+				try {
+					const look = JSON.parse(await navigator.clipboard.readText()) as Record<string, unknown>;
+					if (look.universeviewLook !== 1) throw new Error("not a look");
+					const all = s as unknown as Record<string, unknown>;
+					for (const k of LOOK_KEYS) {
+						if (k in look) all[k] = look[k];
+						else if (k === "buttonStyle" || k === "tabStyle" || k === "edgeStyle" || k === "fontStyle" || k === "iconStyle" || k === "headingStyle" || k === "sketchRandom") delete all[k];
+					}
+					if (!THEMES.some((t) => t.id === s.theme)) s.theme = "obsidian";
+					await save();
+					this.update();
+					new Notice("Look applied.");
+				} catch {
+					new Notice("The clipboard doesn't hold a copied look.");
+				}
 			}));
 		new Setting(containerEl)
 			.setName("Motion")

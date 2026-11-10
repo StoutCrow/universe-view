@@ -1,4 +1,53 @@
-import type { ChronicleSettings, MotionId, TactilePart, ThemeId } from "./settings";
+import { setRoughEdges } from "./ui/roughedges";
+import type { ButtonStyle, ChronicleSettings, EdgeStyle, FontStyle, HeadingStyle, IconStyle, MotionId, TabStyle, TactilePart, ThemeId } from "./settings";
+export const BUTTON_STYLES: { id: ButtonStyle; name: string }[] = [
+	{ id: "quiet", name: "Quiet (text, fills on hover)" },
+	{ id: "outlined", name: "Outlined (a thin edge)" },
+	{ id: "filled", name: "Filled (a soft solid)" },
+	{ id: "pill", name: "Pill (fully rounded, accent when on)" },
+	{ id: "stamp", name: "Stamp (hard shadow, presses down)" },
+	{ id: "glow", name: "Glow (lit edge)" },
+	{ id: "ruled", name: "Ruled (small caps, underline)" },
+];
+export const TAB_STYLES: { id: TabStyle; name: string }[] = [
+	{ id: "underline", name: "Underline" },
+	{ id: "folder", name: "Folder tab (joined to the page)" },
+	{ id: "segmented", name: "Segmented (one rounded strip)" },
+	{ id: "plain", name: "Plain text (accent and a dot when open)" },
+	{ id: "block", name: "Block (solid accent when open)" },
+	{ id: "glow", name: "Glow (capitals, lit when open)" },
+	{ id: "rule", name: "Rule (small caps between two rules)" },
+];
+export const EDGE_STYLES: { id: EdgeStyle; name: string; note: string }[] = [
+	{ id: "clean", name: "Clean", note: "A thin line" },
+	{ id: "double", name: "Double rule", note: "A second line inside" },
+	{ id: "ornate", name: "Ornate", note: "Corner brackets" },
+	{ id: "stitched", name: "Stitched", note: "A dashed seam" },
+	{ id: "sketch", name: "Hand-drawn", note: "A wobbly pen line" },
+	{ id: "chamfer", name: "Cut corners", note: "Technical, angled" },
+	{ id: "ledger", name: "Ledger", note: "Rules top and bottom" },
+];
+export const FONT_STYLES: { id: FontStyle; name: string; note: string }[] = [
+	{ id: "book", name: "Book", note: "Serif throughout" },
+	{ id: "chancery", name: "Chancery", note: "Engraved capitals" },
+	{ id: "blackletter", name: "Blackletter", note: "Old manuscript headings" },
+	{ id: "humanist", name: "Humanist", note: "Warm, open sans" },
+	{ id: "modern", name: "Modern", note: "Clean UI sans" },
+	{ id: "technical", name: "Technical", note: "Squared, sci-fi" },
+	{ id: "typewriter", name: "Typewriter", note: "Monospaced" },
+];
+export const ICON_STYLES: { id: IconStyle; name: string; note: string }[] = [
+	{ id: "light", name: "Light", note: "Fine, delicate lines" },
+	{ id: "regular", name: "Regular", note: "Obsidian's own weight" },
+	{ id: "bold", name: "Bold", note: "Heavy, easy to spot" },
+];
+export const HEADING_STYLES: { id: HeadingStyle; name: string; note: string }[] = [
+	{ id: "plain", name: "Plain", note: "Just the words" },
+	{ id: "ruled", name: "Ruled", note: "Underlined" },
+	{ id: "flourish", name: "Flourish", note: "An ornament after" },
+	{ id: "smallcaps", name: "Small caps", note: "Book style" },
+	{ id: "capitals", name: "Capitals", note: "Spaced, technical" },
+];
 
 /** The parts of the tactile style, each one switchable on its own. */
 export const TACTILE_PARTS: { id: TactilePart; name: string; desc: string }[] = [
@@ -26,6 +75,12 @@ export interface ThemeInfo {
 	/** What kind of project the look suits. */
 	forWhat: string;
 	description: string;
+	/** The buttons, tabs, edges, icons and headings the theme brings, until you pick your own. */
+	buttons: ButtonStyle;
+	tabs: TabStyle;
+	edges: EdgeStyle;
+	icons: IconStyle;
+	headings: HeadingStyle;
 	/** Preview swatches: background, panel, text, accent, then the four type colors. */
 	swatches: string[];
 }
@@ -34,6 +89,7 @@ export interface ThemeInfo {
 export const THEMES: ThemeInfo[] = [
 	{
 		id: "obsidian",
+		buttons: "quiet", tabs: "underline", edges: "clean", icons: "regular", headings: "plain",
 		name: "Obsidian",
 		forWhat: "Any vault",
 		description: "Follows your Obsidian theme and accent color, light or dark.",
@@ -41,6 +97,7 @@ export const THEMES: ThemeInfo[] = [
 	},
 	{
 		id: "parchment",
+		buttons: "outlined", tabs: "folder", edges: "ornate", icons: "regular", headings: "flourish",
 		name: "Parchment",
 		forWhat: "Fantasy worldbuilding & campaigns",
 		description: "Aged paper, ink and sealing-wax red, with engraved serif headings. Candle-lit leather in dark mode.",
@@ -48,6 +105,7 @@ export const THEMES: ThemeInfo[] = [
 	},
 	{
 		id: "archive",
+		buttons: "quiet", tabs: "plain", edges: "stitched", icons: "light", headings: "ruled",
 		name: "Archive",
 		forWhat: "Genealogy & family history",
 		description: "Soft archival cream, photo-album cards and calm greens, like a well-kept family record.",
@@ -55,6 +113,7 @@ export const THEMES: ThemeInfo[] = [
 	},
 	{
 		id: "starfield",
+		buttons: "glow", tabs: "glow", edges: "chamfer", icons: "bold", headings: "capitals",
 		name: "Starfield",
 		forWhat: "Science fiction & space opera",
 		description: "Deep-space navy with glowing neon lines, a star field behind every view and technical type.",
@@ -62,6 +121,7 @@ export const THEMES: ThemeInfo[] = [
 	},
 	{
 		id: "scholar",
+		buttons: "ruled", tabs: "rule", edges: "ledger", icons: "light", headings: "smallcaps",
 		name: "Scholar",
 		forWhat: "History & academic research",
 		description: "Crisp paper-white, navy and burgundy, fine rules and book typography. Built for reading dense timelines.",
@@ -69,6 +129,7 @@ export const THEMES: ThemeInfo[] = [
 	},
 	{
 		id: "atelier",
+		buttons: "stamp", tabs: "block", edges: "sketch", icons: "bold", headings: "plain",
 		name: "Atelier",
 		forWhat: "Novels, scripts & story planning",
 		description: "A modern studio look: frosted glass, soft gradients and rounded cards in muted pastels.",
@@ -99,11 +160,22 @@ const BODY_VARS = [
 	"--chronicle-tl-row-height", "--chronicle-tl-font-size", "--chronicle-card-width", "--chronicle-card-height", "--chronicle-male-tint", "--chronicle-female-tint", "--uv-river-color", "--uv-t-depth", "--uv-t-folder",
 ];
 
+/** The theme whose buttons, tabs and edges apply: the chosen one, or the plain Obsidian set when the theme's styles are switched off. */
+export function looksOf(s: ChronicleSettings): ThemeInfo {
+	return s.themeStyles === false ? THEMES[0] : (THEMES.find((x) => x.id === s.theme) ?? THEMES[0]);
+}
+
 /** Puts the chosen theme, colors, motion and density on <body> as classes and CSS variables. */
 export function applyAppearance(s: ChronicleSettings) {
 	const body = document.body;
 	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-")) body.classList.remove(c);
 	body.classList.add(`chronicle-theme-${s.theme}`, `chronicle-motion-${s.motion}`);
+	// Buttons, tabs, edges, icons, headings and fonts: your pick, else the theme's own.
+	for (const c of Array.from(body.classList)) if (/^uv-(btn|tabs|edge|font|icons|head)-/.test(c)) body.classList.remove(c);
+	const th = looksOf(s);
+	body.classList.add(`uv-btn-${s.buttonStyle ?? th.buttons}`, `uv-tabs-${s.tabStyle ?? th.tabs}`, `uv-edge-${s.edgeStyle ?? th.edges}`, `uv-icons-${s.iconStyle ?? th.icons}`, `uv-head-${s.headingStyle ?? th.headings}`);
+	if (s.fontStyle) body.classList.add(`uv-font-${s.fontStyle}`);
+	setRoughEdges(s.sketchRandom === true && (s.edgeStyle ?? th.edges) === "sketch");
 	const set = (name: string, v: string | undefined) => (v ? body.style.setProperty(name, v) : body.style.removeProperty(name));
 	set("--chronicle-user-accent", s.colors.accent);
 	// Tooltip and fade timings and sizes (Settings → Hover cards and tips).
@@ -162,7 +234,8 @@ export function applyAppearance(s: ChronicleSettings) {
 }
 
 export function clearAppearance() {
+	setRoughEdges(false);
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-map-frame" || c === "uv-map-compass" || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || /^uv-(btn|tabs|edge|font|icons|head)-/.test(c) || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-map-frame" || c === "uv-map-compass" || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
 	for (const v of BODY_VARS) body.style.removeProperty(v);
 }

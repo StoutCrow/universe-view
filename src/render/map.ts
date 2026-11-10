@@ -3,7 +3,7 @@ import { Menu, Notice, Platform, TFile, debounce } from "obsidian";
 import { phoneCopy, phoneCopyByName, savePhoneCopy, tooBigForPhone } from "./phonecopy";
 import { touchHelp } from "./touchhelp";
 import { brushShape, cutFrom, mergeInto, pocketsBetween, tidyRing, untangle } from "../index/merge";
-import { ROUGHNESS, roughenRing } from "../index/rough";
+import { ROUGHNESS, cornerDistance, holdRadius, roughenRing } from "../index/rough";
 import { simplifyShared } from "../index/simplify";
 import { ribbon, smoothLine } from "../index/ribbon";
 import { landFill, thinWater } from "./landfill";
@@ -35,7 +35,7 @@ import { GROUP_KINDS, groupKind } from "./houses";
 const NO_GROUP = "#9a958c";
 import { nameAt } from "../index/renames";
 import { ColourImportModal, findColourAreas } from "./colourimport";
-import { areaDatesSheet, bordersFromSheet, growSheet, mapNoteSheet, moveMapSheet, newLandSheet, splitNameSheet } from "../ui/territoryactions";
+import { areaDatesSheet, bordersFromSheet, mapNoteSheet, moveMapSheet, newLandSheet, splitNameSheet } from "../ui/territoryactions";
 import { toolSheet } from "../ui/toolsheet";
 import { STAT_NAMES, realmStats, statValue, type StatKey } from "../index/realmstats";
 import { EntityPickerModal } from "../ui/suggest";
@@ -153,10 +153,17 @@ interface Group {
 	target?: string;
 }
 
-export type MapMode = "none" | "paint" | "expand" | "brush" | "simplify" | "fill" | "import" | "edit" | "measure" | "route" | "notes" | "rings" | "journey" | "borders" | "coast" | "trace" | "erase"
+export type MapMode = "none" | "paint" | "expand" | "brush" | "simplify" | "grow" | "fill" | "import" | "edit" | "measure" | "route" | "notes" | "rings" | "journey" | "borders" | "coast" | "trace" | "erase"
 	/** Never a running mode: names the border check's menu entry. */
 	| "check";
 type Mode = MapMode;
+/** What Grow would do: the area's new outline, and the neighbours' borders with the matching corners added. */
+interface GrowPlan {
+	points: [number, number][];
+	rings: { key: string; n: number; ring: [number, number][] }[];
+	moved: number;
+	names: string[];
+}
 
 /** An area as drawn right now, in stored coordinates (used for snapping and as a fill barrier). */
 interface DrawnArea {
@@ -1342,6 +1349,18 @@ export class MapRenderer {
 		const rough = ROUGHNESS[this.plugin.settings.roughBorders ?? "off"] ?? 0;
 		const roughLen = (this.isImageMap && this.imageWidth ? Math.max(this.imageWidth, this.imageHeight) : 360) * 0.006;
 		const plain = this.mode !== "none";
+		// Every corner of every land about to be drawn: the wobble holds still near them, so borders two lands share agree.
+		let near: ReturnType<typeof cornerDistance> | undefined;
+		if (rough > 0 && !plain) {
+			const rings: P2[][] = [];
+			for (const e of lands) {
+				if (this.options.folder && !e.path.startsWith(this.options.folder + "/")) continue;
+				if (at !== undefined && !idx.existsAt(e, at)) continue;
+				if (!this.seen(e.key)) continue;
+				for (const { t } of this.areasHere(e)) if (this.shapeNow(t)) rings.push(t.points);
+			}
+			near = cornerDistance(rings, holdRadius(roughLen));
+		}
 		for (const e of lands) {
 			if (this.options.folder && !e.path.startsWith(this.options.folder + "/")) continue;
 			if (at !== undefined && !idx.existsAt(e, at)) continue;
@@ -1353,7 +1372,7 @@ export class MapRenderer {
 			for (const { t, n } of this.areasHere(e)) {
 				if (!this.shapeNow(t)) continue;
 				this.drawnAreas.push({ key: e.key, n, points: t.points });
-				const shownPts = roughenRing(t.points, rough, roughLen);
+				const shownPts = roughenRing(t.points, rough, roughLen, near);
 				const latlngs = (plain ? t.points : shownPts).map((p) => this.pointToLatLng(p));
 				const poly = L.polygon(latlngs, { className: "chronicle-territory", weight: 2, fillOpacity: 0.18, smoothFactor: 1.5 }).addTo(layer);
 				const path = poly.getElement() as HTMLElement | undefined;
@@ -1847,11 +1866,11 @@ export class MapRenderer {
 	 * border is pulled onto it, so the gap between the two fills in. Its edges are first cut into short
 	 * steps so long straight sides can bend to follow the neighbour; steps that didn't move are dropped.
 	 */
-	async closeGaps(key: string, n: number, px: number) {
+	private growPlan(key: string, n: number, px: number, quiet = false): GrowPlan | null {
 		const map = this.map;
 		const owner = this.plugin.index.get(key);
 		const area = owner && this.areasHere(owner).find((a) => a.n === n);
-		if (!map || !owner || !area) return;
+		if (!map || !owner || !area) return null;
 		const toScreen = (q: [number, number]): Pt => {
 			const c = map.latLngToContainerPoint(this.pointToLatLng(q));
 			return [c.x, c.y];
@@ -1859,8 +1878,8 @@ export class MapRenderer {
 		const neighbours = this.drawnAreas.filter((a) => !(a.key === key && a.n === n));
 		const others = neighbours.map((a) => a.points.map(toScreen));
 		if (!others.length) {
-			new Notice("No other areas on this map to grow towards.");
-			return;
+			if (!quiet) new Notice("No other areas on this map to grow towards.");
+			return null;
 		}
 		const toStored = (p: Pt): [number, number] => this.fromLatLng(map.containerPointToLatLng(L.point(p[0], p[1])));
 		/** The nearest point of any neighbour's border: on a corner (that exact corner), or on an edge. */
@@ -1913,15 +1932,15 @@ export class MapRenderer {
 			}
 		}
 		if (!moved) {
-			new Notice(`No neighbour within ${px} px of ${owner.name}'s border at this zoom. Zoom out, or try a wider gap.`);
-			return;
+			if (!quiet) new Notice(`No neighbour within ${px} px of ${owner.name}'s border at this zoom. Zoom out, or try a wider gap.`);
+			return null;
 		}
 		// Steps that landed on the same spot collapse into one.
 		const same = (p: [number, number], q: [number, number]) => Math.abs(p[0] - q[0]) < 1e-9 && Math.abs(p[1] - q[1]) < 1e-9;
 		const points = out.filter((p, i) => !same(p, out[(i + out.length - 1) % out.length]));
-		await this.plugin.saveShapes("territory", key, this.options.map, n, points);
 		// Each neighbour gets the new corners on its edges, in order along each edge.
-		const touched: string[] = [];
+		const rings: GrowPlan["rings"] = [];
+		const names: string[] = [];
 		for (const [o, list] of inserts) {
 			const nb = neighbours[o];
 			const ring: [number, number][] = [];
@@ -1930,11 +1949,79 @@ export class MapRenderer {
 				const here = list.filter((x) => x.seg === s).sort((x, y) => x.t - y.t);
 				for (const x of here) if (!ring.some((r) => same(r, x.q))) ring.push(x.q);
 			});
-			await this.plugin.saveShapes("territory", nb.key, this.options.map, nb.n, ring);
+			rings.push({ key: nb.key, n: nb.n, ring });
 			const nm = this.plugin.index.get(nb.key)?.name;
-			if (nm && !touched.includes(nm)) touched.push(nm);
+			if (nm && !names.includes(nm)) names.push(nm);
 		}
-		new Notice(`Grew ${owner.name} to meet its neighbours (${moved} points moved)${touched.length ? `; the shared border was added to ${touched.join(", ")} too` : ""}. Undo puts it back.`);
+		return { points, rings, moved, names };
+	}
+
+	async closeGaps(key: string, n: number, px: number) {
+		const plan = this.growPlan(key, n, px);
+		const owner = this.plugin.index.get(key);
+		if (!plan || !owner) return;
+		await this.plugin.saveShapes("territory", key, this.options.map, n, plan.points);
+		for (const r of plan.rings) await this.plugin.saveShapes("territory", r.key, this.options.map, r.n, r.ring);
+		new Notice(`Grew ${owner.name} to meet its neighbours (${plan.moved} points moved)${plan.names.length ? `; the shared border was added to ${plan.names.join(", ")} too` : ""}. Undo puts it back.`);
+	}
+
+	/**
+	 * Grow an area to its neighbours, tried on first: the grown outline shows over the old one (dashed) as you set
+	 * how wide a gap to close, and nothing is saved until Grow.
+	 */
+	startGrow(ownerKey: string, n: number) {
+		const map = this.map;
+		const owner = this.plugin.index.get(ownerKey);
+		const area = owner && this.areasHere(owner).find((a) => a.n === n);
+		if (!map || !owner || !area || !this.toolLayer) return;
+		this.endMode();
+		const color = entityColor(this.plugin, owner);
+		const preview = L.layerGroup().addTo(this.toolLayer);
+		const status = el("span", { cls: "uv-simplify-count" });
+		let px = this.plugin.settings.growPx ?? 16;
+		let plan: GrowPlan | null = null;
+		const redraw = () => {
+			plan = this.growPlan(ownerKey, n, px, true);
+			preview.clearLayers();
+			L.polygon(area.t.points.map((p) => this.pointToLatLng(p)), { className: "uv-simplify-orig", fill: false, interactive: false }).addTo(preview);
+			if (plan) {
+				const shape = L.polygon(plan.points.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.25, interactive: false }).addTo(preview);
+				(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
+			}
+			status.setText(plan ? `${plan.moved} points move${plan.names.length ? ` to meet ${plan.names.slice(0, 3).join(", ")}${plan.names.length > 3 ? ` +${plan.names.length - 3}` : ""}` : ""}` : `No neighbour within ${px} px at this zoom`);
+		};
+		const apply = () => {
+			if (!plan) {
+				new Notice(`No neighbour within ${px} px of ${owner.name}'s border at this zoom. Zoom out, or try a wider gap.`);
+				return;
+			}
+			this.endMode();
+			void this.closeGaps(ownerKey, n, px);
+		};
+		this.beginMode("grow", (evt) => {
+			if (evt.key === "Escape") this.endMode();
+			else if (evt.key === "Enter") apply();
+			else return;
+			evt.stopPropagation();
+		});
+		// The gap is measured in screen pixels, so it is tried again whenever the zoom changes.
+		map.on("zoomend", redraw);
+		this.modeCleanup.push(() => map.off("zoomend", redraw));
+		this.showBanner(`Growing ${owner.name} to its neighbours: its border is pulled onto any neighbouring border within the gap, and the neighbours get the matching corners · the old outline stays dashed · nothing is saved until Grow`, [
+			{ label: "Cancel", run: () => this.endMode() },
+			{ label: "Grow", cta: true, run: apply },
+		], (b) => {
+			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			b.addClass("has-fill-controls");
+			this.slider(controls, "Close gaps up to", "How wide a gap, in screen pixels as the map shows now, to close: zoom out to close wider ones", 2, 120, px, (v) => {
+				px = v;
+				this.plugin.settings.growPx = v;
+				this.saveSoon();
+				redraw();
+			});
+			controls.appendChild(status);
+		});
+		redraw();
 	}
 
 	/**
@@ -2058,7 +2145,7 @@ export class MapRenderer {
 		tool(shape, "lasso", "Expand", "Circle new land and it joins this same area", () => this.startExpand(e.key, n));
 		tool(shape, "brush", "Brush", "Paint land onto this same area, push a neighbour back, or rub it out", () => this.startBrush(e.key, n));
 			tool(shape, "flag", "Occupied", "Paint ground this land holds for a while, with dates; its real borders stay", () => this.startPaint(e.key, true));
-		tool(shape, "expand", "Grow", "Grow it out to its neighbours, filling the gaps between", () => growSheet(this.plugin, e, (px) => void this.closeGaps(e.key, n, px)));
+		tool(shape, "expand", "Grow", "Grow it out to its neighbours, filling the gaps between (tried on first)", () => this.startGrow(e.key, n));
 		tool(shape, "square-plus", "New area", "Paint another, separate area for it (an island, an exclave)", () => this.startPaint(e.key));
 		if (this.isImageMap) tool(shape, "paint-bucket", "Fill", "Fill land up to the picture's coasts, rivers and borders, joining this same area", () => void this.startFill(e.key, n));
 		const time = group("Over time");
@@ -3517,15 +3604,17 @@ export class MapRenderer {
 
 	/** Saves a grown (or trimmed) area, and any pieces that came apart from it as areas of their own. */
 	private async saveGrown(owner: Entity, n: number, ring: Pt[], extra: Pt[][], what: string) {
-		const r = (p: Pt[]) => p.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt);
+		const r = (p: Pt[]) => this.tidyRing(p.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt), { key: owner.key, n });
 		await this.plugin.saveTerritory(owner.key, this.options.map, n, r(ring), extra.map(r));
 		const more = extra.length ? `, plus ${extra.length} separate piece${extra.length === 1 ? "" : "s"} as area${extra.length === 1 ? "" : "s"} of its own` : "";
 		new Notice(`${what}${more}. Undo puts it back.`);
 	}
 
 	/**
-	 * Simplify an area: corners within a few screen pixels of the line through their neighbours go, previewed
-	 * before saving. Corners shared with a neighbour go from its border too, so the two stay matched.
+	 * Simplify, tried on first: corners within a few screen pixels of the line through their neighbours go, shown over
+	 * the old outline (dashed) as you move the strength, and nothing is saved until Apply. One area (its neighbours'
+	 * shared corners go with it, so borders stay matched), or every area on the map at once, which is what speeds up a
+	 * map weighed down by detail.
 	 */
 	startSimplify(ownerKey: string, n: number) {
 		const map = this.map;
@@ -3533,35 +3622,63 @@ export class MapRenderer {
 		const area = owner && this.areasHere(owner).find((a) => a.n === n);
 		if (!map || !owner || !area || !this.toolLayer) return;
 		this.endMode();
-		const color = entityColor(this.plugin, owner);
 		const layer = this.toolLayer;
 		const before = area.t.points as Pt[];
-		const others = this.drawnAreas.filter((a) => !(a.key === ownerKey && a.n === n));
 		const k = this.unitsPerPx(map.getCenter());
 		let px = this.plugin.settings.simplifyPx ?? 3;
-		let res = simplifyShared(before, others.map((a) => a.points), px * k);
+		let all = false;
+		const pool = this.drawnAreas.map((a) => ({ key: a.key, n: a.n, points: a.points }));
+		let me = pool.findIndex((a) => a.key === ownerKey && a.n === n);
+		if (me < 0) {
+			pool.push({ key: ownerKey, n, points: before });
+			me = pool.length - 1;
+		}
+		/** Each area that would change, with its new ring. Areas are taken one after another, each seeing what the last left. */
+		const compute = () => {
+			const work = pool.map((a) => a.points);
+			for (const i of all ? pool.map((_, j) => j) : [me]) {
+				const rest = pool.map((_, j) => j).filter((j) => j !== i);
+				const res = simplifyShared(work[i], rest.map((j) => work[j]), px * k);
+				work[i] = res.ring;
+				res.others.forEach((o, x) => {
+					if (o) work[rest[x]] = o;
+				});
+			}
+			return pool.map((a, i) => ({ key: a.key, n: a.n, before: a.points, ring: work[i] })).filter((p) => p.ring !== p.before);
+		};
+		let plan = compute();
 		const preview = L.layerGroup().addTo(layer);
 		const count = el("span", { cls: "uv-simplify-count" });
 		const redraw = () => {
-			res = simplifyShared(before, others.map((a) => a.points), px * k);
+			plan = compute();
 			preview.clearLayers();
-			const shape = L.polygon(res.ring.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.2, interactive: false }).addTo(preview);
-			(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
-			// Its corners, so it's clear how few are left to edit.
-			for (const p of res.ring) L.circleMarker(this.pointToLatLng(p), { radius: 3, className: "uv-simplify-corner", interactive: false }).addTo(preview);
-			const touched = res.others.filter(Boolean).length;
-			count.setText(`${before.length} → ${res.ring.length} corners${touched ? ` · ${touched} neighbour${touched === 1 ? "" : "s"} matched` : ""}`);
+			if (!all) L.polygon(before.map((p) => this.pointToLatLng(p)), { className: "uv-simplify-orig", fill: false, interactive: false }).addTo(preview);
+			for (const p of plan) {
+				const shape = L.polygon(p.ring.map((q) => this.pointToLatLng(q)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.2, interactive: false }).addTo(preview);
+				const ent = this.plugin.index.get(p.key);
+				if (ent) (shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", entityColor(this.plugin, ent));
+				// Its corners, so it's clear how few are left to edit (one area; on a whole map they would be a crowd).
+				if (!all && p.key === ownerKey && p.n === n) for (const q of p.ring) L.circleMarker(this.pointToLatLng(q), { radius: 3, className: "uv-simplify-corner", interactive: false }).addTo(preview);
+			}
+			const was = plan.reduce((s, p) => s + p.before.length, 0);
+			const now = plan.reduce((s, p) => s + p.ring.length, 0);
+			count.setText(
+				!plan.length
+					? "Nothing to simplify at this strength"
+					: all
+						? `${plan.length} area${plan.length === 1 ? "" : "s"} · ${was} → ${now} corners`
+						: `${before.length} → ${plan.find((p) => p.key === ownerKey && p.n === n)?.ring.length ?? before.length} corners${plan.length > 1 ? ` · ${plan.length - 1} neighbour${plan.length === 2 ? "" : "s"} matched` : ""}`,
+			);
 		};
+		const slow = debounce(redraw, 120, true);
 		const done = async () => {
-			if (res.ring.length === before.length) return this.endMode();
+			if (!plan.length) return this.endMode();
 			this.endMode();
 			const r = (p: Pt[]) => p.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt);
-			await this.plugin.saveShapes("territory", ownerKey, this.options.map, n, r(res.ring));
-			for (let i = 0; i < others.length; i++) {
-				const o = res.others[i];
-				if (o) await this.plugin.saveShapes("territory", others[i].key, this.options.map, others[i].n, r(o));
-			}
-			new Notice(`Simplified ${owner.name}: ${before.length} → ${res.ring.length} corners. Undo puts it back.`);
+			const was = plan.reduce((s, p) => s + p.before.length, 0);
+			const now = plan.reduce((s, p) => s + p.ring.length, 0);
+			for (const p of plan) await this.plugin.saveShapes("territory", p.key, this.options.map, p.n, r(p.ring));
+			new Notice(all ? `Simplified ${plan.length} area${plan.length === 1 ? "" : "s"}: ${was} → ${now} corners. Undo puts them back.` : `Simplified ${owner.name}: ${before.length} → ${plan.find((p) => p.key === ownerKey && p.n === n)?.ring.length ?? before.length} corners. Undo puts it back.`);
 		};
 		this.beginMode("simplify", (evt) => {
 			if (evt.key === "Escape") this.endMode();
@@ -3569,9 +3686,9 @@ export class MapRenderer {
 			else return;
 			evt.stopPropagation();
 		});
-		this.showBanner(`Simplifying ${owner.name}: corners that barely change the border go; real detail such as a coast stays. Shared corners go from the neighbour too, so borders stay matched · Strength is how far (on screen) a corner may sit off the line`, [
+		this.showBanner(`Trying out simplify on ${owner.name}: corners that barely change the border go, real detail such as a coast stays · the old outline stays dashed · nothing is saved until Apply`, [
 			{ label: "Cancel", run: () => this.endMode() },
-			{ label: "Save", cta: true, run: () => void done() },
+			{ label: "Apply", cta: true, run: () => void done() },
 		], (b) => {
 			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
 			b.addClass("has-fill-controls");
@@ -3579,11 +3696,37 @@ export class MapRenderer {
 				px = v;
 				this.plugin.settings.simplifyPx = v;
 				this.saveSoon();
-				redraw();
+				if (all) slow();
+				else redraw();
 			});
 			controls.appendChild(count);
+			this.brushSwitch(b, "Every area on this map", "Try the same strength on every area at once, shared borders kept matched", false, (v) => {
+				all = v;
+				redraw();
+			});
 		});
 		redraw();
+	}
+
+	/**
+	 * Fewer corners in a ring about to be saved, by the "Simplify as I draw" strength (fill, brush and expand). Corners
+	 * a neighbour shares stay, so no border is left parted from its neighbour.
+	 */
+	private tidyRing(ring: Pt[], own?: { key: string; n: number }): Pt[] {
+		const px = this.plugin.settings.makeSimplifyPx ?? 2;
+		if (px <= 0 || ring.length <= 6 || !this.map) return ring;
+		const others = this.drawnAreas.filter((a) => !(own && a.key === own.key && a.n === own.n)).map((a) => a.points);
+		const out = simplifyShared(ring, others, px * this.unitsPerPx(this.map.getCenter()), true).ring;
+		return out.length >= 3 ? out : ring;
+	}
+
+	/** The "Simplify as I draw" slider for a drawing tool's banner. */
+	private makeSimplifySlider(controls: HTMLElement, onChange?: () => void) {
+		this.slider(controls, "Simplify", "Fewer corners in what you draw, so borders stay light: how far off the line, in screen pixels, a corner may sit and be dropped. 0 keeps every corner.", 0, 12, this.plugin.settings.makeSimplifyPx ?? 2, (v) => {
+			this.plugin.settings.makeSimplifyPx = v;
+			this.saveSoon();
+			onChange?.();
+		});
 	}
 
 	/**
@@ -3808,6 +3951,7 @@ export class MapRenderer {
 				s.brushSize = v;
 				style();
 			});
+			this.makeSimplifySlider(controls);
 			this.keepOffSwitch(b);
 			this.brushSwitch(b, "Push neighbours back", "Land brushed over leaves the neighbour, and both borders move", !!s.pushBorders, (v) => (s.pushBorders = v));
 			if (this.isImageMap) this.brushSwitch(b, "Stay on land", "Paint over the sea is trimmed to the coast", s.coastLock !== false, (v) => (s.coastLock = v));
@@ -4091,7 +4235,7 @@ export class MapRenderer {
 		// Corners several are moved at once: Shift-click to pick them, then drag any one of them.
 		const selected = new Set<number>();
 		// Shared borders: a neighbour's corner sitting on one of these moves with it (unless turned off).
-		let together = true;
+		let together = this.plugin.settings.moveSharedBorders !== false;
 		const neighbours = new Map<string, { key: string; n: number; pts: L.LatLng[]; poly?: L.Polygon; moved: boolean }>();
 		const linked = new Map<number, { area: string; j: number }[]>();
 		if (!isRoute) {
@@ -4313,7 +4457,23 @@ export class MapRenderer {
 				new Notice(`Saved ${name}'s ${isRoute ? "route" : "area"}${moved.length ? ` and the shared border with ${moved.map((nb) => this.plugin.index.get(nb.key)?.name).filter(Boolean).join(", ")}` : ""}`);
 			})();
 		};
+		/** The neighbours that move with this border are outlined, and the switch names them, so it is clear what a drag will touch. */
+		let sharedText: HTMLElement | undefined;
+		const markLinked = () => {
+			const names: string[] = [];
+			for (const [id, nb] of neighbours) {
+				const on = together && [...linked.values()].some((list) => list.some((l) => l.area === id));
+				(nb.poly?.getElement() as SVGElement | undefined)?.classList.toggle("is-linked", on);
+				const nm = this.plugin.index.get(nb.key)?.name;
+				if (on && nm && !names.includes(nm)) names.push(nm);
+			}
+			sharedText?.setText(names.length ? `Shared borders move with ${names.slice(0, 3).join(", ")}${names.length > 3 ? ` +${names.length - 3}` : ""}` : "No shared borders here");
+		};
+		this.modeCleanup.push(() => {
+			for (const nb of neighbours.values()) (nb.poly?.getElement() as SVGElement | undefined)?.classList.remove("is-linked");
+		});
 		const redraw = () => {
+			markLinked();
 			shape.setLatLngs(pts);
 			(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			handles.clearLayers();
@@ -4440,15 +4600,17 @@ export class MapRenderer {
 			const box = el("input", { attr: { type: "checkbox" } }, sw);
 			box.checked = together;
 			el("span", { cls: "uv-banner-switch-track" }, sw);
-			el("span", { cls: "uv-banner-switch-text", text: "Move shared corners together" }, sw);
+			sharedText = el("span", { cls: "uv-banner-switch-text", text: "Shared borders" }, sw);
 			box.addEventListener("change", () => {
 				together = box.checked;
+				this.plugin.settings.moveSharedBorders = together ? undefined : false;
+				this.saveSoon();
 				redraw();
 			});
 		};
 		this.showBanner(isRoute
 			? `Editing ${line ? name : `${name}'s route`}: drag a point · click a + to add one · right-click removes · Ctrl+Z undoes`
-			: `Editing ${name}: drag a corner · click a + to add one · right-click removes · Shift-click picks several · Ctrl+Z undoes · a corner dropped on a neighbour's border becomes shared`, buttons, (b) => {
+				: `Editing ${name}: drag a corner · click a + to add one · right-click removes · Shift-click picks several · Ctrl+Z undoes`, buttons, (b) => {
 			sharedSwitch(b);
 			if (!isRoute) this.waterSwitch(b);
 		});
@@ -4522,6 +4684,7 @@ export class MapRenderer {
 			const stick = Math.max(3 * scale, 6 * this.unitsPerPx(map.getCenter()));
 			const rings = traceOutlines(m, w, h, 12)
 				.map((ring) => simplifyRing(ring, 0.9).map(([x, y]) => [round(x * scale + ox, 1), round(y * scale + oy, 1)] as Pt))
+				.map((ring) => this.tidyRing(ring, area ? { key: owner.key, n: area.n } : undefined))
 				.map((ring) => (stopAtAreas ? snapRing(ring, others, stick) : ring))
 				.filter((ring) => ring.length >= 3);
 			// Whole-map copy: an edge is just the map's own edge.
@@ -4626,6 +4789,7 @@ export class MapRenderer {
 			(b) => {
 				const controls = el("div", { cls: "chronicle-fill-controls" }, b);
 			b.addClass("has-fill-controls");
+				this.makeSimplifySlider(controls, refill);
 				// Like a paint bucket: everything of the clicked kind of ground, or (as before) everything of the clicked colour.
 				const by = el("select", { cls: "chronicle-fill-select", attr: { title: "Fill all the land (or water) joined to the click, whatever is drawn on it; or only the clicked colour" } }, controls);
 				for (const [v, t] of [["ground", "Fill land / sea"], ["colour", "Fill same colour"]]) {

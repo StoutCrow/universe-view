@@ -113,6 +113,17 @@ export class FileTree {
 		list.setAttribute("role", "tree");
 		list.addEventListener("keydown", (evt) => this.onKey(evt));
 		list.addEventListener("pointerdown", (evt) => this.onDragStart(evt));
+		// Hover cards listen here, not on each row: the tree redraws its rows whenever the vault changes, and a
+		// row replaced under the pointer would never have heard it.
+		list.addEventListener("mouseover", (evt) => {
+			const row = (evt.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row[data-hover]");
+			if (!row || row.contains(evt.relatedTarget as Node | null)) return;
+			this.plugin.hoverCards?.hoverOnce(row, row.dataset.hover ?? "", evt);
+		});
+		list.addEventListener("mousemove", (evt) => {
+			const row = (evt.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row[data-hover]");
+			if (row) this.plugin.hoverCards?.nudge(row, row.dataset.hover ?? "", evt);
+		});
 	}
 
 	/** Moves a note or folder, links and all. A folder note's row is its folder, so they go together. */
@@ -349,7 +360,7 @@ export class FileTree {
 			if (entity) showEntityMenu(this.plugin, entity.key, evt, { top: (m) => this.moveItem(m, n.path, true) });
 			else this.folderMenu(n.path, evt);
 		});
-		if (entity) this.plugin.hoverCards?.attach(row, entity.key);
+		if (entity) row.dataset.hover = entity.key;
 	}
 
 	private fileRow(f: TFile, depth: number) {
@@ -375,7 +386,7 @@ export class FileTree {
 				menu.showAtMouseEvent(evt);
 			}
 		});
-		if (e) this.plugin.hoverCards?.attach(row, e.key);
+		if (e) row.dataset.hover = e.key;
 	}
 
 	private moveItem(menu: Menu, path: string, isFolder: boolean) {

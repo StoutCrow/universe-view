@@ -6,10 +6,18 @@ import { builtinModules } from "node:module";
 const prod = process.argv[2] === "production";
 
 // Obsidian only loads styles.css, so Leaflet's stylesheet is concatenated in front of ours.
+// The button, tab, edge and font styles are written once against <body> (with @@ marking "not inside a preview");
+// the settings' preview cards get the same rules against .uv-pv, so they are always drawn by the real styles.
+function looks() {
+	const src = fs.readFileSync("src/styles-looks.css", "utf8").replace(/^\uFEFF/, "");
+	const forBody = src.replace(/@@/g, ":not(.uv-pv *)");
+	const forPreview = src.replace(/@@/g, "").replace(/^body/gm, ".uv-pv");
+	return `\n\n${forBody}\n\n${forPreview}`;
+}
 function buildStyles() {
 	const leaflet = fs.readFileSync("node_modules/leaflet/dist/leaflet.css", "utf8");
 	// Base styles, then the modern layer (motion, boards, hover cards, map tools) and the themes.
-	const own = ["src/styles.css", "src/styles-ui.css", "src/styles-views.css", "src/styles-tools.css", "src/styles-calendar.css", "src/styles-calendar-extra.css", "src/styles-panels.css", "src/styles-map.css", "src/styles-realms.css", "src/styles-explorer.css", "src/styles-notes.css", "src/styles-settings.css", "src/styles-hub.css", "src/styles-tactile.css", "src/themes.css"].map((f) => fs.readFileSync(f, "utf8").replace(/^\uFEFF/, "")).join("\n\n");
+	const own = ["src/styles.css", "src/styles-ui.css", "src/styles-views.css", "src/styles-tools.css", "src/styles-calendar.css", "src/styles-calendar-extra.css", "src/styles-panels.css", "src/styles-map.css", "src/styles-realms.css", "src/styles-explorer.css", "src/styles-notes.css", "src/styles-settings.css", "src/styles-hub.css", "src/styles-tactile.css", "src/themes.css"].map((f) => fs.readFileSync(f, "utf8").replace(/^\uFEFF/, "")).join("\n\n") + looks();
 	// Style Settings requires its @settings block to be the first comment it finds, so it stays on top.
 	const marker = "/* @settings";
 	const start = own.indexOf(marker);

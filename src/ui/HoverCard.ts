@@ -39,7 +39,9 @@ export class HoverCards {
 	constructor(private plugin: ChroniclePlugin) {
 		const hideNow = () => this.hide(true);
 		plugin.registerDomEvent(window, "wheel", (evt) => {
-			if (!(evt.target as Element)?.closest?.(".chronicle-hovercard")) hideNow();
+			// Only an open card closes on a scroll. A card still on its way is left alone: a trackpad keeps sending
+			// small scroll events after you stop, and they would cancel it just as the ring fills.
+			if (this.card && !(evt.target as Element)?.closest?.(".chronicle-hovercard")) hideNow();
 		}, { passive: true });
 		plugin.registerDomEvent(window, "keydown", (evt) => {
 			if (evt.key === "Escape") {
@@ -151,8 +153,23 @@ export class HoverCards {
 	hoverOnce(target: Element, key: string, evt: MouseEvent) {
 		if (this.anchor === target) return;
 		this.schedule(target, key, evt);
-		target.addEventListener("mouseleave", () => this.scheduleHide(), { once: true });
+		// Moving from one item to the next, the browser fires the new item's mouseover before the old one's
+		// mouseleave: a leave from an item that is no longer the one waiting must not cancel the new one.
+		target.addEventListener("mouseleave", () => {
+			if (this.pending && this.pending !== target) return;
+			this.scheduleHide();
+		}, { once: true });
 	}
+
+	/** Pointer movement over an item with no card open or on its way (one a click or scroll just closed): a little way on, it comes back. */
+	nudge(target: Element, key: string, evt: MouseEvent) {
+		if (this.showTimer || (this.card && this.anchor === target)) return;
+		if (Math.hypot(evt.clientX - this.closedAt[0], evt.clientY - this.closedAt[1]) < 12) return;
+		this.schedule(target, key, evt);
+	}
+
+	/** The item a card is currently on its way for. */
+	private pending?: Element;
 
 	private schedule(target: Element, key: string, evt: MouseEvent) {
 		if (!this.plugin.settings.hoverCards || Keymap.isModEvent(evt)) return;
@@ -167,11 +184,15 @@ export class HoverCards {
 		// the next is turned on in the settings. Alt opens it at once.
 		const swap = this.plugin.settings.hoverSwapFast === true && !!this.card?.hasClass("is-visible");
 		const delay = swap || evt.altKey ? 60 : Math.max(0, this.plugin.settings.hoverDelay);
+		this.pending = target;
 		this.startRing(target, evt, delay);
 		this.showTimer = window.setTimeout(() => {
 			this.showTimer = 0;
+			this.pending = undefined;
 			this.stopRing();
-			if (!target.isConnected) return;
+			// A view that redraws while you wait (hover highlights, live updates) replaces the item; if the
+			// pointer is still where it started, the card still belongs there.
+			if (!target.isConnected && Math.hypot(this.px - evt.clientX, this.py - evt.clientY) > 40) return;
 			this.show(target, key);
 		}, delay);
 	}
@@ -216,6 +237,7 @@ export class HoverCards {
 	private scheduleHide() {
 		window.clearTimeout(this.showTimer);
 		this.showTimer = 0;
+		this.pending = undefined;
 		window.clearTimeout(this.hideTimer);
 		this.stopRing();
 		const wait = Math.max(260, this.plugin.settings.hoverHideDelay ?? 180);
@@ -226,7 +248,9 @@ export class HoverCards {
 				this.hideTimer = window.setTimeout(attempt, 150);
 				return;
 			}
-			this.hide();
+			// The pointer has already moved on to another item whose card is on its way: close this card, but leave
+			// that one alone (this timer is the old item's, and must not cancel the new one's).
+			this.hide(false, !!this.pending);
 		};
 		this.hideTimer = window.setTimeout(attempt, wait);
 	}
@@ -253,11 +277,14 @@ export class HoverCards {
 		return this.px >= left && this.px <= right && this.py >= Math.min(top, bottom) - 2 && this.py <= Math.max(top, bottom) + 2;
 	}
 
-	hide(immediate = false) {
-		window.clearTimeout(this.showTimer);
-		this.showTimer = 0;
+	hide(immediate = false, keepPending = false) {
+		if (!keepPending) {
+			window.clearTimeout(this.showTimer);
+			this.showTimer = 0;
+			this.pending = undefined;
+			this.stopRing();
+		}
 		window.clearTimeout(this.hideTimer);
-		this.stopRing();
 		this.closedAt = [this.px, this.py];
 		const card = this.card;
 		if (!card) return;
@@ -269,9 +296,13 @@ export class HoverCards {
 		else window.setTimeout(() => card.remove(), 220);
 	}
 
-	private show(target: Element, key: string) {
+	private show(target: Element, key: string, retry = true) {
 		const e = this.plugin.index.get(key);
-		if (!e) return;
+		if (!e) {
+			// The index can be rebuilding at that instant (a sync, an edit): look once more shortly instead of dropping the card.
+			if (retry) window.setTimeout(() => this.show(target, key, false), 250);
+			return;
+		}
 		if (this.key === key && this.anchor === target && this.card) return;
 		// Hovering a link inside the open card keeps that card (pinned) and stacks the new one on top.
 		if (this.card?.contains(target)) this.pin(this.card);
@@ -284,9 +315,15 @@ export class HoverCards {
 		try {
 			this.fill(card, e);
 		} catch (err) {
-			console.error("UniverseView: hover card failed", err);
-			this.hide(true);
-			return;
+			// One odd note must not leave a ring that fills and then nothing: show the name, and say why in the console.
+			console.error("UniverseView: hover card failed for", key, err);
+			card.empty();
+			const head = el("div", { cls: "chronicle-hc-head" }, card);
+			const name = el("a", { cls: "chronicle-hc-name", text: e.name }, head);
+			name.addEventListener("click", (evt) => {
+				this.hide(true);
+				openEntity(this.plugin, e.key, evt);
+			});
 		}
 		card.addEventListener("mouseenter", () => window.clearTimeout(this.hideTimer));
 		card.addEventListener("mouseleave", () => this.scheduleHide());
@@ -320,7 +357,14 @@ export class HoverCards {
 	}
 
 	private position(card: HTMLElement, target: Element) {
-		const r = target.getBoundingClientRect();
+		let r = target.getBoundingClientRect();
+		// A big item (a territory, a lane, a whole row) would put the card far from the pointer, or off screen:
+		// the card follows the pointer instead.
+		if (!target.isConnected || r.width > 220 || r.height > 120) {
+			const x = this.px >= 0 ? this.px : r.left;
+			const y = this.py >= 0 ? this.py : r.top;
+			r = new DOMRect(x - 12, y - 8, 24, 16);
+		}
 		const cw = card.offsetWidth || 320;
 		const ch = card.offsetHeight || 200;
 		const vw = window.innerWidth;

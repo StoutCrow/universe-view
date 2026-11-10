@@ -32,7 +32,8 @@ body.chronicle-theme-parchment .chronicle-scope {
 	--chronicle-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 2px 8px rgba(80, 50, 10, 0.16);
 	--chronicle-shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 10px 24px rgba(80, 50, 10, 0.25);
 	--font-interface: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-	--chronicle-backdrop: radial-gradient(ellipse at center, transparent 55%, rgba(110, 70, 20, 0.18) 100%),
+	--chronicle-backdrop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .28 0 0 0 0 .1 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+		radial-gradient(ellipse at center, transparent 55%, rgba(110, 70, 20, 0.22) 100%),
 		radial-gradient(circle at 18% 28%, rgba(160, 110, 40, 0.09), transparent 40%),
 		radial-gradient(circle at 82% 72%, rgba(120, 70, 20, 0.08), transparent 45%);
 	color-scheme: light;
@@ -83,6 +84,24 @@ body.chronicle-theme-parchment .chronicle-ov-hero {
 }
 body.chronicle-theme-parchment .chronicle-map .leaflet-tile-pane {
 	filter: sepia(0.45) saturate(0.8) brightness(0.97);
+}
+
+/* Parchment finish: a flourish under the title, ink-red rules, a deckled hero. */
+body.chronicle-theme-parchment .chronicle-ov-hero::after {
+	content: "";
+	display: block;
+	height: 12px;
+	margin: 10px auto 0;
+	width: 180px;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 12'%3E%3Cpath d='M0 6H72M108 6H180' stroke='%239a2f1d' stroke-width='1'/%3E%3Cpath d='M90 1L96 6L90 11L84 6Z' fill='%239a2f1d'/%3E%3Ccircle cx='78' cy='6' r='1.5' fill='%239a2f1d'/%3E%3Ccircle cx='102' cy='6' r='1.5' fill='%239a2f1d'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+body.theme-dark.chronicle-theme-parchment .chronicle-ov-hero::after {
+	filter: brightness(1.6) saturate(0.8);
+}
+body.chronicle-theme-parchment .chronicle-module-title,
+body.chronicle-theme-parchment .chronicle-ov-panel-head h3 {
+	padding-bottom: 4px;
+	background: linear-gradient(90deg, var(--chronicle-accent), transparent 70%) bottom / 100% 1px no-repeat;
 }
 
 /* ---- Archive: genealogy & family history ---- */

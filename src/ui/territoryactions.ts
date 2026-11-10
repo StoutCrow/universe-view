@@ -89,19 +89,6 @@ export function splitNameSheet(p: ChroniclePlugin, owner: Entity, done: (name: s
 	});
 }
 
-/** How far to grow out to the neighbours. */
-export function growSheet(p: ChroniclePlugin, e: Entity, grow: (px: number) => void) {
-	toolSheet(p, {
-		title: `Grow ${e.name} to its neighbours`,
-		icon: "expand",
-		intro: "Pulls its border onto any neighbouring border within this distance, filling the gaps between, and adds the matching corners to the neighbours so the two borders are one line.",
-		fields: [{ key: "px", kind: "number", label: "Close gaps up to", value: 16, min: 2, max: 120, step: 1, unit: "px on screen", hint: "Measured as the map shows now: zoom out to close wider gaps." }],
-		preview: (v) => `Gaps up to ${v.px} px wide close.`,
-		submit: "Grow it",
-		run: (v) => grow(Math.max(2, Math.min(200, Number(v.px) || 16))),
-	});
-}
-
 /** The colours a map note can take. */
 export const NOTE_COLOURS: [string, string][] = [["#e8b33a", "Amber"], ["#e05252", "Red"], ["#3d8fd1", "Blue"], ["#3bb273", "Green"], ["#9b59b6", "Purple"], ["#333333", "Ink"]];
 

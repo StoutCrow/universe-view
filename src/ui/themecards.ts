@@ -24,6 +24,7 @@ export function renderThemeCards(parent: HTMLElement, selected: ThemeId, onPick:
 		});
 		el("div", { cls: "chronicle-theme-name", text: th.name }, card);
 		el("div", { cls: "chronicle-theme-for", text: th.forWhat }, card);
+		el("div", { cls: "chronicle-theme-for uv-theme-looks", text: `${th.buttons} buttons · ${th.tabs} tabs · ${th.edges} edges · ${th.icons} icons · ${th.headings} headings` }, card);
 		card.setAttribute("aria-label", th.description);
 		card.addEventListener("click", () => {
 			grid.querySelectorAll(".chronicle-theme-card").forEach((c) => c.removeClass("is-active"));
