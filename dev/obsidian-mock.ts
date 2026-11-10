@@ -290,9 +290,10 @@ export class Notice {
 	}
 }
 
-class MenuItem {
+export class MenuItem {
 	title = "";
 	icon = "";
+	sub?: Menu;
 	cb?: (evt: MouseEvent) => void;
 	setTitle(t: string) {
 		this.title = t;
@@ -315,13 +316,18 @@ class MenuItem {
 	setWarning() {
 		return this;
 	}
+	/** Obsidian's submenus: the items go in a nested menu, shown under this row when it is clicked. */
+	setSubmenu() {
+		this.sub = new Menu();
+		return this.sub;
+	}
 	onClick(cb: (evt: MouseEvent) => void) {
 		this.cb = cb;
 		return this;
 	}
 }
 export class Menu {
-	private items: (MenuItem | "sep")[] = [];
+	items: (MenuItem | "sep")[] = [];
 	addItem(cb: (i: MenuItem) => void) {
 		const i = new MenuItem();
 		cb(i);
@@ -340,21 +346,32 @@ export class Menu {
 		const menu = document.body.createDiv("menu");
 		menu.style.left = `${p.x}px`;
 		menu.style.top = `${p.y}px`;
-		for (const it of this.items) {
-			if (it === "sep") {
-				menu.createDiv("menu-separator");
-				continue;
+		const fill = (box: HTMLElement, items: (MenuItem | "sep")[]) => {
+			for (const it of items) {
+				if (it === "sep") {
+					box.createDiv("menu-separator");
+					continue;
+				}
+				const row = box.createDiv("menu-item");
+				const ic = row.createDiv("menu-item-icon");
+				setIcon(ic, it.icon);
+				row.createDiv({ cls: "menu-item-title", text: it.title });
+				if (it.sub) {
+					const nested = box.createDiv("menu-sub");
+					nested.style.display = "none";
+					nested.style.paddingLeft = "14px";
+					fill(nested, it.sub.items);
+					row.addClass("has-submenu");
+					row.addEventListener("click", () => (nested.style.display = nested.style.display === "none" ? "" : "none"));
+					continue;
+				}
+				row.addEventListener("click", (e) => {
+					menu.remove();
+					it.cb?.(e);
+				});
 			}
-			const row = menu.createDiv("menu-item");
-			const ic = row.createDiv("menu-item-icon");
-			setIcon(ic, it.icon);
-			row.createDiv({ cls: "menu-item-title", text: it.title });
-			row.addEventListener("click", (e) => {
-				menu.remove();
-				it.cb?.(e);
-			});
-		}
-		window.setTimeout(() => document.addEventListener("click", () => menu.remove(), { once: true }), 0);
+		};
+		fill(menu, this.items);		window.setTimeout(() => document.addEventListener("click", () => menu.remove(), { once: true }), 0);
 	}
 }
 

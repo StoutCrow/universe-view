@@ -20,7 +20,7 @@ import { absorbGaps, untangle } from "./index/merge";
 import { BUILT_IN_PRESETS, applyLook, type MapPreset } from "./ui/mappresets";
 import { WhatsNewModal } from "./ui/WhatsNew";
 import { TourModal } from "./ui/Tour";
-import { AddRelativesModal } from "./ui/AddRelatives";
+import { relativeMenu } from "./ui/AddRelatives";
 import { compareVersions } from "./index/changelog";
 import { isHouse } from "./render/houses";
 import { setHelpDelay } from "./render/common";
@@ -35,7 +35,7 @@ import { styleTerritories } from "./ui/territorystyle";
 import { statusBar } from "./ui/statusbar";
 import { CauseChainModal } from "./ui/causes";
 import { WorldSettingsModal } from "./ui/WorldSettings";
-import { HOVER_SOURCE, TYPE_ICONS, clickNotice } from "./render/common";
+import { HOVER_SOURCE, TYPE_ICONS, addShortcutMenus, clickNotice } from "./render/common";
 import { WORLD_MAP } from "./render/map";
 import { TimelineView, VIEW_TIMELINE } from "./views/TimelineView";
 import { FamilyTreeView, VIEW_FAMILY } from "./views/FamilyTreeView";
@@ -2028,18 +2028,10 @@ export default class ChroniclePlugin extends Plugin {
 			item("Change icon…", "smile-plus", () => changeNoteIcon(this, file));
 			return;
 		}
-		item(label ? `Inspect ${label}` : "Inspect", "panel-right", () => void this.inspect(e.key, "edit"));
-		if (e.start || e.end) item("Show on timeline", "calendar-range", () => void this.openTimeline({ focus: e.key }));
-		if (e.type === "person") item("Show family tree", "git-fork", () => void this.openFamilyTree(e.key));
-		if (e.type === "culture") item("Show in the lineage of groups", "git-branch", () => void this.openLineage(e.key));
-		if (e.type === "culture") item("Show organisation chart", "network", () => void this.openOrgChart(e.key));
-		if (e.type === "place" || e.type === "map" || e.places.length || e.birthPlace) item("Show on map", "map", () => void this.openMap(e.key));
-		item("Show connections", "waypoints", () => void this.openNetwork(e.key));
-		item("Show in UniverseView dashboard", "panels-top-left", () => void this.openDashboard(e.key));
-		if (e.type === "person") item("Add relatives by name…", "users-round", () => new AddRelativesModal(this, e).open());
-		if (e.type === "person") item("Add child…", "baby", () => this.createEntityPrompt({ type: "person", parents: [e.name] }));
-		if (e.type === "place") item("Add event here…", "calendar-plus", () => this.createEntityPrompt({ type: "event", places: [e.name] }));
-		item("Change icon…", "smile-plus", () => changeNoteIcon(this, file));
+		item(label ? `Inspect ${label}` : "Inspect", "panel-right", () => void this.inspect(e.key));
+		addShortcutMenus(menu, this, e, section);
+		if (e.type === "person") relativeMenu(menu, this, e, section);
+		if (e.type === "place") item("Add event here…", "calendar-plus", () => this.createEntityPrompt({ type: "event", places: [e.name] }));		item("Change icon…", "smile-plus", () => changeNoteIcon(this, file));
 	}
 
 	/** Right-click items for a folder: open each view limited to it (one folder per world). */

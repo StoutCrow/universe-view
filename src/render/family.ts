@@ -1,5 +1,5 @@
-import { Platform } from "obsidian";
-import { AddRelativesModal } from "../ui/AddRelatives";
+import { Menu, Platform } from "obsidian";
+import { AddRelativesModal, relativeMenu } from "../ui/AddRelatives";
 import type ChroniclePlugin from "../main";
 import type { Entity } from "../types";
 import { formatDate, yearsBetween } from "../dates/parser";
@@ -220,7 +220,8 @@ export class FamilyTreeRenderer {
 
 	private otherParent(child: string, parent: string): string | undefined {
 		const c = this.plugin.index.get(child);
-		if (!c) return undefined;
+		// A relative with no note has the parents their family lines give.
+		if (!c) return this.plugin.index.parentsOf(child).find((p) => p.key !== parent)?.key;
 		return [...c.parents, ...c.adoptiveParents].find((p) => p.key !== parent)?.key;
 	}
 
@@ -300,7 +301,10 @@ export class FamilyTreeRenderer {
 		const node: UpNode = { key, dup, parents: [], adoptive };
 		if (dup || depth <= 0) return node;
 		const e = this.plugin.index.get(key);
-		if (!e) return node;
+		if (!e) {
+			for (const p of this.plugin.index.parentsOf(key).slice(0, 2)) node.parents.push(this.buildUp(p.key, depth - 1));
+			return node;
+		}
 		for (const p of e.parents.slice(0, 2)) node.parents.push(this.buildUp(p.key, depth - 1));
 		if (!node.parents.length) for (const p of e.adoptiveParents.slice(0, 2)) node.parents.push(this.buildUp(p.key, depth - 1, true));
 		return node;
@@ -451,7 +455,7 @@ export class FamilyTreeRenderer {
 		this.families = [];
 		const parentsOf = (k: string) => {
 			const e = idx.get(k);
-			return e ? [...e.parents, ...e.adoptiveParents].map((r) => r.key) : [];
+			return e ? [...e.parents, ...e.adoptiveParents].map((r) => r.key) : idx.parentsOf(k).map((r) => r.key);
 		};
 		const graph: FamilyGraph = {
 			parents: parentsOf,
@@ -579,7 +583,7 @@ export class FamilyTreeRenderer {
 		if (!e) card.addClass("is-ghost");
 		if (e?.gender) card.addClass(`gender-${e.gender}`);
 		if (e?.end) card.addClass("is-deceased");
-		const name = e?.name ?? (n.key.startsWith("?") ? n.key.slice(1) : n.key);
+		const name = e?.name ?? idx.ghostName(n.key) ?? (n.key.startsWith("?") ? n.key.slice(1) : n.key);
 		const accent = e?.color ?? (e?.cultures[0] ? cultureColor(this.plugin, e.cultures[0].ref.key) : undefined);
 		if (accent) card.style.setProperty("--card-accent", accent);
 
@@ -593,7 +597,7 @@ export class FamilyTreeRenderer {
 			avatar.setText(initials(name));
 		}
 		const body = el("div", { cls: "chronicle-card-body" }, card);
-		el("div", { cls: "chronicle-card-name", text: e ? name : titleCase(name) }, body);
+		el("div", { cls: "chronicle-card-name", text: e || idx.ghostName(n.key) ? name : titleCase(name) }, body);
 		const sub = el("div", { cls: "chronicle-card-sub" }, body);
 		if (e) {
 			sub.setText(lifeText(this.plugin, e));
@@ -632,12 +636,13 @@ export class FamilyTreeRenderer {
 			});
 			t.addEventListener("dblclick", (evt) => evt.stopPropagation());
 		}
-		card.setAttribute("aria-label", e ? `${name}\nDouble-click to centre the tree here` : `${name} has no note yet. Click to create it.`);
+		card.setAttribute("aria-label", e ? `${name}\nDouble-click to centre the tree here` : `${name} has no note yet. Click for what you can do.`);
 
 		clickOrDouble(
 			card,
 			(evt) => {
-				if (!e) this.plugin.createEntityPrompt({ type: "person", name: titleCase(name) });
+				// A relative with no note: the click opens what can be done with them (it used to start a new note at once).
+				if (!e) this.ghostMenu(n.key, name, evt);
 				else openEntity(this.plugin, n.key, evt);
 			},
 			() => e && this.recenter(n.key),
@@ -645,24 +650,48 @@ export class FamilyTreeRenderer {
 		);
 		card.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
+			if (!e) {
+				this.ghostMenu(n.key, name, evt);
+				return;
+			}
 			showEntityMenu(this.plugin, n.key, evt, {
 				extra: (menu) => {
-					if (e && n.key !== this.options.root)
-						menu.addItem((i) => i.setTitle("Centre tree here").setIcon("locate-fixed").onClick(() => this.recenter(n.key)));
-					if (e) menu.addItem((i) => i.setTitle("Add relatives by name…").setIcon("users-round").onClick(() => new AddRelativesModal(this.plugin, e).open()));
-						if (kids) menu.addItem((i) => i.setTitle(this.options.collapsed?.includes(n.key) ? "Unfold this branch" : "Fold this branch").setIcon("fold-vertical").onClick(() => this.toggleFold(n.key)));
-					if (e) {
-						menu.addItem((i) =>
-							i.setTitle("Add child").setIcon("baby").onClick(() => this.plugin.createEntityPrompt({ type: "person", parents: [e.name] })),
-						);
-						menu.addItem((i) =>
-							i.setTitle("Add parent").setIcon("arrow-up").onClick(() => this.plugin.createEntityPrompt({ type: "person", childOf: e.key })),
-						);
-					}
+					// This tree: where it is centred, what is folded.
+					if (n.key !== this.options.root) menu.addItem((i) => i.setTitle("Centre tree here").setIcon("locate-fixed").onClick(() => this.recenter(n.key)));
+					if (kids) menu.addItem((i) => i.setTitle(this.options.collapsed?.includes(n.key) ? "Unfold this branch" : "Fold this branch").setIcon("fold-vertical").onClick(() => this.toggleFold(n.key)));
+					// Who they are related to: add by name (no notes), or start a note.
+					menu.addSeparator();
+					relativeMenu(menu, this.plugin, e);
 				},
 			});
 		});
-		if (e) bindHover(this.plugin, card, n.key, this.hoverParent);
+		// Hover handles to add a parent, child or partner right on the card (by name, no notes), for relatives with no note too.
+		if (!this.embedded && !Platform.isMobile) {
+			const adds = el("div", { cls: "uv-card-adds" }, slot);
+			const target = e ?? { key: n.key, name };
+			for (const [kind, where, label] of [["parents", "is-up", "Add a parent"], ["children", "is-down", "Add a child"], ["partners", "is-side", "Add a partner"]] as const) {
+				const b = el("button", { cls: `uv-card-add ${where}`, attr: { "aria-label": `${label} by name` } }, adds);
+				icon(b, "plus");
+				b.addEventListener("click", (evt) => {
+					evt.stopPropagation();
+					new AddRelativesModal(this.plugin, target, kind).open();
+				});
+				b.addEventListener("dblclick", (evt) => evt.stopPropagation());
+			}
+		}		if (e) bindHover(this.plugin, card, n.key, this.hoverParent);
+	}
+
+	/** What can be done with a relative who has no note: add their relatives, or write them up. */
+	private ghostMenu(key: string, name: string, evt: MouseEvent) {
+		const menu = new Menu();
+		menu.addItem((i) => {
+			i.setTitle(`${name} · not created yet`).setIcon("user-round").setDisabled(true);
+			(i as unknown as { setIsLabel?: (v: boolean) => void }).setIsLabel?.(true);
+		});
+		relativeMenu(menu, this.plugin, { key, name });
+		menu.addSeparator();
+		menu.addItem((i) => i.setTitle("Write up as a note…").setIcon("file-plus").onClick(() => this.plugin.createEntityPrompt({ type: "person", name: titleCase(name) })));
+		menu.showAtMouseEvent(evt);
 	}
 
 	private kinCache?: KinGraph;
@@ -671,7 +700,7 @@ export class FamilyTreeRenderer {
 	private kin(): KinGraph {
 		const idx = this.plugin.index;
 		return (this.kinCache ??= {
-			parents: (k) => (idx.get(k)?.parents ?? []).map((r) => r.key),
+			parents: (k) => idx.parentsOf(k).map((r) => r.key),
 			partners: (k) => idx.partners(k).map((p) => p.ref.key),
 			gender: (k) => {
 				const g = idx.get(k)?.gender ?? "";

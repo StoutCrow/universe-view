@@ -2,6 +2,22 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 3.1.0 — 2026-11-10
+
+Relatives of relatives, one right-click menu, and Alt+click for the inspector.
+
+### Family tree: relatives of relatives
+- A relative with no note can have relatives too, so a whole branch can be sketched by name without a single bare-bones note. Hover a card and use the **+** handles (parent above, child below, partner beside), or right-click → **Add by name**. Their families are kept as lines in a `relatives:` property on a note that mentions them: `Bob + Mary > Carol, Dan` is a couple and their children.
+- Clicking a *Not created yet* card no longer starts a new note at once: it opens what you can do (add relatives, or write them up).
+- Names keep the capitals they were typed with.
+
+### One right-click menu
+- Every note's menu is now the same everywhere: **Inspect**, **Open note** and **Open beside** (three different icons), then two submenus, **Show in** (Timeline, Family tree, Map, Connections, Dashboard…) and **Find out** (related to…, line of succession, why did this happen), then the view's own tools, then anything that removes.
+- In a tree, **Add by name** and **New note for** replace the lookalike *Add relatives by name…*, *Add child* and *Add parent*.
+
+### Opening the inspector
+- **Alt+click** anything with a hover card (a card, a pin, a bar, a row in the Library or Files panel) opens it in the inspector. Every *Inspect* now opens the tab you chose as the default, instead of some opening one tab and some another.
+
 ## 3.0.0 — 2026-11-10
 
 The look of UniverseView is now yours to build, maps are lighter and steadier, and the plugin shows which build is running.

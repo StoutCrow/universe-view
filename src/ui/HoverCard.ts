@@ -32,6 +32,8 @@ export class HoverCards {
 	private anchor?: Element;
 	private key?: string;
 	private excerpts = new Map<string, Excerpt>();
+	/** The note each item with a card stands for, so Alt+click can open it in the inspector wherever it is. */
+	private keys = new WeakMap<Element, () => string>();
 	/** Cards pinned in place (by the pin button, or by dragging them); they stay until closed. */
 	private pinned: HTMLElement[] = [];
 	private z = 0;
@@ -56,7 +58,7 @@ export class HoverCards {
 			if ((evt.target as Element)?.closest?.("input, textarea, [contenteditable='true'], .cm-editor")) return;
 			const run: Record<string, () => void> = {
 				p: () => this.pin(card),
-				i: () => void plugin.inspect(key, "edit"),
+				i: () => void plugin.inspect(key),
 				e: () => void plugin.inspect(key, "edit"),
 				o: () => openEntity(plugin, key),
 			};
@@ -73,6 +75,23 @@ export class HoverCards {
 		plugin.registerDomEvent(window, "pointerdown", (evt) => {
 			if (!this.card?.contains(evt.target as Node)) hideNow();
 		});
+		// Alt+click on anything with a hover card (a card, a pin, a bar, a row…) opens it in the inspector: one way in, everywhere.
+		plugin.registerDomEvent(document, "click", (evt) => {
+			if (!evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey) return;
+			let node = evt.target instanceof Element ? evt.target : null;
+			if (node?.closest(".is-tool, .chronicle-hovercard, input, textarea, select")) return;
+			while (node) {
+				const key = this.keys.get(node)?.();
+				if (key && plugin.index.get(key)) {
+					evt.preventDefault();
+					evt.stopImmediatePropagation();
+					this.hide(true);
+					void plugin.inspect(key);
+					return;
+				}
+				node = node.parentElement;
+			}
+		}, { capture: true });
 		plugin.registerDomEvent(window, "pointermove", (evt) => {
 			this.px = evt.clientX;
 			this.py = evt.clientY;
@@ -133,6 +152,7 @@ export class HoverCards {
 
 	/** Shows the card for `key` when the pointer rests on `target`. */
 	attach(target: Element, key: string | (() => string)) {
+		this.keys.set(target, typeof key === "function" ? key : () => key);
 		target.addEventListener("mouseenter", (evt) => this.schedule(target, typeof key === "function" ? key() : key, evt as MouseEvent));
 		target.addEventListener("mouseleave", () => this.scheduleHide());
 		// A card closed by a scroll, a click or a key while the pointer stays on a big item (a whole
@@ -151,6 +171,7 @@ export class HoverCards {
 
 	/** One-off version for elements created by others (links in notes). */
 	hoverOnce(target: Element, key: string, evt: MouseEvent) {
+		this.keys.set(target, () => key);
 		if (this.anchor === target) return;
 		this.schedule(target, key, evt);
 		// Moving from one item to the next, the browser fires the new item's mouseover before the old one's
@@ -341,7 +362,7 @@ export class HoverCards {
 			});
 		};
 		// One button for the inspector, which reads and edits (I or E).
-		tool("panel-right", "Inspect and edit (I)", () => void this.plugin.inspect(key, "edit"));
+		tool("panel-right", "Inspect (I), or Alt+click anything", () => void this.plugin.inspect(key));
 		const pinBtn = el("button", { cls: "clickable-icon chronicle-hc-pin", attr: { "aria-label": "Keep this card open (P, or drag it)" } }, tools);
 		icon(pinBtn, "pin");
 		pinBtn.addEventListener("click", () => this.pin(card));
@@ -469,7 +490,7 @@ export class HoverCards {
 		if (e.type === "place" || e.type === "map" || e.places.length || e.territories.length) act("map", "Show on map", () => void p.openMap(e.key));
 		act("waypoints", "Connections", () => void p.openNetwork(e.key));
 		// Fix a date, the kind, the size or the names without opening the note.
-		act("panel-right", "Inspect and edit", () => void p.inspect(e.key, "edit"));
+		act("panel-right", "Inspect", () => void p.inspect(e.key));
 	}
 
 	private glyph(thumb: HTMLElement, e: Entity) {

@@ -1499,3 +1499,28 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 
 /* Board linked: what you can pick shows it. */
 .chronicle-board.is-linked .chronicle-module-body [data-key] { cursor: crosshair; }
+
+/* ---- Family tree: handles to add a parent, child or partner right on a card ---- */
+.uv-card-adds { position: absolute; inset: 0; pointer-events: none; }
+button.uv-card-add {
+	position: absolute;
+	display: grid;
+	place-items: center;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 1px solid var(--background-modifier-border-hover);
+	border-radius: 999px;
+	background: var(--background-primary);
+	color: var(--text-muted);
+	box-shadow: none;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--chronicle-fast, 120ms) ease-out, color var(--chronicle-fast, 120ms) ease-out;
+}
+button.uv-card-add svg { width: 12px; height: 12px; }
+button.uv-card-add.is-up { left: 50%; top: -10px; margin-left: -10px; }
+button.uv-card-add.is-down { left: 50%; bottom: -10px; margin-left: -10px; }
+button.uv-card-add.is-side { right: -10px; top: 50%; margin-top: -10px; }
+.uv-card-html:hover button.uv-card-add { opacity: 1; pointer-events: auto; }
+button.uv-card-add:hover { color: var(--text-on-accent); background: var(--interactive-accent); border-color: var(--interactive-accent); }

@@ -29,7 +29,7 @@ import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { dropEmptyProperties, quickAddFrontmatter, withFields } from "../src/import/quickadd";
-import { addLinks, parseNames } from "../src/index/relatives";
+import { addKinChildren, addKinPartner, addLinks, kinLines, parseKin, parseNames } from "../src/index/relatives";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
 import { nameAt, nameRows, readNames, renamings, writeNames } from "../src/index/renames";
 import { findOrphans } from "../src/index/tidy";
@@ -1378,7 +1378,17 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		addLinks(blank, ["parents"], "parents", ["[[Cy]]"]);
 		eq(blank, { parents: ["[[Cy]]"] }, "relatives: a new list is made when there isn't one");
 	}
-	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");
+	// Relatives of relatives: families written as lines, so a relative with no note can have relatives too.
+	{
+		const kin = parseKin(["Bob + Mary > Carol, Dan", "- [[Carol|Caz]] + Eric > Frank", "Gwen + Hal", "Loner"]);
+		eq(kin.parentOf.map(([p, c]) => `${p}>${c}`), ["Bob>Carol", "Bob>Dan", "Mary>Carol", "Mary>Dan", "Carol>Frank", "Eric>Frank"], "kin: each parent on a line is a parent of each child");
+		eq(kin.partners, [["Bob", "Mary"], ["Carol", "Eric"], ["Gwen", "Hal"]], "kin: names joined by + are partners, a lone name says nothing");
+		eq(kinLines("a > b\nc + d"), ["a > b", "c + d"], "kin: one text with line breaks is read as lines");
+		const lines: string[] = ["Bob + Mary > Carol"];
+		eq([addKinChildren(lines, ["Mary", "Bob"], ["Dan", "carol"]), lines], [1, ["Bob + Mary > Carol, Dan"]], "kin: new children join the line already written for those parents");
+		eq([addKinChildren(lines, ["Carol"], ["Frank"]), lines[1]], [1, "Carol > Frank"], "kin: a relative with no note gets a line of their own");
+		eq([addKinPartner(lines, "Bob", "mary"), addKinPartner(lines, "Gwen", "Hal"), lines[2]], [0, 1, "Gwen + Hal"], "kin: partners already tied by a line are not added twice");
+	}	eq(quickAddFrontmatter(withFields(typedLine, { date: "1200", gender: "female", occupation: "scribe", birthPlace: "London", parents: ["Bea"] })), { born: "1200", gender: "female", occupation: "scribe", birthplace: "[[London]]", parents: ["[[Bea]]"] }, "creator: a person's form");
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Siege", type: "event" }, { date: "1200", war: "The War", importance: "5" })), { date: "1200", war: "[[The War]]", importance: 5 }, "creator: an event's form");
 	eq(quickAddFrontmatter(withFields({ ...typedLine, name: "Guild", type: "culture" }, { cultures: ["Crown"] })), { "parent-cultures": ["[[Crown]]"] }, "creator: a group's parent");
 

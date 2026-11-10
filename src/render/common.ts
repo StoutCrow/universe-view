@@ -1,4 +1,4 @@
-import { Keymap, Menu, Notice, TFile, WorkspaceLeaf, setIcon } from "obsidian";
+import { Keymap, Menu, MenuItem, Notice, TFile, WorkspaceLeaf, setIcon } from "obsidian";
 import type ChroniclePlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { kindLabel } from "../index/reader";
@@ -326,9 +326,69 @@ export function warningItem(menu: Menu, title: string, iconName: string, run: ()
 }
 
 /**
- * The right-click menu for a note anywhere in UniverseView, in the same order everywhere: its name,
- * Inspect and Open; what to do with it here; the other views it shows in; this view's tools; and,
- * set apart at the bottom, anything that removes.
+ * A menu entry that opens a submenu. Where Obsidian has no submenus, its items are listed flat, each titled
+ * "<flatPrefix>: <title>", so nothing is lost and nothing reads the same as something else.
+ */
+export function addSubmenu(menu: Menu, title: string, iconName: string, build: (m: Menu) => void, flatPrefix?: string, section?: string) {
+	const native = typeof (MenuItem.prototype as unknown as { setSubmenu?: unknown }).setSubmenu === "function";
+	if (native) {
+		let sub: Menu | undefined;
+		menu.addItem((i) => {
+			i.setTitle(title).setIcon(iconName);
+			if (section) i.setSection(section);
+			sub = (i as unknown as { setSubmenu: () => Menu }).setSubmenu();
+		});
+		if (sub) build(sub);
+		return;
+	}
+	const prefix = flatPrefix ?? title;
+	const flat = Object.create(menu) as Menu;
+	flat.addItem = (cb) =>
+		menu.addItem((i) => {
+			if (section) i.setSection(section);
+			cb(i);
+			// The title the caller set gets the heading put in front of it.
+			const titleEl = (i as unknown as { titleEl?: HTMLElement }).titleEl;
+			if (titleEl?.textContent) titleEl.textContent = `${prefix}: ${titleEl.textContent}`;
+		});
+	build(flat);
+}
+
+type Shortcut = [title: string, icon: string, run: () => void];
+
+/**
+ * What can be done with a note, in two kinds that were once mixed in one long list: the views it can be shown in
+ * ("Show in"), and the questions it can answer ("Find out"). Every menu that offers them uses this, so the words
+ * and icons are the same everywhere.
+ */
+export function entityShortcuts(plugin: ChroniclePlugin, e: Entity): { views: Shortcut[]; asks: Shortcut[] } {
+	const key = e.key;
+	const views: Shortcut[] = [];
+	if (e.start || e.end || e.type === "person" || e.type === "culture") views.push(["Timeline", "calendar-range", () => void plugin.openTimeline({ focus: key })]);
+	if (e.type === "person") views.push(["Family tree", "git-fork", () => void plugin.openFamilyTree(key)]);
+	if (e.type === "culture") views.push(["Lineage of groups", "git-branch", () => void plugin.openLineage(key)]);
+	if (e.type === "culture") views.push(["Organisation chart", "network", () => void plugin.openOrgChart(key)]);
+	if (e.type === "place" || e.type === "map" || e.places.length || e.birthPlace) views.push(["Map", "map", () => void plugin.openMap(key)]);
+	views.push(["Connections", "waypoints", () => void plugin.openNetwork(key)]);
+	views.push(["Dashboard", "panels-top-left", () => void plugin.openDashboard(key)]);
+	const asks: Shortcut[] = [];
+	if (e.type === "person") asks.push([`How is ${e.name.split(" ")[0]} related to…`, "git-compare", () => plugin.openKinship(key)]);
+	if (e.type === "person" || e.type === "culture") asks.push(["Line of succession", "crown", () => plugin.openSuccession(key)]);
+	if (e.type === "event") asks.push(["Why did this happen?", "git-pull-request-arrow", () => plugin.openCauses(key)]);
+	return { views, asks };
+}
+
+/** The two submenus of {@link entityShortcuts}, added to a menu. */
+export function addShortcutMenus(menu: Menu, plugin: ChroniclePlugin, e: Entity, section?: string) {
+	const { views, asks } = entityShortcuts(plugin, e);
+	if (views.length) addSubmenu(menu, "Show in", "eye", (m) => views.forEach(([t, ic, run]) => m.addItem((i) => i.setTitle(t).setIcon(ic).onClick(run))), "Show in", section);
+	if (asks.length) addSubmenu(menu, "Find out", "telescope", (m) => asks.forEach(([t, ic, run]) => m.addItem((i) => i.setTitle(t).setIcon(ic).onClick(run))), "Find out", section);
+}
+
+/**
+ * The right-click menu for a note anywhere in UniverseView, in the same order everywhere: its name; the three ways
+ * to open it (Inspect, Open note, Open beside); what this view does with it; two submenus, Show in (the other views)
+ * and Find out (questions it answers); this view's tools; and, set apart at the bottom, anything that removes.
  */
 export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseEvent, opts: EntityMenuOptions = {}) {
 	const e = plugin.index.get(key);
@@ -338,11 +398,11 @@ export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseE
 			i.setTitle(`${e.name}${e.category ? ` · ${kindLabel(e.category)}` : ""}`).setIcon(TYPE_ICONS[e.type] ?? "file").setDisabled(true);
 			(i as unknown as { setIsLabel?: (v: boolean) => void }).setIsLabel?.(true);
 		});
-		// One way in: the inspector reads and edits everything (kind, size, map layer, realm, names…).
-		menu.addItem((i) => i.setTitle("Inspect").setIcon("panel-right").onClick(() => void plugin.inspect(key, "edit")));
+		// Three ways to open it, three icons: the side panel, the note itself, the note beside this view.
+		menu.addItem((i) => i.setTitle("Inspect").setIcon("panel-right").onClick(() => void plugin.inspect(key)));
 		menu.addItem((i) => i.setTitle("Open note").setIcon("file-text").onClick(() => openEntity(plugin, key)));
 		menu.addItem((i) =>
-			i.setTitle("Open to the right").setIcon("separator-vertical").onClick(() => {
+			i.setTitle("Open beside").setIcon("columns-2").onClick(() => {
 				const file = plugin.app.vault.getAbstractFileByPath(key);
 				if (file instanceof TFile) void plugin.app.workspace.getLeaf("split").openFile(file);
 			}),
@@ -352,23 +412,7 @@ export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseE
 			opts.top(menu);
 		}
 		menu.addSeparator();
-		if (e.start || e.end || e.type === "person" || e.type === "culture")
-			menu.addItem((i) => i.setTitle("Show on timeline").setIcon("calendar-range").onClick(() => plugin.openTimeline({ focus: key })));
-		if (e.type === "person")
-			menu.addItem((i) => i.setTitle("Show family tree").setIcon("git-fork").onClick(() => plugin.openFamilyTree(key)));
-		if (e.type === "culture")
-			menu.addItem((i) => i.setTitle("Show in the lineage of groups").setIcon("git-branch").onClick(() => plugin.openLineage(key)));
-		if (e.type === "culture")
-			menu.addItem((i) => i.setTitle("Show organisation chart").setIcon("network").onClick(() => void plugin.openOrgChart(key)));
-		if (e.type === "person")
-			menu.addItem((i) => i.setTitle("How related to…").setIcon("git-compare").onClick(() => plugin.openKinship(key)));
-		if (e.type === "person" || e.type === "culture")
-			menu.addItem((i) => i.setTitle("Line of succession").setIcon("crown").onClick(() => plugin.openSuccession(key)));
-		if (e.type === "event")
-			menu.addItem((i) => i.setTitle("Why did this happen?").setIcon("git-pull-request-arrow").onClick(() => plugin.openCauses(key)));
-		if (e.type === "place" || e.places.length || e.type === "map")
-			menu.addItem((i) => i.setTitle("Show on map").setIcon("map").onClick(() => plugin.openMap(key)));
-		menu.addItem((i) => i.setTitle("Show connections").setIcon("waypoints").onClick(() => plugin.openNetwork(key)));
+		addShortcutMenus(menu, plugin, e);
 	} else {
 		const name = key.startsWith("?") ? key.slice(1) : key;
 		menu.addItem((i) =>
@@ -385,7 +429,6 @@ export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseE
 	}
 	menu.showAtMouseEvent(evt);
 }
-
 export function iconButton(parent: HTMLElement, iconName: string, label: string, onClick: (evt: MouseEvent) => void, cls = ""): HTMLElement {
 	const b = el("div", { cls: `clickable-icon chronicle-icon-btn ${cls}`.trim(), title: label }, parent);
 	b.setAttribute("aria-label", label);

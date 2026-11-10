@@ -9,6 +9,7 @@ import { readNames } from "./renames";
 import { holdersProperty, readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
+import { parseKin } from "./relatives";
 import { clearInferred, noteSignature } from "./derived";
 import { timeBoundaries, timeStep } from "./timesteps";
 import {
@@ -37,6 +38,12 @@ export class EntityIndex extends Events {
 	childrenOf = new Map<string, Set<string>>();
 	adoptiveChildrenOf = new Map<string, Set<string>>();
 	partnersOf = new Map<string, TimedRef[]>();
+	/** Parents of relatives with no note, from `relatives:` lines (see relatives.ts); keyed "?name". */
+	private ghostParents = new Map<string, Ref[]>();
+	/** The name as written for each relative with no note ("?mary-anne" is "Mary-Anne"). */
+	private ghostNames = new Map<string, string>();
+	/** Which keys each note's `relatives:` lines talk about. */
+	private kinKeys = new Map<string, Set<string>>();
 	relationsOf = new Map<string, TimedRef[]>();
 	eventsOf = new Map<string, Set<string>>();
 	membersOf = new Map<string, { key: string; link: TimedRef }[]>();
@@ -615,6 +622,44 @@ export class EntityIndex extends Events {
 			}
 		}
 
+		// Families written as `relatives:` lines: relatives with no note can have parents, partners and children too.
+		this.ghostParents = new Map();
+		this.ghostNames = new Map();
+		this.kinKeys = new Map();
+		for (const e of this.entities.values()) {
+			if (e.type !== "person") continue;
+			const kin = parseKin(e.props.relatives ?? e.props.kin);
+			if (!kin.parentOf.length && !kin.partners.length) continue;
+			const seen = new Set<string>();
+			this.kinKeys.set(e.key, seen);
+			const refOf = (name: string): Ref => {
+				const found = this.findByName(name);
+				if (found) return { key: found.key, name: found.name, resolved: true, inferred: true };
+				const key = "?" + name.toLowerCase();
+				if (!this.ghostNames.has(key)) this.ghostNames.set(key, name);
+				return { key, name, resolved: false, inferred: true };
+			};
+			for (const [parent, child] of kin.parentOf) {
+				const p = refOf(parent);
+				const c = refOf(child);
+				seen.add(p.key).add(c.key);
+				if (p.key === c.key) continue;
+				add(this.childrenOf, p.key, c.key);
+				const under = this.entities.get(c.key);
+				const list = under ? under.parents : this.ghostParents.get(c.key) ?? [];
+				if (!list.some((r) => r.key === p.key) && list.length < 2) list.push(p);
+				if (!under) this.ghostParents.set(c.key, list);
+			}
+			for (const [a, b] of kin.partners) {
+				const ra = refOf(a);
+				const rb = refOf(b);
+				seen.add(ra.key).add(rb.key);
+				if (ra.key === rb.key) continue;
+				pushTimed(this.partnersOf, ra.key, { ref: rb });
+				pushTimed(this.partnersOf, rb.key, { ref: ra });
+			}
+		}
+
 		for (const e of this.entities.values()) {
 			for (const p of e.parents) add(this.childrenOf, p.key, e.key);
 			for (const p of e.adoptiveParents) add(this.adoptiveChildrenOf, p.key, e.key);
@@ -691,8 +736,23 @@ export class EntityIndex extends Events {
 		return this.partnersOf.get(key) ?? [];
 	}
 
+	/** A person's parents; for a relative with no note, the ones their family lines give. */
 	parentsOf(key: string): Ref[] {
-		return this.entities.get(key)?.parents ?? [];
+		return this.entities.get(key)?.parents ?? this.ghostParents.get(key) ?? [];
+	}
+
+	/** The name of a relative with no note, as it was written. */
+	ghostName(key: string): string | undefined {
+		return this.ghostNames.get(key);
+	}
+
+	/** The note that talks about a relative with no note, where new lines about them are written: one that lists them, or whose family lines name them. */
+	kinAnchor(key: string): Entity | undefined {
+		for (const e of this.entities.values()) {
+			if (e.type !== "person") continue;
+			if ([...e.parents, ...e.children, ...e.partners.map((p) => p.ref)].some((r) => r.key === key) || this.kinKeys.get(e.key)?.has(key)) return e;
+		}
+		return undefined;
 	}
 
 	siblings(key: string): string[] {
