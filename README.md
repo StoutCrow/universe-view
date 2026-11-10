@@ -1,7 +1,7 @@
 # UniverseView for Obsidian
 
 
-> Full disclosure, **this was completely made with AI**. I 'dictated' it, but know jack about coding, Claude Opus 5.5 completely coded this plugin.
+> Full disclosure, **this was completely made with AI**. I 'dictated' it, but know jack about coding. It was coded completely by Claude, using different models: Opus 5.5, and Sonnet 5.5 advised by Opus.
 > According to the AI, this plugin has over 370 unit tests and was exercised in a browser test harness. However it has not been reviewed line by line by a human developer. Back up your vault, and use Undo freely: every change UniverseView makes to your notes can be undone (the clock button on any view lists them all).
 
 Turn ordinary notes into **timelines, family trees, maps, calendars, organisation charts and more**, for history, genealogy, worldbuilding, fiction and tabletop campaigns. It handles fictional calendars and hand-drawn maps.
