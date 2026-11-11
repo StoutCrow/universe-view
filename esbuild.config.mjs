@@ -11,6 +11,8 @@ const prod = process.argv[2] === "production";
 // the settings' preview cards get the same rules against .uv-pv, so they are always drawn by the real styles.
 function buildInfo() {
 	const git = (cmd) => execSync(`git ${cmd}`, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+	// Only local installs (dev/install.ps1) carry a build number. A release build must not depend on git, so the same source gives the same main.js anywhere.
+	if (!process.env.UV_BUILD_NUMBER) return { build: 0, dirty: false, at: "" };
 	try {
 		return { build: Number(git("rev-list --count HEAD")), dirty: git("status --porcelain").length > 0, at: git("log -1 --format=%cI") };
 	} catch {

@@ -2,6 +2,14 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 3.2.2 — 2026-11-11
+
+More fixes from the Obsidian plugin review.
+
+### Fixed
+- The Chamfer edge style no longer clips corners (CSS clip-path); panels keep square corners with a diagonal accent line across two corners. Cards and popups keep plain square corners.
+- Release builds no longer depend on git history, so the same source always gives the same main.js. Release builds show the version only; local installs still show a build number.
+
 ## 3.2.1 — 2026-11-11
 
 Fixes from the Obsidian plugin review.

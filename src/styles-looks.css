@@ -170,7 +170,7 @@ body.uv-edge-ornate { --oc: var(--chronicle-accent, var(--interactive-accent)); 
 	--uve-bi: linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)); }
 body.uv-edge-stitched { --uve-r: var(--uv-r-lg); --uve-bd: 1px solid var(--background-modifier-border); --uve-o: 1.5px dashed var(--text-faint); --uve-oo: -5px; --uve-clip: none; --uve-bi: none; --uve-bar-b: 2px dashed var(--text-faint); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none; }
 body.uv-edge-sketch { --uve-r: 16px 4px 18px 5px / 5px 18px 4px 16px; --uve-bd: var(--uve-bw, 1.5px) solid var(--text-muted); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: none; --uve-bar-b: 2px solid var(--text-muted); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none; }
-body.uv-edge-chamfer { --oc: var(--chronicle-accent, var(--interactive-accent)); --uve-r: 0; --uve-bd: 1px solid color-mix(in srgb, var(--oc) 55%, transparent); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); --uve-bi: none; --uve-bar-b: 1px solid var(--oc); --uve-bar-t: 0 solid transparent; --uve-bar-sh: 0 1px 12px -5px var(--oc); }
+body.uv-edge-chamfer { --oc: var(--chronicle-accent, var(--interactive-accent)); --uve-r: 0; --uve-bd: 1px solid color-mix(in srgb, var(--oc) 55%, transparent); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: linear-gradient(135deg, transparent calc(50% - 0.5px), var(--oc) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)), linear-gradient(135deg, transparent calc(50% - 0.5px), var(--oc) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)); --uve-bs: 12px 12px, 12px 12px; --uve-bp: left top, right bottom; --uve-bar-b: 1px solid var(--oc); --uve-bar-t: 0 solid transparent; --uve-bar-sh: 0 1px 12px -5px var(--oc); }
 body.uv-edge-ledger { --uve-r: 0; --uve-bd: 0 solid transparent; --uve-bt: 2px solid var(--text-normal); --uve-bb: 1px solid var(--text-normal); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: none; --uve-bar-b: 1px solid var(--text-normal); --uve-bar-t: 3px solid var(--text-normal); --uve-bar-sh: none; }
 
 /* Panels: the full frame. */
@@ -181,18 +181,16 @@ body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-module, .chronicle-ov-pan
 	border-radius: var(--uve-r);
 	outline: var(--uve-o);
 	outline-offset: var(--uve-oo);
-	clip-path: var(--uve-clip);
 	background-image: var(--uve-bi);
 	background-repeat: no-repeat;
-	background-size: 16px 2px, 2px 16px, 16px 2px, 2px 16px, 16px 2px, 2px 16px, 16px 2px, 2px 16px;
-	background-position: left 7px top 7px, left 7px top 7px, right 7px top 7px, right 7px top 7px, left 7px bottom 7px, left 7px bottom 7px, right 7px bottom 7px, right 7px bottom 7px;
+	background-size: var(--uve-bs, 16px 2px, 2px 16px, 16px 2px, 2px 16px, 16px 2px, 2px 16px, 16px 2px, 2px 16px);
+	background-position: var(--uve-bp, left 7px top 7px, left 7px top 7px, right 7px top 7px, right 7px top 7px, left 7px bottom 7px, left 7px bottom 7px, right 7px bottom 7px, right 7px bottom 7px);
 }
 /* Cards, the map's banner and popups: the shape and inner line, never the border (they keep their coloured edge). */
 body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-card:not(.is-found), .chronicle-map-banner, .uv-map-picked, .leaflet-popup-content-wrapper):not(.uv-pv *) {
 	border-radius: var(--uve-r);
 	outline: var(--uve-o);
 	outline-offset: var(--uve-oo);
-	clip-path: var(--uve-clip);
 }
 /* The lines that carry the frame across a view: under the toolbar and under the dashboard's tabs. */
 body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-toolbar, .uv-hub-bar):not(.uv-pv *) {

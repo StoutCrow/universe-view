@@ -24,6 +24,7 @@ if ($LASTEXITCODE) { throw "Type errors" }
 node dev/build-tests.mjs
 node dev/out/tests.js | Select-Object -Last 1
 if ($LASTEXITCODE) { throw "Tests failed" }
+$env:UV_BUILD_NUMBER = "1"
 node esbuild.config.mjs production
 if ($LASTEXITCODE) { throw "Build failed" }
 $list = "dev\vaults.local.txt"

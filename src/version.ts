@@ -14,6 +14,8 @@ export interface BuildLabel {
 export function buildLabel(version: string): BuildLabel {
 	const info = typeof UV_BUILD_INFO === "object" ? UV_BUILD_INFO : undefined;
 	if (!info) return { short: `v${version} · dev`, long: `${version} · dev build` };
+	// A release build carries no build number (it must not depend on git): show just the version.
+	if (!info.build) return { short: `v${version}`, long: version };
 	const n = `build ${info.build}${info.dirty ? "+" : ""}`;
 	const when = new Date(info.at);
 	const at = Number.isNaN(when.getTime()) ? "" : `, built ${when.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
