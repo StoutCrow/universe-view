@@ -24,10 +24,10 @@ export function setRoughEdges(on: boolean) {
 		if (observer) return;
 		scan(document.body);
 		observer = new MutationObserver((changes) => {
-			for (const c of changes) c.addedNodes.forEach((n) => n instanceof Element && waiting.add(n));
+			for (const c of changes) c.addedNodes.forEach((n) => n.instanceOf(Element) && waiting.add(n));
 			if (queued) return;
 			queued = true;
-			requestAnimationFrame(() => {
+			window.requestAnimationFrame(() => {
 				queued = false;
 				waiting.forEach(scan);
 				waiting.clear();

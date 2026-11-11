@@ -1165,7 +1165,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Strength")
 			.setDesc("How deep the bevels and shadows are. 100% is the default.")
-			.addSlider((sl) => sl.setLimits(20, 220, 5).setDynamicTooltip().setValue(s.tactileStrength ?? ({ subtle: 55, normal: 100, deep: 160 }[s.tactileDepth ?? "normal"])).onChange(async (v) => {
+			.addSlider((sl) => sl.setLimits(20, 220, 5).setValue(s.tactileStrength ?? ({ subtle: 55, normal: 100, deep: 160 }[s.tactileDepth ?? "normal"])).onChange(async (v) => {
 				s.tactileStrength = v;
 				await save();
 			}))

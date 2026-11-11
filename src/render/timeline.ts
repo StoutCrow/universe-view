@@ -16,6 +16,7 @@ import { dragToReorder } from "../ui/cardlayout";
 import { KIND_LABELS, categoryColor, categoryOf, shapeFor, type ItemKind, type ItemShape } from "./categories";
 import { historyOf, writtenReigns, type HistoryKind, type HistoryMark } from "./history";
 import { markIcon, markKey } from "./markkey";
+import { shapeBar, shapeDot } from "./shapeart";
 
 export type TimelineGroup = "none" | "category" | "realm" | "culture" | "place" | "person" | "tag" | "type";
 
@@ -1005,6 +1006,7 @@ export class TimelineRenderer {
 			node.addClass("is-point");
 			node.style.left = `${p.x1 - 7}px`;
 			const dot = el("span", { cls: "chronicle-tl-dot" }, node);
+				shapeDot(dot, this.shapeIn(it));
 			if (battle) icon(dot, "swords");
 			if (!p.noLabel) el("span", { cls: "chronicle-tl-label", text: it.label }, node);
 		} else {
@@ -1012,6 +1014,7 @@ export class TimelineRenderer {
 			node.style.left = `${p.x1}px`;
 			const bar = el("span", { cls: "chronicle-tl-bar" }, node);
 			bar.style.width = `${p.x2 - p.x1}px`;
+				shapeBar(bar, this.shapeIn(it));
 			const marks = it.marks ?? [];
 			const levels = stackLevels(marks.map((m) => this.x(m.day)));
 			marks.forEach((m, i) => this.renderMark(node, m, p.x1, levels[i]));

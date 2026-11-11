@@ -898,12 +898,6 @@ button.chronicle-ov-tile {
 	border-radius: 0;
 	box-shadow: none;
 }
-.uv-shape-arrow .chronicle-tl-dot { clip-path: polygon(0 0, 100% 50%, 0 100%); }
-.uv-shape-diamond .chronicle-tl-dot { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-.uv-shape-chevron .chronicle-tl-dot { clip-path: polygon(0 0, 60% 0, 100% 50%, 60% 100%, 0 100%, 40% 50%); }
-.uv-shape-hexagon .chronicle-tl-dot { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
-.uv-shape-triangle .chronicle-tl-dot { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.uv-shape-star .chronicle-tl-dot { clip-path: polygon(50% 0, 62% 35%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 35%); }
 .uv-shape-hatch .chronicle-tl-dot,
 .uv-shape-hatch .chronicle-tl-bar {
 	background: repeating-linear-gradient(45deg, var(--item-color) 0 2px, color-mix(in srgb, var(--item-color) 22%, var(--background-primary)) 2px 6px);
@@ -918,11 +912,63 @@ button.chronicle-ov-tile {
 	border-radius: 0;
 	background: color-mix(in srgb, var(--item-color) 32%, var(--background-primary));
 }
-.chronicle-tl-item.uv-shape-arrow .chronicle-tl-bar { clip-path: polygon(0 0, max(0px, calc(100% - 10px)) 0, 100% 50%, max(0px, calc(100% - 10px)) 100%, 0 100%); }
-.chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar { clip-path: polygon(0 0, max(0px, calc(100% - 10px)) 0, 100% 50%, max(0px, calc(100% - 10px)) 100%, 0 100%, 10px 50%); padding-left: 10px; }
-.chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar { clip-path: polygon(10px 0, max(10px, calc(100% - 10px)) 0, 100% 50%, max(10px, calc(100% - 10px)) 100%, 10px 100%, 0 50%); padding-left: 6px; }
-.chronicle-tl-item.uv-shape-triangle .chronicle-tl-bar { clip-path: polygon(10px 0, 100% 0, max(10px, calc(100% - 10px)) 100%, 0 100%); padding-left: 6px; }
-.chronicle-tl-item.uv-shape-star .chronicle-tl-bar { clip-path: polygon(0 0, 100% 0, max(0px, calc(100% - 8px)) 50%, 100% 100%, 0 100%, 8px 50%); padding-left: 8px; }
+/* Shapes with a slanted end are drawn as SVG by render/shapeart.ts (dots: one polygon; bars: a body block between small end caps). */
+.chronicle-tl-dot.has-art:not(#uv-strong) {
+	position: relative;
+	background: none;
+	animation: none;
+	--uv-art-fill: var(--item-color);
+}
+.chronicle-tl-item.kind-death .chronicle-tl-dot.has-art:not(#uv-strong) { --uv-art-fill: var(--background-primary); }
+.chronicle-tl-dot.has-art > svg:not(.uv-shape-art) { position: relative; }
+.uv-shape-art {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	fill: var(--uv-art-fill);
+}
+.chronicle-tl-bar.has-art:not(#uv-strong) {
+	border: none;
+	background: none;
+	animation: none;
+	box-shadow: none;
+	--uv-art-fill: color-mix(in srgb, var(--item-color) 32%, var(--background-primary));
+	--uv-art-edge: color-mix(in srgb, var(--item-color) 85%, transparent);
+}
+.chronicle-tl-bar.has-art > .chronicle-tl-label { position: relative; }
+.uv-art-body {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	background: var(--uv-art-fill);
+	border-top: 1px solid var(--uv-art-edge);
+	border-bottom: 1px solid var(--uv-art-edge);
+}
+.uv-art-body.has-left-edge { border-left: 1px solid var(--uv-art-edge); }
+.uv-art-cap {
+	position: absolute;
+	top: 0;
+	height: 100%;
+}
+.uv-art-cap.is-left { left: 0; }
+.uv-art-cap.is-right { right: 0; }
+.uv-art-cap svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	fill: var(--uv-art-fill);
+	stroke: var(--uv-art-edge);
+	stroke-width: 2px;
+	vector-effect: non-scaling-stroke;
+}
+.uv-art-cap polygon { stroke: none; }
+.uv-art-cap line { vector-effect: non-scaling-stroke; }
+.chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar { padding-left: 10px; }
+.chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar { padding-left: 6px; }
+.chronicle-tl-item.uv-shape-triangle .chronicle-tl-bar { padding-left: 6px; }
+.chronicle-tl-item.uv-shape-star .chronicle-tl-bar { padding-left: 8px; }
 .uv-tl-key {
 	display: inline-flex;
 	flex-wrap: wrap;

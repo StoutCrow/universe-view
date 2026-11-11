@@ -7,21 +7,21 @@ import { execSync } from "node:child_process";
 const prod = process.argv[2] === "production";
 
 // Obsidian only loads styles.css, so Leaflet's stylesheet is concatenated in front of ours.
-// The button, tab, edge and font styles are written once against <body> (with @@ marking "not inside a preview");
+// The button, tab, edge and font styles are written once against <body> (with :not(.uv-pv *) marking "not inside a preview");
 // the settings' preview cards get the same rules against .uv-pv, so they are always drawn by the real styles.
 function buildInfo() {
 	const git = (cmd) => execSync(`git ${cmd}`, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
 	try {
-		return { build: Number(git("rev-list --count HEAD")), dirty: git("status --porcelain").length > 0, at: new Date().toISOString() };
+		return { build: Number(git("rev-list --count HEAD")), dirty: git("status --porcelain").length > 0, at: git("log -1 --format=%cI") };
 	} catch {
-		return { build: 0, dirty: false, at: new Date().toISOString() };
+		return { build: 0, dirty: false, at: "1970-01-01T00:00:00Z" };
 	}
 }
 
 function looks() {
 	const src = fs.readFileSync("src/styles-looks.css", "utf8").replace(/^\uFEFF/, "");
-	const forBody = src.replace(/@@/g, ":not(.uv-pv *)");
-	const forPreview = src.replace(/@@/g, "").replace(/^body/gm, ".uv-pv");
+	const forBody = src;
+	const forPreview = src.replace(/:not\(\.uv-pv \*\)/g, "").replace(/^body/gm, ".uv-pv");
 	return `\n\n${forBody}\n\n${forPreview}`;
 }
 function buildStyles() {

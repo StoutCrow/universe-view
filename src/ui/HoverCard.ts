@@ -78,7 +78,7 @@ export class HoverCards {
 		// Alt+click on anything with a hover card (a card, a pin, a bar, a row…) opens it in the inspector: one way in, everywhere.
 		plugin.registerDomEvent(document, "click", (evt) => {
 			if (!evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey) return;
-			let node = evt.target instanceof Element ? evt.target : null;
+			let node = (evt.target as Node | null)?.instanceOf(Element) ? (evt.target as Element) : null;
 			if (node?.closest(".is-tool, .chronicle-hovercard, input, textarea, select")) return;
 			while (node) {
 				const key = this.keys.get(node)?.();

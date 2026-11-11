@@ -1443,7 +1443,7 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 
 /* ---- Timeline: battles and the picked item's card ---- */
 .chronicle-tl-item.is-battle .chronicle-tl-dot { width: 16px; height: 16px; margin-left: -1px; display: flex; align-items: center; justify-content: center; color: #fff; }
-.chronicle-tl-item.is-battle .chronicle-tl-dot svg { width: 10px; height: 10px; stroke-width: 2.6; }
+.chronicle-tl-item.is-battle .chronicle-tl-dot svg:not(.uv-shape-art) { width: 10px; height: 10px; stroke-width: 2.6; }
 .chronicle-tl-item.is-selected .chronicle-tl-dot,
 .chronicle-tl-item.is-selected .chronicle-tl-bar { box-shadow: 0 0 0 3px color-mix(in srgb, var(--item-color) 55%, transparent); }
 .chronicle-tl-item.is-selected .chronicle-tl-label { color: var(--text-accent); font-weight: 600; }

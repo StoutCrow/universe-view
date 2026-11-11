@@ -25,7 +25,7 @@ body.uv-btn-ruled { --uvb-bg: transparent; --uvb-bd: transparent; --uvb-fg: var(
 	--uvb-hbg: transparent; --uvb-hbd: transparent; --uvb-hfg: var(--text-normal); --uvb-hsh: inset 0 -2px 0 var(--text-normal);
 	--uvb-obg: transparent; --uvb-obd: transparent; --uvb-ofg: var(--text-normal); --uvb-osh: inset 0 -2px 0 var(--chronicle-accent, var(--interactive-accent)); }
 
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .chronicle-ov-action, .uv-lin-chip)@@ {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .chronicle-ov-action, .uv-lin-chip):not(.uv-pv *) {
 	background: var(--uvb-bg);
 	border: var(--uvb-bw, 1px) solid var(--uvb-bd);
 	border-radius: var(--uvb-r);
@@ -35,29 +35,29 @@ body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .
 	letter-spacing: var(--uvb-ls, normal);
 	transform: none;
 }
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .chronicle-ov-action, .uv-lin-chip)@@:hover {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .chronicle-ov-action, .uv-lin-chip):not(.uv-pv *):hover {
 	background: var(--uvb-hbg);
 	border-color: var(--uvb-hbd);
 	box-shadow: var(--uvb-hsh, var(--uvb-sh));
 	color: var(--uvb-hfg);
 }
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .uv-lin-chip)@@:is(.is-active, :active)@@ {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .uv-lin-chip):not(.uv-pv *):is(.is-active, :active):not(.uv-pv *) {
 	background: var(--uvb-obg);
 	border-color: var(--uvb-obd);
 	box-shadow: var(--uvb-osh, var(--uvb-sh));
 	color: var(--uvb-ofg);
 	transform: var(--uvb-ot, none);
 }
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .uv-lin-chip)@@ {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .uv-lin-chip):not(.uv-pv *) {
 	padding-inline: var(--uvb-px);
 }
-body.chronicle-theme-parchment.uv-btn-outlined:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon))@@ {
+body.chronicle-theme-parchment.uv-btn-outlined:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon)):not(.uv-pv *) {
 	box-shadow: inset 0 0 0 2px var(--background-primary), inset 0 0 0 3px color-mix(in srgb, var(--text-normal) 22%, transparent);
 }
 
 /* ---- Tabs: the dashboard's, the inspector's and the sub-tabs ---- */
 /* Shared: every style starts from a clean tab, then adds its own. */
-body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ {
+body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
 	height: 36px;
 	margin-bottom: 0;
 	padding: 0 14px;
@@ -72,37 +72,37 @@ body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-t
 	font-variant: normal;
 	font-weight: normal;
 }
-body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@:hover {
+body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *):hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
-body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	color: var(--text-normal);
 	font-weight: 600;
 }
 /* Underline: a heavy accent bar under the open tab. */
-body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ { border-bottom: 2px solid transparent; }
-body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) { border-bottom: 2px solid transparent; }
+body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	border-bottom-color: var(--chronicle-accent, var(--interactive-accent));
 	background: transparent;
 }
 /* Folder: raised tabs that join the page below. */
 body.uv-tabs-folder:not(#uv-strong) .uv-hub-bar { align-items: flex-end; padding-top: 8px; }
-body.uv-tabs-folder:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .uv-subtabs)@@ { gap: 4px; }
-body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ {
+body.uv-tabs-folder:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .uv-subtabs):not(.uv-pv *) { gap: 4px; }
+body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
 	height: 34px;
 	margin-bottom: -1px;
 	border-color: var(--background-modifier-border-hover);
 	border-radius: var(--uv-r-lg) var(--uv-r-lg) 0 0;
 	background: var(--background-secondary);
 }
-body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	background: var(--background-primary);
 	border-bottom-color: var(--background-primary);
 	border-top: 3px solid var(--chronicle-accent, var(--interactive-accent));
 }
 /* Segmented: one rounded strip with a raised thumb. */
-body.uv-tabs-segmented:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .uv-subtabs)@@ {
+body.uv-tabs-segmented:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .uv-subtabs):not(.uv-pv *) {
 	flex: 0 1 auto;
 	align-self: center;
 	gap: 2px;
@@ -111,17 +111,17 @@ body.uv-tabs-segmented:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .
 	background: var(--background-modifier-border);
 	border-bottom: none;
 }
-body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ { height: 30px; border-radius: var(--uv-r-sm); }
-body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) { height: 30px; border-radius: var(--uv-r-sm); }
+body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	background: var(--background-primary);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 /* Plain: words only; the open one is bold, in the accent, with a dot. */
-body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	color: var(--chronicle-accent, var(--interactive-accent));
 	font-weight: 700;
 }
-body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@::before {
+body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *)::before {
 	content: "";
 	width: 6px;
 	height: 6px;
@@ -130,20 +130,20 @@ body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-i
 	background: currentcolor;
 }
 /* Block: the open tab is a solid accent block. */
-body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ { border-radius: var(--uv-r-sm); }
-body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) { border-radius: var(--uv-r-sm); }
+body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	background: var(--chronicle-accent, var(--interactive-accent));
 	color: var(--text-on-accent);
 	box-shadow: 3px 3px 0 var(--text-normal);
 }
 /* Glow: spaced capitals, and the open tab lights up. */
-body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ {
+body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
 	border-bottom: 2px solid transparent;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
 	font-size: var(--font-ui-smaller);
 }
-body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	color: var(--chronicle-accent, var(--interactive-accent));
 	border-bottom-color: var(--chronicle-accent, var(--interactive-accent));
 	background: linear-gradient(to top, color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 16%, transparent), transparent);
@@ -151,12 +151,12 @@ body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-in
 	box-shadow: 0 8px 12px -8px var(--chronicle-accent, var(--interactive-accent));
 }
 /* Rule: small capitals; the open tab sits between two thin rules. */
-body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab)@@ {
+body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
 	font-variant: small-caps;
 	letter-spacing: 0.06em;
 	font-size: calc(var(--font-ui-small) * 1.1);
 }
-body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on)@@ {
+body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	box-shadow: inset 0 1px 0 var(--text-normal), inset 0 -1px 0 var(--text-normal);
 }
 
@@ -174,7 +174,7 @@ body.uv-edge-chamfer { --oc: var(--chronicle-accent, var(--interactive-accent));
 body.uv-edge-ledger { --uve-r: 0; --uve-bd: 0 solid transparent; --uve-bt: 2px solid var(--text-normal); --uve-bb: 1px solid var(--text-normal); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: none; --uve-bar-b: 1px solid var(--text-normal); --uve-bar-t: 3px solid var(--text-normal); --uve-bar-sh: none; }
 
 /* Panels: the full frame. */
-body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-module, .chronicle-ov-panel, button.chronicle-ov-tile, .chronicle-dash-card, .uv-options, .chronicle-hovercard, .uv-pv-card)@@ {
+body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-module, .chronicle-ov-panel, button.chronicle-ov-tile, .chronicle-dash-card, .uv-options, .chronicle-hovercard, .uv-pv-card):not(.uv-pv *) {
 	border: var(--uve-bd);
 	border-top: var(--uve-bt, var(--uve-bd));
 	border-bottom: var(--uve-bb, var(--uve-bd));
@@ -188,14 +188,14 @@ body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-module, .chronicle-ov-pan
 	background-position: left 7px top 7px, left 7px top 7px, right 7px top 7px, right 7px top 7px, left 7px bottom 7px, left 7px bottom 7px, right 7px bottom 7px, right 7px bottom 7px;
 }
 /* Cards, the map's banner and popups: the shape and inner line, never the border (they keep their coloured edge). */
-body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-card:not(.is-found), .chronicle-map-banner, .uv-map-picked, .leaflet-popup-content-wrapper)@@ {
+body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-card:not(.is-found), .chronicle-map-banner, .uv-map-picked, .leaflet-popup-content-wrapper):not(.uv-pv *) {
 	border-radius: var(--uve-r);
 	outline: var(--uve-o);
 	outline-offset: var(--uve-oo);
 	clip-path: var(--uve-clip);
 }
 /* The lines that carry the frame across a view: under the toolbar and under the dashboard's tabs. */
-body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-toolbar, .uv-hub-bar)@@ {
+body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-toolbar, .uv-hub-bar):not(.uv-pv *) {
 	border-top: var(--uve-bar-t);
 	border-bottom: var(--uve-bar-b);
 	box-shadow: var(--uve-bar-sh);
@@ -209,7 +209,7 @@ body.uv-font-modern { --uvf-d: "Inter", "SF Pro Display", "Segoe UI Variable Dis
 body.uv-font-technical { --uvf-d: "Orbitron", "Bahnschrift", "Eurostile", "Rajdhani", "Segoe UI", sans-serif; --uvf-u: "Rajdhani", "Bahnschrift", "Segoe UI", system-ui, sans-serif; }
 body.uv-font-typewriter { --uvf-d: "American Typewriter", "Courier New", Courier, monospace; --uvf-u: "Courier New", Courier, monospace; }
 body[class*="uv-font-"]:not(#uv-strong) { --chronicle-font-display: var(--uvf-d); }
-body[class*="uv-font-"]:not(#uv-strong) .chronicle-scope@@ { --font-interface: var(--uvf-u); font-family: var(--uvf-u); }
+body[class*="uv-font-"]:not(#uv-strong) .chronicle-scope:not(.uv-pv *) { --font-interface: var(--uvf-u); font-family: var(--uvf-u); }
 .uv-pv[class*="uv-font-"] { font-family: var(--uvf-u); }
 
 /* ==== The picker cards in Settings → Look ======================================================= */
@@ -270,15 +270,15 @@ div.uv-sp-card:focus-visible { outline: 2px solid var(--interactive-accent); out
 body.uv-icons-light { --uvi-w: 1.25px; }
 body.uv-icons-regular { --uvi-w: 1.75px; }
 body.uv-icons-bold { --uvi-w: 2.5px; }
-body[class*="uv-icons-"]:not(#uv-strong) :is(.chronicle-view, .chronicle-scope, .uv-hub, .chronicle-hovercard, .uv-options, .uv-pv) svg.svg-icon@@ { stroke-width: var(--uvi-w); }
+body[class*="uv-icons-"]:not(#uv-strong) :is(.chronicle-view, .chronicle-scope, .uv-hub, .chronicle-hovercard, .uv-options, .uv-pv) svg.svg-icon:not(.uv-pv *) { stroke-width: var(--uvi-w); }
 .uv-sp-icon { display: inline-flex; color: var(--text-normal); }
 .uv-sp-icon svg { width: 20px; height: 20px; }
 
 /* ==== Headings: how titles and group names are marked ========================================= */
-body.uv-head-ruled:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head)@@ { text-decoration: underline; text-decoration-color: var(--text-faint); text-decoration-thickness: 1px; text-underline-offset: 5px; }
-body.uv-head-smallcaps:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head)@@ { font-variant: small-caps; letter-spacing: 0.06em; }
-body.uv-head-capitals:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head)@@ { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.86em; }
-body.uv-head-flourish:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label)@@::after {
+body.uv-head-ruled:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head):not(.uv-pv *) { text-decoration: underline; }
+body.uv-head-smallcaps:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head):not(.uv-pv *) { font-variant: small-caps; letter-spacing: 0.06em; }
+body.uv-head-capitals:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head):not(.uv-pv *) { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.86em; }
+body.uv-head-flourish:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label):not(.uv-pv *)::after {
 	content: "";
 	display: inline-block;
 	width: 26px;

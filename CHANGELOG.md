@@ -2,6 +2,17 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 3.2.1 — 2026-11-11
+
+Fixes from the Obsidian plugin review.
+
+### Fixed
+- Timeline shapes (arrow, diamond, chevron, hexagon, triangle, star) are drawn as SVG instead of CSS clip-path. They look the same; bars shorter than about 20px, approximate-date shaped bars and shaped bars with no end date differ slightly.
+- Stylesheet no longer contains the build-time `@@` marker (invalid CSS); the ruled-heading underline uses the default thickness.
+- Cross-window safety: `instanceOf` checks and `window.requestAnimationFrame`.
+- Removed the deprecated slider tooltip call (the value shows inline).
+- Builds are reproducible: the build date is the commit's date, so the same commit always gives the same main.js.
+
 ## 3.2.0 — 2026-11-10
 
 Redo, the map's one Options panel, and a batch of small quality-of-life fixes.
