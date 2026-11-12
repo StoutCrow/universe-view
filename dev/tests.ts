@@ -1,7 +1,7 @@
 import { findColourAreas } from "../src/render/colours";
 import { kindFix, knownKindWords } from "../src/index/kindcheck";
 import { fitTie, formatDetails, parseDetails, splitDetails, splitParts, tieKindInfo } from "../src/index/ties";
-import { ROW_ORDER, readMembers, rebuildMembers, rowOfKind, rowOfProperty, splitMembers, type GroupRow } from "../src/index/membership";
+import { ROW_ORDER, fitsRow, readMembers, rebuildMembers, rowOfKind, rowOfProperty, splitMembers, type GroupRow } from "../src/index/membership";
 import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
@@ -254,6 +254,9 @@ eq(readIcon("🏰"), "🏰", "emoji icon");
 eq(readCategory({ kind: "City" }, [], "place"), "city", "kind property");
 eq(readCategory({}, ["Fort"], "place"), "fort", "category from tag");
 eq(readCategory({}, ["Place"], "place"), undefined, "generic tag is not a category");
+// Which rows of the edit form offer a group: its own kind's row; a group of no particular kind only as an organisation.
+eq((["realm", "house", "culture", "faith", "organisation"] as const).map((r) => [fitsRow(r, "group"), fitsRow(r, "culture"), fitsRow(r, "realm")]),
+	[[false, false, true], [false, false, false], [false, true, false], [false, false, false], [true, false, false]], "groups: an Other group is never offered as a culture or realm");
 eq(readCategory({ type: "kingdom" }, [], "culture"), "kingdom", "category from specific type");
 eq(readCategory({ category: "place" }, [], "place"), undefined, "category: place is the type itself");
 eq(parseMapCategories("port = anchor").get("port"), { icon: "anchor" }, "map categories: icon only");

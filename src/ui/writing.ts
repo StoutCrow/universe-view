@@ -12,7 +12,7 @@ import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
-import { ROW_INFO, ROW_ORDER, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
+import { ROW_INFO, ROW_ORDER, fitsRow, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
 import { groupKind } from "../render/houses";
 import { asText } from "../index/text";
 import { PARENT_KINDS, PARTNER_KINDS, formatDetails, parseDetails } from "../index/ties";
@@ -186,11 +186,8 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			for (const row of ROW_ORDER) {
 				if (!show.includes(row) && !split[row].length) continue;
 				if (row === "group" && !split.group.length) continue;
-				// Notes of that kind first; a group with no kind yet can go anywhere.
-				const filter = row === "group" ? undefined : (note: Entity) => {
-					const kind = groupKind(p, note);
-					return kind === row || kind === "group";
-				};
+				// Notes of that kind; a group of no particular kind only as an organisation.
+				const filter = row === "group" ? undefined : (note: Entity) => fitsRow(row, groupKind(p, note));
 				rows.set(row, linkRow(box, ROW_INFO[row].label, ROW_INFO[row].asks, split[row].map((m) => m.raw), { types: ["culture"], tie: "relation", filter, placeholder: row === "group" ? "Add a group…" : `Add a ${ROW_INFO[row].label.toLowerCase()}…` }));
 			}
 			saves.push(() => {

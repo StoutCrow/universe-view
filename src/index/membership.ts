@@ -67,6 +67,15 @@ export function rowOfKind(word: string | undefined): GroupRow | undefined {
 	return undefined;
 }
 
+/**
+ * Whether a group can be offered in a row of the edit form. A group of a kind goes in that kind's row only. Any other
+ * group (#Group_Other, the scheme's tag for "no particular kind") is an organisation at most: it is never offered as a
+ * realm, house, culture or faith, which a note has to say it is (or be found to be).
+ */
+export function fitsRow(row: GroupRow, kind: GroupRow): boolean {
+	return kind === row || (kind === "group" && (row === "organisation" || row === "group"));
+}
+
 /** One membership as written: whose it is, in which property, exactly as the note has it. */
 export interface Member {
 	name: string;

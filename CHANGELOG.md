@@ -2,6 +2,11 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## Not released yet
+
+### Inspector
+- **The Realm, House, Culture and Faith boxes only suggest groups of that kind.** A group of no particular kind (#Group_Other) was offered in every box, so a band of outlaws could be picked as someone's culture; it is now offered under Organisation only. A realm, house, culture or faith is suggested when its note says so (#Group_Realm, #Group_Culture…) or UniverseView finds it to be one (a realm with lands, a house with members). You can still type any name.
+
 ## 4.2.0 — 2026-11-12
 
 ### Clicks in the family tree and the timeline
