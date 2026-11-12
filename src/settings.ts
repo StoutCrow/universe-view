@@ -32,6 +32,7 @@ export const DEFAULT_FIELD_ALIASES: Record<FieldName, string[]> = {
 	cultures: [
 		"cultures", "culture", "factions", "faction", "nations", "nation", "organizations", "organization", "affiliations",
 		"houses", "house", "family", "families", "allegience", "allegiance", "allegiances", "faith", "religion",
+		"realm", "realms", "dynasty", "clan", "ethnicity", "faiths", "organisations", "organisation", "guilds", "guild",
 	],
 	parents: ["parents", "parent", "father", "mother"],
 	adoptiveParents: ["adoptive-parents", "adoptive_parents", "adoptiveParents", "guardians", "foster-parents"],

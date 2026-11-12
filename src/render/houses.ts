@@ -1,4 +1,5 @@
 import type UniverseViewPlugin from "../main";
+import { rowOfKind } from "../index/membership";
 import type { Entity } from "../types";
 import { formatSpan } from "../dates/parser";
 import { spacedLabels, yearTicks } from "../dates/calendars";
@@ -340,6 +341,9 @@ const ORG = /\b(guild|company|order|army|navy|fleet|council|league|society|bank|
 /** What a group note is, for labels and icons: a realm, a house, a faith, a people, an organisation or just a group. */
 export function groupKind(plugin: UniverseViewPlugin, c: Entity): GroupKind {
 	if (c.type !== "culture") return "group";
+	// What the note says it is (`kind: house`, #Group_Realm) wins over a guess; a tier word (kingdom, county) is a realm.
+	const said = rowOfKind(c.category);
+	if (said && said !== "group") return said;
 	if (plugin.realms().nodes.has(c.key)) return "realm";
 	if (isHouse(plugin, c)) return "house";
 	const text = `${c.category ?? ""} ${c.tags.join(" ")}`;

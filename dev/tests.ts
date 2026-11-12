@@ -1,6 +1,7 @@
 import { findColourAreas } from "../src/render/colours";
 import { kindFix, knownKindWords } from "../src/index/kindcheck";
 import { formatDetails, parseDetails, splitDetails, splitParts } from "../src/index/ties";
+import { ROW_ORDER, readMembers, rebuildMembers, rowOfKind, rowOfProperty, splitMembers, type GroupRow } from "../src/index/membership";
 import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
@@ -1669,6 +1670,22 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(addKinChildren(lines, ["Bob", "Mary"], ["Carol", "Dan (m)"]), 1, "kin: a child already there, with details, is not added twice");
 	eq(lines, ["Bob + Mary > Carol (f, 1230 – 1290), Dan (m)"], "kin: a new child keeps its details");
 	eq(forgetKin(["Bob + Mary > Carol (f, 1230 – 1290), Dan (m)"], "Dan"), ["Bob + Mary > Carol (f, 1230 – 1290)"], "kin: forgetting one keeps the others' details");
+	// ---- What someone belongs to: realm, house, culture, faith, organisation (index/membership.ts) ----
+	eq([rowOfKind("kingdom"), rowOfKind("County"), rowOfKind("family"), rowOfKind("dynasty"), rowOfKind("religion"), rowOfKind("guild"), rowOfKind("people"), rowOfKind("noble")], ["realm", "realm", "house", "house", "faith", "organisation", "culture", undefined], "membership: a group's kind word answers one question");
+	eq([rowOfProperty("family"), rowOfProperty("Allegience"), rowOfProperty("faith"), rowOfProperty("cultures")], ["house", "realm", "faith", undefined], "membership: a property says what it answers, the general one nothing");
+	const mfm = { family: "[[House Tudor]]", allegience: ["[[England]]", "[[House Tudor]]"], faith: "[[Church of England]]" };
+	const nameOfLink = (raw: unknown) => /\[\[([^\]|]+)/.exec(String(raw))?.[1];
+	const mem = readMembers(mfm, ["cultures", "family", "allegience", "faith"], nameOfLink);
+	eq(mem.map((m) => `${m.prop}:${m.name}`), ["family:House Tudor", "allegience:England", "allegience:House Tudor", "faith:Church of England"], "membership: every group property is read, each entry once");
+	const kinds: Record<string, GroupRow> = { "House Tudor": "house", England: "realm" };
+	const rows = splitMembers(mem, (n) => kinds[n]);
+	eq([rows.house.map((m) => m.name), rows.realm.map((m) => m.name), rows.faith.map((m) => m.name)], [["House Tudor", "House Tudor"], ["England"], ["Church of England"]], "membership: the linked note's kind decides the row, the property decides for a note that does not exist");
+	const keepAll = Object.fromEntries(ROW_ORDER.map((r) => [r, rows[r].map((m) => ({ name: m.name, value: m.raw }))])) as Record<GroupRow, { name: string; value: unknown }[]>;
+	eq(Object.keys(rebuildMembers(mfm, mem, keepAll)).sort(), ["allegience", "faith", "family"], "membership: nothing changed, the same properties");
+	const edited = { ...keepAll, house: [{ name: "House Tudor", value: "[[House Tudor]] (\"the cadet line\")" }, { name: "House Stuart", value: "[[House Stuart]]" }], realm: [{ name: "England", value: "[[England]]" }] };
+	const out = rebuildMembers(mfm, mem, edited);
+	eq([out.family, out.allegience, out.faith], [["[[House Tudor]] (\"the cadet line\")", "[[House Stuart]]"], ["[[England]]"], "[[Church of England]]"], "membership: an edit stays in its property, a new house goes to the property used for houses, a lone value stays single");
+	eq(rebuildMembers({ family: "[[House Tudor]]" }, [{ name: "House Tudor", prop: "family", raw: "[[House Tudor]]" }], { ...Object.fromEntries(ROW_ORDER.map((r) => [r, []])), faith: [{ name: "Church of England", value: "[[Church of England]]" }] } as Record<GroupRow, { name: string; value: unknown }[]>), { family: undefined, faith: "[[Church of England]]" }, "membership: a removed entry empties its property and a first faith goes to faith");
 	// ---- Fixing broken kinds (index/kindcheck.ts) ----
 	const knownKinds = knownKindWords();
 	const never = () => 0;

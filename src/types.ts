@@ -79,6 +79,8 @@ export interface TimedRef {
 	label?: string;
 	/** How it ended, when it did (eason: divorce). */
 	reason?: string;
+	/** The property it was written under (family, allegiance, cultures…). */
+	via?: string;
 }
 
 export const PIN_SIZES = ["tiny", "small", "medium", "large", "huge"] as const;

@@ -294,7 +294,8 @@ export function readTimedRefs(
 						to,
 						kind: typeof kind === "string" ? kind : r.kindFromKey ?? aliasKind,
 						role: typeof role === "string" ? role : undefined,
-						label: typeof label === "string" && label.trim() ? label.trim() : undefined,
+						via: alias,
+							label: typeof label === "string" && label.trim() ? label.trim() : undefined,
 						reason: typeof reason === "string" && reason.trim() ? reason.trim() : undefined,
 					});
 				}
@@ -309,14 +310,14 @@ export function readTimedRefs(
 				const d = parseDetails(inside, TIE_KINDS);
 				const dates = d.span ? parseSpan(d.span, cal) : undefined;
 				if (d.span && !dates) issues.push(`Could not read dates "${d.span}"`);
-				out.push({ ref, kind: d.kind ?? aliasKind, from: dates?.start, to: dates?.end, role: d.words[0], label: d.label, reason: d.reason });
+				out.push({ ref, kind: d.kind ?? aliasKind, from: dates?.start, to: dates?.end, role: d.words[0], label: d.label, reason: d.reason, via: alias });
 			} else {
 				for (const t of linkTexts(v)) {
 					const ref = resolve(t);
 					const id = ref.key + "|" + (aliasKind ?? "");
 					if (!ref.name || seen.has(id)) continue;
 					seen.add(id);
-					out.push({ ref, kind: aliasKind });
+					out.push({ ref, kind: aliasKind, via: alias });
 				}
 			}
 		}
