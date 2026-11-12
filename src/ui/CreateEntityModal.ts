@@ -96,10 +96,15 @@ export class LinkList {
 		this.render();
 	}
 
-	/** Includes text typed but not yet confirmed. */
-	collect(): string[] {
+	/** Whether the cursor is in this list's box, where a name may still be being typed. */
+	isTyping(): boolean {
+		return document.activeElement === this.input && !!this.input.value.trim();
+	}
+
+	/** Includes text typed but not yet confirmed (`withPending`, the default), which autosave must not do while someone is mid-word. */
+	collect(withPending = true): string[] {
 		const pending = this.input.value.trim();
-		if (pending && !this.values.includes(pending)) this.add(pending);
+		if (withPending && pending && !this.values.includes(pending)) this.add(pending);
 		return this.values;
 	}
 

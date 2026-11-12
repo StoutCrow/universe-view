@@ -145,6 +145,8 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			}
 			const kinds: [string, string][] = o.tie === "partner" ? PARTNER_KINDS.map((x) => [x, tieLabel(x, "partner")]) : o.tie === "parent" ? PARENT_KINDS.map((x) => [x, tieLabel(x, "parent")]) : [];
 			const list = new LinkList(s.controlEl, p, o.types, before, o.placeholder ?? "Add…", o.single ?? false, o.tie ? ties : undefined, kinds, o.filter);
+			// Adding, removing or editing a chip is a change: it autosaves like typing does (a suggestion picked with the mouse fires no input event).
+			list.onChange = () => mark();
 			const initial = new Map([...ties].map(([n, d]) => [n, formatDetails(d)]));
 			// An entry nobody edited is written back exactly as it was; an edited one is written in brackets.
 			const written = (name: string): unknown => {
@@ -155,8 +157,8 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			const was = JSON.stringify(before.map(written));
 			return {
 				rich,
-				collect: () => list.collect().map((name) => ({ name, value: written(name) })),
-				changed: () => JSON.stringify(list.collect().map(written)) !== was,
+				collect: () => list.collect(!list.isTyping()).map((name) => ({ name, value: written(name) })),
+				changed: () => JSON.stringify(list.collect(!list.isTyping()).map(written)) !== was,
 			};
 		};
 		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box, tie?: "parent" | "partner" | "relation") => {

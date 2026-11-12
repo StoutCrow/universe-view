@@ -2,6 +2,12 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.0.2 — not released yet
+
+### Inspector
+- **Adding a group, relative or relationship in the edit form now saves.** A name picked from the suggestions with the mouse (or added, removed or edited with the pencil) used to leave the form looking changed while nothing was written until you left it, so a card elsewhere kept showing the old data.
+- Autosave no longer writes a name you are still typing: a half-typed word is only added once you confirm it or leave the field.
+
 ## 4.0.1 — 2026-11-12
 
 ### Family tree
