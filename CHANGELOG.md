@@ -2,7 +2,7 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 3.4.1 — not released yet
+## 3.4.1 — 2026-11-12
 
 ### Relationships
 - **Edit a relationship you already added**: the pencil on a partner, parent or relationship chip opens a small window for its kind (spouse, ex, widowed… or step, foster, guardian…), when it lasted, how it ended and your own text. Partners written as objects (`{ name, from, to }`) can be edited too; one nobody edits is written back exactly as it was. A tie with an end or a reason is drawn as ended.
