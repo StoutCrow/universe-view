@@ -11,6 +11,8 @@ import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
 import { parseKin, type KinPerson } from "./relatives";
 import { PARENT_KINDS, parseDetails } from "./ties";
+import { ROW_PROPERTY, rowOfKind } from "./membership";
+import { parseTag } from "./tagscheme";
 import { clearInferred, noteSignature } from "./derived";
 import { timeBoundaries, timeStep } from "./timesteps";
 import {
@@ -490,13 +492,26 @@ export class EntityIndex extends Events {
 		// Typed relations ("ruler: [[X]]", "mentor: [[Y]]") apply to every kind of note.
 		e.relations = timed("relations");
 
+		// A group named in a belonging tag (#Group_Realm_Vael, #Group_House_Tudor) is a membership too, shown with the
+		// others; one the note already lists is not added twice. Only groups that exist.
+		const tagGroups = (list: TimedRef[]): TimedRef[] => {
+			const out = [...list];
+			for (const tag of e.tags) {
+				const s = parseTag(tag);
+				if (s?.role !== "member" || s.type !== "culture") continue;
+				const ref = resolve(s.name);
+				if (ref.resolved && ref.key !== e.key && !out.some((c) => c.ref.key === ref.key)) out.push({ ref, via: ROW_PROPERTY[rowOfKind(s.kind) ?? "group"] });
+			}
+			return out;
+		};
+
 		switch (type) {
 			case "event":
 				e.start = date("date");
 				e.end = date("end");
 				e.participants = refs("participants");
 				e.places = refs("places");
-				e.cultures = timed("cultures");
+				e.cultures = tagGroups(timed("cultures"));
 				break;
 			case "person":
 				e.start = date("born");
@@ -520,7 +535,7 @@ export class EntityIndex extends Events {
 				}
 				e.partners = timed("partners");
 				e.children = refs("children");
-				e.cultures = timed("cultures");
+				e.cultures = tagGroups(timed("cultures"));
 				e.places = refs("places");
 				e.birthPlace = refs("birthPlace")[0];
 				e.deathPlace = refs("deathPlace")[0];
@@ -543,7 +558,7 @@ export class EntityIndex extends Events {
 				e.end = date("dissolved");
 				this.readPin(e, fm, reader, refs("map"));
 				e.locatedIn = refs("locatedIn").find((r) => r.key !== e.key);
-				e.cultures = timed("cultures");
+				e.cultures = tagGroups(timed("cultures"));
 				break;
 			}
 			case "map":

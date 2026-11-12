@@ -3,6 +3,7 @@ import { DEFAULT_FAMILY_OPTIONS, FamilyOptions, FamilyTreeRenderer } from "../re
 import { FanChartRenderer, TimeTreeRenderer } from "../render/treecharts";
 import { dropdown, iconButton } from "../render/common";
 import { optionsButton, type OptionEntry } from "../render/optionsmenu";
+import { CARD_GROUP_CHOICES, type CardGroups } from "../ui/groupsplit";
 import { UniverseViewBase } from "./base";
 import { AddRelativesModal } from "../ui/AddRelatives";
 
@@ -159,6 +160,7 @@ export class FamilyTreeView extends UniverseViewBase {
 					}
 					if (layout === "tree" || layout === "everyone") {
 							list.push({ type: "choice", label: "Card style", options: [["cards", "Cards"], ["compact", "Compact"], ["portrait", "Portrait"], ["chart", "Chart"]], get: () => o.style ?? "cards", set: (v) => { o.style = v as FamilyOptions["style"]; this.update(); } });
+							list.push({ type: "choice", label: "Under the name", options: CARD_GROUP_CHOICES, get: () => o.groups ?? "both", set: (v) => { o.groups = v as CardGroups; this.update(); } });
 							list.push({ type: "choice", label: "Lines", options: [["rounded", "Rounded"], ["square", "Square"], ["curved", "Curved"]], get: () => o.lines ?? "rounded", set: (v) => { o.lines = v as FamilyOptions["lines"]; this.update(); } });
 						}
 						if (layout === "tree" || layout === "everyone") list.push({ type: "toggle", label: "Relationships on cards", get: () => o.relations !== false, set: (v) => { o.relations = v; this.update(); } });
