@@ -493,11 +493,11 @@ export class FamilyTreeRenderer {
 			const t = f.parents.length === 2 ? tie(f.parents[0], f.parents[1]) : undefined;
 			const adoptive = new Set<number>();
 			for (const c of f.children) if (idx.get(c)?.adoptiveParents.some((r) => f.parents.includes(r.key))) adoptive.add(id.get(c)!);
-			this.families.push({ parents: f.parents.map((k) => id.get(k)!), children: f.children.map((k) => id.get(k)!), adoptive, kind: t?.kind, ended: !!t?.to, label: t?.label, reason: t?.reason });
+			this.families.push({ parents: f.parents.map((k) => id.get(k)!), children: f.children.map((k) => id.get(k)!), adoptive, kind: t?.kind, ended: !!(t?.to || t?.reason), label: t?.label, reason: t?.reason });
 		}
 		for (const [a, b] of laid.couples) {
 			const t = tie(a, b);
-			this.families.push({ parents: [id.get(a)!, id.get(b)!], children: [], adoptive: new Set(), kind: t?.kind, ended: !!t?.to, label: t?.label, reason: t?.reason });
+			this.families.push({ parents: [id.get(a)!, id.get(b)!], children: [], adoptive: new Set(), kind: t?.kind, ended: !!(t?.to || t?.reason), label: t?.label, reason: t?.reason });
 		}
 	}
 

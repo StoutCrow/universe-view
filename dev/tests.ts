@@ -1,6 +1,6 @@
 import { findColourAreas } from "../src/render/colours";
 import { kindFix, knownKindWords } from "../src/index/kindcheck";
-import { parseDetails, splitDetails, splitParts } from "../src/index/ties";
+import { formatDetails, parseDetails, splitDetails, splitParts } from "../src/index/ties";
 import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
@@ -1656,6 +1656,9 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(parseDetails("f, 1230", ["spouse"]), { words: [], gender: "female", span: "1230" }, "ties: a gender and dates");
 	eq(parseDetails("king, 1220 – 1258", ["spouse"]), { words: ["king"], span: "1220 – 1258" }, "ties: other words are left for the reader");
 	eq(splitDetails("Carol (f, 1230 – 1290)"), { name: "Carol", inside: "f, 1230 – 1290" }, "ties: a name and its brackets");
+	eq(parseDetails('ex, 1230 – 1255, ended: divorce, "no heirs"', ["ex"]), { words: [], kind: "ex", span: "1230 – 1255", reason: "divorce", label: "no heirs" }, "ties: how it ended");
+	eq(formatDetails({ kind: "ex", span: "1230 – 1255", reason: "divorce", label: "no heirs", words: [] }), ' (ex, 1230 – 1255, ended: divorce, "no heirs")', "ties: details written back in brackets");
+	eq(formatDetails({ words: [] }), "", "ties: nothing to say, no brackets");
 	eq(splitDetails("- [[Carol]]"), { name: "Carol", inside: undefined }, "ties: a link is unwrapped");
 	const kin = parseKin("Bob + Mary (spouse) > Carol (f, 1230 – 1290), Dan (step)");
 	eq(kin.partners, [["Bob", "Mary", "spouse"]], "kin: a kind word after a partner is the tie");

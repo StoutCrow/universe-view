@@ -309,7 +309,7 @@ export function readTimedRefs(
 				const d = parseDetails(inside, TIE_KINDS);
 				const dates = d.span ? parseSpan(d.span, cal) : undefined;
 				if (d.span && !dates) issues.push(`Could not read dates "${d.span}"`);
-				out.push({ ref, kind: d.kind ?? aliasKind, from: dates?.start, to: dates?.end, role: d.words[0], label: d.label });
+				out.push({ ref, kind: d.kind ?? aliasKind, from: dates?.start, to: dates?.end, role: d.words[0], label: d.label, reason: d.reason });
 			} else {
 				for (const t of linkTexts(v)) {
 					const ref = resolve(t);

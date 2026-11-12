@@ -19,6 +19,8 @@ export interface TieDetails {
 	label?: string;
 	/** The dates, as written ("1230 – 1255"). */
 	span?: string;
+	/** How it ended (`ended: divorce`). */
+	reason?: string;
 	/** Parts that are none of the above, in order. */
 	words: string[];
 }
@@ -53,7 +55,9 @@ export function parseDetails(inside: string, kinds: readonly string[] = []): Tie
 	const out: TieDetails = { words: [] };
 	const vocab = new Set(kinds.map(norm));
 	for (const part of splitParts(inside)) {
-		if (/^["“]/.test(part)) out.label ??= unquote(part);
+		const ended = /^(?:ended|reason)\s*:\s*(.+)$/i.exec(part);
+		if (ended) out.reason ??= ended[1].trim();
+		else if (/^["“]/.test(part)) out.label ??= unquote(part);
 		else if (/\d/.test(part)) out.span ??= part;
 		else if (GENDERS[part.toLowerCase()] && !vocab.has(norm(part))) out.gender ??= GENDERS[part.toLowerCase()];
 		else if (vocab.has(norm(part))) out.kind ??= norm(part);
@@ -81,4 +85,10 @@ export function tieLabel(kind: string, role: "parent" | "partner"): string {
 	const word = kind.replace(/-/g, " ");
 	if (role === "parent") return kind === "birth" ? "Parent" : `${word.charAt(0).toUpperCase()}${word.slice(1)} ${kind === "guardian" ? "" : "parent"}`.trim();
 	return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/** The brackets for a tie, from what it says: kind, other words, dates, how it ended, custom text ("" when there is nothing to say). */
+export function formatDetails(d: Partial<TieDetails>): string {
+	const bits = [d.kind, ...(d.words ?? []), d.gender === "female" ? "f" : d.gender === "male" ? "m" : undefined, d.span, d.reason ? `ended: ${d.reason}` : undefined, d.label ? `"${d.label.replace(/"/g, "'")}"` : undefined].filter((x): x is string => !!x && !!x.trim());
+	return bits.length ? ` (${bits.join(", ")})` : "";
 }

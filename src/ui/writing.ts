@@ -11,9 +11,10 @@ import { settingWords } from "../index/worldsetting";
 import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
-import { presetKinds, relKind } from "../index/relkinds";
+import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
 import { asText } from "../index/text";
-import { splitParts } from "../index/ties";
+import { PARENT_KINDS, PARTNER_KINDS, formatDetails, parseDetails, tieLabel } from "../index/ties";
+import type { TieEdit } from "./TieModal";
 
 const YEAR = 365.25;
 
@@ -98,48 +99,72 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 
 		// ---- Links, as chips
 		const names = (v: unknown): string[] => ([] as unknown[]).concat(v ?? []).map((x) => (x && typeof x === "object" ? linkTarget(Object.values(x).find((y) => typeof y === "string" && /\[\[/.test(y))) : linkTarget(x)) ?? "").filter(Boolean);
-		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box, custom = false) => {
+		/** What an object entry (`{ name, from, to, kind }`) says about the tie, in the shape the editor works with. */
+		const tieOfObject = (o: Record<string, unknown>): TieEdit => {
+			const get = (keys: string[]) => {
+				for (const key of Object.keys(o)) if (keys.includes(key.toLowerCase())) return o[key];
+				return undefined;
+			};
+			const text = (v: unknown) => (v === undefined || v === null ? "" : asText(v).trim());
+			const kind = get(["kind", "type", "relation", "relationship", "as"]);
+			const role = text(get(["role", "title", "rank", "position"]));
+			return {
+				kind: typeof kind === "string" && kind.trim() ? kind.trim().toLowerCase().replace(/[\s_]+/g, "-") : undefined,
+				span: [text(get(["from", "start", "since", "began", "married", "joined"])), text(get(["to", "end", "until", "ended", "left", "divorced"]))].filter(Boolean).join(" – ") || undefined,
+				reason: text(get(["reason", "ended-by", "ended_by", "outcome"])) || undefined,
+				label: text(get(["label", "note", "text", "custom", "description"])) || undefined,
+				words: role ? [role] : [],
+			};
+		};
+		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box, tie?: "parent" | "partner" | "relation") => {
 			used.add(k);
 			const raw = fm[k];
-			// Entries with dates or roles are kept as they are; chips edit the plain links.
-			const rich = ([] as unknown[]).concat(raw ?? []).filter((x) => x && typeof x === "object");
+			const entries = ([] as unknown[]).concat(raw ?? []);
+			const isObject = (x: unknown) => !!x && typeof x === "object";
+			// A plain list keeps entries with dates or roles as written; a list of ties can edit them too.
+			const rich = tie ? [] : entries.filter(isObject);
 			const before = names(raw).filter((n) => !rich.some((r) => names(r).includes(n)));
 			const s = new Setting(parent).setName(label);
 			if (desc) s.setDesc(desc);
 			if (rich.length) s.setDesc(`${desc ? desc + " · " : ""}${rich.length} with dates or roles kept as written`);
 			s.settingEl.addClass("universeview-list-setting");
-			// What an entry already says in brackets (`[[Anna]] (step, "the clever one")`) is kept; the custom text can be changed.
-			const tail = new Map<string, string[]>();
-			const notes = new Map<string, string>();
-			for (const x of ([] as unknown[]).concat(raw ?? [])) {
-				const m = typeof x === "string" ? /^\s*\[\[([^\]|]+)(?:\|[^\]]*)?\]\]\s*\((.*)\)\s*$/.exec(x) : null;
-				if (!m) continue;
-				const parts = splitParts(m[2]);
-				const quoted = parts.find((pt) => /^["“]/.test(pt));
-				tail.set(m[1].trim(), parts.filter((pt) => pt !== quoted));
-				if (quoted) notes.set(m[1].trim(), quoted.replace(/^["“”]|["“”]$/g, "").trim());
+			// What each entry already says about the tie: in brackets (`[[Anna]] (step, "the clever one")`) or as an object.
+			const ties = new Map<string, TieEdit>();
+			const originals = new Map<string, unknown>();
+			const vocab = [...PARTNER_KINDS, ...PARENT_KINDS, ...REL_KINDS.map((r) => r.key)];
+			for (const x of entries) {
+				if (typeof x === "string") {
+					const m = /^\s*\[\[([^\]|]+)(?:\|[^\]]*)?\]\]\s*\((.*)\)\s*$/.exec(x);
+					if (m) ties.set(m[1].trim(), parseDetails(m[2], vocab));
+				} else if (isObject(x)) {
+					const n = names(x)[0];
+					if (!n) continue;
+					originals.set(n, x);
+					ties.set(n, tieOfObject(x as Record<string, unknown>));
+				}
 			}
-			const list = new LinkList(s.controlEl, p, types, before, "Add…", single, custom ? notes : undefined);
-			const written = (n: string, texts: Map<string, string>) => {
-				const bits = [...(tail.get(n) ?? [])];
-				const text = texts.get(n);
-				if (text) bits.push(`"${text.replace(/"/g, "'")}"`);
-				return `[[${n}]]${bits.length ? ` (${bits.join(", ")})` : ""}`;
+			const kinds: [string, string][] = tie === "partner" ? PARTNER_KINDS.map((x) => [x, tieLabel(x, "partner")]) : tie === "parent" ? PARENT_KINDS.map((x) => [x, tieLabel(x, "parent")]) : [];
+			const list = new LinkList(s.controlEl, p, types, before, "Add…", single, tie ? ties : undefined, kinds);
+			const initial = new Map([...ties].map(([n, d]) => [n, formatDetails(d)]));
+			// An entry nobody edited is written back exactly as it was; an edited one is written in brackets.
+			const written = (n: string): unknown => {
+				const text = formatDetails(ties.get(n) ?? {});
+				const original = originals.get(n);
+				return original !== undefined && text === initial.get(n) ? original : `[[${n}]]${text}`;
 			};
-			const was = before.map((n) => written(n, new Map(notes)));
+			const was = JSON.stringify(before.map(written));
 			saves.push(() => {
-				const now = list.collect();
-				const plain = now.map((n) => written(n, list.notes ?? notes));
-				if (plain.join("|") === was.join("|")) return;
-				changes.set(k, single ? plain[0] ?? "" : [...rich, ...plain]);
+				const out = list.collect().map(written);
+				if (JSON.stringify(out) === was) return;
+				changes.set(k, single ? out[0] ?? "" : [...rich, ...out]);
 			});
 		};
 		const saves: (() => void)[] = [];
 		section("Links");
-		const field = (f: FieldName, label: string, types?: EntityType[], single = false, custom = false) => chips(label, keyFor(f), types, single, undefined, box, custom);
+		const field = (f: FieldName, label: string, types?: EntityType[], single = false, tie?: "parent" | "partner" | "relation") => chips(label, keyFor(f), types, single, undefined, box, tie);
 		if (e.type === "person") {
-			field("parents", "Parents", ["person"], false, true);
-			field("partners", "Partners", ["person"], false, true);
+			field("parents", "Parents", ["person"], false, "parent");
+			field("partners", "Partners", ["person"], false, "partner");
 			field("cultures", "Groups", ["culture"]);
 			field("places", "Places", ["place"]);
 		} else if (e.type === "event") {
@@ -179,7 +204,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			}
 			// The ones the note has are shown; the rest wait in one menu, so the form stays short.
 			const relBox = el("div", {}, box);
-			const row = (rk: string, prop: string) => chips(relKind(rk)?.label ?? prop, prop, e.type === "culture" && !/leader|founder/.test(rk) ? ["culture"] : undefined, false, relKind(rk)?.desc, relBox, true);
+			const row = (rk: string, prop: string) => chips(relKind(rk)?.label ?? prop, prop, e.type === "culture" && !/leader|founder/.test(rk) ? ["culture"] : undefined, false, relKind(rk)?.desc, relBox, "relation");
 			const empty: [string, string][] = [];
 			for (const [rk, prop] of kinds) {
 				if (names(fm[prop]).length) row(rk, prop);

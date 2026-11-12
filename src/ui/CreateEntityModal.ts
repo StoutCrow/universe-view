@@ -1,4 +1,5 @@
 import { Modal, Notice, Setting, TFolder } from "obsidian";
+import { TieModal, type TieEdit } from "./TieModal";
 import { makeFolderNote, placementFor, type Placement } from "./foldernotes";
 import { choiceTags, standardFields, type TagChoice } from "./tagstandard";
 import type UniverseViewPlugin from "../main";
@@ -63,11 +64,14 @@ export class LinkList {
 	private box: HTMLElement;
 	private input: HTMLInputElement;
 
-	/** Custom text for each link, by name, when the list allows it (a relationship: "sworn brother"); undefined for plain lists. */
-	notes?: Map<string, string>;
+	/** What each link says about the tie (kind, dates, how it ended, custom text), by name, when the list allows editing it; undefined for plain lists. */
+	ties?: Map<string, TieEdit>;
+	/** The kinds a tie in this list can be, with labels; empty when the list's own name is the kind. */
+	private tieKinds: [string, string][];
 
-	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, notes?: Map<string, string>) {
-		this.notes = notes;
+	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, ties?: Map<string, TieEdit>, tieKinds: [string, string][] = []) {
+		this.ties = ties;
+		this.tieKinds = tieKinds;
 		this.values = [...initial];
 		const box = (this.box = el("div", { cls: "universeview-linklist" }, parent));
 		this.input = el("input", { attr: { type: "text", placeholder } }, box);
@@ -113,37 +117,22 @@ export class LinkList {
 			this.box.insertBefore(chip, this.input);
 			const known = !!this.plugin.index.findByName(v);
 			if (!known) chip.addClass("is-unresolved");
-			const text = el("span", { text: v }, chip);
-			const custom = this.notes?.get(v);
-			if (custom) el("span", { cls: "universeview-linkchip-note", text: ` · ${custom}` }, chip);
-			if (this.notes) {
-				// A pencil to give the link text of its own, shown as written ('sworn brother', 'since the siege').
-				const pen = el("span", { cls: "universeview-linkchip-x", title: custom ? "Change the custom text" : "Add custom text" }, chip);
+			el("span", { text: v }, chip);
+			const tie = this.ties?.get(v);
+			// What the tie says, short: its kind, dates and custom text.
+			const said = tie ? [tie.kind ? tie.kind.replace(/-/g, " ") : "", tie.span, tie.reason ? `ended: ${tie.reason}` : "", tie.label].filter(Boolean).join(" · ") : "";
+			if (said) el("span", { cls: "universeview-linkchip-note", text: ` · ${said}` }, chip);
+			if (this.ties) {
+				// A pencil to edit the tie: its kind, when, how it ended, and text of your own.
+				const pen = el("span", { cls: "universeview-linkchip-x", title: said ? "Edit this relationship" : "Add details to this relationship" }, chip);
 				icon(pen, "pencil");
 				pen.addEventListener("click", (evt) => {
 					evt.stopPropagation();
-					const input = el("input", { cls: "universeview-linkchip-edit", attr: { type: "text", placeholder: "Custom text" } });
-					input.value = custom ?? "";
-					chip.replaceChildren(text, input);
-					const done = () => {
-						const now = input.value.trim();
-						if (now) this.notes?.set(v, now);
-						else this.notes?.delete(v);
+					new TieModal(this.plugin, v, tie ?? { words: [] }, this.tieKinds, (edited) => {
+						this.ties?.set(v, edited);
 						this.render();
 						this.onChange?.();
-					};
-					input.addEventListener("keydown", (e) => {
-						if (e.key === "Enter") {
-							e.preventDefault();
-							e.stopPropagation();
-							done();
-						} else if (e.key === "Escape") {
-							e.stopPropagation();
-							this.render();
-						}
-					});
-					input.addEventListener("blur", done);
-					input.focus();
+					}).open();
 				});
 			}
 			const x = el("span", { cls: "universeview-linkchip-x", title: "Remove" }, chip);
