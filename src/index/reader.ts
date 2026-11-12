@@ -4,6 +4,11 @@ import type { FieldName } from "../settings";
 import type { Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import { asText } from "./text";
+import { PARENT_KINDS, PARTNER_KINDS, parseDetails } from "./ties";
+import { REL_KINDS } from "./relkinds";
+
+/** Every kind word a tie can carry in brackets: how a partner or parent is one, or what a relation is. */
+const TIE_KINDS: string[] = [...PARTNER_KINDS, ...PARENT_KINDS, ...REL_KINDS.map((k) => k.key)];
 import { factOnly, isDefaultKind, parseTag, type SchemeTag } from "./tagscheme";
 
 const TYPE_SYNONYMS: Record<EntityType, string[]> = {
@@ -226,6 +231,8 @@ const FROM_KEYS = ["from", "start", "since", "began", "married", "joined"];
 const TO_KEYS = ["to", "end", "until", "ended", "left", "divorced"];
 const KIND_KEYS = ["kind", "type", "relation", "relationship", "as"];
 const ROLE_KEYS = ["role", "title", "rank", "position"];
+const LABEL_KEYS = ["label", "note", "text", "custom", "description"];
+const REASON_KEYS = ["reason", "ended-by", "ended_by", "outcome"];
 
 function pick(o: Record<string, unknown>, keys: string[]): unknown {
 	for (const k of Object.keys(o)) if (keys.includes(k.toLowerCase())) return o[k];
@@ -271,6 +278,8 @@ export function readTimedRefs(
 				if (!r) continue;
 				const kind = pick(o, KIND_KEYS);
 				const role = pick(o, ROLE_KEYS);
+				const label = pick(o, LABEL_KEYS);
+				const reason = pick(o, REASON_KEYS);
 				const from = dateOf(pick(o, FROM_KEYS), "start");
 				const to = dateOf(pick(o, TO_KEYS), "end");
 				for (const t of linkTexts(r.value)) {
@@ -285,6 +294,8 @@ export function readTimedRefs(
 						to,
 						kind: typeof kind === "string" ? kind : r.kindFromKey ?? aliasKind,
 						role: typeof role === "string" ? role : undefined,
+						label: typeof label === "string" && label.trim() ? label.trim() : undefined,
+						reason: typeof reason === "string" && reason.trim() ? reason.trim() : undefined,
 					});
 				}
 			} else if (typeof v === "string" && /^\s*\[\[[^\]]+\]\]\s*\(.+\)\s*$/.test(v)) {
@@ -294,11 +305,11 @@ export function readTimedRefs(
 				const id = ref.key + "|" + (aliasKind ?? "");
 				if (!ref.name || seen.has(id)) continue;
 				seen.add(id);
-				const parts = inside.split(",").map((x) => x.trim());
-				const span = parts.find((x) => /\d/.test(x));
-				const dates = span ? parseSpan(span, cal) : undefined;
-				if (span && !dates) issues.push(`Could not read dates "${span}"`);
-				out.push({ ref, kind: aliasKind, from: dates?.start, to: dates?.end, role: parts.find((x) => !/\d/.test(x)) });
+				// Kind, dates, custom text and gender from one reader (ties.ts), so every tie reads the same.
+				const d = parseDetails(inside, TIE_KINDS);
+				const dates = d.span ? parseSpan(d.span, cal) : undefined;
+				if (d.span && !dates) issues.push(`Could not read dates "${d.span}"`);
+				out.push({ ref, kind: d.kind ?? aliasKind, from: dates?.start, to: dates?.end, role: d.words[0], label: d.label });
 			} else {
 				for (const t of linkTexts(v)) {
 					const ref = resolve(t);
@@ -427,7 +438,9 @@ export function readLayer(fm: Record<string, unknown>): number | undefined {
 /** The note name a stored link points at: "[[Folder/Name|alias]]", "Name", or { person: "[[Name]]" }. */
 export function linkTarget(v: unknown): string | undefined {
 	if (typeof v === "string") {
-		const s = v.replace(/^\[\[|\]\]$/g, "").split("|")[0].trim();
+		// A link with text after it ("[[Anna]] (step)") is still Anna.
+		const link = /\[\[([^\]]+?)\]\]/.exec(v);
+		const s = (link ? link[1] : v).split("|")[0].trim();
 		return s.split("/").pop()?.replace(/\.md$/, "");
 	}
 	if (v && typeof v === "object" && !Array.isArray(v)) {

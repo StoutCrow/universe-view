@@ -1530,3 +1530,67 @@ button.uv-card-add:hover { color: var(--text-on-accent); background: var(--inter
 /* The family tree card the arrow keys are on */
 .uv-card-html.is-kb .universeview-card { box-shadow: 0 0 0 3px var(--interactive-accent); }
 .universeview-family:focus-visible { outline: none; }
+/* ---- Family tree card styles: the Card style option (cards is the default look) ---- */
+.universeview-family.uv-fam-compact {
+	--universeview-card-width: 150px;
+	--universeview-card-height: 34px;
+}
+.universeview-family.uv-fam-compact .universeview-card {
+	gap: 6px;
+	padding: 2px 8px 2px 6px;
+}
+.universeview-family.uv-fam-compact .universeview-card-avatar {
+	width: 22px;
+	height: 22px;
+	font-size: 9px;
+}
+.universeview-family.uv-fam-compact .universeview-card-name {
+	font-size: 12px;
+}
+.universeview-family.uv-fam-compact .universeview-card-sub,
+.universeview-family.uv-fam-compact .universeview-card-meta {
+	display: none;
+}
+.universeview-family.uv-fam-portrait {
+	--universeview-card-width: 132px;
+	--universeview-card-height: 112px;
+}
+.universeview-family.uv-fam-portrait .universeview-card {
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+	padding: 8px 8px 6px;
+	text-align: center;
+	border-left-width: 1px;
+	border-top: 4px solid var(--card-accent);
+}
+.universeview-family.uv-fam-portrait .universeview-card-avatar {
+	width: 48px;
+	height: 48px;
+	font-size: 16px;
+}
+.universeview-family.uv-fam-portrait .universeview-card-body {
+	flex: 0 1 auto;
+	width: 100%;
+}
+.universeview-family.uv-fam-chart {
+	--universeview-card-width: 172px;
+	--universeview-card-height: 52px;
+}
+.universeview-family.uv-fam-chart .universeview-card {
+	justify-content: center;
+	gap: 0;
+	padding: 4px 8px;
+	text-align: center;
+	border-radius: var(--uv-r-sm);
+	border-left-width: 1px;
+	border-top: 3px solid var(--card-accent);
+	box-shadow: none;
+}
+.universeview-family.uv-fam-chart .universeview-card-avatar {
+	display: none;
+}
+.universeview-family.uv-fam-chart .universeview-card-name {
+	font-family: var(--universeview-font-display, var(--font-text));
+	font-size: 13px;
+}

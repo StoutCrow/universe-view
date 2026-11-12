@@ -9,7 +9,8 @@ import { readNames } from "./renames";
 import { holdersProperty, readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
-import { parseKin } from "./relatives";
+import { parseKin, type KinPerson } from "./relatives";
+import { PARENT_KINDS, parseDetails } from "./ties";
 import { clearInferred, noteSignature } from "./derived";
 import { timeBoundaries, timeStep } from "./timesteps";
 import {
@@ -42,6 +43,8 @@ export class EntityIndex extends Events {
 	private ghostParents = new Map<string, Ref[]>();
 	/** The name as written for each relative with no note ("?mary-anne" is "Mary-Anne"). */
 	private ghostNames = new Map<string, string>();
+	/** What a family line says about a relative with no note: gender, dates, custom text. */
+	private ghostPeople = new Map<string, KinPerson>();
 	/** Which keys each note's `relatives:` lines talk about. */
 	private kinKeys = new Map<string, Set<string>>();
 	relationsOf = new Map<string, TimedRef[]>();
@@ -500,6 +503,21 @@ export class EntityIndex extends Events {
 				e.end = date("died");
 				e.parents = refs("parents");
 				e.adoptiveParents = refs("adoptiveParents");
+				{
+					// "[[Anna]] (step)": a parent who is one another way than by birth is drawn like an adoptive parent and keeps the way.
+					const otherKinds: Record<string, string> = {};
+					for (const v of ([] as unknown[]).concat(fm.parents ?? [])) {
+						const m = typeof v === "string" ? /^\s*\[\[([^\]]+)\]\]\s*\(([^)]*)\)\s*$/.exec(v) : null;
+						const kind = m ? parseDetails(m[2], PARENT_KINDS).kind : undefined;
+						if (m && kind && kind !== "birth") otherKinds[resolve(cleanLinkText(m[1]).path).key] = kind;
+					}
+					if (Object.keys(otherKinds).length) {
+						e.parentKinds = otherKinds;
+						const moved = e.parents.filter((r) => r.key in otherKinds);
+						e.parents = e.parents.filter((r) => !(r.key in otherKinds));
+						e.adoptiveParents = [...e.adoptiveParents, ...moved.filter((r) => !e.adoptiveParents.some((x) => x.key === r.key))];
+					}
+				}
 				e.partners = timed("partners");
 				e.children = refs("children");
 				e.cultures = timed("cultures");
@@ -625,7 +643,18 @@ export class EntityIndex extends Events {
 		// Families written as `relatives:` lines: relatives with no note can have parents, partners and children too.
 		this.ghostParents = new Map();
 		this.ghostNames = new Map();
+		this.ghostPeople = new Map();
 		this.kinKeys = new Map();
+		// A child named only by a link in `children:` (no note yet) still has that parent, so the tree joins them.
+		for (const e of this.entities.values()) {
+			if (e.type !== "person") continue;
+			for (const c of e.children) {
+				if (this.entities.has(c.key)) continue;
+				const list = this.ghostParents.get(c.key) ?? [];
+				if (!list.some((r) => r.key === e.key) && list.length < 2) list.push(inferredRef(e));
+				this.ghostParents.set(c.key, list);
+			}
+		}
 		for (const e of this.entities.values()) {
 			if (e.type !== "person") continue;
 			const kin = parseKin(e.props.relatives ?? e.props.kin);
@@ -650,13 +679,27 @@ export class EntityIndex extends Events {
 				if (!list.some((r) => r.key === p.key) && list.length < 2) list.push(p);
 				if (!under) this.ghostParents.set(c.key, list);
 			}
-			for (const [a, b] of kin.partners) {
+			for (const [lower, person] of kin.people) {
+				if (this.findByName(person.name)) continue;
+				const had = this.ghostPeople.get("?" + lower);
+				this.ghostPeople.set("?" + lower, { ...had, ...Object.fromEntries(Object.entries(person).filter(([, v]) => v !== undefined)) } as KinPerson);
+			}
+			for (const [a, b, tieKind] of kin.partners) {
 				const ra = refOf(a);
 				const rb = refOf(b);
 				seen.add(ra.key).add(rb.key);
 				if (ra.key === rb.key) continue;
-				pushTimed(this.partnersOf, ra.key, { ref: rb });
-				pushTimed(this.partnersOf, rb.key, { ref: ra });
+				pushTimed(this.partnersOf, ra.key, { ref: rb, kind: tieKind });
+				pushTimed(this.partnersOf, rb.key, { ref: ra, kind: tieKind });
+			}
+		}
+
+		// A relative named only by a link (children: [[William of Orange]]) keeps the way it was written, so a card shows
+		// William of Orange, not a lower-cased key.
+		for (const e of this.entities.values()) {
+			if (e.type !== "person") continue;
+			for (const r of [...e.parents, ...e.adoptiveParents, ...e.children, ...e.partners.map((p) => p.ref)]) {
+				if (!r.resolved && r.key.startsWith("?") && r.name && !this.ghostNames.has(r.key)) this.ghostNames.set(r.key, r.name);
 			}
 		}
 
@@ -742,6 +785,11 @@ export class EntityIndex extends Events {
 	}
 
 	/** The name of a relative with no note, as it was written. */
+	/** What the family lines say about a relative with no note (gender, dates, custom text). */
+	ghostPerson(key: string): KinPerson | undefined {
+		return this.ghostPeople.get(key);
+	}
+
 	ghostName(key: string): string | undefined {
 		return this.ghostNames.get(key);
 	}

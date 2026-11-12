@@ -168,9 +168,9 @@ export function tieOf(self: string, r: TimedRef): Tie {
 	const tone = relTone(r.kind);
 	const directed = !!known && !relSymmetric(r.kind) && tone === "rank";
 	if (directed && POINTS_UP.has(known.key)) {
-		return { a: r.ref.key, b: self, label: relLabel(relInverse(r.kind)), kind: relInverse(r.kind), tone, directed, from: r.from, to: r.to };
+		return { a: r.ref.key, b: self, label: r.label ?? relLabel(relInverse(r.kind)), kind: relInverse(r.kind), tone, directed, from: r.from, to: r.to };
 	}
-	return { a: self, b: r.ref.key, label: relLabel(r.kind), kind: r.kind, tone, directed, from: r.from, to: r.to };
+	return { a: self, b: r.ref.key, label: r.label ?? relLabel(r.kind), kind: r.kind, tone, directed, from: r.from, to: r.to };
 }
 
 /** Every relationship between groups, both from `relations`-style properties and `related-cultures`. */

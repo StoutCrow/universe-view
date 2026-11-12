@@ -157,7 +157,11 @@ export class FamilyTreeView extends UniverseViewBase {
 						if (layout !== "fan") list.push({ type: "choice", label: "Generations of descendants", options: gens, get: () => String(o.down), set: (v) => { o.down = +v; this.update(); } });
 						if (layout === "tree") list.push({ type: "toggle", label: "Siblings", get: () => o.siblings, set: (v) => { o.siblings = v; this.update(); } });
 					}
-					if (layout === "tree" || layout === "everyone") list.push({ type: "toggle", label: "Relationships on cards", get: () => o.relations !== false, set: (v) => { o.relations = v; this.update(); } });
+					if (layout === "tree" || layout === "everyone") {
+							list.push({ type: "choice", label: "Card style", options: [["cards", "Cards"], ["compact", "Compact"], ["portrait", "Portrait"], ["chart", "Chart"]], get: () => o.style ?? "cards", set: (v) => { o.style = v as FamilyOptions["style"]; this.update(); } });
+							list.push({ type: "choice", label: "Lines", options: [["rounded", "Rounded"], ["square", "Square"], ["curved", "Curved"]], get: () => o.lines ?? "rounded", set: (v) => { o.lines = v as FamilyOptions["lines"]; this.update(); } });
+						}
+						if (layout === "tree" || layout === "everyone") list.push({ type: "toggle", label: "Relationships on cards", get: () => o.relations !== false, set: (v) => { o.relations = v; this.update(); } });
 					list.push({
 						type: "toggle", label: "Follow the active note", get: () => this.follow, set: (v) => {
 							this.follow = v;

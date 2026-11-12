@@ -75,6 +75,10 @@ export interface TimedRef {
 	to?: ChronDate;
 	kind?: string;
 	role?: string;
+	/** Custom text for this tie, shown as written ((spouse, ""a secret wedding"")). */
+	label?: string;
+	/** How it ended, when it did (eason: divorce). */
+	reason?: string;
 }
 
 export const PIN_SIZES = ["tiny", "small", "medium", "large", "huge"] as const;
@@ -181,6 +185,8 @@ export interface Entity {
 	// people
 	parents: Ref[];
 	adoptiveParents: Ref[];
+	/** How a parent who is not one by birth is one (`step`, `foster`, `guardian`), by their key. */
+	parentKinds?: Record<string, string>;
 	partners: TimedRef[];
 	/** Children listed on the parent's note; folded into the children's parents by the index. */
 	children: Ref[];

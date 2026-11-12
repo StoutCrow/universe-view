@@ -1,5 +1,7 @@
 import { findColourAreas } from "../src/render/colours";
 import { kindFix, knownKindWords } from "../src/index/kindcheck";
+import { parseDetails, splitDetails, splitParts } from "../src/index/ties";
+import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
 import { ROW_FORMATS, holdersProperty, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
@@ -1638,6 +1640,32 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(run({ ...base, type: "place", name: "Greyford", tags: ["Place", "Place_Capital"] }), ["Place_Settlement", "Place_Role_Capital"], "places: an old capital tag becomes a settlement with a role");
 	eq(run({ ...base, type: "place", name: "Greyford", tags: [], kind: "capital" }), ["Place_Settlement", "Place_Role_Capital"], "places: kind capital without tags gets both tags");
 	eq(run({ ...base, type: "place", name: "Dunmere", tags: ["Place_Fortress"], kind: "fortress" }), ["Place_Fort"], "places: fortress becomes fort");
+	// ---- Relationship kinds: no key or alias belongs to two kinds ----
+	const relSeen = new Map<string, string>();
+	const relClash: string[] = [];
+	for (const k of REL_KINDS) for (const w of [k.key, ...k.aliases]) {
+		const owner = relSeen.get(w);
+		if (owner && owner !== k.key) relClash.push(`${w}: ${owner} and ${k.key}`);
+		relSeen.set(w, k.key);
+	}
+	eq(relClash, [], "relationships: every key and alias belongs to one kind");
+	eq(REL_KINDS.every((k) => REL_KINDS.some((o) => o.key === k.inverse)), true, "relationships: every kind's inverse is a kind");
+	// ---- Ties: the bracketed part after a name (index/ties.ts) ----
+	eq(splitParts('spouse, 1230 – 1255, "a secret, hidden wedding"'), ["spouse", "1230 – 1255", '"a secret, hidden wedding"'], "ties: commas inside quotes do not split");
+	eq(parseDetails('spouse, 1230 – 1255, "a secret wedding"', ["spouse", "ex"]), { words: [], kind: "spouse", span: "1230 – 1255", label: "a secret wedding" }, "ties: kind, dates and custom text");
+	eq(parseDetails("f, 1230", ["spouse"]), { words: [], gender: "female", span: "1230" }, "ties: a gender and dates");
+	eq(parseDetails("king, 1220 – 1258", ["spouse"]), { words: ["king"], span: "1220 – 1258" }, "ties: other words are left for the reader");
+	eq(splitDetails("Carol (f, 1230 – 1290)"), { name: "Carol", inside: "f, 1230 – 1290" }, "ties: a name and its brackets");
+	eq(splitDetails("- [[Carol]]"), { name: "Carol", inside: undefined }, "ties: a link is unwrapped");
+	const kin = parseKin("Bob + Mary (spouse) > Carol (f, 1230 – 1290), Dan (step)");
+	eq(kin.partners, [["Bob", "Mary", "spouse"]], "kin: a kind word after a partner is the tie");
+	eq(kin.parentOf, [["Bob", "Carol"], ["Bob", "Dan", "step"], ["Mary", "Carol"], ["Mary", "Dan", "step"]], "kin: a kind word on a child is how the parent is one");
+	eq(kin.people.get("carol"), { name: "Carol", gender: "female", span: "1230 – 1290", label: undefined }, "kin: gender and dates belong to the person");
+	eq(parseKin("Bob + Mary > Carol, Dan").parentOf.length, 4, "kin: lines without details read as before");
+	const lines = ["Bob + Mary > Carol (f, 1230 – 1290)"];
+	eq(addKinChildren(lines, ["Bob", "Mary"], ["Carol", "Dan (m)"]), 1, "kin: a child already there, with details, is not added twice");
+	eq(lines, ["Bob + Mary > Carol (f, 1230 – 1290), Dan (m)"], "kin: a new child keeps its details");
+	eq(forgetKin(["Bob + Mary > Carol (f, 1230 – 1290), Dan (m)"], "Dan"), ["Bob + Mary > Carol (f, 1230 – 1290)"], "kin: forgetting one keeps the others' details");
 	// ---- Fixing broken kinds (index/kindcheck.ts) ----
 	const knownKinds = knownKindWords();
 	const never = () => 0;

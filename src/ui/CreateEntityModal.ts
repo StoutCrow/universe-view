@@ -63,7 +63,11 @@ export class LinkList {
 	private box: HTMLElement;
 	private input: HTMLInputElement;
 
-	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false) {
+	/** Custom text for each link, by name, when the list allows it (a relationship: "sworn brother"); undefined for plain lists. */
+	notes?: Map<string, string>;
+
+	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, notes?: Map<string, string>) {
+		this.notes = notes;
 		this.values = [...initial];
 		const box = (this.box = el("div", { cls: "universeview-linklist" }, parent));
 		this.input = el("input", { attr: { type: "text", placeholder } }, box);
@@ -109,7 +113,39 @@ export class LinkList {
 			this.box.insertBefore(chip, this.input);
 			const known = !!this.plugin.index.findByName(v);
 			if (!known) chip.addClass("is-unresolved");
-			el("span", { text: v }, chip);
+			const text = el("span", { text: v }, chip);
+			const custom = this.notes?.get(v);
+			if (custom) el("span", { cls: "universeview-linkchip-note", text: ` · ${custom}` }, chip);
+			if (this.notes) {
+				// A pencil to give the link text of its own, shown as written ('sworn brother', 'since the siege').
+				const pen = el("span", { cls: "universeview-linkchip-x", title: custom ? "Change the custom text" : "Add custom text" }, chip);
+				icon(pen, "pencil");
+				pen.addEventListener("click", (evt) => {
+					evt.stopPropagation();
+					const input = el("input", { cls: "universeview-linkchip-edit", attr: { type: "text", placeholder: "Custom text" } });
+					input.value = custom ?? "";
+					chip.replaceChildren(text, input);
+					const done = () => {
+						const now = input.value.trim();
+						if (now) this.notes?.set(v, now);
+						else this.notes?.delete(v);
+						this.render();
+						this.onChange?.();
+					};
+					input.addEventListener("keydown", (e) => {
+						if (e.key === "Enter") {
+							e.preventDefault();
+							e.stopPropagation();
+							done();
+						} else if (e.key === "Escape") {
+							e.stopPropagation();
+							this.render();
+						}
+					});
+					input.addEventListener("blur", done);
+					input.focus();
+				});
+			}
 			const x = el("span", { cls: "universeview-linkchip-x", title: "Remove" }, chip);
 			icon(x, "x");
 			x.addEventListener("click", () => {

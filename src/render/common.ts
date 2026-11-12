@@ -446,7 +446,7 @@ export function showEntityMenu(plugin: UniverseViewPlugin, key: string, evt: Mou
 		menu.addSeparator();
 		addShortcutMenus(menu, plugin, e);
 	} else {
-		const name = key.startsWith("?") ? key.slice(1) : key;
+		const name = plugin.index.ghostName(key) ?? (key.startsWith("?") ? key.slice(1) : key);
 		menu.addItem((i) =>
 			i.setTitle(`Create note "${name}"`).setIcon("file-plus").onClick(() => plugin.createEntityPrompt({ name })),
 		);

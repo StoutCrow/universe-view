@@ -1,4 +1,5 @@
 /** Adding relatives by name: pure helpers, so they're testable. No notes are made; names become links. */
+import { PARENT_KINDS, PARTNER_KINDS, parseDetails, splitDetails } from "./ties";
 
 /** Names from typed text: one per line (or split by ";"), links unwrapped, blanks and repeats dropped. */
 export function parseNames(text: string): string[] {
@@ -44,11 +45,22 @@ export function addLinks(front: Record<string, unknown>, aliases: string[], fall
 // "+" joins partners, ">" leads to their children (commas or semicolons between them). A name matching a note
 // in the vault is that person; any other name is a relative with no note yet.
 
+export interface KinPerson {
+	name: string;
+	gender?: "female" | "male";
+	/** Dates as written ("1230 – 1290"). */
+	span?: string;
+	/** Custom text, shown as written. */
+	label?: string;
+}
+
 export interface KinEdges {
-	/** [parent, child] pairs. */
-	parentOf: [string, string][];
-	/** Partner pairs. */
-	partners: [string, string][];
+	/** [parent, child, kind] triples: the kind is how the parent is one (step, foster…), when the line says. */
+	parentOf: [string, string, string?][];
+	/** Partner pairs, with the kind of tie (spouse, betrothed…) when the line says. */
+	partners: [string, string, string?][];
+	/** What the lines say about each person: gender, dates and custom text, by lower-case name. */
+	people: Map<string, KinPerson>;
 }
 
 /** The lines of a `relatives:` property, whatever shape the note gave it (a list, or one text with line breaks). */
@@ -57,71 +69,99 @@ export function kinLines(value: unknown): string[] {
 	return items.flatMap((v) => String(v).split("\n")).map((l) => l.trim()).filter(Boolean);
 }
 
-const bare = (s: string) => s.replace(/^\s*[-*]\s+/, "").replace(/\[\[([^\]|]*)(?:\|[^\]]*)?\]\]/g, "$1").trim();
+/** One name in a line, as written (`raw`), with the name alone and what its brackets say. */
+interface Item {
+	raw: string;
+	name: string;
+	kind?: string;
+	person: KinPerson;
+}
+
+/** "Carol (f, 1230 – 1290)" → the name, and its gender, dates and text; a kind word (spouse, step) is the tie's. */
+function item(raw: string, kinds: readonly string[]): Item | undefined {
+	const { name, inside } = splitDetails(raw);
+	if (!name) return undefined;
+	const d = inside ? parseDetails(inside, kinds) : undefined;
+	return { raw: raw.trim(), name, kind: d?.kind, person: { name, gender: d?.gender, span: d?.span, label: d?.label } };
+}
+
+const KIN_KINDS: readonly string[] = [...PARTNER_KINDS, ...PARENT_KINDS];
+
+/** Splits `A + B > C, D` (links and brackets allowed on every name). */
+function parseLine(line: string): { left: Item[]; kids: Item[] } {
+	const cut = line.indexOf(">");
+	const list = (s: string, sep: RegExp) => s.split(sep).map((x) => item(x, KIN_KINDS)).filter((x): x is Item => !!x);
+	return { left: list(cut < 0 ? line : line.slice(0, cut), /\+/), kids: cut < 0 ? [] : list(line.slice(cut + 1), /[,;](?![^()]*\))/) };
+}
 
 /** Everyone the lines say something about, and how they are tied. */
 export function parseKin(value: unknown): KinEdges {
-	const out: KinEdges = { parentOf: [], partners: [] };
+	const out: KinEdges = { parentOf: [], partners: [], people: new Map() };
+	const note = (it: Item) => {
+		const had = out.people.get(it.name.toLowerCase());
+		const p = it.person;
+		if (!had || p.gender || p.span || p.label) out.people.set(it.name.toLowerCase(), { name: it.name, gender: p.gender ?? had?.gender, span: p.span ?? had?.span, label: p.label ?? had?.label });
+	};
 	for (const line of kinLines(value)) {
-		const cut = line.indexOf(">");
-		const left = (cut < 0 ? line : line.slice(0, cut)).split("+").map(bare).filter(Boolean);
-		const kids = cut < 0 ? [] : line.slice(cut + 1).split(/[,;]/).map(bare).filter(Boolean);
-		for (let i = 0; i < left.length; i++) for (let j = i + 1; j < left.length; j++) out.partners.push([left[i], left[j]]);
-		for (const p of left) for (const c of kids) out.parentOf.push([p, c]);
+		const { left, kids } = parseLine(line);
+		left.concat(kids).forEach(note);
+		// A kind word after a partner ("Bob + Mary (spouse)") is how the two are tied.
+		const tie = left.slice(1).find((x) => x.kind && (PARTNER_KINDS as readonly string[]).includes(x.kind))?.kind;
+		for (let i = 0; i < left.length; i++) for (let j = i + 1; j < left.length; j++) out.partners.push(tie ? [left[i].name, left[j].name, tie] : [left[i].name, left[j].name]);
+		for (const p of left) for (const c of kids) out.parentOf.push(c.kind && (PARENT_KINDS as readonly string[]).includes(c.kind) ? [p.name, c.name, c.kind] : [p.name, c.name]);
 	}
 	return out;
 }
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-const sides = (line: string) => {
-	const cut = line.indexOf(">");
-	return { left: (cut < 0 ? line : line.slice(0, cut)).split("+").map(bare).filter(Boolean), kids: cut < 0 ? [] : line.slice(cut + 1).split(/[,;]/).map(bare).filter(Boolean) };
-};
 
 /**
  * Adds `children` under `parents` (one or two names): to the line already written for those parents, else as a new
- * line. Returns how many children were new.
+ * line. A child may carry details ("Carol (f, 1230)"). Returns how many children were new.
  */
 export function addKinChildren(lines: string[], parents: string[], children: string[]): number {
 	const known = new Set(parseKin(lines).parentOf.filter(([p]) => parents.some((x) => same(x, p))).map(([, c]) => c.toLowerCase()));
-	const fresh = children.filter((c) => !known.has(c.toLowerCase()));
+	const fresh = children.filter((c) => !known.has(splitDetails(c).name.toLowerCase()));
 	if (!fresh.length) return 0;
 	const at = lines.findIndex((l) => {
-		const s = sides(l);
-		return s.left.length === parents.length && s.left.every((n) => parents.some((x) => same(x, n))) && l.includes(">");
+		const s = parseLine(l);
+		return s.left.length === parents.length && s.left.every((n) => parents.some((x) => same(x, n.name))) && l.includes(">");
 	});
 	if (at >= 0) lines[at] = `${lines[at].replace(/\s+$/, "")}, ${fresh.join(", ")}`;
 	else lines.push(`${parents.join(" + ")} > ${fresh.join(", ")}`);
 	return fresh.length;
 }
 
-/** Ties two people as partners, unless a line already does. Returns 1 when it was new. */
-export function addKinPartner(lines: string[], a: string, b: string): number {
+/** Ties two people as partners, unless a line already does. `kind` (spouse…) is written after the second name. Returns 1 when it was new. */
+export function addKinPartner(lines: string[], a: string, b: string, kind?: string): number {
+	const nameB = splitDetails(b).name;
 	if (lines.some((l) => {
-		const s = sides(l).left;
-		return s.some((n) => same(n, a)) && s.some((n) => same(n, b));
+		const s = parseLine(l).left;
+		return s.some((n) => same(n.name, a)) && s.some((n) => same(n.name, nameB));
 	})) return 0;
-	lines.push(`${a} + ${b}`);
+	lines.push(`${a} + ${kind && !/\(/.test(b) ? `${b} (${kind})` : b}`);
 	return 1;
 }
 
 /**
  * Takes a name out of the family lines: out of the partners and parents before ">" and out of the children after it.
- * A line left with nobody to say anything about goes; one left with a lone parent and children stays.
+ * A line left with nobody to say anything about goes; one left with a lone parent and children stays. What the
+ * other names say about themselves (their brackets) is kept.
  */
 export function forgetKin(lines: string[], name: string): string[] {
 	const out: string[] = [];
 	for (const line of lines) {
-		const { left, kids } = sides(line);
-		const left2 = left.filter((n) => !same(n, name));
-		const kids2 = kids.filter((n) => !same(n, name));
+		const { left, kids } = parseLine(line);
+		const left2 = left.filter((n) => !same(n.name, name));
+		const kids2 = kids.filter((n) => !same(n.name, name));
 		if (left2.length === left.length && kids2.length === kids.length) {
 			out.push(line);
 			continue;
 		}
 		if (!kids2.length && left2.length < 2) continue;
 		if (!left2.length) continue;
-		out.push(kids2.length ? `${left2.join(" + ")} > ${kids2.join(", ")}` : left2.join(" + "));
+		const l = left2.map((n) => n.raw).join(" + ");
+		out.push(kids2.length ? `${l} > ${kids2.map((n) => n.raw).join(", ")}` : l);
 	}
 	return out;
 }

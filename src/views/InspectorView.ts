@@ -119,13 +119,16 @@ export class InspectorView extends ItemView {
 	/** Shows a note, whatever was showing. */
 	show(key: string, quiet = false) {
 		// Each kind of note opens on the tab you last used for it (people on Person, places on Place…).
+		// Only a different note opens on its kind's remembered tab: showing the same note again (a refresh after an
+		// edit, the note being focused) keeps the tab and the scroll position you were on.
+		const again = key === this.key && !this.creator;
 		const type = this.plugin.index.get(key)?.type;
 		const remembered = type ? this.plugin.settings.inspectorTabByType?.[type] : undefined;
-		if (!this.explicitTab && remembered) this.tab = remembered as InspectorTab;
+		if (!again && !this.explicitTab && remembered) this.tab = remembered as InspectorTab;
 		this.explicitTab = false;
 		this.creator = undefined;
 		this.key = key;
-		this.editor = undefined;
+		if (!again || !this.editor?.dirty()) this.editor = undefined;
 		this.render();
 		if (!quiet) this.app.workspace.requestSaveLayout();
 	}
@@ -199,8 +202,13 @@ export class InspectorView extends ItemView {
 		this.draw();
 		tuckDescriptions(this.bodyEl);
 		this.foldable();
-		this.contentEl.scrollTop = tops[0];
-		if (this.bodyEl) this.bodyEl.scrollTop = tops[1];
+		const restore = () => {
+			this.contentEl.scrollTop = tops[0];
+			if (this.bodyEl) this.bodyEl.scrollTop = tops[1];
+		};
+		restore();
+		// Content that fills in a moment later (a tab that builds its list after a frame) is taller only then.
+		if (same && (tops[0] || tops[1])) window.requestAnimationFrame(restore);
 	}
 
 	private draw() {

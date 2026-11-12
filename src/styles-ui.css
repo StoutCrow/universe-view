@@ -1416,6 +1416,23 @@ textarea.universeview-mono {
 	width: 100%;
 	resize: vertical;
 }
+.uv-rel-how {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	color: var(--text-muted);
+}
+.uv-rel-how.is-hidden {
+	display: none;
+}
+.uv-rel-more {
+	margin-top: 6px;
+	color: var(--text-muted);
+}
+.uv-rel-more summary {
+	cursor: pointer;
+}
 
 /* ---- The Options panel every view's toolbar has ---- */
 .uv-options {
@@ -1581,4 +1598,29 @@ body.uv-t-panels .uv-options {
 @container (max-width: 900px) {
 	.universeview-toolbar .uv-map-tools .universeview-chip > span:not(.universeview-chip-icon):not(.uv-chip-caret) { display: none; }
 	.universeview-toolbar .uv-map-tools .universeview-chip { padding-left: 8px; padding-right: 8px; }
+}
+
+.universeview-qe-hint {
+	margin: 2px 0 6px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+.universeview-qe-icon-preview {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	margin-right: 6px;
+	color: var(--text-muted);
+}
+.universeview-linkchip-note {
+	color: var(--text-muted);
+}
+.universeview-linkchip-edit {
+	width: 12em;
+	height: 22px;
+}
+.universeview-qe-more .setting-item.is-removed {
+	opacity: 0.4;
 }

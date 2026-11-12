@@ -11,9 +11,11 @@ import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinla
 import { relationship, type KinGraph } from "../index/kinship";
 
 /** Down from a parent, along the line between the generations and down to a child, with rounded corners. */
-function elbow(x1: number, y1: number, busY: number, x2: number, y2: number): string {
+function elbow(x1: number, y1: number, busY: number, x2: number, y2: number, style: "rounded" | "square" | "curved" = "rounded"): string {
 	const dx = x2 - x1;
 	if (Math.abs(dx) < 1) return `M${x1},${y1} V${y2}`;
+	if (style === "curved") return `M${x1},${y1} C${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`;
+	if (style === "square") return `M${x1},${y1} V${busY} H${x2} V${y2}`;
 	const s = Math.sign(dx);
 	const r = Math.max(0, Math.min(10, Math.abs(dx) / 2, busY - y1, y2 - busY));
 	return `M${x1},${y1} V${busY - r} Q${x1},${busY} ${x1 + s * r},${busY} H${x2 - s * r} Q${x2},${busY} ${x2},${busY + r} V${y2}`;
@@ -37,6 +39,10 @@ export interface FamilyOptions {
 	inLaws?: boolean;
 	/** What each person is to the one at the centre ("Grandmother", "Second cousin"), on their card. */
 	relations?: boolean;
+	/** How the cards look: cards (the default), compact (names only), portrait (tall, with a large avatar) or chart (formal boxes). */
+	style?: "cards" | "compact" | "portrait" | "chart";
+	/** How the lines between generations are drawn. */
+	lines?: "rounded" | "square" | "curved";
 }
 
 export const DEFAULT_FAMILY_OPTIONS: FamilyOptions = { up: 2, down: 2, siblings: true, steps: 3, inLaws: false, relations: true };
@@ -63,12 +69,18 @@ interface CardNode {
 	root: boolean;
 }
 
+/** A kind word as shown on a couple's line: "ex" → "Ex". */
+const kindWord = (k: string) => k.charAt(0).toUpperCase() + k.slice(1).replace(/-/g, " ");
+
 interface Family {
 	parents: number[];
 	children: number[];
 	adoptive: Set<number>;
 	kind?: string;
 	ended?: boolean;
+	/** Custom text for the tie, and how it ended. */
+	label?: string;
+	reason?: string;
 }
 
 /**
@@ -157,6 +169,8 @@ export class FamilyTreeRenderer {
 	}
 
 	refresh() {
+		// The card style sets the size of the cards, so its class goes on before the size is read.
+		for (const s of ["cards", "compact", "portrait", "chart"]) this.root.toggleClass(`uv-fam-${s}`, (this.options.style ?? "cards") === s);
 		this.W = cssNumber(this.root, "--universeview-card-width", 180);
 		this.H = cssNumber(this.root, "--universeview-card-height", 64);
 		const clear = () => {
@@ -479,11 +493,11 @@ export class FamilyTreeRenderer {
 			const t = f.parents.length === 2 ? tie(f.parents[0], f.parents[1]) : undefined;
 			const adoptive = new Set<number>();
 			for (const c of f.children) if (idx.get(c)?.adoptiveParents.some((r) => f.parents.includes(r.key))) adoptive.add(id.get(c)!);
-			this.families.push({ parents: f.parents.map((k) => id.get(k)!), children: f.children.map((k) => id.get(k)!), adoptive, kind: t?.kind, ended: !!t?.to });
+			this.families.push({ parents: f.parents.map((k) => id.get(k)!), children: f.children.map((k) => id.get(k)!), adoptive, kind: t?.kind, ended: !!t?.to, label: t?.label, reason: t?.reason });
 		}
 		for (const [a, b] of laid.couples) {
 			const t = tie(a, b);
-			this.families.push({ parents: [id.get(a)!, id.get(b)!], children: [], adoptive: new Set(), kind: t?.kind, ended: !!t?.to });
+			this.families.push({ parents: [id.get(a)!, id.get(b)!], children: [], adoptive: new Set(), kind: t?.kind, ended: !!t?.to, label: t?.label, reason: t?.reason });
 		}
 	}
 
@@ -522,9 +536,12 @@ export class FamilyTreeRenderer {
 					svg("path", { d: `M${a.x + W},${y} H${b.x}`, class: "universeview-edge is-partner" + (dashedCouple ? " is-dashed" : "") }, edges);
 					// A ring where the couple meet: filled while together, hollow once it ended.
 					svg("circle", { cx: (a.x + W + b.x) / 2, cy: y, r: 4.5, class: "uv-couple-ring" + (dashedCouple ? " is-ended" : "") }, edges);
-					if (f.kind && !["co-parent", "marriage", "married", "spouse"].includes(f.kind.toLowerCase()) && b.x - (a.x + W) > 30) {
+					const plainKind = !f.kind || ["co-parent", "marriage", "married", "spouse"].includes(f.kind.toLowerCase());
+						// The custom text if there is one, else the kind when it is more than an ordinary marriage; the reason it ended goes in the tooltip.
+						if ((f.label || !plainKind) && b.x - (a.x + W) > 30) {
 						const t = svg("text", { x: (a.x + W + b.x) / 2, y: y - 9, class: "universeview-edge-label", "text-anchor": "middle" }, edges);
-						t.textContent = f.kind;
+						t.textContent = f.label ?? kindWord(f.kind ?? "");
+							if (f.reason) svg("title", {}, t).textContent = f.reason;
 					}
 					ox = (a.x + W + b.x) / 2;
 					oy = y + 4.5;
@@ -541,7 +558,7 @@ export class FamilyTreeRenderer {
 			const busY = childTop - VG / 2;
 			// One rounded line from the parents to each child: down, along and down again.
 			for (const c of cs) {
-				svg("path", { d: elbow(ox, oy, busY, c.x + W / 2, c.y), class: "universeview-edge" + (f.adoptive.has(c.id) ? " is-dashed" : "") }, edges);
+				svg("path", { d: elbow(ox, oy, busY, c.x + W / 2, c.y, this.options.lines ?? "rounded"), class: "universeview-edge" + (f.adoptive.has(c.id) ? " is-dashed" : "") }, edges);
 			}
 		}
 
@@ -589,7 +606,9 @@ export class FamilyTreeRenderer {
 		if (n.root) card.addClass("is-root");
 		if (n.dup) card.addClass("is-dup");
 		if (!e) card.addClass("is-ghost");
+		const ghost = !e ? idx.ghostPerson(n.key) : undefined;
 		if (e?.gender) card.addClass(`gender-${e.gender}`);
+		else if (ghost?.gender) card.addClass(ghost.gender === "female" ? "gender-f" : "gender-m");
 		if (e?.end) card.addClass("is-deceased");
 		const name = e?.name ?? idx.ghostName(n.key) ?? (n.key.startsWith("?") ? n.key.slice(1) : n.key);
 		const accent = e?.color ?? (e?.cultures[0] ? cultureColor(this.plugin, e.cultures[0].ref.key) : undefined);
@@ -619,7 +638,7 @@ export class FamilyTreeRenderer {
 			if (titles.length) {
 					// "King of England", from the highest ruled land they hold and the world's setting; the address (Her Majesty) is the hover.
 					const setting = this.plugin.settings.worldSetting;
-					const gender = e.gender === "female" ? "female" : e.gender === "male" ? "male" : undefined;
+					const gender = e.gender === "f" ? "female" : e.gender === "m" ? "male" : undefined;
 					const ruled = holdingsOf(tree, e.key).flatMap((k) => {
 						const node = tree.nodes.get(k);
 						const name = idx.get(k)?.name;
@@ -635,7 +654,9 @@ export class FamilyTreeRenderer {
 				if (culture) el("div", { cls: "universeview-card-meta", text: culture }, body);
 			}
 		} else {
-			sub.setText("Not created yet");
+			// What the family line says (dates, custom text), else that there is no note yet.
+			sub.setText([ghost?.span, ghost?.label].filter(Boolean).join(" · ") || "Not created yet");
+			if (ghost?.span || ghost?.label) card.setAttribute("title", "Not created yet");
 		}
 		if (n.dup) {
 			const badge = el("div", { cls: "universeview-card-badge", title: "Appears elsewhere in this tree" }, card);
@@ -844,6 +865,8 @@ function initials(name: string): string {
 	return ((use[0]?.[0] ?? "?") + (use.length > 1 ? use[use.length - 1][0] : "")).toUpperCase();
 }
 
+/** Capitals for a name typed in lower case: the small words in a name (of, the, de, von) stay as they are, except first. */
+const SMALL = new Set(["of", "	he", "de", "del", "la", "le", "on", "an", "der", "den", "da", "di", "nd"]);
 function titleCase(s: string): string {
-	return s.replace(/\b\w/g, (c) => c.toUpperCase());
+	return s.replace(/\b\w+/g, (w, at: number) => (at > 0 && SMALL.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)));
 }

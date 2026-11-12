@@ -13,6 +13,7 @@ import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { presetKinds, relKind } from "../index/relkinds";
 import { asText } from "../index/text";
+import { splitParts } from "../index/ties";
 
 const YEAR = 365.25;
 
@@ -97,7 +98,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 
 		// ---- Links, as chips
 		const names = (v: unknown): string[] => ([] as unknown[]).concat(v ?? []).map((x) => (x && typeof x === "object" ? linkTarget(Object.values(x).find((y) => typeof y === "string" && /\[\[/.test(y))) : linkTarget(x)) ?? "").filter(Boolean);
-		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box) => {
+		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box, custom = false) => {
 			used.add(k);
 			const raw = fm[k];
 			// Entries with dates or roles are kept as they are; chips edit the plain links.
@@ -107,20 +108,38 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			if (desc) s.setDesc(desc);
 			if (rich.length) s.setDesc(`${desc ? desc + " · " : ""}${rich.length} with dates or roles kept as written`);
 			s.settingEl.addClass("universeview-list-setting");
-			const list = new LinkList(s.controlEl, p, types, before, "Add…", single);
+			// What an entry already says in brackets (`[[Anna]] (step, "the clever one")`) is kept; the custom text can be changed.
+			const tail = new Map<string, string[]>();
+			const notes = new Map<string, string>();
+			for (const x of ([] as unknown[]).concat(raw ?? [])) {
+				const m = typeof x === "string" ? /^\s*\[\[([^\]|]+)(?:\|[^\]]*)?\]\]\s*\((.*)\)\s*$/.exec(x) : null;
+				if (!m) continue;
+				const parts = splitParts(m[2]);
+				const quoted = parts.find((pt) => /^["“]/.test(pt));
+				tail.set(m[1].trim(), parts.filter((pt) => pt !== quoted));
+				if (quoted) notes.set(m[1].trim(), quoted.replace(/^["“”]|["“”]$/g, "").trim());
+			}
+			const list = new LinkList(s.controlEl, p, types, before, "Add…", single, custom ? notes : undefined);
+			const written = (n: string, texts: Map<string, string>) => {
+				const bits = [...(tail.get(n) ?? [])];
+				const text = texts.get(n);
+				if (text) bits.push(`"${text.replace(/"/g, "'")}"`);
+				return `[[${n}]]${bits.length ? ` (${bits.join(", ")})` : ""}`;
+			};
+			const was = before.map((n) => written(n, new Map(notes)));
 			saves.push(() => {
 				const now = list.collect();
-				if (now.join("|") === before.join("|")) return;
-				const plain = now.map((n) => `[[${n}]]`);
+				const plain = now.map((n) => written(n, list.notes ?? notes));
+				if (plain.join("|") === was.join("|")) return;
 				changes.set(k, single ? plain[0] ?? "" : [...rich, ...plain]);
 			});
 		};
 		const saves: (() => void)[] = [];
 		section("Links");
-		const field = (f: FieldName, label: string, types?: EntityType[], single = false) => chips(label, keyFor(f), types, single);
+		const field = (f: FieldName, label: string, types?: EntityType[], single = false, custom = false) => chips(label, keyFor(f), types, single, undefined, box, custom);
 		if (e.type === "person") {
-			field("parents", "Parents", ["person"]);
-			field("partners", "Partners", ["person"]);
+			field("parents", "Parents", ["person"], false, true);
+			field("partners", "Partners", ["person"], false, true);
 			field("cultures", "Groups", ["culture"]);
 			field("places", "Places", ["place"]);
 		} else if (e.type === "event") {
@@ -160,7 +179,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			}
 			// The ones the note has are shown; the rest wait in one menu, so the form stays short.
 			const relBox = el("div", {}, box);
-			const row = (rk: string, prop: string) => chips(relKind(rk)?.label ?? prop, prop, e.type === "culture" && !/leader|founder/.test(rk) ? ["culture"] : undefined, false, relKind(rk)?.desc, relBox);
+			const row = (rk: string, prop: string) => chips(relKind(rk)?.label ?? prop, prop, e.type === "culture" && !/leader|founder/.test(rk) ? ["culture"] : undefined, false, relKind(rk)?.desc, relBox, true);
 			const empty: [string, string][] = [];
 			for (const [rk, prop] of kinds) {
 				if (names(fm[prop]).length) row(rk, prop);
@@ -189,15 +208,39 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			changes.set("tags", next);
 		}));
 
-		// ---- More: finer settings and every other property
-		const more = el("details", { cls: "universeview-qe-more" }, box);
-		el("summary", { text: "More: appearance, map pin, calendar and all other properties" }, more);
+		// ---- Appearance and other properties: two groups that stay open or shut as you left them
+		const openGroups = () => new Set(p.settings.inspectorOpen ?? []);
+		const group = (id: string, title: string, hint: string) => {
+			const d = el("details", { cls: "universeview-qe-more" }, box);
+			if (openGroups().has(id)) d.setAttribute("open", "");
+			el("summary", { text: title }, d);
+			el("div", { cls: "universeview-qe-hint", text: hint }, d);
+			d.addEventListener("toggle", () => {
+				const now = openGroups();
+				if (d.open) now.add(id);
+				else now.delete(id);
+				p.settings.inspectorOpen = [...now];
+				void p.saveSettings();
+			});
+			return d;
+		};
+		const more = group("appearance", "Appearance", "How it looks in the views and on maps: colour, icon, importance, and for places the pin, layer and population.");
 		const impKey = keyFor("importance");
 		const colKey = keyFor("color");
 		used.add(impKey).add(colKey).add("icon").add("pin-size").add("layer").add(keyFor("calendar"));
 		new Setting(more).setName("Importance").setDesc("1–5: higher stays visible when zoomed out or filtered").addSlider((sl) => sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => changes.set(impKey, v)));
-		new Setting(more).setName("Colour").addColorPicker((c) => c.setValue(e.color ?? "#7c5cff").onChange((v) => changes.set(colKey, v))).addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Use the default colour").onClick(() => changes.set(colKey, "")));
-		new Setting(more).setName("Icon").setDesc("A Lucide icon name or an emoji, for map pins and cards").addText((t) => t.setValue(e.icon ?? "").onChange((v) => changes.set(has(["icon"]) ?? "icon", v.trim())));
+		new Setting(more).setName("Colour").setDesc(e.color ? "Its own colour" : "From its type or group; pick one to give it its own").addColorPicker((c) => c.setValue(e.color ?? "#7c5cff").onChange((v) => changes.set(colKey, v))).addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Use the default colour").onClick(() => changes.set(colKey, "")));
+		const iconRow = new Setting(more).setName("Icon").setDesc("A Lucide icon name or an emoji, for map pins and cards");
+		const preview = el("span", { cls: "universeview-qe-icon-preview" }, iconRow.controlEl);
+		const showIcon = (name: string) => {
+			preview.empty();
+			if (name) icon(preview, name);
+		};
+		showIcon(e.icon ?? "");
+		iconRow.addText((t) => t.setValue(e.icon ?? "").onChange((v) => {
+			changes.set(has(["icon"]) ?? "icon", v.trim());
+			showIcon(v.trim());
+		}));
 		if (e.type === "place" && !owned) {
 			new Setting(more).setName("Map pin").addDropdown((d) => d.addOptions({ "": "Size: from its kind", tiny: "Tiny", small: "Small", medium: "Medium", large: "Large", huge: "Huge" }).setValue(e.pinSize ?? "").onChange((v) => changes.set(has(["pin-size"]) ?? "pin-size", v)))
 				.addDropdown((d) => d.addOptions({ "": "Layer: from its kind", "1": "1 · always shown", "2": "2", "3": "3", "4": "4", "5": "5 · zoomed right in" }).setValue(e.layer ? String(e.layer) : "").onChange((v) => changes.set(has(["layer"]) ?? "layer", v ? Number(v) : "")));
@@ -209,28 +252,44 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			for (const c of p.calendars.all()) d.addOption(c.id, c.name);
 			d.setValue(typeof fm[keyFor("calendar")] === "string" ? String(fm[keyFor("calendar")]) : "").onChange((v) => changes.set(keyFor("calendar"), v));
 		});
+
 		const rest = Object.keys(fm).filter((k) => !used.has(k) && !relKind(k) && !Object.values(aliases).some((list) => list.includes(k)) && !["territory", "territories", "routes", "annotations", "images", "names", "image-size", "holders", "transfers", "sides", "war"].includes(k) && !(owned && ["under", "polity"].includes(k)));
-		if (rest.length) {
-			section("Other properties", more);
-			for (const k of rest) {
-				const v = fm[k];
-				const complex = v !== null && typeof v === "object" && !(Array.isArray(v) && v.every((x) => typeof x !== "object"));
-				const s = new Setting(more).setName(k);
-				if (complex) s.setDesc("Has structure: edit it in the note");
-				else s.addText((t) => t.setValue(Array.isArray(v) ? v.join(", ") : v === null || v === undefined ? "" : asText(v)).onChange((x) => {
+		const other = group("other", `Other properties${rest.length ? ` (${rest.length})` : ""}`, "Everything else the note has. Edit a value, remove a property with the bin, or add one.");
+		for (const k of rest) {
+			const v = fm[k];
+			const complex = v !== null && typeof v === "object" && !(Array.isArray(v) && v.every((x) => typeof x !== "object"));
+			const kindOf = typeof v === "boolean" ? "yes or no" : typeof v === "number" ? "number" : Array.isArray(v) ? "list, separated by commas" : complex ? "has structure" : "text";
+			const s = new Setting(other).setName(k).setDesc(kindOf);
+			if (complex) {
+				s.addExtraButton((b) => b.setIcon("file-text").setTooltip("Edit it in the note").onClick(() => void openEntity(p, e.key)));
+			} else if (typeof v === "boolean") {
+				s.addToggle((tg) => tg.setValue(v).onChange((x) => changes.set(k, x)));
+			} else {
+				s.addText((t) => t.setValue(Array.isArray(v) ? v.join(", ") : v === null || v === undefined ? "" : asText(v)).onChange((x) => {
 					const val = x.trim();
-					changes.set(k, Array.isArray(v) ? val.split(",").map((y) => y.trim()).filter(Boolean) : typeof v === "number" && val !== "" && Number.isFinite(Number(val)) ? Number(val) : typeof v === "boolean" ? val === "true" : val);
+					changes.set(k, Array.isArray(v) ? val.split(",").map((y) => y.trim()).filter(Boolean) : typeof v === "number" && val !== "" && Number.isFinite(Number(val)) ? Number(val) : val);
 				}));
 			}
+			s.addExtraButton((b) => b.setIcon("trash-2").setTooltip(`Remove ${k}`).onClick(() => {
+				changes.set(k, "");
+				s.settingEl.addClass("is-removed");
+				touched = true;
+				onChange?.();
+			}));
 		}
-		new Setting(more).setName("Add a property").addText((t) => {
-			t.setPlaceholder("Name: value");
-			t.inputEl.addEventListener("change", () => {
-				const m = t.getValue().match(/^\s*([^:]+):\s*(.*)$/);
-				if (m) changes.set(m[1].trim(), m[2].trim());
-			});
-		});
-
+		// A new property: its name and its value side by side.
+		const addRow = new Setting(other).setName("Add a property");
+		let newName = "";
+		let newValue = "";
+		addRow.addText((t) => t.setPlaceholder("Name").onChange((v) => (newName = v.trim())));
+		addRow.addText((t) => t.setPlaceholder("Value").onChange((v) => (newValue = v.trim())));
+		addRow.addExtraButton((b) => b.setIcon("plus").setTooltip("Add it").onClick(() => {
+			if (!newName) return;
+			changes.set(newName, newValue);
+			addRow.setDesc(`Will add ${newName}${newValue ? `: ${newValue}` : ""} when saved`);
+			touched = true;
+			onChange?.();
+		}));
 		// Any input or chip change marks the form as changed.
 		let touched = false;
 		const mark = () => {

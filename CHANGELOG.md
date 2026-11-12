@@ -2,6 +2,26 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 3.4.0 — 2026-11-12
+
+Relationships, custom text, ghost relatives, family tree styles.
+
+### Family tree
+- **Card style** (Options): Cards, Compact (names only), Portrait (tall, large avatar) or Chart (formal boxes), and **Lines**: Rounded, Square or Curved. Both are saved with the view.
+- A relative with no note keeps the way their name is written (William of Orange, not William Of Orange), also in the right-click menu.
+- A child named only in a parent's `children:` list now joins that parent in the tree.
+- Women holding land show Queen, Duchess and so on (the card used the wrong gender codes).
+
+### Relationships
+- **Custom text on every link**: a pencil on a parent, partner or relationship chip, written as `[[Anna]] ("the clever one")` and shown as written on both sides. Details already written after a link are kept when you edit.
+- **Parents** can be step, foster, guardian or adoptive (`[[Anna]] (step)`); **partners** can be spouse, betrothed, lover, ex, widowed, concubine or consort, with dates and how it ended.
+- **Add relatives**: Enter adds, *Add and add more*, a *They are* box, and optional detail per name: `Carol (f, 1230 – 1290, "the clever one")` for gender, dates and a note, shown on the card.
+- New friendly kinds: confidants, sworn kin, colleagues, acquaintances, godparents and godchildren, guardians and wards.
+
+### Inspector
+- Editing a note keeps its tab and scroll position.
+- The edit form's *Appearance* and *Other properties* are two groups that stay open or shut as you left them, with an icon preview, typed editors, remove and add.
+
 ## 3.3.0 — 2026-11-12
 
 Places get one system, and titles get more words.

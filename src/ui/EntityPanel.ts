@@ -226,7 +226,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	// Relationships, coloured by kind (allies green, rivals red, lieges purple…), minus the ones shown above.
 	const shownKinds = new Set(["holder", "owner", "lord", "lady", "ruler"]);
 	const rels: TimedRef[] = [...e.relations.filter((r) => !(node && shownKinds.has(r.kind ?? ""))), ...(e.relatedCultures ?? [])];
-	list("Relationships", "handshake", rels.map((r) => ({ ...r.ref, sub: [relLabel(r.kind), formatSpan(r.from, r.to, cal)].filter(Boolean).join(" · "), tone: relTone(r.kind) })), 16);
+	list("Relationships", "handshake", rels.map((r) => ({ ...r.ref, sub: [r.label ?? relLabel(r.kind), formatSpan(r.from, r.to, cal), r.reason].filter(Boolean).join(" · "), tone: relTone(r.kind) })), 16);
 	list("Knows about", "eye", e.knows.map((t) => ({ ...t.ref, sub: formatSpan(t.from, t.to, cal) })), 8);
 
 	// ---- The rest of what's written about it ----

@@ -26,6 +26,14 @@ export interface RelKind {
 export const REL_KINDS: RelKind[] = [
 	{ key: "allies", label: "Allies", aliases: ["ally", "allied", "allied-with", "alliance", "alliances"], inverse: "allies", tone: "ally", on: ["person", "culture"], desc: "On the same side" },
 	{ key: "friends", label: "Friends", aliases: ["friend", "companions", "companion"], inverse: "friends", tone: "bond", on: ["person"], desc: "Close personal ties" },
+	{ key: "confidants", label: "Confidants", aliases: ["confidant", "confidante", "confidantes", "trusted"], inverse: "confidants", tone: "bond", on: ["person"], desc: "Who they trust with secrets" },
+	{ key: "sworn", label: "Sworn kin", aliases: ["sworn-brothers", "sworn-brother", "sworn-sisters", "sworn-sister", "oathsworn", "blood-brothers", "blood-brother"], inverse: "sworn", tone: "bond", on: ["person"], desc: "Bound by oath, as family" },
+	{ key: "colleagues", label: "Colleagues", aliases: ["colleague", "peers", "peer", "comrades", "comrade"], inverse: "colleagues", tone: "bond", on: ["person"], desc: "Work or serve side by side" },
+	{ key: "acquaintances", label: "Acquaintances", aliases: ["acquaintance", "neighbours", "neighbour", "neighbors", "neighbor"], inverse: "acquaintances", tone: "neutral", on: ["person"], desc: "Known, not close" },
+	{ key: "godparents", label: "Godparents", aliases: ["godparent", "godfather", "godmother", "sponsor", "sponsors"], inverse: "godchildren", tone: "bond", on: ["person"], desc: "Who stood for them" },
+	{ key: "godchildren", label: "Godchildren", aliases: ["godchild", "godson", "goddaughter"], inverse: "godparents", tone: "bond", on: ["person"], desc: "Who they stood for" },
+	{ key: "guardians", label: "Guardians", aliases: ["guardian"], inverse: "wards", tone: "rank", on: ["person"], desc: "Who looks after them" },
+	{ key: "wards", label: "Wards", aliases: ["ward"], inverse: "guardians", tone: "rank", on: ["person"], desc: "Who they look after" },
 	{ key: "rivals", label: "Rivals", aliases: ["rival", "rivalry", "competitors", "competitor"], inverse: "rivals", tone: "hostile", on: ["person", "culture"], desc: "Competing, not (yet) at war" },
 	{ key: "enemies", label: "Enemies", aliases: ["enemy", "foes", "foe", "at-war-with", "at_war_with"], inverse: "enemies", tone: "hostile", on: ["person", "culture"], desc: "Open hostility or war" },
 	{ key: "mentors", label: "Mentors", aliases: ["mentor", "teacher", "teachers"], inverse: "students", tone: "rank", on: ["person"], desc: "Who taught them" },
@@ -78,7 +86,7 @@ export function relLabel(kind: string | undefined, fromOtherSide = false): strin
 }
 
 const ONE: Record<string, string> = {
-	allies: "ally", friends: "friend", rivals: "rival", enemies: "enemy", mentors: "mentor", students: "student", liege: "liege", vassals: "vassal",
+	allies: "ally", friends: "friend", confidants: "confidant", sworn: "sworn kin", colleagues: "colleague", acquaintances: "acquaintance", godparents: "godparent", godchildren: "godchild", guardians: "guardian", wards: "ward", rivals: "rival", enemies: "enemy", mentors: "mentor", students: "student", liege: "liege", vassals: "vassal",
 	employer: "employer", employees: "employee", leader: "leader", leads: "leads", "trade-partners": "trade partner", founder: "founder", founded: "founded",
 };
 

@@ -190,6 +190,8 @@ export interface UniverseViewSettings {
 	inspectorDensity?: "comfortable" | "compact";
 	/** Inspector: sections folded away, by their heading. */
 	inspectorCollapsed?: string[];
+	/** Which groups in the inspector's edit form (Appearance, Other properties) are open. */
+	inspectorOpen?: string[];
 	/** Hover cards: parts left out (owner, map, facts, excerpt, tags, actions). */
 	hoverHide?: string[];
 	/** Map: size of place and territory names (1 = as drawn). */

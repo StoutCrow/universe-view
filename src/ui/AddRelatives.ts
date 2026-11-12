@@ -4,6 +4,7 @@ import type { Entity } from "../types";
 import { addSubmenu, el } from "../render/common";
 import { buildFieldAliases } from "../settings";
 import { addKinChildren, addKinPartner, addLinks, kinLines, parseNames } from "../index/relatives";
+import { PARENT_KINDS, PARTNER_KINDS, parseDetails, splitDetails, tieLabel } from "../index/ties";
 
 export type RelativeKind = "parents" | "children" | "partners" | "siblings";
 
@@ -37,14 +38,28 @@ export function relativeMenu(menu: Menu, plugin: UniverseViewPlugin, target: Rel
 	}
 }
 
+/** Whether a typed name carries details a link cannot hold: a gender, dates or custom text. */
+function hasDetails(name: string): boolean {
+	const { inside } = splitDetails(name);
+	if (!inside) return false;
+	const d = parseDetails(inside, [...PARTNER_KINDS, ...PARENT_KINDS]);
+	return !!(d.gender || d.span || d.label);
+}
+
 /**
  * Grows the tree by names. Nobody gets a note: a name becomes a link on a note that already exists (or, for relatives
  * of a relative with no note, a family line on the note that mentions them), and the tree draws a card marked "Not
  * created yet". Clicking that card offers to write the note when there's something to say.
  * A name that matches someone already in the vault links to them.
+ *
+ * Quick: pick who they are to this person, type names, press Enter. Optionally detailed: put brackets after a name
+ * (`Carol (f, 1230 – 1290, "the clever one")`) for gender, dates and a note of your own; those go in a family line,
+ * because a link cannot hold them. For partners and parents, the "How" box says what kind of tie it is.
  */
 export class AddRelativesModal extends Modal {
 	private kind: RelativeKind;
+	/** The kind of tie chosen in the "How" box: spouse, step… ("" for the ordinary one). */
+	private how = "";
 
 	constructor(private plugin: UniverseViewPlugin, private person: RelTarget, kind: RelativeKind = "children") {
 		super(plugin.app);
@@ -58,15 +73,31 @@ export class AddRelativesModal extends Modal {
 		const ghost = !hasNote(this.person);
 		const kinds = el("div", { cls: "uv-rel-kinds" }, this.contentEl);
 		const note = el("p", { cls: "setting-item-description" }, this.contentEl);
-		const area = el("textarea", { cls: "uv-rel-names", attr: { rows: "6", placeholder: "One name per line" } }, this.contentEl);
+		const howRow = el("label", { cls: "uv-rel-how" }, this.contentEl);
+		const howName = el("span", {}, howRow);
+		const howSel = el("select", { cls: "dropdown" }, howRow);
+		const area = el("textarea", { cls: "uv-rel-names", attr: { rows: "5", placeholder: "One name per line. Enter adds them." } }, this.contentEl);
+		const more = el("details", { cls: "uv-rel-more" }, this.contentEl);
+		el("summary", { text: "Add detail" }, more);
+		el("p", { cls: "setting-item-description", text: "Put brackets after a name for more: a gender (f or m), dates, and a note of your own in quotes. For example Carol (f, 1230 – 1290, \"the clever one\"). These are kept in a family line on the note, and the card shows them." }, more);
 		const buttons = el("div", { cls: "modal-button-container" }, this.contentEl);
 		const ok = el("button", { cls: "mod-cta", text: "Add" }, buttons);
+		const again = el("button", { text: "Add and add more" }, buttons);
 		el("button", { text: "Cancel" }, buttons).addEventListener("click", () => this.close());
 		const chips: Record<string, HTMLElement> = {};
 		const paint = () => {
 			for (const k of KINDS) chips[k.id].toggleClass("is-on", k.id === this.kind);
 			const k = KINDS.find((x) => x.id === this.kind);
 			note.setText(`No notes are made. ${ghost ? k?.ghost : k?.own} Each name shows in the tree as a card you can write up later.`);
+			// How they are tied: partners (spouse, betrothed…) and parents (step, foster…).
+			const options = this.kind === "partners" ? PARTNER_KINDS : this.kind === "parents" ? PARENT_KINDS.filter((x) => x !== "birth") : [];
+			howRow.toggleClass("is-hidden", !options.length);
+			howName.setText(this.kind === "partners" ? "They are" : "Parent by");
+			howSel.empty();
+			howSel.add(new Option(this.kind === "partners" ? "Not said" : "Birth", ""));
+			for (const o of options) howSel.add(new Option(tieLabel(o, this.kind === "partners" ? "partner" : "parent"), o));
+			this.how = "";
+			howSel.value = "";
 		};
 		for (const k of KINDS) {
 			chips[k.id] = el("button", { cls: "universeview-chip", text: k.label }, kinds);
@@ -76,17 +107,29 @@ export class AddRelativesModal extends Modal {
 				area.focus();
 			});
 		}
+		howSel.addEventListener("change", () => (this.how = howSel.value));
 		paint();
 		ok.addEventListener("click", () => void this.submit(area.value));
+		again.addEventListener("click", () => void this.submit(area.value, true).then((done) => {
+			if (done) {
+				area.value = "";
+				area.focus();
+			}
+		}));
+		// Enter adds; Shift+Enter makes a new line.
 		area.addEventListener("keydown", (evt) => {
-			if (evt.key === "Enter" && (evt.ctrlKey || evt.metaKey)) void this.submit(area.value);
+			if (evt.key === "Enter" && !evt.shiftKey && !evt.isComposing) {
+				evt.preventDefault();
+				void this.submit(area.value);
+			}
 		});
 		window.setTimeout(() => area.focus(), 30);
 	}
 
-	private async submit(text: string) {
+	/** Adds the typed names. Returns whether anything was written (so "add more" knows to clear the box). */
+	private async submit(text: string, keepOpen = false): Promise<boolean> {
 		const names = parseNames(text);
-		if (!names.length) return;
+		if (!names.length) return false;
 		const p = this.plugin;
 		const idx = p.index;
 		const fileOf = (key: string) => {
@@ -96,58 +139,85 @@ export class AddRelativesModal extends Modal {
 		const label = `Add ${names.length} ${this.kind === "siblings" ? "sibling" : this.kind.replace(/s$/, "")}${names.length === 1 ? "" : "s"}`;
 		const person = this.person;
 		if (!hasNote(person)) {
-			await this.submitForGhost(person, names, label);
-			return;
+			return this.submitForGhost(person, names, label, keepOpen);
 		}
-		const link = (name: string) => {
-			const found = idx.findByName(name);
-			return `[[${found ? found.key.split("/").pop()!.replace(/\.md$/i, "") : name}]]`;
-		};
-		const links = names.map(link);
-		const aliases = buildFieldAliases(p.settings.fieldAliases);
-		let targets: { file: TFile; field: "parents" | "children" | "partners" }[];
-		if (this.kind === "siblings") {
-			targets = person.parents.map((r) => fileOf(r.key)).filter((f): f is TFile => !!f).map((file) => ({ file, field: "children" as const }));
-			if (!targets.length) {
-				new Notice(`${person.name} has no parent with a note yet. Add a parent first, then their siblings.`);
-				return;
-			}
-		} else {
-			const file = fileOf(person.key);
-			if (!file) return;
-			targets = [{ file, field: this.kind }];
-		}
+		// Names with details go in a family line (a link cannot hold a gender or dates); the rest are links.
+		const detailed = names.filter(hasDetails);
+		const plain = names.filter((n) => !hasDetails(n));
 		let added = 0;
-		for (const t of targets) {
-			await p.editFrontmatter(t.file, (front) => {
-				added = Math.max(added, addLinks(front, aliases[t.field], p.fieldName(t.field), links));
-			}, label);
+		const tie = this.how ? ` (${this.how})` : "";
+		const link = (name: string) => {
+			const clean = splitDetails(name).name;
+			const found = idx.findByName(clean);
+			return `[[${found ? found.key.split("/").pop()!.replace(/\.md$/i, "") : clean}]]${tie}`;
+		};
+		const aliases = buildFieldAliases(p.settings.fieldAliases);
+		if (plain.length) {
+			const links = plain.map(link);
+			let targets: { file: TFile; field: "parents" | "children" | "partners" }[];
+			if (this.kind === "siblings") {
+				targets = person.parents.map((r) => fileOf(r.key)).filter((f): f is TFile => !!f).map((file) => ({ file, field: "children" as const }));
+				if (!targets.length) {
+					new Notice(`${person.name} has no parent with a note yet. Add a parent first, then their siblings.`);
+					return false;
+				}
+			} else {
+				const file = fileOf(person.key);
+				if (!file) return false;
+				targets = [{ file, field: this.kind }];
+			}
+			for (const t of targets) {
+				await p.editFrontmatter(t.file, (front) => {
+					added = Math.max(added, addLinks(front, aliases[t.field], p.fieldName(t.field), links));
+				}, label);
+			}
 		}
-		this.close();
+		if (detailed.length) added += await this.writeLines(person, detailed, label);
+		if (!keepOpen) this.close();
 		new Notice(added ? `Added ${added} to ${person.name}'s tree. Click a "Not created yet" card to write one up.` : "They were all there already.");
+		return true;
+	}
+
+	/** Family lines on a person's own note, for relatives who carry details. */
+	private async writeLines(person: Entity, typed: string[], label: string): Promise<number> {
+		const p = this.plugin;
+		const file = p.app.vault.getAbstractFileByPath(person.key);
+		if (!(file instanceof TFile)) return 0;
+		const parents = p.index.parentsOf(person.key).map((r) => r.name);
+		let added = 0;
+		await p.editFrontmatter(file, (front) => {
+			const prop = "kin" in front && !("relatives" in front) ? "kin" : "relatives";
+			const lines = kinLines(front[prop]);
+			if (this.kind === "children") added = addKinChildren(lines, [person.name], typed);
+			else if (this.kind === "parents") for (const n of typed) added += addKinChildren(lines, [n], [person.name]);
+			else if (this.kind === "partners") for (const n of typed) added += addKinPartner(lines, person.name, n, this.how || undefined);
+			else if (parents.length) added = addKinChildren(lines, parents.slice(0, 2), typed);
+			if (added) front[prop] = lines;
+		}, label);
+		return added;
 	}
 
 	/**
 	 * Relatives of a relative with no note: there is no note to write on, so each goes into a family line (`relatives:`)
 	 * on the note that mentions them.
 	 */
-	private async submitForGhost(person: { key: string; name: string }, typed: string[], label: string) {
+	private async submitForGhost(person: { key: string; name: string }, typed: string[], label: string, keepOpen: boolean): Promise<boolean> {
 		const p = this.plugin;
 		const idx = p.index;
 		const anchor = idx.kinAnchor(person.key);
 		const file = anchor && p.app.vault.getAbstractFileByPath(anchor.key);
 		if (!anchor || !(file instanceof TFile)) {
 			new Notice(`No note mentions ${person.name} yet, so there is nowhere to write this. Write ${person.name} up as a note first.`);
-			return;
+			return false;
 		}
-		// A name matching a note in the vault means that person.
-		const names = typed.map((n) => idx.findByName(n)?.name ?? n);
+		// A name matching a note in the vault means that person (and the details have nothing to add).
+		const names = typed.map((n) => idx.findByName(splitDetails(n).name)?.name ?? n);
 		const me = idx.ghostName(person.key) ?? person.name;
 		const parents = idx.parentsOf(person.key).map((r) => r.name);
 		const partners = idx.partners(person.key).map((x) => x.ref.name);
 		if (this.kind === "siblings" && !parents.length) {
 			new Notice(`${person.name} has no parent in the tree yet. Add a parent first, then their siblings.`);
-			return;
+			return false;
 		}
 		let added = 0;
 		await p.editFrontmatter(file, (front) => {
@@ -158,12 +228,13 @@ export class AddRelativesModal extends Modal {
 				if (names.length >= 2) added += addKinChildren(lines, [names[0], names[1]], [me]);
 				else added += addKinChildren(lines, [names[0]], [me]);
 				for (const extra of names.slice(2)) added += addKinChildren(lines, [extra], [me]);
-			} else if (this.kind === "partners") for (const n of names) added += addKinPartner(lines, me, n);
+			} else if (this.kind === "partners") for (const n of names) added += addKinPartner(lines, me, n, this.how || undefined);
 			else added = addKinChildren(lines, parents.slice(0, 2), names);
 			if (added) front[prop] = lines;
 		}, label);
-		this.close();
+		if (!keepOpen) this.close();
 		new Notice(added ? `Added ${added} to the tree, written on ${anchor.name}'s note. Click a "Not created yet" card to write one up.` : "They were all there already.");
+		return true;
 	}
 
 	onClose() {
