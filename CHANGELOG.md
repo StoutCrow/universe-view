@@ -2,6 +2,13 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## Not released yet
+
+### Relationships
+- **A tie only asks what fits its kind.** In the tie window and the Add relatives window, the kind is now two steps: what it is (*Parent*; *Married* or *Not married* for partners), then which kind, as tabs under it (Birth, Adoptive, Step, Foster, Guardian; Spouse, Consort, Widowed, Former spouse; Betrothed, Lover, Concubine).
+- A birth parent has no dates and no ending; an adoptive parent asks when they were adopted; step, foster and guardian parents ask when and how it ended. A widowed marriage asks when it began but not how it ended. Details a kind doesn't have are dropped when you save, so switching a step-parent to a birth parent clears the dates.
+- A kind of your own (such as "annulled") stays as a tab in the group it belongs to.
+
 ## 4.1.0 — 2026-11-12
 
 ### Family tree

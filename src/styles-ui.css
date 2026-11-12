@@ -1417,11 +1417,7 @@ textarea.universeview-mono {
 	resize: vertical;
 }
 .uv-rel-how {
-	display: flex;
-	align-items: center;
-	gap: 8px;
 	margin-bottom: 8px;
-	color: var(--text-muted);
 }
 :is(.uv-rel-how, .uv-rel-names, .uv-rel-more, .uv-rel-pick).is-hidden {
 	display: none;
@@ -1429,9 +1425,15 @@ textarea.universeview-mono {
 .uv-rel-modes {
 	margin-bottom: 12px;
 }
-/* The tie editor: the kind as chips, then the details as labelled fields, two to a row. */
-.uv-tie-kinds {
+/* The tie editor: what the tie is as chips, which kind as tabs under it, then only the details that kind has. */
+.uv-tie-picker {
 	margin-bottom: 16px;
+}
+.uv-tie-sub {
+	margin-bottom: 0;
+}
+:is(.uv-tie-sub, .uv-tie-field).is-hidden {
+	display: none;
 }
 .uv-tie-grid {
 	display: grid;

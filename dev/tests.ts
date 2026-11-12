@@ -1,6 +1,6 @@
 import { findColourAreas } from "../src/render/colours";
 import { kindFix, knownKindWords } from "../src/index/kindcheck";
-import { formatDetails, parseDetails, splitDetails, splitParts } from "../src/index/ties";
+import { fitTie, formatDetails, parseDetails, splitDetails, splitParts, tieKindInfo } from "../src/index/ties";
 import { ROW_ORDER, readMembers, rebuildMembers, rowOfKind, rowOfProperty, splitMembers, type GroupRow } from "../src/index/membership";
 import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
@@ -419,6 +419,9 @@ eq(findMapping("People/ = person\n/Vael = vaelic", "Vael"), "vaelic", "find a fo
 	const kp = { ...kg, parents: (k: string) => (k === "L" ? ["LF"] : parents[k] ?? []), partners: (k: string) => partners[k] ?? [], gender: (k: string) => ({ ...genders, L: "f", H: "m", X: "f", LF: "m" } as Record<string, "m" | "f">)[k], partnerKind: (a: string, b: string) => kinds[`${a}>${b}`] };
 	eq(["L", "W", "H", "LF"].map((k) => relationship(kp, "A", k)?.label), ["lover", "wife", "husband of an aunt", "lover's father"], "kin: a partner's word follows the tie's kind, on either side");
 	eq(relationship(kp, "A", "X")?.label, "former wife of a first cousin once removed", "kin: a former partner of a relative");
+	eq([tieKindInfo("parent", "birth"), tieKindInfo("parent", "step"), tieKindInfo("parent", undefined)].map((t) => [t.group, !!t.info.when, !!t.info.ends]), [[1, false, false], [1, true, true], [0, false, false]], "ties: a birth parent has no dates, a step-parent has dates and an end");
+	eq([tieKindInfo("partner", "annulled"), tieKindInfo("partner", "paramour"), tieKindInfo("partner", "Widowed")].map((t) => [t.group, t.own, !!t.info.ends]), [[1, true, true], [2, true, true], [1, false, false]], "ties: a partner kind of one's own goes in a likely group and keeps its details");
+	eq([fitTie("parent", { kind: "birth", span: "1230", reason: "death", label: "x" }), fitTie("parent", { kind: "foster", span: "1230", reason: "death" })], [{ kind: "birth", span: undefined, reason: undefined, label: "x" }, { kind: "foster", span: "1230", reason: "death" }], "ties: details a kind doesn't have are dropped");
 	eq(["annulled", "Divorced", "betrothed", "concubine", undefined].map((k) => partnerWord(k, "f")), ["former wife", "former wife", "fiancée", "concubine", "wife"], "kin: partner words for ended and other ties");
 	eq(["husband of an aunt", "husband of a great-uncle", "former wife of a first cousin once removed", "spouse's grandfather", "spouse's first cousin", "lover's father", "second cousin once removed", "first cousin once removed", "2× great-grandmother", "2× great-uncle", "great-grandfather", "sister-in-law"].map(shortKin),
 		["uncle", "distant in-law", "distant in-law", "grandfather-in-law", "distant in-law", "lover's father", "distant cousin", "cousin", "ancestor", "distant uncle", "great-grandfather", "sister-in-law"], "kin: short names");

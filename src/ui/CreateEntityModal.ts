@@ -1,5 +1,6 @@
 import { Modal, Notice, Setting, TFolder } from "obsidian";
 import { TieModal, type TieEdit } from "./TieModal";
+import type { TieRole } from "../index/ties";
 import { makeFolderNote, placementFor, type Placement } from "./foldernotes";
 import { choiceTags, standardFields, type TagChoice } from "./tagstandard";
 import type UniverseViewPlugin from "../main";
@@ -67,12 +68,12 @@ export class LinkList {
 
 	/** What each link says about the tie (kind, dates, how it ended, custom text), by name, when the list allows editing it; undefined for plain lists. */
 	ties?: Map<string, TieEdit>;
-	/** The kinds a tie in this list can be, with labels; empty when the list's own name is the kind. */
-	private tieKinds: [string, string][];
+	/** What sort of tie the list holds: parents and partners have kinds to choose; other relationships name their own. */
+	private tieRole: TieRole;
 
-	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, ties?: Map<string, TieEdit>, tieKinds: [string, string][] = [], filter?: (e: Entity) => boolean) {
+	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, ties?: Map<string, TieEdit>, tieRole: TieRole = "relation", filter?: (e: Entity) => boolean) {
 		this.ties = ties;
-		this.tieKinds = tieKinds;
+		this.tieRole = tieRole;
 		this.values = [...initial];
 		const box = (this.box = el("div", { cls: "universeview-linklist" }, parent));
 		this.input = el("input", { attr: { type: "text", placeholder } }, box);
@@ -146,7 +147,7 @@ export class LinkList {
 				icon(pen, "pencil");
 				pen.addEventListener("click", (evt) => {
 					evt.stopPropagation();
-					new TieModal(this.plugin, v, tie ?? { words: [] }, this.tieKinds, (edited) => {
+					new TieModal(this.plugin, v, tie ?? { words: [] }, this.tieRole, (edited) => {
 						this.ties?.set(v, edited);
 						this.render();
 						this.onChange?.();

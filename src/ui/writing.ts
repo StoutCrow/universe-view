@@ -15,7 +15,7 @@ import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
 import { ROW_INFO, ROW_ORDER, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
 import { groupKind } from "../render/houses";
 import { asText } from "../index/text";
-import { PARENT_KINDS, PARTNER_KINDS, formatDetails, parseDetails, tieLabel } from "../index/ties";
+import { PARENT_KINDS, PARTNER_KINDS, formatDetails, parseDetails } from "../index/ties";
 import type { TieEdit } from "./TieModal";
 
 const YEAR = 365.25;
@@ -143,8 +143,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 					ties.set(n, tieOfObject(x as Record<string, unknown>));
 				}
 			}
-			const kinds: [string, string][] = o.tie === "partner" ? PARTNER_KINDS.map((x) => [x, tieLabel(x, "partner")]) : o.tie === "parent" ? PARENT_KINDS.map((x) => [x, tieLabel(x, "parent")]) : [];
-			const list = new LinkList(s.controlEl, p, o.types, before, o.placeholder ?? "Add…", o.single ?? false, o.tie ? ties : undefined, kinds, o.filter);
+			const list = new LinkList(s.controlEl, p, o.types, before, o.placeholder ?? "Add…", o.single ?? false, o.tie ? ties : undefined, o.tie, o.filter);
 			// Adding, removing or editing a chip is a change: it autosaves like typing does (a suggestion picked with the mouse fires no input event).
 			list.onChange = () => mark();
 			const initial = new Map([...ties].map(([n, d]) => [n, formatDetails(d)]));

@@ -87,6 +87,68 @@ export function tieLabel(kind: string, role: "parent" | "partner"): string {
 	return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
+/** What sort of tie: to a parent, to a partner, or any other relationship (allies, a house…). */
+export type TieRole = "parent" | "partner" | "relation";
+
+/** One kind of tie and the details that make sense for it: a birth parent has no dates, a step-parent does. */
+export interface TieKindInfo {
+	/** As written in brackets; "" when the kind is not said. */
+	kind: string;
+	label: string;
+	/** The dates field's label, when this kind has dates. */
+	when?: string;
+	/** Whether it can end (divorce, death…), so "How it ended" is asked. */
+	ends?: boolean;
+}
+
+/** A first choice (Parent, Married…) and the kinds under it, chosen second. */
+export interface TieGroup {
+	label: string;
+	kinds: TieKindInfo[];
+}
+
+const dated = (kind: string, label: string, when = "When"): TieKindInfo => ({ kind, label, when, ends: true });
+
+/** The kinds of parent and partner, grouped; the first kind of a group is the one chosen with it. */
+export const TIE_GROUPS: Record<"parent" | "partner", TieGroup[]> = {
+	parent: [
+		{ label: "Not said", kinds: [{ kind: "", label: "Not said" }] },
+		{
+			label: "Parent",
+			kinds: [{ kind: "birth", label: "Birth" }, { kind: "adoptive", label: "Adoptive", when: "Adopted" }, dated("step", "Step"), dated("foster", "Foster"), dated("guardian", "Guardian")],
+		},
+	],
+	partner: [
+		{ label: "Not said", kinds: [dated("", "Not said")] },
+		{ label: "Married", kinds: [dated("spouse", "Spouse", "Married"), dated("consort", "Consort", "Married"), { kind: "widowed", label: "Widowed", when: "Married" }, dated("ex", "Former spouse", "Married")] },
+		{ label: "Not married", kinds: [dated("betrothed", "Betrothed"), dated("lover", "Lover"), dated("concubine", "Concubine")] },
+	],
+};
+
+const kindLabel = (k: string) => k.charAt(0).toUpperCase() + k.slice(1).replace(/-/g, " ");
+
+/**
+ * Where a kind sits among the choices, and what it asks. A kind of the note's own ("annulled") is kept: it goes in the
+ * group it most likely belongs to, with dates and an ending. Other relationships (allies, a house) have no kinds here.
+ */
+export function tieKindInfo(role: TieRole, kind: string | undefined): { group: number; info: TieKindInfo; own: boolean } {
+	const k = norm(kind ?? "");
+	if (role === "relation") return { group: -1, info: dated(k, kindLabel(k)), own: false };
+	const groups = TIE_GROUPS[role];
+	for (let g = 0; g < groups.length; g++) {
+		const info = groups[g].kinds.find((x) => x.kind === k);
+		if (info) return { group: g, info, own: false };
+	}
+	const group = role === "parent" ? 1 : /annul|divorc|separat|widow|marri|wed|former|husband|wife/.test(k) ? 1 : 2;
+	return { group, info: dated(k, kindLabel(k)), own: true };
+}
+
+/** A tie with only the details its kind has: switching a step-parent to a birth parent drops the dates. */
+export function fitTie<T extends Partial<TieDetails>>(role: TieRole, tie: T): T {
+	const { info } = tieKindInfo(role, tie.kind);
+	return { ...tie, span: info.when ? tie.span : undefined, reason: info.ends ? tie.reason : undefined };
+}
+
 /** The brackets for a tie, from what it says: kind, other words, dates, how it ended, custom text ("" when there is nothing to say). */
 export function formatDetails(d: Partial<TieDetails>): string {
 	const bits = [d.kind, ...(d.words ?? []), d.gender === "female" ? "f" : d.gender === "male" ? "m" : undefined, d.span, d.reason ? `ended: ${d.reason}` : undefined, d.label ? `"${d.label.replace(/"/g, "'")}"` : undefined].filter((x): x is string => !!x && !!x.trim());

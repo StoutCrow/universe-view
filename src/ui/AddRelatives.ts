@@ -4,8 +4,9 @@ import type { Entity } from "../types";
 import { addSubmenu, el } from "../render/common";
 import { buildFieldAliases } from "../settings";
 import { addKinChildren, addKinPartner, addLinks, kinLines, parseNames } from "../index/relatives";
-import { PARENT_KINDS, PARTNER_KINDS, parseDetails, splitDetails, tieLabel } from "../index/ties";
+import { PARENT_KINDS, PARTNER_KINDS, parseDetails, splitDetails } from "../index/ties";
 import { LinkList } from "./CreateEntityModal";
+import { tiePicker } from "./TieModal";
 
 export type RelativeKind = "parents" | "children" | "partners" | "siblings";
 
@@ -83,13 +84,19 @@ export class AddRelativesModal extends Modal {
 		const modes = el("div", { cls: "uv-subtabs uv-rel-modes", attr: { role: "tablist" } }, this.contentEl);
 		const kinds = el("div", { cls: "uv-rel-kinds" }, this.contentEl);
 		const note = el("p", { cls: "setting-item-description" }, this.contentEl);
-		const howRow = el("label", { cls: "uv-rel-how" }, this.contentEl);
-		const howName = el("span", {}, howRow);
-		const howSel = el("select", { cls: "dropdown" }, howRow);
+		// How they are tied, for parents and partners: the same two-step choice as the tie window (Parent, then Birth, Step…).
+		const howBox = el("div", { cls: "uv-rel-how" }, this.contentEl);
+		const drawHow = () => {
+			howBox.empty();
+			this.how = "";
+			const role = this.kind === "partners" ? "partner" : this.kind === "parents" ? "parent" : undefined;
+			howBox.toggleClass("is-hidden", !role);
+			if (role) tiePicker(howBox, role, "", (k) => (this.how = k));
+		};
 		const area = el("textarea", { cls: "uv-rel-names", attr: { rows: "5", placeholder: "One name per line. Enter adds them." } }, this.contentEl);
 		const pickBox = el("div", { cls: "uv-rel-pick" }, this.contentEl);
 		const self = this.person.key;
-		const picked = new LinkList(pickBox, this.plugin, ["person"], [], "Type a person's name…", false, undefined, [], (e) => e.key !== self);
+		const picked = new LinkList(pickBox, this.plugin, ["person"], [], "Type a person's name…", false, undefined, "relation", (e) => e.key !== self);
 		const more = el("details", { cls: "uv-rel-more" }, this.contentEl);
 		el("summary", { text: "Add detail" }, more);
 		el("p", { cls: "setting-item-description", text: "Put brackets after a name for more: a gender (f or m), dates, and a note of your own in quotes. For example Carol (f, 1230 – 1290, \"the clever one\"). These are kept in a family line on the note, and the card shows them." }, more);
@@ -124,25 +131,17 @@ export class AddRelativesModal extends Modal {
 			note.setText(noted
 				? `Pick people who have a note; each becomes a link. ${ghost ? k?.ghost : k?.own}`
 				: `No notes are made. ${ghost ? k?.ghost : k?.own} Each name shows in the tree as a card you can write up later.`);
-			// How they are tied: partners (spouse, betrothed…) and parents (step, foster…).
-			const options = this.kind === "partners" ? PARTNER_KINDS : this.kind === "parents" ? PARENT_KINDS.filter((x) => x !== "birth") : [];
-			howRow.toggleClass("is-hidden", !options.length);
-			howName.setText(this.kind === "partners" ? "They are" : "Parent by");
-			howSel.empty();
-			howSel.add(new Option(this.kind === "partners" ? "Not said" : "Birth", ""));
-			for (const o of options) howSel.add(new Option(tieLabel(o, this.kind === "partners" ? "partner" : "parent"), o));
-			this.how = "";
-			howSel.value = "";
 		};
 		for (const k of KINDS) {
 			chips[k.id] = el("button", { cls: "universeview-chip", text: k.label }, kinds);
 			chips[k.id].addEventListener("click", () => {
 				this.kind = k.id;
+				drawHow();
 				paint();
 				this.focusInput(area, picked);
 			});
 		}
-		howSel.addEventListener("change", () => (this.how = howSel.value));
+		drawHow();
 		paint();
 		/** What to add: the typed names, or the picked people (only those with a note). */
 		const names = (): string | null => {

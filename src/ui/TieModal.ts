@@ -1,16 +1,57 @@
 import { Modal } from "obsidian";
 import type UniverseViewPlugin from "../main";
-import type { TieDetails } from "../index/ties";
-
-/** A kind word as a label: "co-parent" → "Co parent". */
-const tieWord = (k: string) => k.charAt(0).toUpperCase() + k.slice(1).replace(/-/g, " ");
+import { TIE_GROUPS, fitTie, tieKindInfo, type TieDetails, type TieRole } from "../index/ties";
 
 /** What a tie (a partner, a parent, a relationship) says about itself, for editing. */
 export type TieEdit = Partial<TieDetails>;
 
 /**
- * Edits one existing relationship: what kind it is (when the tie has kinds to choose from), when it lasted, how it
- * ended and any text of your own. What is left empty is not written.
+ * Picks the kind of a parent or partner tie in two steps: what it is (Parent, Married, Not married) as chips, then
+ * which kind (Birth, Step, Foster…) as tabs under it. A kind of the note's own ("annulled") stays as a tab in its group.
+ * Returns a function that repaints it for another kind.
+ */
+export function tiePicker(parent: HTMLElement, role: "parent" | "partner", kind: string | undefined, onPick: (kind: string) => void): (kind: string) => void {
+	const box = parent.createDiv({ cls: "uv-tie-picker" });
+	const groupsRow = box.createDiv({ cls: "uv-rel-kinds uv-tie-groups", attr: { role: "group", "aria-label": "Kind of tie" } });
+	const subRow = box.createDiv({ cls: "uv-subtabs uv-tie-sub", attr: { role: "tablist" } });
+	const groups = TIE_GROUPS[role].map((g) => ({ ...g, kinds: [...g.kinds] }));
+	const start = tieKindInfo(role, kind);
+	if (start.own) groups[start.group].kinds.push(start.info);
+	let current = start.info.kind;
+	const paint = (k: string) => {
+		current = k;
+		const at = tieKindInfo(role, k).group;
+		groupsRow.querySelectorAll("button").forEach((b, i) => {
+			b.toggleClass("is-active", i === at);
+			b.setAttribute("aria-pressed", String(i === at));
+		});
+		subRow.empty();
+		const kinds = groups[at]?.kinds ?? [];
+		subRow.toggleClass("is-hidden", kinds.length < 2);
+		for (const info of kinds) {
+			const tab = subRow.createEl("button", { cls: "uv-subtab" + (info.kind === current ? " is-on" : ""), text: info.label, attr: { role: "tab", "aria-selected": String(info.kind === current) } });
+			tab.addEventListener("click", () => {
+				paint(info.kind);
+				onPick(info.kind);
+			});
+		}
+	};
+	groups.forEach((g, i) => {
+		const chip = groupsRow.createEl("button", { cls: "universeview-chip", text: g.label });
+		chip.addEventListener("click", () => {
+			// Choosing the group it is already in keeps the kind; another group starts on its first kind.
+			if (tieKindInfo(role, current).group === i) return;
+			paint(g.kinds[0].kind);
+			onPick(g.kinds[0].kind);
+		});
+	});
+	paint(current);
+	return paint;
+}
+
+/**
+ * Edits one existing relationship: what kind it is (for parents and partners), and then only the details that kind
+ * has: a birth parent has no dates, a step-parent has when and how it ended. What is left empty is not written.
  */
 export class TieModal extends Modal {
 	private value: TieEdit;
@@ -19,8 +60,8 @@ export class TieModal extends Modal {
 		plugin: UniverseViewPlugin,
 		private who: string,
 		current: TieEdit,
-		/** Kinds to choose from, with their labels; empty when the tie has no kinds (a relationship row names its own). */
-		private kinds: [string, string][],
+		/** Parent and partner ties have kinds to choose from; any other relationship names its own. */
+		private role: TieRole,
 		private onSave: (v: TieEdit) => void,
 	) {
 		super(plugin.app);
@@ -32,31 +73,17 @@ export class TieModal extends Modal {
 		this.modalEl.addClass("universeview-scope", "uv-tie-modal");
 		this.titleEl.setText(`Tie with ${this.who}`);
 		const box = this.contentEl;
-		// The kind as a row of chips, like the Add relatives window; a kind of the note's own (annulled…) is kept as one.
-		if (this.kinds.length) {
-			const own = this.value.kind && !this.kinds.some(([k]) => k === this.value.kind) ? [[this.value.kind, tieWord(this.value.kind)] as [string, string]] : [];
-			const row = box.createDiv({ cls: "uv-rel-kinds uv-tie-kinds", attr: { role: "group", "aria-label": "Kind" } });
-			const chips: [string, HTMLElement][] = [];
-			const paint = () => {
-				for (const [k, c] of chips) {
-					c.toggleClass("is-active", k === (this.value.kind ?? ""));
-					c.setAttribute("aria-pressed", String(k === (this.value.kind ?? "")));
-				}
-			};
-			for (const [k, label] of [["", "Not said"] as [string, string], ...this.kinds, ...own]) {
-				const c = row.createEl("button", { cls: "universeview-chip", text: label });
-				c.addEventListener("click", () => {
-					this.value.kind = k || undefined;
-					paint();
-				});
-				chips.push([k, c]);
-			}
-			paint();
+		const role = this.role;
+		if (role !== "relation") {
+			tiePicker(box, role, this.value.kind, (k) => {
+				this.value.kind = k || undefined;
+				showFields();
+			});
 		}
 		const grid = box.createDiv({ cls: "uv-tie-grid" });
 		const field = (label: string, hint: string, value: string | undefined, put: (v: string | undefined) => void, wide = false) => {
 			const f = grid.createEl("label", { cls: "uv-tie-field" + (wide ? " is-wide" : "") });
-			f.createSpan({ cls: "uv-tie-label", text: label });
+			const name = f.createSpan({ cls: "uv-tie-label", text: label });
 			const input = f.createEl("input", { attr: { type: "text", placeholder: hint } });
 			input.value = value ?? "";
 			input.addEventListener("input", () => put(input.value.trim() || undefined));
@@ -66,12 +93,21 @@ export class TieModal extends Modal {
 					this.save();
 				}
 			});
-			return input;
+			return { f, name, input };
 		};
 		const when = field("When", "1230 – 1255, or a start alone", this.value.span, (v) => (this.value.span = v));
-		field("How it ended", "Divorce, death, annulment…", this.value.reason, (v) => (this.value.reason = v));
-		field("Custom text", "Shown as written, on both sides", this.value.label, (v) => (this.value.label = v), true);
-		window.setTimeout(() => when.focus(), 30);
+		const ended = field("How it ended", "Divorce, death, annulment…", this.value.reason, (v) => (this.value.reason = v));
+		const text = field("Custom text", "Shown as written, on both sides", this.value.label, (v) => (this.value.label = v), true);
+		// Only the details this kind has; the others are kept while you look, and dropped on save.
+		const showFields = () => {
+			const { info } = tieKindInfo(role, this.value.kind);
+			when.f.toggleClass("is-hidden", !info.when);
+			when.name.setText(info.when ?? "When");
+			ended.f.toggleClass("is-hidden", !info.ends);
+			when.f.toggleClass("is-wide", !info.ends);
+		};
+		showFields();
+		window.setTimeout(() => (tieKindInfo(role, this.value.kind).info.when ? when.input : text.input).focus(), 30);
 		const buttons = box.createDiv({ cls: "modal-button-container" });
 		buttons.createEl("button", { cls: "mod-cta", text: "Save" }).addEventListener("click", () => this.save());
 		buttons.createEl("button", { text: "Clear details" }).addEventListener("click", () => {
@@ -83,7 +119,7 @@ export class TieModal extends Modal {
 
 	private save() {
 		this.close();
-		this.onSave({ ...this.value, words: this.value.words ?? [] });
+		this.onSave(fitTie(this.role, { ...this.value, words: this.value.words ?? [] }));
 	}
 
 	onClose() {
