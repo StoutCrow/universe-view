@@ -4,6 +4,7 @@ import type { Entity, EntityType } from "../types";
 import { TYPE_WORDS, factTag, kindTag, parseTag } from "../index/tagscheme";
 import { DEFAULT_REGION_WORDS, chainOf, tierLabel, tierName, tierRenamed, tierWords, tierWordsWith } from "../index/realms";
 import { el, icon } from "../render/common";
+import { LAND_FORMS, PLACE_ROLES, PLACE_STATUSES, SETTLEMENT_LADDER, normaliseKind, resolvePlace, usualSize } from "../index/placekinds";
 
 /**
  * One standard for tagging land, so every note says the same things the same way:
@@ -38,8 +39,10 @@ export function realmTiers(): [string, string, string][] {
 		return [v, t === 6 ? `${name} (or a town, fort…)` : name, t === 6 ? "" : name.replace(/\s+/g, "")];
 	});
 }
-export const SETTLEMENT_KINDS = ["City", "Town", "Village", "Castle", "Fort", "Fortress", "Settlement"];
-export const LANDFORMS = ["", "Continent", "Island", "Archipelago", "Peninsula", "Mountains", "Highlands", "Forest", "Valley", "Plains", "Desert", "Coast", "Marsh", "Sea", "Lake", "Crater", "Canyon"];
+const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** The ladder of settlements, biggest first (metropolis … hamlet), then holdings and the plain word. */
+export const SETTLEMENT_KINDS = [...SETTLEMENT_LADDER.map(([k]) => cap1(k)).reverse(), "Castle", "Fort", "Settlement"];
+export const LANDFORMS = ["", ...LAND_FORMS];
 export const SIZES: [string, string, string][] = [
 	// [tag word, as a title, as geography]
 	["", "No size", "No size"],
@@ -61,6 +64,9 @@ export interface TagChoice {
 	/** For regions: Island, Forest… or "". */
 	landform: string;
 	size: string;
+	/** A place's role (Capital, Port…) and status (Ruined…): "" for none, undefined where the note isn't a place. */
+	role?: string;
+	status?: string;
 }
 
 const SIZE_WORDS = new Set(SIZES.map((s) => s[0].toLowerCase()).filter(Boolean).concat(["massive", "big", "major", "minor", "little", "middling"]));
@@ -73,17 +79,25 @@ export function readChoice(plugin: ChroniclePlugin, e: Entity): TagChoice {
 	const size = (schemeSize?.role === "fact" ? schemeSize.value : undefined) ?? tags.map((t) => t.split("_")).find((p) => p.length === 2 && SIZE_WORDS.has(p[1].toLowerCase()))?.[1] ?? "";
 	const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 	// The note's kind says it first (it's what the Kind box shows), then its tags.
-	const named = (list: string[]) => list.find((k) => k && e.category === k.toLowerCase()) ?? list.find((k) => k && tags.some((t) => t.toLowerCase() === k.toLowerCase()));
+	// An older word (fortress, capital) counts as the kind it now is.
+	const own = normaliseKind(e.category).kind;
+	const named = (list: string[]) => list.find((k) => k && own === k.toLowerCase()) ?? list.find((k) => k && tags.some((t) => t.toLowerCase() === k.toLowerCase() || normaliseKind(t.replace(/^.*?_/, "")).kind === k.toLowerCase()));
+	const facts = e.type === "place" ? resolvePlace(e.category, e.tags) : undefined;
 	const settlement = named(SETTLEMENT_KINDS) ?? "City";
 	const landform = named(LANDFORMS) ?? "";
 	// Nothing says its tier yet: a realm note (a group) is most likely a kingdom, a place a county.
 	const tier = node && node.nature !== "region" && node.rank < 9 ? String(Math.max(1, Math.min(6, Math.round(node.rank)))) : e.type === "culture" ? "2" : "4";
-	return { nature: node?.nature ?? "realm", tier, settlement, landform, size: SIZES.some((s) => s[0] === cap(size)) ? cap(size) : "" };
+	return { nature: node?.nature ?? "realm", tier, settlement, landform, size: SIZES.some((s) => s[0] === cap(size)) ? cap(size) : "", role: facts ? cap(facts.roles[0] ?? "") : undefined, status: facts ? cap(facts.status ?? "") : undefined };
 }
 
 /** The tags a choice stands for, in the tag scheme (`tagscheme.ts`): its kind and its size. */
 export function choiceTags(c: TagChoice, type: EntityType = "place"): string[] {
 	const size = c.size ? [factTag(type, "size", c.size)] : [];
+	// A place's traits go with its kind: a role and a status, each only when there is one.
+	if (type === "place") {
+		if (c.role) size.push(factTag(type, "role", c.role));
+		if (c.status) size.push(factTag(type, "status", c.status));
+	}
 	if (c.nature === "region") return [kindTag(type, c.landform || "region"), ...size];
 	if (c.tier === "6") return [kindTag(type, c.settlement), ...size];
 	return [kindTag(type, realmTiers().find((t) => t[0] === c.tier)?.[2] || "Province"), ...size];
@@ -101,7 +115,7 @@ export function restandardise(plugin: ChroniclePlugin, tags: string[], c: TagCho
 	const land = (t: string) => {
 		// The scheme's own kind and size tags give way to the new ones; its facts and belonging tags stay.
 		const s = parseTag(t);
-		if (s) return s.type === type && (s.role === "kind" || (s.role === "fact" && s.field === "size"));
+		if (s) return s.type === type && (s.role === "kind" || (s.role === "fact" && (s.field === "size" || (type === "place" && (s.field === "role" || s.field === "status")))));
 		if (TYPE_WORDS[type].toLowerCase() === t.replace(/^#/, "").toLowerCase()) return true;
 		if (plugin.settings.typeStyle === "tag" && typeTags.has(t.replace(/^#/, "").toLowerCase())) return false;
 		const parts = t.replace(/^#/, "").toLowerCase().split(/[_/\s-]+/);
@@ -154,7 +168,10 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 					for (const k of SETTLEMENT_KINDS) d.addOption(k, k);
 					d.setValue(c.settlement).onChange((v) => {
 						c.settlement = v;
+						// A village is usually small, a city large: the size is offered, never forced.
+						if (!c.size) c.size = cap1(usualSize(v) ?? "");
 						onChange(c);
+						draw();
 					});
 				});
 			}
@@ -180,6 +197,26 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 					draw();
 				});
 			});
+		if (c.role !== undefined) {
+			new Setting(box).setName("Role").setDesc("What it does, beyond what it is: its pin wears the role's icon.").addDropdown((d) => {
+				d.addOption("", "None");
+				for (const r of PLACE_ROLES) d.addOption(cap1(r.role), cap1(r.role));
+				d.setValue(c.role ?? "").onChange((v) => {
+					c.role = v;
+					onChange(c);
+					draw();
+				});
+			});
+			new Setting(box).setName("Status").setDesc("How it stands now.").addDropdown((d) => {
+				d.addOption("", "As it was");
+				for (const s of PLACE_STATUSES) d.addOption(cap1(s), cap1(s));
+				d.setValue(c.status ?? "").onChange((v) => {
+					c.status = v;
+					onChange(c);
+					draw();
+				});
+			});
+		}
 		el("div", { cls: "uv-std-tags", text: `Tags: ${choiceTags(c).map((t) => "#" + t).join(" ")}` }, box);
 	};
 	draw();

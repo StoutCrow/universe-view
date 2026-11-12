@@ -61,8 +61,8 @@ export function settingWords(s: string | undefined): SettingWords {
 }
 
 /** Kinds of place that only a world past the middle ages has. */
-const FUTURE_KINDS = new Set(["planet", "moon", "star", "station", "spaceport", "colony", "habitat", "asteroid", "galaxy", "nebula", "system", "star system", "solar system", "starship", "ship"]);
-const MODERN_KINDS = new Set(["airport", "base", "factory", "office", "campus", "stadium", "suburb", "highway", "railway", "power plant", "skyscraper", "mall"]);
+export const FUTURE_KINDS = new Set(["planet", "moon", "star", "station", "spaceport", "colony", "habitat", "asteroid", "galaxy", "nebula", "system", "star system", "solar system", "starship", "ship"]);
+export const MODERN_KINDS = new Set(["airport", "base", "factory", "office", "campus", "stadium", "suburb", "highway", "railway", "power plant", "skyscraper", "mall"]);
 
 /**
  * The setting a vault's places point to, or undefined when they don't clearly point anywhere:

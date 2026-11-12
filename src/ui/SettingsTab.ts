@@ -10,6 +10,7 @@ import { formatDay } from "../dates/parser";
 import { TYPE_LABELS, el, glyph, helpTip, icon, tuckDescriptions } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
 import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
+import { PLACE_GROUPS, groupOfKind, normaliseKind } from "../index/placekinds";
 import { chooseWorldSetting } from "./worldsettingui";
 import { renderThemeCards } from "./themecards";
 import { previewButtons, previewEdges, previewFonts, previewHeadings, previewIcons, previewTabs, stylePicker } from "./stylepicker";
@@ -734,23 +735,41 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			}));
 		const sizes = (): [string, string][] => [["", "Auto"], ["tiny", "Tiny"], ["small", "Small"], ["medium", "Medium"], ["large", "Large"], ["huge", "Huge"]];
 		const layers = (): [string, string][] => [["", "Auto"], ["1", "1 · always"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5 · zoomed in"]];
-		const placeKindRows = [...parseMapCategories(s.mapCategories)].map(([kind, c]) => ({ kind, color: c.color, icon: c.icon ?? "", size: c.size ?? "", layer: c.layer ? String(c.layer) : "" }));
-		const placeKinds = this.rows(containerEl, "Kinds of place", "Colour, icon, pin size and layer for each kind (a place's `kind:` or a tag like #City). Icons are Lucide names or emoji; a note's own `icon:` wins. Auto takes size and layer from the kind's built-in; layer 1 always shows, higher layers appear as you zoom in.", [
-			{ key: "kind", label: "Kind", kind: "text", width: "1.2fr", placeholder: "city" },
-			{ key: "color", label: "Colour", kind: "color", width: "64px" },
-			{ key: "icon", label: "Icon", kind: "icon", width: "1.3fr", placeholder: "building-2" },
-			{ key: "size", label: "Pin", kind: "select", options: sizes, width: "86px" },
-			{ key: "layer", label: "Layer", kind: "select", options: layers, width: "104px" },
-		], placeKindRows, async (rows) => {
-			s.mapCategories = rows.filter((r) => String(r.kind ?? "").trim()).map((r) => `${String(r.kind).trim().toLowerCase()} = ${[r.color, r.icon, r.size, r.layer ? `layer ${r.layer}` : ""].filter(Boolean).join(", ")}`).join("\n");
+		// Kinds of place, one table per type of place (index/placekinds.ts): the type follows from the kind, so a
+		// kind is listed under the type it belongs to; older words and your own kinds go in the last one.
+		const kindGroups: [string, string, string][] = [...PLACE_GROUPS.filter(([g]) => g !== "territory"), ["other", "Older words and your own kinds", "Words from before 3.3 (capital, fortress…) and kinds you added. Capital and port are now traits; the rest still read as before."]];
+		type KindRow = { kind: string; color: string; icon: string; size: string; layer: string };
+		const kindRows = new Map<string, KindRow[]>();
+		for (const [kind, c] of parseMapCategories(s.mapCategories)) {
+			const g = groupOfKind(kind);
+			const key = g && g !== "territory" && normaliseKind(kind).kind === kind ? g : "other";
+			kindRows.set(key, [...(kindRows.get(key) ?? []), { kind, color: c.color ?? "#888888", icon: c.icon ?? "", size: c.size ?? "", layer: c.layer ? String(c.layer) : "" }]);
+		}
+		const writeKinds = async () => {
+			s.mapCategories = kindGroups.flatMap(([g]) => kindRows.get(g) ?? []).filter((r) => r.kind.trim()).map((r) => `${r.kind.trim().toLowerCase()} = ${[r.color, r.icon, r.size, r.layer ? `layer ${r.layer}` : ""].filter(Boolean).join(", ")}`).join("\n");
 			await this.save(false);
-		}, { blank: () => ({ kind: "", color: "#888888", icon: "", size: "", layer: "" }), addLabel: "Add a kind of place" });
-		new Setting(placeKinds).addButton((b) => b.setButtonText("Reset to the built-in kinds").onClick(async () => {
+		};
+		let lastKinds: HTMLElement = containerEl;
+		for (const [g, label, about] of kindGroups) {
+			lastKinds = this.rows(containerEl, `Kinds of place: ${label}`, `${about} Colour, icon, pin size and layer for each kind (a place's \`kind:\` or a tag like #Place_City). Icons are Lucide names or emoji; a note's own \`icon:\` wins. Auto takes size and layer from the kind's built-in; layer 1 always shows, higher layers appear as you zoom in.`, [
+				{ key: "kind", label: "Kind", kind: "text", width: "1.2fr", placeholder: "city" },
+				{ key: "color", label: "Colour", kind: "color", width: "64px" },
+				{ key: "icon", label: "Icon", kind: "icon", width: "1.3fr", placeholder: "building-2" },
+				{ key: "size", label: "Pin", kind: "select", options: sizes, width: "86px" },
+				{ key: "layer", label: "Layer", kind: "select", options: layers, width: "104px" },
+			], kindRows.get(g) ?? [], async (rows) => {
+				kindRows.set(g, rows);
+				await writeKinds();
+			}, { blank: () => ({ kind: "", color: "#888888", icon: "", size: "", layer: "" }), addLabel: "Add a kind of place" });
+		}
+		new Setting(lastKinds)
+			.setName("Traits")
+			.setDesc("What is special about a place goes in tags, not in its kind: a role (#Place_Role_Capital, #Place_Role_Port, #Place_Role_Holy, #Place_Role_Market), a size (#Place_Size_Small) and a status (#Place_Status_Ruined, Abandoned, Lost, Destroyed). A place with a role wears that role's crown, anchor or other icon on the map. The Tag standard window sets them.");
+		new Setting(lastKinds).addButton((b) => b.setButtonText("Reset to the built-in kinds").onClick(async () => {
 			s.mapCategories = DEFAULT_SETTINGS.mapCategories;
 			await this.save(false);
 			this.update();
 		}));
-
 		// ---- How the map looks: names, pins, borders and fills ---------------------------------
 		const lookHead = new Setting(containerEl).setName("Map look").setHeading();
 		helpTip(lookHead.nameEl, "Applies to every map at once. Each tier's own border, line, fill, edge and texture are under Territory styles below; Fill strength here scales all of them together.");

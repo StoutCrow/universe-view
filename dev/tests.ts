@@ -1,4 +1,6 @@
 import { findColourAreas } from "../src/render/colours";
+import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
+import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
 import { ROW_FORMATS, holdersProperty, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
 import { checkBorders } from "../src/index/bordercheck";
 import { boxOf, labelSpot, mainAxis, snapToNeighbour, unionOutline } from "../src/index/geometry";
@@ -1614,6 +1616,33 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	addBodyToStep(step, "a.md", "two", "three");
 	eq(readHistory(writeHistory([step]))[0].notes[0].body, { before: "one", after: "three" }, "undo: a note's text, earliest before and latest after, kept in the history file");
 	eq(run({ ...base, type: "person", name: "Ann", tags: ["Favourite"] }), ["Favourite", "Character_Person"], "scheme: other tags stay, the kind tag is added");
+
+	// ---- Places: type of place, kind, traits (index/placekinds.ts) ----
+	eq(resolvePlace("capital"), { kind: "settlement", group: "settlement", roles: ["capital"], status: undefined }, "places: kind capital is a settlement with the capital role");
+	eq(resolvePlace("fortress"), { kind: "fort", group: "structure", roles: [], status: undefined }, "places: fortress is a fort, a structure");
+	eq(resolvePlace("city", ["#Place_Role_Port", "Place_Status_Ruined", "Place_Size_Large"]), { kind: "city", group: "settlement", roles: ["port"], status: "ruined" }, "places: roles and status come from the scheme's tags");
+	eq(resolvePlace("harbour").roles, ["port"], "places: harbour is the port role");
+	eq([groupOfKind("kingdom"), groupOfKind("island"), groupOfKind("lake"), groupOfKind("ruins"), groupOfKind("planet"), groupOfKind("nothing")], ["territory", "land", "water", "site", "space", undefined], "places: every kind has one type of place");
+	eq([styleKeyOf("city", ["Place_Role_Capital"]), styleKeyOf("city", []), styleKeyOf("capital", []), styleKeyOf(undefined, ["Place_Role_Port"])], ["capital", "city", "capital", "port"], "places: a role styles the pin, else the kind");
+	eq([usualSize("village"), usualSize("Metropolis"), usualSize("castle")], ["small", "huge", undefined], "places: the settlement ladder says the usual size");
+	eq(normaliseKind("Star System").kind, "system", "places: a spelling of a kind folds into it");
+	const seen = new Set<string>();
+	for (const d of PLACE_KINDS) for (const w of [d.kind, ...(d.alias ?? [])]) {
+		if (seen.has(w)) throw new Error(`places: ${w} is in the catalogue twice`);
+		seen.add(w);
+	}
+	eq(!PLACE_KINDS.some((d) => ["capital", "port", "kingdom", "fortress"].includes(d.kind)), true, "places: no role or tier word is a kind");
+	eq(!/^capital =/m.test(defaultKindsText()) && /^hamlet =/m.test(defaultKindsText()), true, "places: the default Kinds list has no roles and has the ladder");
+	eq(PLACE_ROLES.every((r) => new RegExp(`^${r.role} =`, "m").test(knownKindsText())), true, "places: every role has a style known in every vault");
+	eq(run({ ...base, type: "place", name: "Greyford", tags: ["Place", "Place_Capital"] }), ["Place_Settlement", "Place_Role_Capital"], "places: an old capital tag becomes a settlement with a role");
+	eq(run({ ...base, type: "place", name: "Greyford", tags: [], kind: "capital" }), ["Place_Settlement", "Place_Role_Capital"], "places: kind capital without tags gets both tags");
+	eq(run({ ...base, type: "place", name: "Dunmere", tags: ["Place_Fortress"], kind: "fortress" }), ["Place_Fort"], "places: fortress becomes fort");
+	// ---- Titles and honorifics (index/titles.ts) ----
+	eq([titleFor("medieval", 2, "female"), titleFor("medieval", 3, "male"), titleFor("modern", 2, "female"), titleFor("futuristic", 2), titleFor(undefined, 1, "female")], ["Queen", "Duke", "President", "Governor-General", "Empress"], "titles: the tier and gender give the title, by setting");
+	eq([styleFor("medieval", 2, "female"), styleFor("medieval", 3, "male"), styleFor("modern", 2, "male")], ["Her Majesty", "His Grace", ""], "titles: how a holder is addressed");
+	eq([rankTitle("Knight", "female"), rankTitle("knight", "male"), rankTitle("peasant")], ["Dame", "Sir", undefined], "titles: an honorific for rank without land");
+	eq(holderTitle("medieval", [{ tier: 3, name: "Kent" }, { tier: 2, name: "England" }], "female"), "Queen of England", "titles: the highest land they hold");
+	eq(holderTitle("medieval", [], "male"), "", "titles: nothing held, no title");
 }
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

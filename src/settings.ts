@@ -1,6 +1,7 @@
 import type { CardPrefs } from "./ui/cardlayout";
 import { PIN_SIZES } from "./types";
 import { relPropertyNames } from "./index/relkinds";
+import { KIND_SCALE, PLACE_KINDS, defaultKindsText, knownKindsText } from "./index/placekinds";
 import type { CalendarDef, EntityType, PinSize } from "./types";
 import type { TierName } from "./index/realms";
 import type { WorldSetting } from "./index/worldsetting";
@@ -408,7 +409,8 @@ export interface Board {
 	linked?: boolean;
 }
 
-export const DEFAULT_MAP_CATEGORIES = `# category = color, icon (Lucide icon name or emoji), size (tiny … huge), layer 1–5
+/** The Kinds list before 3.3.0, so a vault that never changed it can be moved to the new one. */
+export const OLD_DEFAULT_MAP_CATEGORIES = `# category = color, icon (Lucide icon name or emoji), size (tiny … huge), layer 1–5
 # Layer 1 is always shown; higher layers appear as you zoom in.
 settlement = #c0392b, home
 city = #c0392b, building-2
@@ -438,6 +440,9 @@ planet = #5b6ee1, globe
 moon = #9aa4b1, moon
 star = #f1c40f, sun
 station = #00a8b5, satellite`;
+
+/** The Kinds list every vault starts with: one catalogue (index/placekinds.ts) the pickers, tags and map all read. */
+export const DEFAULT_MAP_CATEGORIES = defaultKindsText();
 
 export const DEFAULT_SETTINGS: ChronicleSettings = {
 	folderTypes: "",
@@ -547,42 +552,13 @@ export function parseMapCategories(text: string): Map<string, MapCategory> {
  * Built-in sizes and layers per kind of place, used when neither the note nor the settings say:
  * realms and regions are big and always shown; villages and buildings appear as you zoom in.
  */
-export const CATEGORY_SCALE: Record<string, { size: PinSize; layer: number }> = {
-	continent: { size: "huge", layer: 1 }, country: { size: "huge", layer: 1 }, realm: { size: "huge", layer: 1 }, kingdom: { size: "huge", layer: 1 },
-	empire: { size: "huge", layer: 1 }, planet: { size: "huge", layer: 1 }, star: { size: "huge", layer: 1 },
-	region: { size: "large", layer: 1 }, province: { size: "large", layer: 2 }, capital: { size: "large", layer: 1 }, sea: { size: "large", layer: 1 },
-	city: { size: "medium", layer: 2 }, settlement: { size: "medium", layer: 2 }, port: { size: "medium", layer: 2 }, fortress: { size: "medium", layer: 2 },
-	mountain: { size: "medium", layer: 2 }, forest: { size: "medium", layer: 2 }, lake: { size: "medium", layer: 2 }, island: { size: "medium", layer: 2 },
-	moon: { size: "medium", layer: 2 }, station: { size: "medium", layer: 2 }, landform: { size: "medium", layer: 2 },
-	town: { size: "small", layer: 3 }, fort: { size: "small", layer: 3 }, castle: { size: "small", layer: 3 }, temple: { size: "small", layer: 3 },
-	river: { size: "small", layer: 3 }, ruin: { size: "small", layer: 3 }, landmark: { size: "small", layer: 3 }, district: { size: "small", layer: 3 },
-	village: { size: "tiny", layer: 4 }, hamlet: { size: "tiny", layer: 4 }, building: { size: "tiny", layer: 5 }, room: { size: "tiny", layer: 5 },
-	galaxy: { size: "huge", layer: 1 }, nebula: { size: "large", layer: 1 }, system: { size: "large", layer: 1 }, colony: { size: "medium", layer: 2 },
-	spaceport: { size: "medium", layer: 2 }, airport: { size: "medium", layer: 2 }, habitat: { size: "medium", layer: 2 }, base: { size: "small", layer: 3 },
-	outpost: { size: "small", layer: 3 }, asteroid: { size: "small", layer: 3 }, stadium: { size: "small", layer: 3 }, campus: { size: "small", layer: 3 },
-	factory: { size: "tiny", layer: 4 }, office: { size: "tiny", layer: 5 }, ship: { size: "small", layer: 3 },
-};
+export const CATEGORY_SCALE: Record<string, { size: PinSize; layer: number }> = KIND_SCALE;
 
 /**
  * Kinds of place for modern and futuristic worlds, known in every vault: a colour and icon when the
  * settings' own list doesn't name them (that list is copied into each vault, so new kinds go here).
  */
-export const EXTRA_PLACE_KINDS = `airport = #546e7a, plane
-base = #6c5b7b, shield
-factory = #8d6e63, factory
-office = #78909c, building-2
-campus = #7e57c2, school
-stadium = #43a047, trophy
-district = #c0392b, map-pin
-spaceport = #00a8b5, rocket
-colony = #d35400, house
-habitat = #1f9e89, orbit
-outpost = #6c5b7b, radio-tower
-asteroid = #8d8d8d, circle-dot
-galaxy = #7e57c2, sparkles
-nebula = #ab47bc, cloud
-system = #f1c40f, orbit
-ship = #546e7a, ship`;
+export const EXTRA_PLACE_KINDS = knownKindsText();
 
 let extraKinds: Map<string, MapCategory> | undefined;
 
@@ -595,7 +571,7 @@ export function placeCategories(text: string): Map<string, MapCategory> {
 }
 
 /** Common kinds of place offered in pickers (plus whatever the vault already uses). */
-export const COMMON_PLACE_KINDS = ["settlement", "capital", "city", "town", "village", "region", "kingdom", "province", "fort", "castle", "temple", "port", "landmark", "ruin", "mountain", "forest", "river", "lake", "island", "sea", "building"];
+export const COMMON_PLACE_KINDS = PLACE_KINDS.filter((d) => d.core).map((d) => d.kind);
 
 const normFolder = (f: string) => f.trim().replace(/^\/|\/$/g, "").toLowerCase();
 

@@ -64,12 +64,13 @@ export interface RealmTree {
 
 /** Words that name a tier of title, as a kind or a tag; lower is bigger. */
 export const DEFAULT_TIER_WORDS: Record<string, number> = {
-	empire: 1, hegemony: 1, imperium: 1, federation: 1, confederation: 1,
+	empire: 1, hegemony: 1, imperium: 1, federation: 1, confederation: 1, caliphate: 1,
 	kingdom: 2, realm: 2, nation: 2, country: 2, state: 2, republic: 2, principality: 2, commonwealth: 2, dominion: 2,
-	duchy: 3, province: 3, archduchy: 3, grandduchy: 3, prefecture: 3,
-	county: 4, earldom: 4, march: 4, canton: 4,
-	barony: 5, shire: 5, district: 5, territory: 5, lordship: 5, fief: 5,
-	city: 6, town: 6, village: 6, settlement: 6, castle: 6, fort: 6, fortress: 6, municipality: 6, metropolis: 6, megacity: 6,
+	sultanate: 2, emirate: 2, khanate: 2, tsardom: 2, shogunate: 2, electorate: 2,
+	duchy: 3, province: 3, archduchy: 3, grandduchy: 3, prefecture: 3, palatinate: 3, margraviate: 3, landgraviate: 3,
+	county: 4, earldom: 4, march: 4, canton: 4, viscounty: 4,
+	barony: 5, shire: 5, district: 5, territory: 5, lordship: 5, fief: 5, parish: 5, hundred: 5, thanedom: 5, seigneury: 5,
+	city: 6, town: 6, village: 6, hamlet: 6, manor: 6, settlement: 6, castle: 6, fort: 6, fortress: 6, municipality: 6, metropolis: 6, megacity: 6,
 };
 
 /**

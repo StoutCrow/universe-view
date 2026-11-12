@@ -7,6 +7,7 @@ import { GROUP_KINDS, groupKind, type GroupKind } from "../render/houses";
 import { placeCategories } from "../settings";
 import { settingWords } from "../index/worldsetting";
 import { setRankWords } from "../index/relkinds";
+import { styleKeyOf } from "../index/placekinds";
 
 /** The built-in icons, kept so a cleared setting goes back to them. */
 const DEFAULT_TYPE_ICONS = { ...TYPE_ICONS };
@@ -40,7 +41,7 @@ export function noteIcons(plugin: ChroniclePlugin, path: string): { type?: strin
 		return typeof own === "string" && own.trim() ? { kind: own.trim() } : {};
 	}
 	const type = TYPE_ICONS[e.type];
-	const cat = e.category ? placeCategories(plugin.settings.mapCategories).get(e.category)?.icon : undefined;
+	const cat = e.category ? placeCategories(plugin.settings.mapCategories).get(styleKeyOf(e.category, e.tags) ?? e.category)?.icon : undefined;
 	const group = e.type === "culture" ? GROUP_KINDS[groupKind(plugin, e)].icon : undefined;
 	const kind = e.icon ?? cat ?? group;
 	return { type, kind: kind && kind !== type ? kind : undefined };

@@ -6,6 +6,7 @@ import { formatDate, yearsBetween } from "../dates/parser";
 import { PanZoom } from "./panzoom";
 import { bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
 import { holdingsOf } from "../index/realms";
+import { holderTitle, styleFor } from "../index/titles";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
 import { relationship, type KinGraph } from "../index/kinship";
 
@@ -616,9 +617,19 @@ export class FamilyTreeRenderer {
 				.map((t) => idx.get(t.k)?.name)
 				.filter((x): x is string => !!x);
 			if (titles.length) {
-				const meta = el("div", { cls: "chronicle-card-meta is-titles", title: titles.join(", ") }, body);
-				icon(el("span", { cls: "chronicle-card-crown" }, meta), "crown");
-				el("span", { text: titles.slice(0, 2).join(", ") + (titles.length > 2 ? ` +${titles.length - 2}` : "") }, meta);
+					// "King of England", from the highest ruled land they hold and the world's setting; the address (Her Majesty) is the hover.
+					const setting = this.plugin.settings.worldSetting;
+					const gender = e.gender === "female" ? "female" : e.gender === "male" ? "male" : undefined;
+					const ruled = holdingsOf(tree, e.key).flatMap((k) => {
+						const node = tree.nodes.get(k);
+						const name = idx.get(k)?.name;
+						return node && name && node.nature !== "region" && node.rank < 9 ? [{ tier: node.rank, name }] : [];
+					});
+					const lead = holderTitle(setting, ruled, gender);
+					const address = ruled.length ? styleFor(setting, Math.min(...ruled.map((r) => r.tier)), gender) : "";
+					const meta = el("div", { cls: "chronicle-card-meta is-titles", title: [address, titles.join(", ")].filter(Boolean).join(" · ") }, body);
+					icon(el("span", { cls: "chronicle-card-crown" }, meta), "crown");
+					el("span", { text: lead ? lead + (titles.length > 1 ? ` +${titles.length - 1}` : "") : titles.slice(0, 2).join(", ") + (titles.length > 2 ? ` +${titles.length - 2}` : "") }, meta);
 			} else {
 				const culture = e.cultures[0]?.ref.name;
 				if (culture) el("div", { cls: "chronicle-card-meta", text: culture }, body);

@@ -1,4 +1,5 @@
 import type { EntityType } from "../types";
+import { normaliseKind } from "./placekinds";
 
 /**
  * UniverseView's tag scheme. Every tag says one thing, in one shape, so no two tags overlap:
@@ -32,8 +33,8 @@ export type FactField = (typeof FACT_FIELDS)[number];
 /** Words that are facts, not kinds or names, and the field each goes in. */
 export const FACT_WORDS: Record<string, FactField> = {
 	male: "gender", female: "gender", nonbinary: "gender",
-	dead: "status", alive: "status", deceased: "status", missing: "status",
-	ruler: "role", heir: "role", founder: "role", leader: "role", capital: "role", port: "role", harbour: "role", harbor: "role",
+	dead: "status", alive: "status", deceased: "status", missing: "status", ruined: "status", abandoned: "status", lost: "status", destroyed: "status",
+	ruler: "role", heir: "role", founder: "role", leader: "role", capital: "role", port: "role", harbour: "role", harbor: "role", holy: "role", market: "role",
 	noble: "class", lowborn: "class", commoner: "class", royal: "class", peasant: "class",
 	gigantic: "size", enormous: "size", massive: "size", huge: "size", large: "size", big: "size", major: "size",
 	medium: "size", small: "size", minor: "size", little: "size", tiny: "size",
@@ -189,7 +190,14 @@ const isPlaceName = (word: string, n: MigrateNote) => key(word) === key(n.world 
  * #Nation_United_States, #Character_Vael). Tags it can't place are left as they are.
  */
 export function migrateTags(n: MigrateNote, find: (name: string) => MigrateTarget | undefined, w: MigrateWords): Migration {
-	const kind = migrationKind(n, w);
+	// 3.3: an older place kind that is really a role (capital, port) or a spelling (fortress) moves to the catalogue's shape.
+	let legacy = n.type === "place" && !n.land ? normaliseKind(migrationKind(n, w)) : undefined;
+	// Only a role word said it (#Place_Capital on a note with no kind): a capital is a settlement.
+	if (legacy && !legacy.role && legacy.kind === DEFAULT_KINDS.place) {
+		const said = n.tags.map((t) => normaliseKind(t.replace(/^#/, "").split("_").pop())).find((x) => x.role);
+		if (said) legacy = said;
+	}
+	const kind = legacy?.kind ?? migrationKind(n, w);
 	const own = kindTag(n.type, kind);
 	const out: Migration = { rename: [], drop: [], add: [] };
 	const result = new Set<string>();
@@ -262,6 +270,10 @@ export function migrateTags(n: MigrateNote, find: (name: string) => MigrateTarge
 		to(t, t);
 	}
 	if (!kindPlaced && !result.has(own.toLowerCase())) out.add.push(own);
+	if (legacy?.role) {
+		const roleTag = factTag(n.type, "role", legacy.role);
+		if (!result.has(roleTag.toLowerCase())) out.add.push(roleTag);
+	}
 	// Two old tags becoming one new one: the first is renamed, the rest dropped.
 	const firsts: [string, string][] = [];
 	for (const [from, next] of out.rename) {

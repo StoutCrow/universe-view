@@ -9,7 +9,7 @@ if (typeof window.structuredClone !== "function") {
 	(window as { structuredClone?: <T>(v: T) => T }).structuredClone = <T>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
 }
 import { type ChronDate, type Entity, type EntityType } from "./types";
-import { ChronicleSettings, DEFAULT_SETTINGS, FieldName, buildFieldAliases } from "./settings";
+import { ChronicleSettings, DEFAULT_SETTINGS, OLD_DEFAULT_MAP_CATEGORIES, FieldName, buildFieldAliases } from "./settings";
 import { CalendarRegistry, daysFromCivil } from "./dates/calendars";
 import { formatDate, formatDay, parseDate } from "./dates/parser";
 import { EntityIndex } from "./index/EntityIndex";
@@ -407,6 +407,13 @@ export default class ChroniclePlugin extends Plugin {
 		// 2.1: the tour opens once, on a first install; anyone with saved settings already has seen enough.
 		if (this.settings.tourSeen === undefined) this.settings.tourSeen = Object.keys(data).length > 0;
 		// 0.18: realms merge into kingdoms sooner when zooming out; 420 px was the old default.
+		// 3.3: kinds of place are one catalogue (type of place, kind, traits). A list nobody changed moves to the new one;
+		// a list you edited stays as it is (the old words, such as capital and fortress, still read).
+		if (!data.kindsV3) {
+			const norm = (s: string) => s.replace(/\r/g, "").trim();
+			if (data.mapCategories === undefined || norm(data.mapCategories) === norm(OLD_DEFAULT_MAP_CATEGORIES)) this.settings.mapCategories = DEFAULT_SETTINGS.mapCategories;
+			(this.settings as unknown as Record<string, unknown>).kindsV3 = true;
+		}
 		if (!data.tierSplitV2) {
 			if (data.tierSplitPx === undefined || data.tierSplitPx === 420) this.settings.tierSplitPx = 760;
 			(this.settings as unknown as Record<string, unknown>).tierSplitV2 = true;

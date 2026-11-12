@@ -2,6 +2,21 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 3.3.0 — not released yet
+
+Places get one system, and titles get more words.
+
+### Kinds of place
+- **Three layers, one job each.** The *type of place* (Settlement, Territory, Land, Water, Structure, Site, Space) follows from the kind and is never typed. The *kind* says which one exactly (hamlet, city, castle, island, planet). *Traits* in tags say what is special: a role (#Place_Role_Capital, Port, Holy, Market), a size and a status (#Place_Status_Ruined, Abandoned, Lost, Destroyed).
+- **Settlements have a ladder**: hamlet, village, town, city, metropolis, each with a usual size (tiny to huge) offered in the Tag standard window.
+- **Capital and port are roles, not kinds.** Kingdom, realm, province and country are Territories, set under Tier. Fortress is a fort. Notes that still say the old words look and read the same, and *Move tags to the tag scheme* tidies them.
+- **Settings → Kinds of place** is one table per type of place. A list you never changed moves to the new one; a list you edited stays as it is.
+- A place with a role wears that role's icon and colour on the map (a crown for a capital) whether it says kind: capital or #Place_Role_Capital.
+
+### Titles
+- A family card shows the title a person holds as *King of England* or *Duchess of Kent* (the highest ruled land, by the world setting's words and their gender), with the way they are addressed (*Her Majesty*) on hover.
+- More words for a tier of land: sultanate, emirate, khanate, tsardom, shogunate, electorate, palatinate, margraviate, viscounty, parish, hundred, thanedom, manor, hamlet and more.
+
 ## 3.2.2 — 2026-11-11
 
 More fixes from the Obsidian plugin review.

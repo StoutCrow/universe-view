@@ -12,6 +12,7 @@ import { TextPrompt } from "../ui/TextPrompt";
 import type ChroniclePlugin from "../main";
 import type { Entity, PinSize, Territory } from "../types";
 import { CATEGORY_SCALE, PinColorBy, parseMapCategories, placeCategories } from "../settings";
+import { styleKeyOf } from "../index/placekinds";
 import { formatDate, formatSpan } from "../dates/parser";
 import { activeAt } from "../index/EntityIndex";
 import { motionMs } from "../appearance";
@@ -858,7 +859,8 @@ export class MapRenderer {
 	/** Legend group, color and icon of a place under the current "color by" choice. */
 	private groupOf(place: Entity): Group {
 		const idx = this.plugin.index;
-		const cat = place.category ? this.categories.get(place.category) : undefined;
+		const styleKey = styleKeyOf(place.category, place.tags);
+		const cat = styleKey ? this.categories.get(styleKey) : undefined;
 		switch (this.colorBy) {
 			case "category": {
 				const id = place.category ?? "other";
@@ -945,8 +947,9 @@ export class MapRenderer {
 
 	/** Pin size and map layer: the note's own, else its kind's (settings), else a built-in guess for the kind. */
 	private scaleOf(place: Entity): { size?: PinSize; layer: number; explicitLayer: boolean } {
-		const cat = place.category ? this.categories.get(place.category) : undefined;
-		const builtin = place.category ? CATEGORY_SCALE[place.category] : undefined;
+		const styleKey = styleKeyOf(place.category, place.tags);
+		const cat = styleKey ? this.categories.get(styleKey) : undefined;
+		const builtin = styleKey ? CATEGORY_SCALE[styleKey] : undefined;
 		// Its tier as a title (from tags like #Province or #Region_Small): counties show a little in,
 		// towns and forts further in, the way territories split as you zoom.
 		const rank = this.plugin.realms(this.options.at).nodes.get(place.key)?.rank ?? 9;
@@ -993,7 +996,7 @@ export class MapRenderer {
 		html.dataset.key = place.key;
 		html.style.setProperty("--pin-color", color);
 		if (pinSize) {
-			const hasGlyph = !!(place.logo || place.icon || (place.category && this.categories.get(place.category)?.icon));
+			const hasGlyph = !!(place.logo || place.icon || this.categories.get(styleKeyOf(place.category, place.tags) ?? "")?.icon);
 			html.style.setProperty("--dot", `${hasGlyph ? Math.max(22, DOT_PX[pinSize] + 6) : DOT_PX[pinSize]}px`);
 		}
 		html.style.setProperty("--i", String(i % 24));
@@ -1005,7 +1008,7 @@ export class MapRenderer {
 		const firstCulture = place.cultures[0] ? this.plugin.index.get(place.cultures[0].ref.key) : undefined;
 		const photo = this.options.photoPins ? resourceUrl(this.plugin, place.image) : undefined;
 		const logo = resourceUrl(this.plugin, place.logo ?? (this.colorBy === "culture" ? firstCulture?.logo : undefined)) ?? photo;
-		const iconName = place.icon ?? (place.category ? this.categories.get(place.category)?.icon : undefined);
+		const iconName = place.icon ?? this.categories.get(styleKeyOf(place.category, place.tags) ?? "")?.icon;
 		if (photo && !place.logo) {
 			html.addClass("is-photo");
 			html.setCssProps({ "--dot": "38px" });
@@ -1476,7 +1479,7 @@ export class MapRenderer {
 				// A place's own area carries its icon (or sigil) and event count, in place of a pin.
 				if (e.type === "place") {
 					const logo = resourceUrl(this.plugin, e.logo);
-					const iconName = e.icon ?? (e.category ? this.categories.get(e.category)?.icon : undefined);
+					const iconName = e.icon ?? this.categories.get(styleKeyOf(e.category, e.tags) ?? "")?.icon;
 					if (logo) el("img", { cls: "chronicle-territory-icon", attr: { src: logo, alt: "" } }, label);
 					else if (iconName) {
 						const g = el("span", { cls: "chronicle-territory-icon" }, label);
