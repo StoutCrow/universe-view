@@ -1,4 +1,5 @@
 import { findColourAreas } from "../src/render/colours";
+import { kindFix, knownKindWords } from "../src/index/kindcheck";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
 import { ROW_FORMATS, holdersProperty, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
@@ -1637,6 +1638,15 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(run({ ...base, type: "place", name: "Greyford", tags: ["Place", "Place_Capital"] }), ["Place_Settlement", "Place_Role_Capital"], "places: an old capital tag becomes a settlement with a role");
 	eq(run({ ...base, type: "place", name: "Greyford", tags: [], kind: "capital" }), ["Place_Settlement", "Place_Role_Capital"], "places: kind capital without tags gets both tags");
 	eq(run({ ...base, type: "place", name: "Dunmere", tags: ["Place_Fortress"], kind: "fortress" }), ["Place_Fort"], "places: fortress becomes fort");
+	// ---- Fixing broken kinds (index/kindcheck.ts) ----
+	const knownKinds = knownKindWords();
+	const never = () => 0;
+	eq(kindFix("capital", knownKinds, never), { from: "capital", to: "settlement", why: "capital is a role, not a kind", add: ["Place_Role_Capital"] }, "fix: capital is a settlement with a role");
+	eq(kindFix("fortress", knownKinds, never)?.to, "fort", "fix: fortress is fort");
+	eq(kindFix("cities", knownKinds, never)?.to, "city", "fix: a plural");
+	eq(kindFix("villiage", knownKinds, never)?.to, "village", "fix: a typo");
+	eq([kindFix("city", knownKinds, never), kindFix("tavern", knownKinds, never), kindFix("kingdom", knownKinds, never), kindFix("", knownKinds, never)], [undefined, undefined, undefined, undefined], "fix: good kinds and unknown words are left alone");
+	eq(kindFix("villiage", knownKinds, () => 5), undefined, "fix: a word the vault uses often is its own kind");
 	// ---- Titles and honorifics (index/titles.ts) ----
 	eq([titleFor("medieval", 2, "female"), titleFor("medieval", 3, "male"), titleFor("modern", 2, "female"), titleFor("futuristic", 2), titleFor(undefined, 1, "female")], ["Queen", "Duke", "President", "Governor-General", "Empress"], "titles: the tier and gender give the title, by setting");
 	eq([styleFor("medieval", 2, "female"), styleFor("medieval", 3, "male"), styleFor("modern", 2, "male")], ["Her Majesty", "His Grace", ""], "titles: how a holder is addressed");

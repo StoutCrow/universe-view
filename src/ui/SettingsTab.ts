@@ -404,7 +404,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName("Tag scheme")
 				.setDesc("One tag for what a note is (#Character_Person), one per thing it belongs to, one per fact. Older tags still work; this moves them over after a review.")
-				.addButton((b) => b.setButtonText("Move tags…").onClick(() => new NormaliseTagsModal(this.plugin, true).open()));
+				.addButton((b) => b.setButtonText("Fix kinds and tags…").onClick(() => new NormaliseTagsModal(this.plugin, true).open()));
 			// The older tags, read from notes tagged before the scheme: one row, not five.
 			const olderRow = new Setting(containerEl).setName("Older tags").setDesc("Read from notes tagged before the scheme (#Character, #Region); new notes don't get them.");
 			olderRow.settingEl.addClass("uv-compact-fields");

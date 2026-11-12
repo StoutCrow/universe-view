@@ -13,6 +13,12 @@ Places get one system, and titles get more words.
 - **Settings → Kinds of place** is one table per type of place. A list you never changed moves to the new one; a list you edited stays as it is.
 - A place with a role wears that role's icon and colour on the map (a crown for a capital) whether it says kind: capital or #Place_Role_Capital.
 
+### Fix kinds and tags
+- **One command for broken kinds and tags**: *Fix kinds and tags* (it replaces *Move tags to the tag scheme*; the command id is the same, so hotkeys keep working). It lists, note by note, an older kind word that is really a role or a spelling (`kind: capital`, fortress), a plural (cities) and a typo (villiage), and every older tag that is not in the tag scheme yet. Click a change to leave it out; Undo takes all of it back in one step. A kind your vault uses three times or more is never touched.
+
+### Internal
+- The old name Chronicle is gone from the code: classes, types, CSS variables and events are named UniverseView. What is saved keeps its older id so nothing breaks: tab view ids, the embed names in notes (`chronicle-timeline` and the rest, which still work next to `universeview-timeline`) and the `obsidian://chronicle` link. GEDCOM exports now name UniverseView as their source.
+
 ### Titles
 - A family card shows the title a person holds as *King of England* or *Duchess of Kent* (the highest ruled land, by the world setting's words and their gender), with the way they are addressed (*Her Majesty*) on hover.
 - More words for a tier of land: sultanate, emirate, khanate, tsardom, shogunate, electorate, palatinate, margraviate, viscounty, parish, hundred, thanedom, manor, hamlet and more.

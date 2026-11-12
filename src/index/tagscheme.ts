@@ -154,6 +154,8 @@ export interface MigrateWords {
 }
 
 export interface Migration {
+	/** A place's kind property that is broken (an older word, a plural, a typo) and what it should be. */
+	kind?: { from: string; to: string; why: string };
 	/** Old tag → new tag. Several may become the same one. */
 	rename: [string, string][];
 	drop: string[];

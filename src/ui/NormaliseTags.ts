@@ -6,6 +6,8 @@ import { typeFromTag } from "../index/reader";
 import { applyMigration, migrateBodyTags, migrateTags, migrationKind, tidyKinds, type MigrateNote, type MigrateWords, type Migration } from "../index/tagscheme";
 import { factsFromPath, tagFixes, type TagFix, type TagNote } from "../index/tagrules";
 import { el, openEntity } from "../render/common";
+import { kindFix, knownKindWords } from "../index/kindcheck";
+import { CATEGORY_KEYS } from "../index/reader";
 
 /** What UniverseView knows about a note that a tag might state. */
 export function tagFacts(plugin: UniverseViewPlugin, e: Entity): string[] {
@@ -53,6 +55,15 @@ export function schemeMigrations(plugin: UniverseViewPlugin): { entity: Entity; 
 		};
 	};
 	const out: { entity: Entity; fix: Migration }[] = [];
+	// Broken kinds in the `kind:` property: older words, plurals and typos (index/kindcheck.ts).
+	const known = knownKindWords();
+	const used = new Map<string, number>();
+	for (const p of plugin.index.all("place")) if (p.category) used.set(p.category, (used.get(p.category) ?? 0) + 1);
+	const byKey = new Map<string, Migration>();
+	for (const e of plugin.index.all("place")) {
+		const fix = kindFix(e.category, known, (w) => used.get(w) ?? 0);
+		if (fix) byKey.set(e.key, { kind: { from: fix.from, to: fix.to, why: fix.why }, rename: [], drop: [], add: fix.add });
+	}
 	for (const e of plugin.index.all()) {
 		const note = noteOf(e);
 		// A vault that marks types with properties only gets tags where it already has some.
@@ -61,7 +72,18 @@ export function schemeMigrations(plugin: UniverseViewPlugin): { entity: Entity; 
 			const t = plugin.index.findByName(name);
 			return t && { type: t.type, name: t.name, kind: migrationKind(noteOf(t), words), self: t.key === e.key };
 		}, words);
-		if (fix.rename.length || fix.drop.length || fix.add.length) out.push({ entity: e, fix });
+		const kindOnly = byKey.get(e.key);
+		if (kindOnly) {
+			byKey.delete(e.key);
+			fix.kind = kindOnly.kind;
+			for (const t of kindOnly.add) if (!fix.add.some((x) => x.toLowerCase() === t.toLowerCase())) fix.add.push(t);
+		}
+		if (fix.kind || fix.rename.length || fix.drop.length || fix.add.length) out.push({ entity: e, fix });
+	}
+	// Notes with no tags to move still get their broken kind fixed.
+	for (const [key, fix] of byKey) {
+		const entity = plugin.index.get(key);
+		if (entity) out.push({ entity, fix });
 	}
 	return out.sort((a, b) => a.entity.name.localeCompare(b.entity.name));
 }
@@ -87,7 +109,7 @@ export class NormaliseTagsModal extends Modal {
 	onOpen() {
 		const { plugin } = this;
 		this.modalEl.addClass("universeview-detect-modal", "universeview-scope");
-		this.titleEl.setText(this.scheme ? "Move tags to the tag scheme" : "Normalise all tags");
+		this.titleEl.setText(this.scheme ? "Fix kinds and tags" : "Normalise all tags");
 		if (this.scheme) {
 			this.rows = schemeMigrations(plugin).map(({ entity, fix }) => ({ entity, fix, off: new Set<string>() }));
 			this.render();
@@ -106,7 +128,7 @@ export class NormaliseTagsModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 		const intro = this.scheme
-			? "Rewrites tags into one scheme: what a note is (#Place_County, #Character_Person), what it belongs to (#Group_Nation_United_States) and facts (#Character_Status_Dead, #Place_Size_Small). #Title and bare type tags go: the kind says it. Tags in the properties and in the text change (not in code). Click a change to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step."
+			? "Fixes broken kinds (an older word such as capital or fortress, a plural, a typo) and rewrites tags into one scheme: what a note is (#Place_County, #Character_Person), what it belongs to (#Group_Nation_United_States) and facts (#Character_Status_Dead, #Place_Size_Small). #Title and bare type tags go: the kind says it. Tags in the properties and in the text change (not in code). Click a change to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step."
 			: undefined;
 		el("p", { cls: "universeview-detect-intro", text: intro ?? "Brings every note to the tags your vault already uses: each spelling becomes the usual one, and a note gains the tags its folders, realm, kind and dates say it should have. Click a tag to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step." }, contentEl);
 		const list = el("div", { cls: "universeview-detect-list" }, contentEl);
@@ -122,17 +144,18 @@ export class NormaliseTagsModal extends Modal {
 
 	private chosen(row: Row) {
 		const drop = "drop" in row.fix ? row.fix.drop.filter((t) => !row.off.has("-" + t)) : [];
-		return { add: row.fix.add.filter((t) => !row.off.has(t)), rename: row.fix.rename.filter(([from]) => !row.off.has(from)), drop };
+		const kind = "kind" in row.fix && row.fix.kind && !row.off.has("kind") ? row.fix.kind : undefined;
+		return { add: row.fix.add.filter((t) => !row.off.has(t)), rename: row.fix.rename.filter(([from]) => !row.off.has(from)), drop, kind };
 	}
 
 	private updateCount() {
 		const n = this.rows.reduce((sum, r) => {
 			const c = this.chosen(r);
-			return sum + c.add.length + c.rename.length;
+			return sum + c.add.length + c.rename.length + (c.kind ? 1 : 0);
 		}, 0);
 		const notes = this.rows.filter((r) => {
 			const c = this.chosen(r);
-			return c.add.length + c.rename.length > 0;
+			return c.add.length + c.rename.length + (c.kind ? 1 : 0) > 0;
 		}).length;
 		this.countEl?.setText(`${n} change${n === 1 ? "" : "s"} to ${notes} note${notes === 1 ? "" : "s"}`);
 		if (this.applyBtn) this.applyBtn.disabled = n === 0;
@@ -155,6 +178,7 @@ export class NormaliseTagsModal extends Modal {
 				this.updateCount();
 			});
 		};
+		if ("kind" in row.fix && row.fix.kind) chip("kind", `kind: ${row.fix.kind.from} → ${row.fix.kind.to}`, `Change the kind from ${row.fix.kind.from} to ${row.fix.kind.to}: ${row.fix.kind.why}`);
 		for (const t of row.fix.add) chip(t, `+ #${t}`, `Add #${t}`);
 		for (const [from, to] of row.fix.rename) chip(from, `#${from} → #${to}`, `Rename #${from} to #${to}`);
 		if ("drop" in row.fix) for (const t of row.fix.drop) chip("-" + t, `− #${t}`, `Remove #${t}`);
@@ -163,12 +187,18 @@ export class NormaliseTagsModal extends Modal {
 	private async apply() {
 		const { plugin } = this;
 		let notes = 0;
-		await plugin.undoGroup(this.scheme ? "Move tags to the tag scheme" : "Normalise tags", async () => {
+		await plugin.undoGroup(this.scheme ? "Fix kinds and tags" : "Normalise tags", async () => {
 			for (const row of this.rows) {
-				const { add, rename, drop } = this.chosen(row);
-				if (!add.length && !rename.length && !drop.length) continue;
+				const { add, rename, drop, kind } = this.chosen(row);
+				if (!add.length && !rename.length && !drop.length && !kind) continue;
 				notes++;
 				await plugin.editFrontmatter(row.entity.file, (front) => {
+					// A broken kind in the `kind:` property is corrected where it is written.
+					if (kind) {
+						const clean = (v: unknown) => (typeof v === "string" ? v.replace(/^\[\[|\]\]$/g, "").replace(/^#/, "").trim().toLowerCase().replace(/[\s_-]+/g, " ") : "");
+						const key = CATEGORY_KEYS.find((k) => clean(front[k]) === kind.from);
+						if (key) front[key] = kind.to;
+					}
 					const field = "tags" in front || !("tag" in front) ? "tags" : "tag";
 					const swap = new Map(rename.map(([from, to]) => [from.toLowerCase(), to]));
 					const own = ([] as unknown[]).concat(front[field] ?? []).filter((t) => t !== null && t !== "").map(String);
@@ -182,7 +212,7 @@ export class NormaliseTagsModal extends Modal {
 				await plugin.editBody(row.entity.file, (body) => migrateBodyTags(body, { rename, drop: this.scheme ? drop : [] }));
 			}
 		});
-		new Notice(`${this.scheme ? "Moved to the tag scheme" : "Normalised"} the tags on ${notes} note${notes === 1 ? "" : "s"}.`);
+		new Notice(`${this.scheme ? "Fixed the kinds and tags" : "Normalised the tags"} on ${notes} note${notes === 1 ? "" : "s"}.`);
 		this.close();
 	}
 

@@ -2011,7 +2011,7 @@ export default class UniverseViewPlugin extends Plugin {
 			callback: () => new DetectModal(this).open(),
 		});
 		this.addCommand({ id: "normalise-tags", name: "Normalise all tags", icon: "tags", callback: () => new NormaliseTagsModal(this).open() });
-		this.addCommand({ id: "tag-scheme", name: "Move tags to the tag scheme", icon: "tags", callback: () => new NormaliseTagsModal(this, true).open() });
+		this.addCommand({ id: "tag-scheme", name: "Fix kinds and tags", icon: "tags", callback: () => new NormaliseTagsModal(this, true).open() });
 		this.addCommand({ id: "smart-reader", name: "Smart reader: find facts in your notes' text", icon: "scan-text", callback: () => new SmartReaderModal(this).open() });
 		this.addCommand({
 			id: "smart-reader-note",

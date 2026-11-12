@@ -1,5 +1,5 @@
 import { TidyModal, tidyPlan } from "../src/ui/tidy";
-import { tagFacts } from "../src/ui/NormaliseTags";
+import { NormaliseTagsModal, schemeMigrations, tagFacts } from "../src/ui/NormaliseTags";
 import { tagFixes } from "../src/index/tagrules";
 import { viewToSvg } from "../src/ui/export";
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -199,6 +199,17 @@ const plugin = new UniverseViewPlugin(app, { id: "UniverseView", version: "dev" 
 (window as any).universeview = plugin;
 (window as any).tagPlan = () => tagFixes(plugin.index.all().map((e: any) => ({ path: e.key, type: e.type, tags: e.tags, facts: tagFacts(plugin, e) })), plugin.settings.typeStyle === "tag" ? plugin.settings.typeTags : {});
 (window as any).TidyModal = TidyModal;
+	// What "Fix kinds and tags" would change, and a way to run it on the harness vault (the files are read back with app.vault).
+	(window as any).schemePlan = () => schemeMigrations(plugin).map(({ entity, fix }: any) => ({ path: entity.key, ...fix }));
+	(window as any).applySchemeFixes = async () => {
+		const read = async () => Object.fromEntries(await Promise.all(app.vault.getMarkdownFiles().map(async (f: any) => [f.path, await app.vault.read(f)])));
+		const before = await read();
+		const m: any = new NormaliseTagsModal(plugin, true);
+		m.onOpen();
+		await m.apply();
+		const after = await read();
+		return Object.fromEntries(Object.entries(after).filter(([p, text]) => text !== before[p]).map(([p, text]) => [p, { before: before[p], after: text }]));
+	};
 (window as any).tidyPlan = tidyPlan;
 (window as any).universeViewTrace = trace;
 (window as any).universeViewRelations = relations;
