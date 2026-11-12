@@ -2,7 +2,7 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 3.3.0 — not released yet
+## 3.3.0 — 2026-11-12
 
 Places get one system, and titles get more words.
 
