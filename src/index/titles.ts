@@ -74,8 +74,11 @@ export function rankTitle(word: string | undefined, gender?: Gender): string | u
 	return h ? pick(h, gender) : undefined;
 }
 
-/** "King of England", the highest of what they hold: its tier and the land's name. */
-export function holderTitle(setting: string | undefined, held: { tier: number; name: string }[], gender?: Gender): string {
+/**
+ * "King of England", the highest of what they hold: its tier and the land's name. A realm that names its own ruler
+ * (`ruler-title:`, for a realm of a kind of its own) gives `own`, which wins over the tier's word.
+ */
+export function holderTitle(setting: string | undefined, held: { tier: number; name: string; own?: string }[], gender?: Gender): string {
 	const top = [...held].sort((a, b) => a.tier - b.tier)[0];
-	return top ? `${titleFor(setting, top.tier, gender)} of ${top.name}` : "";
+	return top ? `${top.own || titleFor(setting, top.tier, gender)} of ${top.name}` : "";
 }

@@ -4,6 +4,12 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 
 ## Not released yet
 
+### Realms: a title, a land and a people
+- **A realm's edit form has a section of its own** that says what a realm is: its land (seat and borders), its people, and its crown (its ruler and the ruler's title).
+- **Its people** (`demonym:`, or `nationality:`): what its people are called, as England's are English.
+- **Ruler's title** (`ruler-title: King, Queen`): what its ruler is called, for a man and a woman. Family tree cards use it ("Doge of Vael"), so a realm of a kind of its own, with no tier word for its ruler, still gives its ruler a title. Empty uses the tier's title as before.
+- **The Realm, Culture and Faith boxes say what they mean**, for people and for places: a person's Realm is the realm they are a subject of (their nationality), a place's is the realm that rules the land, and Culture is a people by language and custom, which can differ from the realm. Each says where the other meanings go (titles on the realm, a region under Located in).
+
 ### Inspector
 - **The Realm, House, Culture and Faith boxes only suggest groups of that kind.** A group of no particular kind (#Group_Other) was offered in every box, so a band of outlaws could be picked as someone's culture; it is now offered under Organisation only. A realm, house, culture or faith is suggested when its note says so (#Group_Realm, #Group_Culture…) or UniverseView finds it to be one (a realm with lands, a house with members). You can still type any name.
 

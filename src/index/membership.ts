@@ -20,11 +20,25 @@ export type GroupRow = "realm" | "house" | "culture" | "faith" | "organisation" 
 
 export const ROW_ORDER: GroupRow[] = ["realm", "house", "culture", "faith", "organisation", "group"];
 
-export const ROW_INFO: Record<GroupRow, { label: string; plural: string; asks: string }> = {
-	realm: { label: "Realm", plural: "Realms", asks: "The realm they live under or serve. It can change over time, so a realm can have dates." },
-	house: { label: "House", plural: "Houses and families", asks: "Their house or family: their lineage." },
-	culture: { label: "Culture", plural: "Cultures and peoples", asks: "The people or culture they are of." },
-	faith: { label: "Faith", plural: "Faiths", asks: "What they believe." },
+/**
+ * What each question means, for a person (`asks`) and for a place (`asksPlace`). A realm is a title, a land and a
+ * people at once; each answer says which of those it is about, and where the other two are written.
+ */
+export const ROW_INFO: Record<GroupRow, { label: string; plural: string; asks: string; asksPlace?: string }> = {
+	realm: {
+		label: "Realm",
+		plural: "Realms",
+		asks: "The realm they are a subject of or serve: their nationality (an English subject of England). It can change, so it can have dates. A title they hold is written on the realm, as its ruler or holder; where they live goes under Places.",
+		asksPlace: "Who rules this land: the realm it belongs to (England). It can change, so it can have dates. The wider land it lies in, such as a region or continent, is Located in.",
+	},
+	house: { label: "House", plural: "Houses and families", asks: "Their house or family: their lineage (House Tudor), whichever realm they serve." },
+	culture: {
+		label: "Culture",
+		plural: "Cultures and peoples",
+		asks: "The people they are of, by language and custom (English, Welsh). It can differ from their realm: a Welsh subject of England.",
+		asksPlace: "The people who live here, by language and custom.",
+	},
+	faith: { label: "Faith", plural: "Faiths", asks: "What they believe.", asksPlace: "What is believed here." },
 	organisation: { label: "Organisation", plural: "Organisations", asks: "Guilds, orders, armies and companies they belong to." },
 	group: { label: "Other group", plural: "Other groups", asks: "Anything that is none of those." },
 };

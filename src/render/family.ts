@@ -7,6 +7,7 @@ import { PanZoom } from "./panzoom";
 import { INSPECT_CLICK, bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
 import { holdingsOf } from "../index/realms";
 import { holderTitle, styleFor } from "../index/titles";
+import { realmWords, rulerWord } from "../index/realmwords";
 import { groupLine, type CardGroups } from "../ui/groupsplit";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
 import { relationship, shortKin, type KinGraph } from "../index/kinship";
@@ -647,8 +648,10 @@ export class FamilyTreeRenderer {
 					const gender = e.gender === "f" ? "female" : e.gender === "m" ? "male" : undefined;
 					const ruled = holdingsOf(tree, e.key).flatMap((k) => {
 						const node = tree.nodes.get(k);
-						const name = idx.get(k)?.name;
-						return node && name && node.nature !== "region" && node.rank < 9 ? [{ tier: node.rank, name }] : [];
+						const land = idx.get(k);
+						// A realm that names its own ruler ("Grand Prince") counts even when its kind has no tier.
+						const own = land ? rulerWord(realmWords(land.props), gender) : undefined;
+						return node && land && node.nature !== "region" && (node.rank < 9 || own) ? [{ tier: node.rank, name: land.name, own }] : [];
 					});
 					const lead = holderTitle(setting, ruled, gender);
 					const address = ruled.length ? styleFor(setting, Math.min(...ruled.map((r) => r.tier)), gender) : "";

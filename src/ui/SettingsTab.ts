@@ -920,7 +920,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		const presetNow = TIER_NAME_PRESETS.find(([, , p]) => same(p, s.tierNames ?? {}))?.[0] ?? "own";
 		new Setting(containerEl)
 			.setName("Tier names")
-			.setDesc("What your world calls each tier of land, as in United States › California › Los Angeles County. A renamed tier works exactly like the built-in one: its name shows on the map, in the realm tree and in menus, tags like #Place_State put a land on it, and standardised tags use it.")
+			.setDesc("What your world calls each tier of land, as in United States › California › Los Angeles County. A renamed tier works exactly like the built-in one: its name shows on the map, in the realm tree and in menus, tags like #Place_State put a land on it, and standardised tags use it. Each tier's ruler takes its title (a kingdom's King); a realm of a kind of its own names its ruler with ruler-title and its people with demonym, in its edit form.")
 			.addDropdown((d) => {
 				for (const [id, label] of TIER_NAME_PRESETS) d.addOption(id, label);
 				d.addOption("own", "Your own names");

@@ -12,6 +12,7 @@ import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
+import { DEMONYM_KEYS, RULER_TITLE_KEYS } from "../index/realmwords";
 import { ROW_INFO, ROW_ORDER, fitsRow, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
 import { groupKind } from "../render/houses";
 import { asText } from "../index/text";
@@ -188,7 +189,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 				if (row === "group" && !split.group.length) continue;
 				// Notes of that kind; a group of no particular kind only as an organisation.
 				const filter = row === "group" ? undefined : (note: Entity) => fitsRow(row, groupKind(p, note));
-				rows.set(row, linkRow(box, ROW_INFO[row].label, ROW_INFO[row].asks, split[row].map((m) => m.raw), { types: ["culture"], tie: "relation", filter, placeholder: row === "group" ? "Add a group…" : `Add a ${ROW_INFO[row].label.toLowerCase()}…` }));
+				rows.set(row, linkRow(box, ROW_INFO[row].label, (e.type === "place" && ROW_INFO[row].asksPlace) || ROW_INFO[row].asks, split[row].map((m) => m.raw), { types: ["culture"], tie: "relation", filter, placeholder: row === "group" ? "Add a group…" : `Add a ${ROW_INFO[row].label.toLowerCase()}…` }));
 			}
 			saves.push(() => {
 				if (![...rows.values()].some((r) => r.changed())) return;
@@ -213,6 +214,18 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		} else if (e.type === "culture") {
 			field("parentCultures", "Part of", ["culture"]);
 			field("places", "Seats", ["place"]);
+			if (groupKind(p, e) === "realm") {
+				// A realm is a land, a people and a crown: say which word goes with each, so none is mistaken for another.
+				section("The realm");
+				el("p", { cls: "setting-item-description universeview-qe-note", text: "A realm is three things: its land (its seat and its borders on a map), its people (what they are called), and its crown (who rules it, under Relationships, and what the ruler is called). People and places name it under Realm when they are its subjects or its land." }, box);
+				const wordRow = (keys: string[], label: string, desc: string, placeholder: string) => {
+					const k = has(keys) ?? keys[0];
+					used.add(k);
+					new Setting(box).setName(label).setDesc(desc).addText((t) => t.setPlaceholder(placeholder).setValue(asText(fm[k] ?? "")).onChange((v) => changes.set(k, v.trim())));
+				};
+				wordRow(DEMONYM_KEYS, "Its people", "What its people are called, their nationality: England's people are English. Written as demonym.", "English");
+				wordRow(RULER_TITLE_KEYS, "Ruler's title", "What its ruler is called, for a man and a woman. Leave it empty to use the title of its tier (King, Duke…); fill it in for a realm of a kind of its own. Written as ruler-title.", "King, Queen");
+			}
 		} else if (e.type === "place") {
 			if (!owned) {
 				field("locatedIn", "Located in", ["place"], true);

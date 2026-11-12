@@ -4,6 +4,7 @@ import { fitTie, formatDetails, parseDetails, splitDetails, splitParts, tieKindI
 import { ROW_ORDER, fitsRow, readMembers, rebuildMembers, rowOfKind, rowOfProperty, splitMembers, type GroupRow } from "../src/index/membership";
 import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
+import { realmWords, rulerWord } from "../src/index/realmwords";
 import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
 import { ROW_FORMATS, holdersProperty, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
 import { checkBorders } from "../src/index/bordercheck";
@@ -254,6 +255,11 @@ eq(readIcon("🏰"), "🏰", "emoji icon");
 eq(readCategory({ kind: "City" }, [], "place"), "city", "kind property");
 eq(readCategory({}, ["Fort"], "place"), "fort", "category from tag");
 eq(readCategory({}, ["Place"], "place"), undefined, "generic tag is not a category");
+// A realm's own words: its people and its ruler's title, in any of their spellings.
+eq([realmWords({ Demonym: "English", "ruler-title": "King, Queen" }), realmWords({ nationality: "[[Vaelish]]", ruler_title: "Grand Prince / Grand Princess" }), realmWords({ "ruler-title": "Doge" }), realmWords({})],
+	[{ demonym: "English", ruler: { m: "King", f: "Queen" } }, { demonym: "Vaelish", ruler: { m: "Grand Prince", f: "Grand Princess" } }, { ruler: { m: "Doge", f: "Doge" } }, {}], "realms: people and ruler words");
+eq([rulerWord(realmWords({ "ruler-title": "King or Queen" }), "female"), rulerWord({}, "male")], ["Queen", undefined], "realms: the ruler's word by gender");
+eq([holderTitle("medieval", [{ tier: 1, name: "Vael", own: "Doge" }]), holderTitle("medieval", [{ tier: 1, name: "England" }], "female")], ["Doge of Vael", "Empress of England"], "realms: a realm's own ruler title wins over its tier's");
 // Which rows of the edit form offer a group: its own kind's row; a group of no particular kind only as an organisation.
 eq((["realm", "house", "culture", "faith", "organisation"] as const).map((r) => [fitsRow(r, "group"), fitsRow(r, "culture"), fitsRow(r, "realm")]),
 	[[false, false, true], [false, false, false], [false, true, false], [false, false, false], [true, false, false]], "groups: an Other group is never offered as a culture or realm");
