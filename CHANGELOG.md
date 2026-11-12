@@ -2,7 +2,7 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 4.0.1 — not released yet
+## 4.0.1 — 2026-11-12
 
 ### Family tree
 - **A realm named in a belonging tag counts.** A group named in a tag such as `#Group_Realm_Vael` or `#Group_House_Tudor` is now one of the person's or place's groups, shown with the ones written in properties, so two people of the same realm no longer look as if one has none.
