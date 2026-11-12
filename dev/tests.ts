@@ -25,7 +25,7 @@ import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "../src
 import { occupationsAt, occupationsByLand, sidesOf } from "../src/index/wars";
 import { MAX_UNDO, addBodyToStep, addToStep, changesBetween, readHistory, remember, renameInSteps, restoreFront, splitBody, writeHistory, type UndoStep } from "../src/index/undo";
 import { clearInferred, noteSignature } from "../src/index/derived";
-import { splitSpan } from "../src/index/text";
+import { resourcePaths, splitSpan } from "../src/index/text";
 import { followPath, moveTarget } from "../src/index/moves";
 import { isKindTag, kindLabel, markedType, readCategory, typeFromTag } from "../src/index/reader";
 import { kindChoices } from "../src/index/kinds";
@@ -1512,6 +1512,8 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	// Date ranges, with or without spaces.
 	eq(["1277-1278", "1277–1278", "1277 – 1278", "1277 - 1278 C.E."].map((s) => splitSpan(s)), [["1277", "1278"], ["1277", "1278"], ["1277", "1278"], ["1277", "1278 C.E."]], "spans: spaces or none");
 	eq(["1243-05-14", "1243-05", "1240 –", "– 1241", ""].map((s) => splitSpan(s)), [["1243-05-14", ""], ["1243-05", ""], ["1240", ""], ["", "1241"], ["", ""]], "spans: single dates stay whole, open ends stay open");
+	eq(resourcePaths("app://abc123/C:/Vault/Maps/Old%20map.png?1700"), ["C:/Vault/Maps/Old map.png", "Vault/Maps/Old map.png", "Maps/Old map.png", "Old map.png"], "resource address: tails, longest first, decoded, no query");
+	eq([resourcePaths("a.png"), resourcePaths("app://x/100%.png"), resourcePaths("")], [["a.png"], ["100%.png"], []], "resource address: a bare name, a stray %, nothing");
 	eq(readOccupied("[[L]] by [[X]] (1240-1241)", resolve as never, cal)!.map((o) => [!!o.from, !!o.to]), [[true, true]], "occupied: a range without spaces reads both dates");
 
 	// How long an occupation lasts.

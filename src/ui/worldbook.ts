@@ -4,6 +4,7 @@ import type { Entity, EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { renderFacts } from "../render/arc";
 import { clickNotice, entityColor } from "../render/common";
+import { fileOfResource } from "./export";
 
 const SECTIONS: [EntityType, string][] = [["culture", "Peoples and powers"], ["person", "People"], ["place", "Places"], ["event", "Events"]];
 
@@ -36,9 +37,7 @@ async function tidyHtml(plugin: UniverseViewPlugin, root: HTMLElement, ids: Map<
 	for (const img of Array.from(root.querySelectorAll("img"))) {
 		const src = img.getAttribute("src") ?? "";
 		if (src.startsWith("data:")) continue;
-		// Vault pictures: find the file from the end of the resource URL.
-		const name = decodeURIComponent(src.split("?")[0].split("/").pop() ?? "");
-		const file = plugin.app.vault.getFiles().find((f) => f.name === name);
+		const file = fileOfResource(plugin.app, src);
 		const data = file ? await fileToDataUrl(plugin, file.path) : null;
 		if (data) img.setAttribute("src", data);
 		else img.remove();

@@ -1,5 +1,20 @@
 /* Plain-text helpers with no Obsidian dependencies (unit-tested). */
 
+/**
+ * The vault paths a resource address (app://…/C:/Vault/Maps/a.png?123) could stand for: its tails,
+ * longest first ("C:/Vault/Maps/a.png", "Vault/Maps/a.png", "Maps/a.png", "a.png").
+ */
+export function resourcePaths(url: string): string[] {
+	let bare = url.split("?")[0].split("#")[0];
+	try {
+		bare = decodeURIComponent(bare);
+	} catch {
+		// A stray "%": keep the address as it is.
+	}
+	const parts = bare.replace(/^[a-z][\w+.-]*:\/\/[^/]*/i, "").split("/").filter(Boolean);
+	return parts.map((_, i) => parts.slice(i).join("/"));
+}
+
 /** A property value as text: strings as they are, numbers and yes/no written out, lists joined with commas, anything else as JSON; nothing → "". */
 export function asText(v: unknown): string {
 	if (v === undefined || v === null) return "";

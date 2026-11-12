@@ -747,12 +747,6 @@ button.universeview-dash-tool:hover {
 	display: block;
 	font-size: var(--font-ui-small);
 }
-.universeview-dash-tool-desc {
-	display: block;
-	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
-	font-weight: normal;
-}
 
 /* ==== Writing helpers ================================================================================ */
 

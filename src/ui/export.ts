@@ -1,6 +1,7 @@
 import { Menu, Notice, TFile, normalizePath, requestUrl, type App } from "obsidian";
 import { clickNotice } from "../render/common";
 import type UniverseViewPlugin from "../main";
+import { resourcePaths } from "../index/text";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
@@ -59,10 +60,20 @@ const IMAGE_TYPES: Record<string, string> = {
 	png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", avif: "image/avif", bmp: "image/bmp", svg: "image/svg+xml",
 };
 
-/** The vault file a resource address (app://…) points to. */
-function fileOfResource(app: App, url: string): TFile | undefined {
-	const bare = url.split("?")[0];
-	return app.vault.getFiles().find((f) => f.extension.toLowerCase() in IMAGE_TYPES && app.vault.getResourcePath(f).split("?")[0] === bare);
+/**
+ * The vault picture a resource address (app://…) or a bare picture name points to. The address ends in
+ * the file's full path, so the longest tail that is a vault file is the one (two pictures may share a name).
+ */
+export function fileOfResource(app: App, url: string): TFile | undefined {
+	const tails = resourcePaths(url);
+	const isImage = (f: TFile | null): f is TFile => !!f && f.extension.toLowerCase() in IMAGE_TYPES;
+	for (const p of tails) {
+		const f = app.vault.getFileByPath(p);
+		if (isImage(f)) return f;
+	}
+	const name = tails[tails.length - 1];
+	const linked = name ? app.metadataCache.getFirstLinkpathDest(name, "") : null;
+	return isImage(linked) ? linked : undefined;
 }
 
 /** A picture made here (not a file), redrawn into a PNG. */

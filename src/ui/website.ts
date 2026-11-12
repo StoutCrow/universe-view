@@ -6,6 +6,7 @@ import { renderFacts } from "../render/arc";
 import { clickNotice, entityColor } from "../render/common";
 import { relOne } from "../index/relkinds";
 import { pageName } from "../index/pagename";
+import { fileOfResource } from "./export";
 
 /**
  * A world as a small website: a home page with search, a timeline, the maps with clickable places,
@@ -112,8 +113,7 @@ export async function buildWebsite(plugin: UniverseViewPlugin, world: string | u
 			["target", "data-href", "rel", "class"].forEach((x) => a.removeAttribute(x));
 		});
 		root.querySelectorAll("img").forEach((img) => {
-			const src = decodeURIComponent((img.getAttribute("src") ?? "").split("?")[0].split("/").pop() ?? "");
-			const file = plugin.app.vault.getFiles().find((f) => f.name === src);
+			const file = fileOfResource(plugin.app, img.getAttribute("src") ?? "");
 			const a = file ? asset(file.path) : undefined;
 			if (a) img.setAttribute("src", a);
 			else if (!/^https?:/.test(img.getAttribute("src") ?? "")) img.remove();
@@ -219,15 +219,20 @@ export async function exportWebsite(plugin: UniverseViewPlugin, world: string | 
 	try {
 		const files = await buildWebsite(plugin, world);
 		const { vault } = plugin.app;
-		const adapter = vault.adapter;
 		const root = normalizePath(`UniverseView exports/${(world || vault.getName()).replace(/[\\/:*?"<>|#^[\]]/g, "-")} website`);
-		for (const dir of ["UniverseView exports", root, `${root}/assets`]) if (!(await adapter.exists(dir))) await adapter.mkdir(dir);
+		for (const dir of ["UniverseView exports", root, `${root}/assets`]) if (!vault.getFolderByPath(dir)) await vault.createFolder(dir);
 		for (const f of files) {
 			const path = normalizePath(`${root}/${f.path}`);
-			if (f.text !== undefined) await adapter.write(path, f.text);
-			else if (f.copy) {
-				const src = vault.getAbstractFileByPath(f.copy);
-				if (src instanceof TFile) await adapter.writeBinary(path, await vault.readBinary(src));
+			const existing = vault.getFileByPath(path);
+			if (f.text !== undefined) {
+				if (existing) await vault.modify(existing, f.text);
+				else await vault.create(path, f.text);
+			} else if (f.copy) {
+				const src = vault.getFileByPath(f.copy);
+				if (!src) continue;
+				const data = await vault.readBinary(src);
+				if (existing) await vault.modifyBinary(existing, data);
+				else await vault.createBinary(path, data);
 			}
 		}
 		notice.hide();

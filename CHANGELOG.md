@@ -2,6 +2,13 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.0.3 — 2026-11-12
+
+### Exports
+- **The right picture in a website or world book.** Two pictures with the same name in different folders could swap: the export now finds each picture by its full path.
+- Exports with many pictures are faster: a picture is found directly instead of by searching the whole vault.
+- The website export writes its files through Obsidian's own file functions, like the other exports.
+
 ## 4.0.2 — 2026-11-12
 
 ### Inspector
