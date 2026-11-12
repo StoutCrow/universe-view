@@ -1246,6 +1246,16 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 					await save();
 					this.update();
 				}));
+		new Setting(containerEl)
+			.setName("Relationship names on family tree cards")
+			.setDesc("What each card says the person is to the one at the centre. Short turns long names into plain ones: “husband of a great-uncle” becomes “distant in-law”, “second cousin once removed” becomes “distant cousin”.")
+			.addDropdown((d) => d
+				.addOptions({ exact: "Exact (husband of a great-uncle)", short: "Short (distant in-law)" })
+				.setValue(s.kinNames ?? "exact")
+				.onChange(async (v) => {
+					s.kinNames = v === "short" ? "short" : undefined;
+					await this.save();
+				}));
 		tint("Men's tint", () => s.tintMale, (v) => (s.tintMale = v), "#3d7fd9");
 		tint("Women's tint", () => s.tintFemale, (v) => (s.tintFemale = v), "#d24f8a");
 

@@ -24,6 +24,7 @@ export function kinGraph(plugin: UniverseViewPlugin): KinGraph {
 			const g = idx.get(k)?.gender ?? "";
 			return /^m/i.test(g) ? "m" : /^f/i.test(g) ? "f" : undefined;
 		},
+		partnerKind: (a, b) => idx.partners(a).find((p) => p.ref.key === b)?.kind,
 	};
 }
 

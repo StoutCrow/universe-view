@@ -1501,7 +1501,8 @@ button.universeview-dash-rel:hover .universeview-dash-rel-remove,
 .universeview-board.is-linked .universeview-module-body [data-key] { cursor: crosshair; }
 
 /* ---- Family tree: handles to add a parent, child or partner right on a card ---- */
-.uv-card-adds { position: absolute; inset: 0; pointer-events: none; }
+/* Above the relationship tag, which shares the card's top edge. */
+.uv-card-adds { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 button.uv-card-add {
 	position: absolute;
 	display: grid;
@@ -1524,6 +1525,10 @@ button.uv-card-add.is-down { left: 50%; bottom: -10px; margin-left: -10px; }
 button.uv-card-add.is-side { right: -10px; top: 50%; margin-top: -10px; }
 .uv-card-html:hover button.uv-card-add { opacity: 1; pointer-events: auto; }
 button.uv-card-add:hover { color: var(--text-on-accent); background: var(--interactive-accent); border-color: var(--interactive-accent); }
+/* A wider ring around each plus counts as near it: the relationship tag fades when the pointer comes close to the top one. */
+button.uv-card-add::before { content: ""; position: absolute; inset: -12px; border-radius: 999px; }
+.uv-card-rel { transition: opacity var(--universeview-fast, 120ms) ease-out; }
+.uv-card-html:has(button.uv-card-add.is-up:hover) .uv-card-rel { opacity: 0; }
 /* A row the tree has just revealed */
 @keyframes uv-reveal { from { background: color-mix(in srgb, var(--interactive-accent) 35%, transparent); } to { background: transparent; } }
 .universeview-dash-row.is-revealed { animation: uv-reveal 1.5s ease-out; }

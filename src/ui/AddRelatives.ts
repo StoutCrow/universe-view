@@ -5,6 +5,7 @@ import { addSubmenu, el } from "../render/common";
 import { buildFieldAliases } from "../settings";
 import { addKinChildren, addKinPartner, addLinks, kinLines, parseNames } from "../index/relatives";
 import { PARENT_KINDS, PARTNER_KINDS, parseDetails, splitDetails, tieLabel } from "../index/ties";
+import { LinkList } from "./CreateEntityModal";
 
 export type RelativeKind = "parents" | "children" | "partners" | "siblings";
 
@@ -60,6 +61,13 @@ export class AddRelativesModal extends Modal {
 	private kind: RelativeKind;
 	/** The kind of tie chosen in the "How" box: spouse, step… ("" for the ordinary one). */
 	private how = "";
+	/** Ghost: typed names, no notes. Noted: links to people who have a note. */
+	private mode: "ghost" | "noted" = "ghost";
+
+	private focusInput(area: HTMLTextAreaElement, picked: LinkList) {
+		if (this.mode === "noted") picked.focus();
+		else area.focus();
+	}
 
 	constructor(private plugin: UniverseViewPlugin, private person: RelTarget, kind: RelativeKind = "children") {
 		super(plugin.app);
@@ -71,12 +79,17 @@ export class AddRelativesModal extends Modal {
 		this.modalEl.addClass("universeview-scope");
 		this.titleEl.setText(`Add relatives of ${this.person.name}`);
 		const ghost = !hasNote(this.person);
+		// Two ways to add: Ghost (a name only, drawn as a "Not created yet" card) or Noted (a link to a person's note).
+		const modes = el("div", { cls: "uv-subtabs uv-rel-modes", attr: { role: "tablist" } }, this.contentEl);
 		const kinds = el("div", { cls: "uv-rel-kinds" }, this.contentEl);
 		const note = el("p", { cls: "setting-item-description" }, this.contentEl);
 		const howRow = el("label", { cls: "uv-rel-how" }, this.contentEl);
 		const howName = el("span", {}, howRow);
 		const howSel = el("select", { cls: "dropdown" }, howRow);
 		const area = el("textarea", { cls: "uv-rel-names", attr: { rows: "5", placeholder: "One name per line. Enter adds them." } }, this.contentEl);
+		const pickBox = el("div", { cls: "uv-rel-pick" }, this.contentEl);
+		const self = this.person.key;
+		const picked = new LinkList(pickBox, this.plugin, ["person"], [], "Type a person's name…", false, undefined, [], (e) => e.key !== self);
 		const more = el("details", { cls: "uv-rel-more" }, this.contentEl);
 		el("summary", { text: "Add detail" }, more);
 		el("p", { cls: "setting-item-description", text: "Put brackets after a name for more: a gender (f or m), dates, and a note of your own in quotes. For example Carol (f, 1230 – 1290, \"the clever one\"). These are kept in a family line on the note, and the card shows them." }, more);
@@ -85,10 +98,32 @@ export class AddRelativesModal extends Modal {
 		const again = el("button", { text: "Add and add more" }, buttons);
 		el("button", { text: "Cancel" }, buttons).addEventListener("click", () => this.close());
 		const chips: Record<string, HTMLElement> = {};
+		const modeTabs: Record<string, HTMLElement> = {};
+		for (const [id, label] of [["ghost", "Ghost"], ["noted", "Noted"]] as const) {
+			const tab = (modeTabs[id] = el("button", { cls: "uv-subtab", text: label, attr: { role: "tab", title: id === "ghost" ? "Just a name, with no note: shown as a card marked “Not created yet”" : "A link to a person who has a note" } }, modes));
+			tab.addEventListener("click", () => {
+				this.mode = id;
+				paint();
+				this.focusInput(area, picked);
+			});
+		}
 		const paint = () => {
-			for (const k of KINDS) chips[k.id].toggleClass("is-on", k.id === this.kind);
+			for (const k of KINDS) {
+				chips[k.id].toggleClass("is-active", k.id === this.kind);
+				chips[k.id].setAttribute("aria-pressed", String(k.id === this.kind));
+			}
+			for (const [id, tab] of Object.entries(modeTabs)) {
+				tab.toggleClass("is-on", id === this.mode);
+				tab.setAttribute("aria-selected", String(id === this.mode));
+			}
+			const noted = this.mode === "noted";
+			area.toggleClass("is-hidden", noted);
+			more.toggleClass("is-hidden", noted);
+			pickBox.toggleClass("is-hidden", !noted);
 			const k = KINDS.find((x) => x.id === this.kind);
-			note.setText(`No notes are made. ${ghost ? k?.ghost : k?.own} Each name shows in the tree as a card you can write up later.`);
+			note.setText(noted
+				? `Pick people who have a note; each becomes a link. ${ghost ? k?.ghost : k?.own}`
+				: `No notes are made. ${ghost ? k?.ghost : k?.own} Each name shows in the tree as a card you can write up later.`);
 			// How they are tied: partners (spouse, betrothed…) and parents (step, foster…).
 			const options = this.kind === "partners" ? PARTNER_KINDS : this.kind === "parents" ? PARENT_KINDS.filter((x) => x !== "birth") : [];
 			howRow.toggleClass("is-hidden", !options.length);
@@ -104,18 +139,32 @@ export class AddRelativesModal extends Modal {
 			chips[k.id].addEventListener("click", () => {
 				this.kind = k.id;
 				paint();
-				area.focus();
+				this.focusInput(area, picked);
 			});
 		}
 		howSel.addEventListener("change", () => (this.how = howSel.value));
 		paint();
-		ok.addEventListener("click", () => void this.submit(area.value));
-		again.addEventListener("click", () => void this.submit(area.value, true).then((done) => {
-			if (done) {
-				area.value = "";
-				area.focus();
+		/** What to add: the typed names, or the picked people (only those with a note). */
+		const names = (): string | null => {
+			if (this.mode === "ghost") return area.value;
+			const all = picked.collect();
+			const unknown = all.filter((n) => !this.plugin.index.findByName(n));
+			if (unknown.length) {
+				new Notice(`No note for ${unknown.join(", ")}. Pick people from the suggestions, or add them on the Ghost tab.`);
+				return null;
 			}
-		}));
+			return all.join("\n");
+		};
+		const go = async (keepOpen = false) => {
+			const text = names();
+			if (text === null) return;
+			if (!(await this.submit(text, keepOpen))) return;
+			area.value = "";
+			picked.clear();
+			this.focusInput(area, picked);
+		};
+		ok.addEventListener("click", () => void go());
+		again.addEventListener("click", () => void go(true));
 		// Enter adds; Shift+Enter makes a new line.
 		area.addEventListener("keydown", (evt) => {
 			if (evt.key === "Enter" && !evt.shiftKey && !evt.isComposing) {

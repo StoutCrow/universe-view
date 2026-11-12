@@ -9,7 +9,7 @@ import { holdingsOf } from "../index/realms";
 import { holderTitle, styleFor } from "../index/titles";
 import { groupLine, type CardGroups } from "../ui/groupsplit";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
-import { relationship, type KinGraph } from "../index/kinship";
+import { relationship, shortKin, type KinGraph } from "../index/kinship";
 
 /** Down from a parent, along the line between the generations and down to a child, with rounded corners. */
 function elbow(x1: number, y1: number, busY: number, x2: number, y2: number, style: "rounded" | "square" | "curved" = "rounded"): string {
@@ -599,7 +599,10 @@ export class FamilyTreeRenderer {
 		if (n.key === this.kbKey) slot.addClass("is-kb");
 		// What they are to the person at the centre, as a tag on the card's top edge.
 		const rel = e && !n.root && this.options.relations !== false ? relationship(this.kin(), this.options.root!, n.key) : null;
-		if (rel) el("span", { cls: "uv-card-rel" + (rel.blood ? "" : " is-marriage"), text: rel.label.charAt(0).toUpperCase() + rel.label.slice(1) }, slot);
+		if (rel) {
+			const word = this.plugin.settings.kinNames === "short" ? shortKin(rel.label) : rel.label;
+			el("span", { cls: "uv-card-rel" + (rel.blood ? "" : " is-marriage"), text: word.charAt(0).toUpperCase() + word.slice(1), attr: word !== rel.label ? { title: rel.label } : {} }, slot);
+		}
 		// Hovering someone traces how they're related: the people between them and the centre stay bright.
 		if (rel && !Platform.isMobile) {
 			slot.addEventListener("mouseenter", () => this.trace(rel.path));
@@ -721,7 +724,8 @@ export class FamilyTreeRenderer {
 				});
 				b.addEventListener("dblclick", (evt) => evt.stopPropagation());
 			}
-		}		if (e) bindHover(this.plugin, card, n.key, this.hoverParent);
+		}
+		if (e) bindHover(this.plugin, card, n.key, this.hoverParent);
 	}
 
 	/** What can be done with a relative who has no note: add their relatives, or write them up. */
@@ -801,6 +805,7 @@ export class FamilyTreeRenderer {
 				const g = idx.get(k)?.gender ?? "";
 				return /^m/i.test(g) ? "m" : /^f/i.test(g) ? "f" : undefined;
 			},
+			partnerKind: (a, b) => idx.partners(a).find((p) => p.ref.key === b)?.kind,
 		});
 	}
 

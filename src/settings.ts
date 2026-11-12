@@ -317,6 +317,8 @@ export interface UniverseViewSettings {
 	tlRowHeight?: number;
 	tlFontSize?: number;
 	cardWidth?: number;
+	/** How family tree cards name relationships; unset is "exact". */
+	kinNames?: "short";
 	cardHeight?: number;
 	tintMale?: string;
 	tintFemale?: string;

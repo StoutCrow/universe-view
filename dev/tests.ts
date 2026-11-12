@@ -59,7 +59,7 @@ import { spacedLabels } from "../src/dates/calendars";
 import { linkTarget, readTimedRefs } from "../src/index/reader";
 import { days, parseScale, planJourney, terrainFactor } from "../src/render/travel";
 import { totalPopulation } from "../src/index/tidy";
-import { kinTerm, relationship } from "../src/index/kinship";
+import { kinTerm, partnerWord, relationship, shortKin } from "../src/index/kinship";
 import { parseQuickAdd, quickAddFrontmatter } from "../src/import/quickadd";
 import { lineOfSuccession } from "../src/index/succession";
 import { generateNames, givenNames, seeded, tooClose, trainNames } from "../src/index/names";
@@ -413,6 +413,15 @@ eq(findMapping("People/ = person\n/Vael = vaelic", "Vael"), "vaelic", "find a fo
 	eq(relationship(kg, "A", "C")?.path, ["A", "P1", "G", "P2", "C"], "kin: path through common ancestor");
 	eq(kinTerm(3, 4, "m"), "second cousin once removed", "kin term: second cousin once removed");
 	eq(relationship(kg, "A", "nobody"), null, "kin: unrelated");
+	// Partner kinds: A's lover L (written on L's side only), the aunt P2's husband H, D's former wife X.
+	const partners: Record<string, string[]> = { A: ["W", "L"], W: ["A"], L: ["A"], P2: ["H"], H: ["P2"], D: ["X"], X: ["D"], LF: [] };
+	const kinds: Record<string, string> = { "L>A": "lover", "D>X": "ex" };
+	const kp = { ...kg, parents: (k: string) => (k === "L" ? ["LF"] : parents[k] ?? []), partners: (k: string) => partners[k] ?? [], gender: (k: string) => ({ ...genders, L: "f", H: "m", X: "f", LF: "m" } as Record<string, "m" | "f">)[k], partnerKind: (a: string, b: string) => kinds[`${a}>${b}`] };
+	eq(["L", "W", "H", "LF"].map((k) => relationship(kp, "A", k)?.label), ["lover", "wife", "husband of an aunt", "lover's father"], "kin: a partner's word follows the tie's kind, on either side");
+	eq(relationship(kp, "A", "X")?.label, "former wife of a first cousin once removed", "kin: a former partner of a relative");
+	eq(["annulled", "Divorced", "betrothed", "concubine", undefined].map((k) => partnerWord(k, "f")), ["former wife", "former wife", "fiancée", "concubine", "wife"], "kin: partner words for ended and other ties");
+	eq(["husband of an aunt", "husband of a great-uncle", "former wife of a first cousin once removed", "spouse's grandfather", "spouse's first cousin", "lover's father", "second cousin once removed", "first cousin once removed", "2× great-grandmother", "2× great-uncle", "great-grandfather", "sister-in-law"].map(shortKin),
+		["uncle", "distant in-law", "distant in-law", "grandfather-in-law", "distant in-law", "lover's father", "distant cousin", "cousin", "ancestor", "distant uncle", "great-grandfather", "sister-in-law"], "kin: short names");
 }
 
 // ---- Quick add ----

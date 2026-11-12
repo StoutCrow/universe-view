@@ -2,6 +2,21 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## Not released yet
+
+### Family tree
+- **Cards name a partner by the kind of tie.** A lover shows as "Lover", a betrothed as "Fiancée", an ex or an annulled marriage as "Former wife", instead of "Wife" for everyone. Step and in-law words are kept for marriages; other ties say what they are ("lover's father", "former wife of a cousin"). "Wife of a uncle" now reads "wife of an uncle".
+- **Short relationship names** (Settings → Views → *Relationship names on family tree cards*): "husband of a great-uncle" becomes "distant in-law", "second cousin once removed" "distant cousin", "3× great-grandfather" "ancestor". Hover a card's tag for the exact name.
+- The relationship tag on a card fades when the pointer comes near the plus above it, so the plus is never hidden.
+
+### Add relatives
+- **Ghost and Noted tabs.** Ghost adds people by name only (a "Not created yet" card, as before); Noted picks people who have a note and links them.
+- The picked kind (Parents, Children, Partners, Siblings) now shows as selected.
+
+### Inspector
+- **The pencil on a relationship is easier to see**, as a small button of its own.
+- **The tie window matches the rest of UniverseView**: the kind is a row of chips, and the dates, how it ended and your own text are labelled fields. A kind of your own (such as "annulled") is kept and shown, where before the window showed it blank and could drop it on save.
+
 ## 4.0.3 — 2026-11-12
 
 ### Exports

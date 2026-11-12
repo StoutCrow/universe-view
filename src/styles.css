@@ -1255,6 +1255,30 @@ g.is-dimmed .universeview-net-link.is-lit {
 	width: 12px;
 	height: 12px;
 }
+/* The pencil that edits a tie: a real button, full strength, so it reads as something to press. */
+button.universeview-linkchip-pen {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 20px;
+	height: 20px;
+	margin-left: 2px;
+	padding: 0;
+	border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+	border-radius: var(--uv-r-sm);
+	background: transparent;
+	box-shadow: none;
+	color: inherit;
+	cursor: pointer;
+}
+button.universeview-linkchip-pen:hover {
+	border-color: currentColor;
+	background: color-mix(in srgb, currentColor 12%, transparent);
+}
+button.universeview-linkchip-pen svg {
+	width: 13px;
+	height: 13px;
+}
 .universeview-create-folder {
 	display: flex;
 	align-items: center;

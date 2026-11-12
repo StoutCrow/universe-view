@@ -4,6 +4,8 @@ export interface KinGraph {
 	parents(key: string): string[];
 	partners(key: string): string[];
 	gender(key: string): "m" | "f" | undefined;
+	/** The kind of tie between two partners ("lover", "spouse"…), as written on either side. */
+	partnerKind?(a: string, b: string): string | undefined;
 }
 
 export interface Kinship {
@@ -110,34 +112,88 @@ function kindOf(label: string): "parent" | "child" | "sibling" | undefined {
 	return undefined;
 }
 
+const norm = (k: string | undefined) => (k ?? "").trim().toLowerCase().replace(/[\s_]+/g, "-");
+/** Kinds of partner tie that are a marriage (no kind written counts as one). */
+const MARRIED = new Set(["", "spouse", "married", "marriage", "wed", "wedded", "widowed", "husband", "wife", "wives"]);
+const isMarriage = (kind: string | undefined) => MARRIED.has(norm(kind));
+const article = (w: string) => (/^[aeiou]/i.test(w) ? "an" : "a");
+
+/** What B is to A as a partner, from the tie's kind: "wife", "former husband", "fiancée", "lover". */
+export function partnerWord(kind: string | undefined, g: G): string {
+	const k = norm(kind);
+	if (MARRIED.has(k)) return pick(g, "husband", "wife", "spouse");
+	if (/^(ex|former(-spouse)?|divorced?|annulled|separated)$/.test(k)) return `former ${pick(g, "husband", "wife", "spouse")}`;
+	if (k === "betrothed" || k === "engaged") return pick(g, "fiancé", "fiancée", "betrothed");
+	return k.replace(/-/g, " ");
+}
+
 /**
- * What B is to A: a blood relationship ("second cousin once removed"), a spouse, or a relationship
- * by marriage ("sister-in-law", "stepfather", "wife of A's brother").
+ * What B is to A: a blood relationship ("second cousin once removed"), a partner as their tie says ("wife",
+ * "lover"), or a relationship through a partner ("sister-in-law", "stepfather", "wife of an uncle", "lover's father").
+ * In-law and step words are only for marriages; any other tie says what it is.
  */
 export function relationship(g: KinGraph, a: string, b: string): Kinship | null {
 	const direct = blood(g, a, b);
 	if (direct) return direct;
 	const gb = g.gender(b);
-	if (g.partners(a).includes(b)) return { label: pick(gb, "husband", "wife", "spouse"), path: [a, b], blood: false };
-	// B married to one of A's relatives.
+	const kindOfTie = (x: string, y: string) => g.partnerKind?.(x, y) ?? g.partnerKind?.(y, x);
+	const slot = gb === "m" ? 0 : gb === "f" ? 1 : 2;
+	if (g.partners(a).includes(b)) return { label: partnerWord(kindOfTie(a, b), gb), path: [a, b], blood: false };
+	// B is the partner of one of A's relatives.
 	for (const p of g.partners(b)) {
 		const r = blood(g, a, p);
 		if (!r) continue;
-		const kind = kindOf(r.label);
-		if (kind === "child") return { label: IN_LAW.child[gb === "m" ? 0 : gb === "f" ? 1 : 2], path: [...r.path, b], blood: false };
-		if (kind === "sibling") return { label: IN_LAW.sibling[gb === "m" ? 0 : gb === "f" ? 1 : 2], path: [...r.path, b], blood: false };
-		if (kind === "parent") return { label: pick(gb, "stepfather", "stepmother", "step-parent"), path: [...r.path, b], blood: false };
-		return { label: `${pick(gb, "husband", "wife", "spouse")} of a ${r.label}`, path: [...r.path, b], blood: false };
+		const path = [...r.path, b];
+		const tie = kindOfTie(b, p);
+		if (isMarriage(tie)) {
+			const kind = kindOf(r.label);
+			if (kind === "child") return { label: IN_LAW.child[slot], path, blood: false };
+			if (kind === "sibling") return { label: IN_LAW.sibling[slot], path, blood: false };
+			if (kind === "parent") return { label: pick(gb, "stepfather", "stepmother", "step-parent"), path, blood: false };
+		}
+		return { label: `${partnerWord(tie, gb)} of ${article(r.label)} ${r.label}`, path, blood: false };
 	}
-	// B is a relative of A's spouse.
+	// B is a relative of A's partner.
 	for (const q of g.partners(a)) {
 		const r = blood(g, q, b);
 		if (!r) continue;
-		const kind = kindOf(r.label);
-		if (kind === "parent") return { label: IN_LAW.parent[gb === "m" ? 0 : gb === "f" ? 1 : 2], path: [a, ...r.path], blood: false };
-		if (kind === "sibling") return { label: IN_LAW.sibling[gb === "m" ? 0 : gb === "f" ? 1 : 2], path: [a, ...r.path], blood: false };
-		if (kind === "child") return { label: pick(gb, "stepson", "stepdaughter", "stepchild"), path: [a, ...r.path], blood: false };
-		return { label: `spouse's ${r.label}`, path: [a, ...r.path], blood: false };
+		const path = [a, ...r.path];
+		const tie = kindOfTie(a, q);
+		if (isMarriage(tie)) {
+			const kind = kindOf(r.label);
+			if (kind === "parent") return { label: IN_LAW.parent[slot], path, blood: false };
+			if (kind === "sibling") return { label: IN_LAW.sibling[slot], path, blood: false };
+			if (kind === "child") return { label: pick(gb, "stepson", "stepdaughter", "stepchild"), path, blood: false };
+			return { label: `spouse's ${r.label}`, path, blood: false };
+		}
+		return { label: `${partnerWord(tie, g.gender(q))}'s ${r.label}`, path, blood: false };
 	}
 	return null;
+}
+
+/** How relationships are named on family tree cards: as worked out, or short. */
+export type KinNames = "exact" | "short";
+
+/**
+ * A short name for a long relationship: "husband of a great-uncle" → "distant in-law", "second cousin once removed"
+ * → "distant cousin", "3× great-grandfather" → "ancestor". Close relationships stay as they are.
+ */
+export function shortKin(label: string): string {
+	const l = label.toLowerCase();
+	// The partner of a relative ("wife of an uncle"): an uncle's wife is an aunt; anyone further is a distant in-law.
+	const of = /^(husband|wife|spouse) of an? (uncle|aunt|uncle or aunt)$/.exec(l);
+	if (of) return of[1] === "husband" ? "uncle" : of[1] === "wife" ? "aunt" : "uncle or aunt";
+	if (/ of an? /.test(l)) return "distant in-law";
+	// A relative of a partner ("spouse's grandfather"): one word gets "-in-law", more is distant.
+	const owner = /^spouse's (\S+)$/.exec(l);
+	if (owner && !/great|cousin|×/.test(owner[1])) return `${owner[1]}-in-law`;
+	if (/^spouse's /.test(l)) return "distant in-law";
+	if (/'s /.test(l)) return l.length > 16 ? "distant in-law" : label;
+	if (/^first cousin/.test(l)) return "cousin";
+	if (/cousin/.test(l)) return "distant cousin";
+	if (/×.*grand(father|mother|parent)$/.test(l)) return "ancestor";
+	if (/×.*grand(son|daughter|child)$/.test(l)) return "descendant";
+	const far = /×\s*great-(?:grand-)?(uncle|aunt|uncle or aunt|nephew|niece|nephew or niece)$/.exec(l);
+	if (far) return `distant ${far[1]}`;
+	return label;
 }

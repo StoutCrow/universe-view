@@ -1423,8 +1423,46 @@ textarea.universeview-mono {
 	margin-bottom: 8px;
 	color: var(--text-muted);
 }
-.uv-rel-how.is-hidden {
+:is(.uv-rel-how, .uv-rel-names, .uv-rel-more, .uv-rel-pick).is-hidden {
 	display: none;
+}
+.uv-rel-modes {
+	margin-bottom: 12px;
+}
+/* The tie editor: the kind as chips, then the details as labelled fields, two to a row. */
+.uv-tie-kinds {
+	margin-bottom: 16px;
+}
+.uv-tie-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	margin-bottom: 4px;
+}
+.uv-tie-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+.uv-tie-field.is-wide {
+	grid-column: 1 / -1;
+}
+.uv-tie-label {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+.uv-tie-field input {
+	width: 100%;
+}
+@media (max-width: 480px) {
+	.uv-tie-grid {
+		grid-template-columns: 1fr;
+	}
+}
+.uv-rel-pick .universeview-linklist {
+	width: 100%;
+	min-height: 32px;
 }
 .uv-rel-more {
 	margin-top: 6px;

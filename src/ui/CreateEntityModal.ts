@@ -108,6 +108,18 @@ export class LinkList {
 		return this.values;
 	}
 
+	/** Empties the list and its box. */
+	clear() {
+		this.values = [];
+		this.input.value = "";
+		this.render();
+	}
+
+	/** Puts the cursor in the box. */
+	focus() {
+		this.input.focus();
+	}
+
 	private add(name: string) {
 		if (this.single) this.values = [];
 		if (!this.values.includes(name)) this.values.push(name);
@@ -130,7 +142,7 @@ export class LinkList {
 			if (said) el("span", { cls: "universeview-linkchip-note", text: ` · ${said}` }, chip);
 			if (this.ties) {
 				// A pencil to edit the tie: its kind, when, how it ended, and text of your own.
-				const pen = el("span", { cls: "universeview-linkchip-x", title: said ? "Edit this relationship" : "Add details to this relationship" }, chip);
+				const pen = el("button", { cls: "universeview-linkchip-pen", attr: { "aria-label": said ? "Edit this relationship" : "Add details to this relationship", title: said ? "Edit this relationship" : "Add details to this relationship" } }, chip);
 				icon(pen, "pencil");
 				pen.addEventListener("click", (evt) => {
 					evt.stopPropagation();
