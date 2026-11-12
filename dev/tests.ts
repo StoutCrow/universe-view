@@ -260,6 +260,8 @@ eq([realmWords({ Demonym: "English", "ruler-title": "King, Queen" }), realmWords
 	[{ demonym: "English", ruler: { m: "King", f: "Queen" } }, { demonym: "Vaelish", ruler: { m: "Grand Prince", f: "Grand Princess" } }, { ruler: { m: "Doge", f: "Doge" } }, {}], "realms: people and ruler words");
 eq([rulerWord(realmWords({ "ruler-title": "King or Queen" }), "female"), rulerWord({}, "male")], ["Queen", undefined], "realms: the ruler's word by gender");
 eq([holderTitle("medieval", [{ tier: 1, name: "Vael", own: "Doge" }]), holderTitle("medieval", [{ tier: 1, name: "England" }], "female")], ["Doge of Vael", "Empress of England"], "realms: a realm's own ruler title wins over its tier's");
+// A realm's people made into a culture note get the kind "nationality", which is a culture; "culture" itself is no kind.
+eq([rowOfKind("nationality"), readCategory({ kind: "nationality" }, [], "culture"), readCategory({ kind: "culture" }, [], "culture")], ["culture", "nationality", undefined], "realms: a nationality is a culture");
 // Which rows of the edit form offer a group: its own kind's row; a group of no particular kind only as an organisation.
 eq((["realm", "house", "culture", "faith", "organisation"] as const).map((r) => [fitsRow(r, "group"), fitsRow(r, "culture"), fitsRow(r, "realm")]),
 	[[false, false, true], [false, false, false], [false, true, false], [false, false, false], [true, false, false]], "groups: an Other group is never offered as a culture or realm");

@@ -1,4 +1,4 @@
-import { MarkdownPostProcessorContext, Modal, Setting, TFile, debounce } from "obsidian";
+import { MarkdownPostProcessorContext, Modal, Notice, Setting, TFile, debounce } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { ChronDate, Entity, EntityType } from "../types";
 import { buildFieldAliases, type FieldName } from "../settings";
@@ -12,7 +12,7 @@ import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
-import { DEMONYM_KEYS, RULER_TITLE_KEYS } from "../index/realmwords";
+import { DEMONYM_KEYS, RULER_TITLE_KEYS, realmWords } from "../index/realmwords";
 import { ROW_INFO, ROW_ORDER, fitsRow, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
 import { groupKind } from "../render/houses";
 import { asText } from "../index/text";
@@ -157,6 +157,8 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			const was = JSON.stringify(before.map(written));
 			return {
 				rich,
+				list,
+				setting: s,
 				collect: () => list.collect(!list.isTyping()).map((name) => ({ name, value: written(name) })),
 				changed: () => JSON.stringify(list.collect(!list.isTyping()).map(written)) !== was,
 			};
@@ -191,6 +193,32 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 				const filter = row === "group" ? undefined : (note: Entity) => fitsRow(row, groupKind(p, note));
 				rows.set(row, linkRow(box, ROW_INFO[row].label, (e.type === "place" && ROW_INFO[row].asksPlace) || ROW_INFO[row].asks, split[row].map((m) => m.raw), { types: ["culture"], tie: "relation", filter, placeholder: row === "group" ? "Add a group…" : `Add a ${ROW_INFO[row].label.toLowerCase()}…` }));
 			}
+			// A realm's people as a culture: under Culture, "+ English" for each realm here that names its people.
+			const culture = rows.get("culture");
+			const realms = rows.get("realm");
+			if (culture && realms) {
+				const offers = el("div", { cls: "uv-qe-offers" }, culture.setting.controlEl);
+				const paintOffers = () => {
+					offers.empty();
+					const have = new Set(culture.list.values.map((v) => v.toLowerCase()));
+					for (const name of realms.list.values) {
+						const realm = p.index.findByName(name);
+						const people = realm ? realmWords(realm.props).demonym : undefined;
+						if (!realm || !people || have.has(people.toLowerCase())) continue;
+						have.add(people.toLowerCase());
+						const b = el("button", { cls: "universeview-chip", text: `+ ${people}`, attr: { "aria-label": `Add ${people}, the people of ${realm.name}, as a culture` } }, offers);
+						b.addEventListener("click", () => culture.list.addName(people));
+					}
+				};
+				for (const row of [culture, realms]) {
+					const before = row.list.onChange;
+					row.list.onChange = () => {
+						before?.();
+						paintOffers();
+					};
+				}
+				paintOffers();
+			}
 			saves.push(() => {
 				if (![...rows.values()].some((r) => r.changed())) return;
 				const wanted = Object.fromEntries(ROW_ORDER.map((r) => [r, rows.get(r)?.collect() ?? split[r].map((m) => ({ name: m.name, value: m.raw }))])) as Record<GroupRow, Wanted[]>;
@@ -221,9 +249,23 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 				const wordRow = (keys: string[], label: string, desc: string, placeholder: string) => {
 					const k = has(keys) ?? keys[0];
 					used.add(k);
-					new Setting(box).setName(label).setDesc(desc).addText((t) => t.setPlaceholder(placeholder).setValue(asText(fm[k] ?? "")).onChange((v) => changes.set(k, v.trim())));
+					let value = asText(fm[k] ?? "").trim();
+					const s = new Setting(box).setName(label).setDesc(desc).addText((t) => t.setPlaceholder(placeholder).setValue(value).onChange((v) => {
+						value = v.trim();
+						changes.set(k, value);
+					}));
+					return { s, value: () => value };
 				};
-				wordRow(DEMONYM_KEYS, "Its people", "What its people are called, their nationality: England's people are English. Written as demonym.", "English");
+				const people = wordRow(DEMONYM_KEYS, "Its people", "What its people are called, their nationality: England's people are English. Written as demonym.", "English");
+				// Its people as a culture of their own, which people and places can then name under Culture.
+				people.s.addButton((b) => b.setButtonText("Make a culture").setTooltip("Start a culture note named after its people").onClick(() => {
+					const name = people.value();
+					if (!name) return void new Notice("Write what its people are called first.");
+					const found = p.index.findByName(name);
+					if (found) return void new Notice(`${found.name} already has a note.`);
+					// Kind "nationality" reads as a culture; "culture" would be the type's own name, so no kind at all.
+					p.createEntityPrompt({ type: "culture", groupKind: "nationality", name });
+				}));
 				wordRow(RULER_TITLE_KEYS, "Ruler's title", "What its ruler is called, for a man and a woman. Leave it empty to use the title of its tier (King, Duke…); fill it in for a realm of a kind of its own. Written as ruler-title.", "King, Queen");
 			}
 		} else if (e.type === "place") {

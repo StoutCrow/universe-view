@@ -31,7 +31,8 @@ export function suggestionPool(plugin: UniverseViewPlugin, type: EntityType, gro
 export interface CreatePrefill {
 	type?: EntityType;
 	/** For a group: a realm or a house (its kind is written for it). */
-	groupKind?: "realm" | "house" | "region";
+	/** "nationality" is a culture: a realm's people (a group's kind can't be "culture", the type's own name). */
+	groupKind?: "realm" | "house" | "region" | "nationality";
 	name?: string;
 	date?: string;
 	calendar?: string;
@@ -114,6 +115,11 @@ export class LinkList {
 		this.values = [];
 		this.input.value = "";
 		this.render();
+	}
+
+	/** Adds a name, as picking it from the suggestions would. */
+	addName(name: string) {
+		this.add(name);
 	}
 
 	/** Puts the cursor in the box. */

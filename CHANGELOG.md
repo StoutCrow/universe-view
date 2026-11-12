@@ -2,9 +2,13 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## Not released yet
+## 4.3.0 — 2026-11-12
 
 ### Realms: a title, a land and a people
+- **A ruler's title shows everywhere they do**: on their family tree card as before, and now on their hover card ("Title: Queen of England · Her Majesty") and as a chip in the inspector. One rule for all three.
+- **A realm's people as a culture.** Under a person's or place's Culture box, each of their realms that names its people offers it in one click ("+ English"). On the realm itself, *Make a culture* next to *Its people* starts a culture note of that name (kind: nationality), which Culture boxes then suggest.
+- The About tab names a realm's own words as the edit form does: *Its people* and *Ruler's title*, not "Demonym" and "Ruler title".
+- A realm with no tier and a title of its own no longer gives its ruler the lowest tier's form of address: there is none to go by, so none is shown.
 - **A realm's edit form has a section of its own** that says what a realm is: its land (seat and borders), its people, and its crown (its ruler and the ruler's title).
 - **Its people** (`demonym:`, or `nationality:`): what its people are called, as England's are English.
 - **Ruler's title** (`ruler-title: King, Queen`): what its ruler is called, for a man and a woman. Family tree cards use it ("Doge of Vael"), so a realm of a kind of its own, with no tier word for its ruler, still gives its ruler a title. Empty uses the tier's title as before.

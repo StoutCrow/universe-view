@@ -5,9 +5,7 @@ import type { Entity } from "../types";
 import { formatDate, yearsBetween } from "../dates/parser";
 import { PanZoom } from "./panzoom";
 import { INSPECT_CLICK, bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
-import { holdingsOf } from "../index/realms";
-import { holderTitle, styleFor } from "../index/titles";
-import { realmWords, rulerWord } from "../index/realmwords";
+import { personTitle } from "./rulertitle";
 import { groupLine, type CardGroups } from "../ui/groupsplit";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
 import { relationship, shortKin, type KinGraph } from "../index/kinship";
@@ -636,25 +634,10 @@ export class FamilyTreeRenderer {
 		if (e) {
 			sub.setText(lifeText(this.plugin, e));
 			// What they hold (a crown and the highest titles), else their house or group.
-			const tree = this.plugin.realms();
-			const titles = holdingsOf(tree, e.key)
-				.map((k) => ({ k, rank: tree.nodes.get(k)?.rank ?? 9 }))
-				.sort((a, b) => a.rank - b.rank)
-				.map((t) => idx.get(t.k)?.name)
-				.filter((x): x is string => !!x);
-			if (titles.length) {
-					// "King of England", from the highest ruled land they hold and the world's setting; the address (Her Majesty) is the hover.
-					const setting = this.plugin.settings.worldSetting;
-					const gender = e.gender === "f" ? "female" : e.gender === "m" ? "male" : undefined;
-					const ruled = holdingsOf(tree, e.key).flatMap((k) => {
-						const node = tree.nodes.get(k);
-						const land = idx.get(k);
-						// A realm that names its own ruler ("Grand Prince") counts even when its kind has no tier.
-						const own = land ? rulerWord(realmWords(land.props), gender) : undefined;
-						return node && land && node.nature !== "region" && (node.rank < 9 || own) ? [{ tier: node.rank, name: land.name, own }] : [];
-					});
-					const lead = holderTitle(setting, ruled, gender);
-					const address = ruled.length ? styleFor(setting, Math.min(...ruled.map((r) => r.tier)), gender) : "";
+			const held = personTitle(this.plugin, e);
+			if (held?.titles.length) {
+					// "King of England", from the highest ruled land they hold; the address (Her Majesty) is the hover.
+					const { lead, address, titles } = held;
 					const meta = el("div", { cls: "universeview-card-meta is-titles", title: [address, titles.join(", ")].filter(Boolean).join(" · ") }, body);
 					icon(el("span", { cls: "universeview-card-crown" }, meta), "crown");
 					el("span", { text: lead ? lead + (titles.length > 1 ? ` +${titles.length - 1}` : "") : titles.slice(0, 2).join(", ") + (titles.length > 2 ? ` +${titles.length - 2}` : "") }, meta);

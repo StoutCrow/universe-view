@@ -11,6 +11,8 @@ import { buildFieldAliases } from "../settings";
 import { relKind } from "../index/relkinds";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { ROW_INFO } from "../index/membership";
+import { DEMONYM_KEYS, RULER_TITLE_KEYS } from "../index/realmwords";
+import { personTitle } from "../render/rulertitle";
 import { groupsByRow } from "./groupsplit";
 import { changeNoteIcon, noteIcons } from "./icons";
 import { TYPE_ICONS, TYPE_LABELS, bindHover, el, entityColor, glyph, helpTip, icon, openEntity, resourceUrl } from "../render/common";
@@ -84,6 +86,9 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	const kind = e.type === "culture" ? GROUP_KINDS[groupKind(p, e)] : undefined;
 	chip(kind?.label ?? TYPE_LABELS[e.type], kind?.icon ?? TYPE_ICONS[e.type], "is-type");
 	if (e.category) chip(cap(e.category), "tag");
+	// A ruler's title, as on their family tree card ("Queen of England"); how they are addressed is its hover.
+	const held = personTitle(p, e);
+	if (held?.lead) chip(held.lead, "crown").setAttribute("title", [held.address, held.titles.join(", ")].filter(Boolean).join(" · "));
 	const tier = node ? tierLabel(node) || undefined : undefined;
 	if (tier && tier !== kind?.label && tier.toLowerCase() !== e.category?.toLowerCase()) chip(tier, "crown");
 	if (e.importance >= 4) chip("★".repeat(Math.min(5, e.importance)), undefined, "is-stars");
@@ -316,7 +321,9 @@ function otherProperties(p: UniverseViewPlugin, e: Entity): [string, string][] {
 		if (NOT_FACTS.test(k) || known.has(k.toLowerCase()) || relKind(k)) continue;
 		const values = (Array.isArray(v) ? v : [v]).filter((x) => x !== null && x !== "" && typeof x !== "object");
 		const text = values.map((x) => asText(x).replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, "$1")).join(", ");
-		if (text) out.push([cap(k.replace(/[-_]/g, " ")), text]);
+		// A realm's own words get the names the edit form gives them.
+		const label = DEMONYM_KEYS.includes(k.toLowerCase()) ? "Its people" : RULER_TITLE_KEYS.includes(k.toLowerCase()) ? "Ruler's title" : cap(k.replace(/[-_]/g, " "));
+		if (text) out.push([label, text]);
 	}
 	return out;
 }

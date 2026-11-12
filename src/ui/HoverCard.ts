@@ -5,6 +5,7 @@ import { occupationsByLand } from "../index/wars";
 import { formatDate, formatSpan, yearsBetween } from "../dates/parser";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { ROW_INFO } from "../index/membership";
+import { personTitle } from "../render/rulertitle";
 import { groupsByRow } from "./groupsplit";
 import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, ownershipLines, resourceUrl, svg } from "../render/common";
 import { excerptOf } from "../index/text";
@@ -544,6 +545,9 @@ export class HoverCards {
 		const cultures = e.cultures.map((c) => (c.role ? { ...c.ref, name: `${c.ref.name} (${c.role})` } : c.ref));
 		switch (e.type) {
 			case "person": {
+				// What they hold, as on their family tree card: "Queen of England", with how she is addressed.
+				const held = personTitle(p, e);
+				if (held) add("Title", [held.lead || held.titles.slice(0, 2).join(", "), held.address].filter(Boolean).join(" · "));
 				if (e.birthPlace) add("Born in", [e.birthPlace]);
 				if (e.deathPlace) add("Died in", [e.deathPlace]);
 				add("Parents", e.parents);

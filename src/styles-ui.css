@@ -1425,6 +1425,16 @@ textarea.universeview-mono {
 .uv-rel-modes {
 	margin-bottom: 12px;
 }
+/* Under a Culture box: a realm's people, one click to add as a culture. */
+.uv-qe-offers {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 4px;
+}
+.uv-qe-offers:empty {
+	display: none;
+}
 /* The tie editor: what the tie is as chips, which kind as tabs under it, then only the details that kind has. */
 .uv-tie-picker {
 	margin-bottom: 16px;
