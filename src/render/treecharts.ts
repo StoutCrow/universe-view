@@ -4,7 +4,7 @@ import { formatSpan } from "../dates/parser";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import type { FamilyOptions } from "./family";
 import { PanZoom } from "./panzoom";
-import { bindHover, el, emptyState, entityColor, iconButton, openEntity, showEntityMenu, svg } from "./common";
+import { bindHover, clickOrDouble, el, emptyState, entityColor, iconButton, openEntity, showEntityMenu, svg } from "./common";
 
 const YEAR = 365.25;
 
@@ -17,6 +17,8 @@ abstract class SvgChart {
 	protected bbox = { x: 0, y: 0, width: 1, height: 1 };
 	/** Set by the view: double-click someone to put them at the centre. */
 	onRecenter?: (key: string) => void;
+	/** Called just before a click opens someone's note, so a tree that follows the active note doesn't move for it. */
+	onOpenNote?: (key: string) => void;
 
 	constructor(
 		protected container: HTMLElement,
@@ -63,13 +65,16 @@ abstract class SvgChart {
 	}
 
 	protected wire(g: Element, key: string) {
-		g.addEventListener("click", (evt) => {
-			if (!this.pz.justPanned) openEntity(this.plugin, key, evt as MouseEvent);
-		});
-		g.addEventListener("dblclick", (evt) => {
-			evt.preventDefault();
-			this.onRecenter?.(key);
-		});
+		// Click opens the note, double-click centres here: the same as the tree's cards.
+		clickOrDouble(
+			g,
+			(evt) => {
+				this.onOpenNote?.(key);
+				openEntity(this.plugin, key, evt);
+			},
+			() => this.onRecenter?.(key),
+			() => this.pz.justPanned,
+		);
 		g.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
 			showEntityMenu(this.plugin, key, evt as MouseEvent);

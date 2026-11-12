@@ -4,7 +4,7 @@ import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { formatDate, yearsBetween } from "../dates/parser";
 import { PanZoom } from "./panzoom";
-import { bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
+import { INSPECT_CLICK, bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
 import { holdingsOf } from "../index/realms";
 import { holderTitle, styleFor } from "../index/titles";
 import { groupLine, type CardGroups } from "../ui/groupsplit";
@@ -682,17 +682,21 @@ export class FamilyTreeRenderer {
 			});
 			t.addEventListener("dblclick", (evt) => evt.stopPropagation());
 		}
-		card.setAttribute("aria-label", e ? `${name}\nDouble-click to centre the tree here` : `${name} has no note yet. Click for what you can do.`);
+		card.setAttribute("aria-label", e ? `${name}\nClick to open · double-click to centre here · ${INSPECT_CLICK} to inspect` : `${name} has no note yet. Click for what you can do.`);
 
 		clickOrDouble(
 			card,
 			(evt) => {
 				// A relative with no note: the click opens what can be done with them (it used to start a new note at once).
 				if (!e) this.ghostMenu(n.key, name, evt);
-				else openEntity(this.plugin, n.key, evt);
+				else {
+					this.onOpenNote?.(n.key);
+					openEntity(this.plugin, n.key, evt);
+				}
 			},
 			() => e && this.recenter(n.key),
 			() => this.pz.justPanned,
+			() => this.markKey(n.key),
 		);
 		card.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
@@ -818,6 +822,9 @@ export class FamilyTreeRenderer {
 
 	/** Called when the folded branches change, so the view can remember them. */
 	onFold?: () => void;
+
+	/** Called just before a click opens someone's note, so a tree that follows the active note doesn't move for it. */
+	onOpenNote?: (key: string) => void;
 
 	private toggleFold(key: string) {
 		const set = new Set(this.options.collapsed ?? []);

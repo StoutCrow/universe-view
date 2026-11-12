@@ -13,6 +13,8 @@ export class FamilyTreeView extends UniverseViewBase {
 	protected exportable = true;
 	private options: FamilyOptions = { ...DEFAULT_FAMILY_OPTIONS };
 	private follow = false;
+	/** The note a click in the tree is opening, so following the active note leaves the tree where it is. */
+	private openedHere?: string;
 	private renderer?: FamilyTreeRenderer | FanChartRenderer | TimeTreeRenderer;
 	private picker?: HTMLInputElement;
 
@@ -54,7 +56,11 @@ export class FamilyTreeView extends UniverseViewBase {
 		this.makeRenderer();
 		this.registerEvent(
 			this.app.workspace.on("file-open", (file: TFile | null) => {
-				if (!this.follow || !file) return;
+				if (!file) return;
+				// A note opened by clicking its card here: the click opens it, only a double-click centres the tree.
+				const own = this.openedHere === file.path;
+				this.openedHere = undefined;
+				if (!this.follow || own) return;
 				const e = this.plugin.index.get(file.path);
 				if (e?.type === "person" && e.key !== this.options.root) this.setRoot(e.key);
 			}),
@@ -68,6 +74,7 @@ export class FamilyTreeView extends UniverseViewBase {
 		const make = this.options.layout === "fan" ? FanChartRenderer : this.options.layout === "time" ? TimeTreeRenderer : FamilyTreeRenderer;
 		this.renderer = new make(this.body, this.plugin, this.options, false, this.hoverHost);
 		this.renderer.onRecenter = (key) => this.setRoot(key);
+		this.renderer.onOpenNote = (key) => (this.openedHere = key);
 		if (this.renderer instanceof FamilyTreeRenderer)
 			this.renderer.onFold = () => {
 				this.app.workspace.requestSaveLayout();

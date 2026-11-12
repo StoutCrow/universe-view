@@ -1,4 +1,4 @@
-import { Keymap, Menu, MenuItem, Notice, TFile, WorkspaceLeaf, setIcon } from "obsidian";
+import { Keymap, Menu, MenuItem, Notice, Platform, TFile, WorkspaceLeaf, setIcon } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { kindLabel } from "../index/reader";
@@ -267,20 +267,35 @@ export function openEntity(plugin: UniverseViewPlugin, key: string, evt?: MouseE
 	void leaf.openFile(file).then(() => workspace.setActiveLeaf(leaf, { focus: true }));
 }
 
-/** Separates single from double clicks so a double-click doesn't also trigger the single action. */
-export function clickOrDouble(target: Element, single: (evt: MouseEvent) => void, double: (evt: MouseEvent) => void, guard: () => boolean = () => false) {
+/**
+ * How long a first click waits for a second before it acts alone. Most systems count two clicks within 500ms as a
+ * double-click; a shorter wait let a slower double-click do both (open the note, then centre on it).
+ */
+export const DOUBLE_CLICK_MS = 450;
+
+/** The click that opens anything with a hover card in the inspector (see HoverCards), named for this computer. */
+export const INSPECT_CLICK = Platform.isMacOS ? "Option-click" : "Alt+click";
+
+/**
+ * Separates single from double clicks so a double-click does only the double action. `pressed` runs at once on the
+ * first click (to mark what was clicked), so the wait for a possible second click never looks like nothing happened.
+ */
+export function clickOrDouble(target: Element, single: (evt: MouseEvent) => void, double: (evt: MouseEvent) => void, guard: () => boolean = () => false, pressed?: (evt: MouseEvent) => void) {
 	let timer = 0;
-	target.addEventListener("click", (evt) => {
-		const e = evt as MouseEvent;
-		if (guard()) return;
+	target.addEventListener("click", (evt: MouseEvent) => {
+		// Alt+click belongs to the inspector (HoverCards takes it first).
+		if (guard() || evt.altKey) return;
 		window.clearTimeout(timer);
-		if (e.detail > 1) return;
-		timer = window.setTimeout(() => single(e), 230);
+		// The second click of a double-click: the dblclick event right after it does the work.
+		if (evt.detail > 1) return;
+		pressed?.(evt);
+		timer = window.setTimeout(() => single(evt), DOUBLE_CLICK_MS);
 	});
-	target.addEventListener("dblclick", (evt) => {
+	target.addEventListener("dblclick", (evt: MouseEvent) => {
 		window.clearTimeout(timer);
 		evt.preventDefault();
-		double(evt as MouseEvent);
+		evt.stopPropagation();
+		if (!guard() && !evt.altKey) double(evt);
 	});
 }
 

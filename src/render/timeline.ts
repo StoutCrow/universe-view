@@ -8,7 +8,7 @@ import { rangeOf } from "../index/EntityIndex";
 import { chainOf, holdingsOf } from "../index/realms";
 import { renamings } from "../index/renames";
 import { fitRange } from "./layout";
-import { bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svg, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
+import { INSPECT_CLICK, bindHover, cssNumber, el, emptyState, entityColor, icon, iconButton, openEntity, showEntityMenu, svg, svgMarkup, TYPE_ICONS, typeColorVar } from "./common";
 import { drawNation, nameFits } from "./nationbar";
 import { battlesOf, eventCategories, isBattle, namedAsWar, occupationsByLand, sidesOf, warOf } from "../index/wars";
 import { causePath, packRows, rowLayout, stackLevels, type Box, type TimeRange } from "./timelinerows";
@@ -997,7 +997,7 @@ export class TimelineRenderer {
 		if (it.open) node.addClass("is-open-ended");
 		if (it.importance >= 4) node.addClass("is-important");
 		if (this.highlight === it.key) node.addClass("is-highlighted");
-		node.setAttribute("aria-label", `${it.label}\n${it.dateText}`);
+		node.setAttribute("aria-label", `${it.label}\n${it.dateText}\n${this.embedded ? "Click to open" : "Double-click to open"} · ${INSPECT_CLICK} to inspect`);
 		node.setAttribute("data-tooltip-position", "top");
 		if (this.selected === it.id) node.addClass("is-selected");
 		const battle = it.kind === "event" && isBattle(it.entity);
@@ -1030,15 +1030,12 @@ export class TimelineRenderer {
 		}
 		node.addEventListener("click", (evt) => {
 			if (this.drag?.moved || this.itemMoved) return;
+			evt.stopPropagation();
+			// The second click of a double-click: the double-click opens the note (see `firstClick`).
+			if (evt.detail > 1) return;
 			// A click shows its card beside the timeline; Ctrl/Cmd-click (or any click in an embed) opens the note.
 			if (this.embedded || evt.ctrlKey || evt.metaKey) return openEntity(this.plugin, it.key, evt);
-			evt.stopPropagation();
 			this.select(it.id);
-		});
-		node.addEventListener("dblclick", (evt) => {
-			// Not "a new event here", which a double-click on empty timeline means.
-			evt.stopPropagation();
-			openEntity(this.plugin, it.key, evt);
 		});
 		if (!this.embedded && it.kind === "event" && !it.entity.repeat && it.entity.start && it.entity.start.precision !== "range") this.makeEditable(node, p);
 		node.addEventListener("contextmenu", (evt) => {
@@ -1335,7 +1332,23 @@ export class TimelineRenderer {
 		this.root.addEventListener("pointercancel", end);
 		this.root.addEventListener("mouseenter", () => this.root.addClass("is-hovering"));
 		this.root.addEventListener("mouseleave", () => this.root.removeClass("is-hovering"));
+		// What the first click of a possible double-click landed on: an item's note key, "" for a cluster, null for empty
+		// timeline. The first click can move things (it opens the item's card, or zooms into a cluster), so the second
+		// click may land elsewhere; the double-click goes by the first.
+		let firstClick: string | null = null;
+		this.bodyEl.addEventListener("click", (evt) => {
+			if (evt.detail !== 1) return;
+			const item = (evt.target as HTMLElement).closest<HTMLElement>(".universeview-tl-item");
+			firstClick = item ? (item.hasClass("is-cluster") ? "" : item.dataset.key ?? "") : null;
+		}, { capture: true });
 		this.bodyEl.addEventListener("dblclick", (evt) => {
+			// Alt+click belongs to the inspector, so an Alt+double-click is not a new event.
+			if (this.drag?.moved || this.itemMoved || evt.altKey) return;
+			if (firstClick !== null) {
+				// A double-click on an item opens its note, once (an embed's first click already did).
+				if (firstClick && !this.embedded) openEntity(this.plugin, firstClick, evt);
+				return;
+			}
 			if ((evt.target as HTMLElement).closest(".universeview-tl-item, .universeview-tl-lane-label")) return;
 			const r = this.root.getBoundingClientRect();
 			const day = this.viewStart + (evt.clientX - r.left) / this.pxPerDay;

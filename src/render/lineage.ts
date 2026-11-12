@@ -84,6 +84,8 @@ export class LineageRenderer {
 	private frame = 0;
 	/** True right after a drag, so the click that ends it doesn't pick a group. */
 	private justPanned = false;
+	/** The culture the last click picked, so the second click of a double-click opens it rather than nothing. */
+	private pickedByClick?: string;
 
 	constructor(
 		private container: HTMLElement,
@@ -495,16 +497,27 @@ export class LineageRenderer {
 				if (m.name) svg("text", { x: mx + 6, y: my - 4, class: "uv-lin-rename-label" }, g).textContent = m.name;
 				mark.addEventListener("click", (evt) => {
 					evt.stopPropagation();
-					if (!this.justPanned) openEntity(p, m.key, evt);
+					// Once per double-click, not twice.
+					if (!this.justPanned && evt.detail <= 1) openEntity(p, m.key, evt);
 				});
 			});
 			g.addEventListener("click", (evt) => {
 				if (this.justPanned) return;
-				// Click picks it for the side panel; Ctrl/Cmd-click, or a second click, opens the note.
-				if (evt.ctrlKey || evt.metaKey || this.embedded || this.options.selected === c.key) openEntity(p, c.key, evt);
-				else this.select(c.key);
+				// Click picks it for the side panel; Ctrl/Cmd-click, or clicking it again (so a double-click), opens the note.
+				// One handler for both, so a double-click opens it once, even when picking it redrew the chart in between.
+				const first = evt.detail <= 1;
+				const pickedByFirst = this.pickedByClick === c.key;
+				this.pickedByClick = undefined;
+				if (evt.ctrlKey || evt.metaKey || this.embedded) {
+					if (first) openEntity(p, c.key, evt);
+				} else if (this.options.selected === c.key) {
+					// Already picked: a click opens it; the second click of a double-click only if the first one picked it.
+					if (first || (evt.detail === 2 && pickedByFirst)) openEntity(p, c.key, evt);
+				} else if (first) {
+					this.pickedByClick = c.key;
+					this.select(c.key);
+				}
 			});
-			g.addEventListener("dblclick", (evt) => openEntity(p, c.key, evt));
 			g.addEventListener("contextmenu", (evt) => {
 				evt.preventDefault();
 				showEntityMenu(p, c.key, evt);

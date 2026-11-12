@@ -2,7 +2,14 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## Not released yet
+## 4.2.0 — 2026-11-12
+
+### Clicks in the family tree and the timeline
+- **One meaning per click, every time.** In the family tree (every layout), a click opens the person's note and a double-click only centres the tree on them. In the timeline and its lineage mode, a click picks an item (its card shows beside it) and a double-click opens its note, once.
+- A double-click no longer opens a note *and* centres the tree: the click now waits a little longer for a second one, and the card is marked at once so you can see it was clicked.
+- With *Follow the active note* on, clicking a card no longer moves the tree; notes opened elsewhere still do.
+- In the timeline, a double-click on an item can no longer start a new event when its card opening moved the item out from under the second click. A double-click on empty timeline still starts one.
+- **Alt+click (Option-click on a Mac) opens the inspector** on any card, bar or mark, as it does everywhere in UniverseView; the tooltips now say so, and an Alt+double-click no longer centres the tree or starts an event.
 
 ### Relationships
 - **A tie only asks what fits its kind.** In the tie window and the Add relatives window, the kind is now two steps: what it is (*Parent*; *Married* or *Not married* for partners), then which kind, as tabs under it (Birth, Adoptive, Step, Foster, Guardian; Spouse, Consort, Widowed, Former spouse; Betrothed, Lover, Concubine).
