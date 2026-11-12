@@ -13,6 +13,7 @@ function Note($path, $front, $body = "") {
 $T = "Tudors"
 Note "$T/Cultures/House of Tudor.md" @"
 type: culture
+kind: house
 founded: 1485-08-22
 dissolved: 1603-03-24
 parent-cultures: ["[[House of Lancaster]]"]
@@ -20,6 +21,7 @@ color: "#c0392b"
 "@ "Royal house that ruled England from Bosworth to the death of Elizabeth I."
 Note "$T/Cultures/House of Lancaster.md" @"
 type: culture
+kind: house
 founded: 1399
 dissolved: 1471
 parent-cultures: ["[[House of Plantagenet]]"]
@@ -27,12 +29,14 @@ color: "#e67e22"
 "@
 Note "$T/Cultures/House of Plantagenet.md" @"
 type: culture
+kind: house
 founded: 1154
 dissolved: 1485
 color: "#d4ac0d"
 "@
 Note "$T/Cultures/House of York.md" @"
 type: culture
+kind: house
 founded: 1461
 dissolved: 1485
 parent-cultures: ["[[House of Plantagenet]]"]
@@ -46,6 +50,7 @@ color: "#8e44ad"
 "@
 Note "$T/Cultures/Church of England.md" @"
 type: culture
+kind: faith
 founded: 1534-11
 color: "#2980b9"
 "@

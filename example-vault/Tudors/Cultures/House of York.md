@@ -1,5 +1,6 @@
 ---
 type: culture
+kind: house
 founded: 1461
 dissolved: 1485
 parent-cultures: ["[[House of Plantagenet]]"]

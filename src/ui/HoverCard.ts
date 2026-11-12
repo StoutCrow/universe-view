@@ -4,6 +4,8 @@ import type { Entity, Ref } from "../types";
 import { occupationsByLand } from "../index/wars";
 import { formatDate, formatSpan, yearsBetween } from "../dates/parser";
 import { GROUP_KINDS, groupKind } from "../render/houses";
+import { ROW_INFO } from "../index/membership";
+import { groupsByRow } from "./groupsplit";
 import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, ownershipLines, resourceUrl, svg } from "../render/common";
 import { excerptOf } from "../index/text";
 import { totalPopulation } from "../index/tidy";
@@ -548,7 +550,8 @@ export class HoverCards {
 				add("Partners", idx.partners(e.key).map((x) => x.ref));
 				add("Children", idx.children(e.key).map(ref));
 				add("Siblings", idx.siblings(e.key).map(ref));
-				add("Member of", cultures);
+				// What they belong to, by question: realm, house, culture, faith, organisation.
+				for (const [row, refs] of groupsByRow(p, e.cultures)) add(ROW_INFO[row].label, refs.map((c) => (c.role ? { ...c.ref, name: `${c.ref.name} (${c.role})` } : c.ref)));
 				const rel = idx.relationsOf.get(e.key)?.filter((r) => r.kind) ?? [];
 				for (const r of rel.slice(0, 2)) add(cap(r.kind!), [r.ref]);
 				break;

@@ -12,6 +12,8 @@ import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
 import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
+import { ROW_INFO, ROW_ORDER, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
+import { groupKind } from "../render/houses";
 import { asText } from "../index/text";
 import { PARENT_KINDS, PARTNER_KINDS, formatDetails, parseDetails, tieLabel } from "../index/ties";
 import type { TieEdit } from "./TieModal";
@@ -116,14 +118,12 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 				words: role ? [role] : [],
 			};
 		};
-		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box, tie?: "parent" | "partner" | "relation") => {
-			used.add(k);
-			const raw = fm[k];
-			const entries = ([] as unknown[]).concat(raw ?? []);
+		/** One row of links: chips with a pencil for the tie, written back as they were unless edited. */
+		const linkRow = (parent: HTMLElement, label: string, desc: string | undefined, entries: unknown[], o: { types?: EntityType[]; single?: boolean; tie?: "parent" | "partner" | "relation"; filter?: (e: Entity) => boolean; placeholder?: string }) => {
 			const isObject = (x: unknown) => !!x && typeof x === "object";
 			// A plain list keeps entries with dates or roles as written; a list of ties can edit them too.
-			const rich = tie ? [] : entries.filter(isObject);
-			const before = names(raw).filter((n) => !rich.some((r) => names(r).includes(n)));
+			const rich = o.tie ? [] : entries.filter(isObject);
+			const before = names(entries).filter((n) => !rich.some((r) => names(r).includes(n)));
 			const s = new Setting(parent).setName(label);
 			if (desc) s.setDesc(desc);
 			if (rich.length) s.setDesc(`${desc ? desc + " · " : ""}${rich.length} with dates or roles kept as written`);
@@ -143,20 +143,59 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 					ties.set(n, tieOfObject(x as Record<string, unknown>));
 				}
 			}
-			const kinds: [string, string][] = tie === "partner" ? PARTNER_KINDS.map((x) => [x, tieLabel(x, "partner")]) : tie === "parent" ? PARENT_KINDS.map((x) => [x, tieLabel(x, "parent")]) : [];
-			const list = new LinkList(s.controlEl, p, types, before, "Add…", single, tie ? ties : undefined, kinds);
+			const kinds: [string, string][] = o.tie === "partner" ? PARTNER_KINDS.map((x) => [x, tieLabel(x, "partner")]) : o.tie === "parent" ? PARENT_KINDS.map((x) => [x, tieLabel(x, "parent")]) : [];
+			const list = new LinkList(s.controlEl, p, o.types, before, o.placeholder ?? "Add…", o.single ?? false, o.tie ? ties : undefined, kinds, o.filter);
 			const initial = new Map([...ties].map(([n, d]) => [n, formatDetails(d)]));
 			// An entry nobody edited is written back exactly as it was; an edited one is written in brackets.
-			const written = (n: string): unknown => {
-				const text = formatDetails(ties.get(n) ?? {});
-				const original = originals.get(n);
-				return original !== undefined && text === initial.get(n) ? original : `[[${n}]]${text}`;
+			const written = (name: string): unknown => {
+				const text = formatDetails(ties.get(name) ?? {});
+				const original = originals.get(name);
+				return original !== undefined && text === initial.get(name) ? original : `[[${name}]]${text}`;
 			};
 			const was = JSON.stringify(before.map(written));
+			return {
+				rich,
+				collect: () => list.collect().map((name) => ({ name, value: written(name) })),
+				changed: () => JSON.stringify(list.collect().map(written)) !== was,
+			};
+		};
+		const chips = (label: string, k: string, types?: EntityType[], single = false, desc?: string, parent: HTMLElement = box, tie?: "parent" | "partner" | "relation") => {
+			used.add(k);
+			const row = linkRow(parent, label, desc, ([] as unknown[]).concat(fm[k] ?? []), { types, single, tie });
 			saves.push(() => {
-				const out = list.collect().map(written);
-				if (JSON.stringify(out) === was) return;
-				changes.set(k, single ? out[0] ?? "" : [...rich, ...out]);
+				if (!row.changed()) return;
+				const out = row.collect().map((x) => x.value);
+				changes.set(k, single ? out[0] ?? "" : [...row.rich, ...out]);
+			});
+		};
+		/**
+		 * What they belong to, as separate questions (realm, house, culture, faith, organisation: index/membership.ts).
+		 * Each entry stays in the property it was written under; a new one goes to the property the note already uses
+		 * for that question, else the usual one.
+		 */
+		const groupRows = (show: GroupRow[]) => {
+			const members = readMembers(fm, aliases.cultures, (raw) => names(raw)[0]);
+			for (const m of members) used.add(m.prop);
+			const kindOf = (name: string): GroupRow | undefined => {
+				const note = p.index.findByName(name);
+				return note ? (groupKind(p, note)) : undefined;
+			};
+			const split = splitMembers(members, kindOf);
+			const rows = new Map<GroupRow, ReturnType<typeof linkRow>>();
+			for (const row of ROW_ORDER) {
+				if (!show.includes(row) && !split[row].length) continue;
+				if (row === "group" && !split.group.length) continue;
+				// Notes of that kind first; a group with no kind yet can go anywhere.
+				const filter = row === "group" ? undefined : (note: Entity) => {
+					const kind = groupKind(p, note);
+					return kind === row || kind === "group";
+				};
+				rows.set(row, linkRow(box, ROW_INFO[row].label, ROW_INFO[row].asks, split[row].map((m) => m.raw), { types: ["culture"], tie: "relation", filter, placeholder: row === "group" ? "Add a group…" : `Add a ${ROW_INFO[row].label.toLowerCase()}…` }));
+			}
+			saves.push(() => {
+				if (![...rows.values()].some((r) => r.changed())) return;
+				const wanted = Object.fromEntries(ROW_ORDER.map((r) => [r, rows.get(r)?.collect() ?? split[r].map((m) => ({ name: m.name, value: m.raw }))])) as Record<GroupRow, Wanted[]>;
+				for (const [prop, value] of Object.entries(rebuildMembers(fm, members, wanted))) changes.set(prop, value === undefined ? "" : value);
 			});
 		};
 		const saves: (() => void)[] = [];
@@ -165,7 +204,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		if (e.type === "person") {
 			field("parents", "Parents", ["person"], false, "parent");
 			field("partners", "Partners", ["person"], false, "partner");
-			field("cultures", "Groups", ["culture"]);
+			groupRows(["realm", "house", "culture", "faith", "organisation"]);
 			field("places", "Places", ["place"]);
 		} else if (e.type === "event") {
 			field("participants", "People", ["person"]);
@@ -179,8 +218,8 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		} else if (e.type === "place") {
 			if (!owned) {
 				field("locatedIn", "Located in", ["place"], true);
-				field("cultures", "Held by", ["culture"]);
-			} else field("cultures", "Groups", ["culture"]);
+				groupRows(["realm", "culture", "faith"]);
+			} else groupRows(["realm", "culture", "faith"]);
 		}
 		// Relationships: the world's presets, plus any others the note already has.
 		if (e.type === "person" || e.type === "culture") {

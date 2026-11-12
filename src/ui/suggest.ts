@@ -43,12 +43,15 @@ export class EntityInputSuggest extends AbstractInputSuggest<Entity> {
 		private plugin: UniverseViewPlugin,
 		private types: EntityType[] | undefined,
 		private onPick: (e: Entity) => void,
+		/** Only notes this lets through are offered (the groups of one kind, for example). */
+		private filter?: (e: Entity) => boolean,
 	) {
 		super(app, input);
 	}
 
 	getSuggestions(query: string): Entity[] {
-		return rank(this.plugin, query, this.types);
+		const found = rank(this.plugin, query, this.types);
+		return this.filter ? found.filter(this.filter) : found;
 	}
 
 	renderSuggestion(e: Entity, row: HTMLElement) {

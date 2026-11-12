@@ -35,7 +35,7 @@ const MEDIEVAL: SettingWords = {
 	liege: "Liege", vassals: "Vassals", liegeOne: "liege", vassalOne: "vassal",
 	house: "House", houses: "Houses", houseIcon: "castle",
 	tiers: "medieval", mapLook: "standard",
-	hints: { person: "Knight, merchant, deity…", event: "Battle, treaty, birth…", culture: "Kingdom, house, guild, faith…", map: "World, region, city plan…" },
+	hints: { person: "Knight, merchant, deity…", event: "Battle, treaty, birth…", culture: "Realm, house, culture, faith, organisation…", map: "World, region, city plan…" },
 	defences: ["castle", "fort"],
 };
 
@@ -45,12 +45,12 @@ const WORDS: Record<WorldSetting, SettingWords> = {
 	medieval: MEDIEVAL,
 	modern: {
 		...LATER, tiers: "modern", mapLook: "clean-political",
-		hints: { person: "Senator, engineer, spy…", event: "Election, treaty, crash…", culture: "Country, company, party, agency…", map: "World, country, city plan…" },
+		hints: { person: "Senator, engineer, spy…", event: "Election, treaty, crash…", culture: "Country, family, culture, religion, company…", map: "World, country, city plan…" },
 		defences: ["base", "fort"],
 	},
 	futuristic: {
 		...LATER, tiers: "galactic", mapLook: "star-chart",
-		hints: { person: "Captain, pilot, android…", event: "Landing, accord, uprising…", culture: "Federation, corporation, fleet, colony…", map: "Galaxy, star system, station plan…" },
+		hints: { person: "Captain, pilot, android…", event: "Landing, accord, uprising…", culture: "Federation, family, culture, faith, corporation…", map: "Galaxy, star system, station plan…" },
 		defences: ["base", "outpost"],
 	},
 };

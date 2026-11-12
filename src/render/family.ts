@@ -7,6 +7,7 @@ import { PanZoom } from "./panzoom";
 import { bindHover, clickOrDouble, icon, cssNumber, cultureColor, el, emptyState, iconButton, openEntity, resourceUrl, showEntityMenu, svg, warningItem } from "./common";
 import { holdingsOf } from "../index/realms";
 import { holderTitle, styleFor } from "../index/titles";
+import { firstOfRow } from "../ui/groupsplit";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
 import { relationship, type KinGraph } from "../index/kinship";
 
@@ -650,7 +651,8 @@ export class FamilyTreeRenderer {
 					icon(el("span", { cls: "universeview-card-crown" }, meta), "crown");
 					el("span", { text: lead ? lead + (titles.length > 1 ? ` +${titles.length - 1}` : "") : titles.slice(0, 2).join(", ") + (titles.length > 2 ? ` +${titles.length - 2}` : "") }, meta);
 			} else {
-				const culture = e.cultures[0]?.ref.name;
+				// Their house, else their first group, under the name.
+				const culture = (firstOfRow(this.plugin, e.cultures, "house") ?? e.cultures[0])?.ref.name;
 				if (culture) el("div", { cls: "universeview-card-meta", text: culture }, body);
 			}
 		} else {

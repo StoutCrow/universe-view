@@ -7,6 +7,8 @@ import { kindLabel } from "../index/reader";
 import { formatSpan } from "../dates/parser";
 import { TYPE_LABELS, el, entityColor, helpTip, icon } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
+import { ROW_INFO } from "../index/membership";
+import { groupsByRow } from "./groupsplit";
 import { noteChip } from "./EntityPanel";
 import { miniMap } from "./minimap";
 import { aliasesOf } from "./identity";
@@ -226,7 +228,7 @@ export function linksTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ct
 		group("Partners", "heart", keys(idx.partners(e.key).map((x) => x.ref)));
 		group("Siblings", "users", idx.siblings(e.key));
 	}
-	group("Groups", "users", keys(e.cultures.map((c) => c.ref)));
+	for (const [row, refs] of groupsByRow(p, e.cultures)) group(ROW_INFO[row].plural, GROUP_KINDS[row].icon, keys(refs.map((c) => c.ref)));
 	group("Places", "map-pin", keys(e.places));
 	group("People", "user", keys(e.participants));
 	if (e.type === "culture") group("Members", "users", idx.members(e.key).map((m) => (m as { key: string }).key), () => undefined);

@@ -4,6 +4,7 @@ import { makeFolderNote, placementFor, type Placement } from "./foldernotes";
 import { choiceTags, standardFields, type TagChoice } from "./tagstandard";
 import type UniverseViewPlugin from "../main";
 import { EntityType } from "../types";
+import type { Entity } from "../types";
 import { formatDate, parseDate } from "../dates/parser";
 import { Calendar, GREGORIAN_ID } from "../dates/calendars";
 import { TYPE_ICONS, TYPE_LABELS, el, icon } from "../render/common";
@@ -69,7 +70,7 @@ export class LinkList {
 	/** The kinds a tie in this list can be, with labels; empty when the list's own name is the kind. */
 	private tieKinds: [string, string][];
 
-	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, ties?: Map<string, TieEdit>, tieKinds: [string, string][] = []) {
+	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false, ties?: Map<string, TieEdit>, tieKinds: [string, string][] = [], filter?: (e: Entity) => boolean) {
 		this.ties = ties;
 		this.tieKinds = tieKinds;
 		this.values = [...initial];
@@ -78,7 +79,7 @@ export class LinkList {
 		new EntityInputSuggest(plugin.app, this.input, plugin, types, (e) => {
 			this.add(e.name);
 			this.input.value = "";
-		});
+		}, filter);
 		this.input.addEventListener("keydown", (evt) => {
 			if ((evt.key === "Enter" || evt.key === ",") && this.input.value.trim()) {
 				// Unknown names are fine: they become unresolved links you can create later.

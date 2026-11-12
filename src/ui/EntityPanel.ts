@@ -10,6 +10,8 @@ import { asText } from "../index/text";
 import { buildFieldAliases } from "../settings";
 import { relKind } from "../index/relkinds";
 import { GROUP_KINDS, groupKind } from "../render/houses";
+import { ROW_INFO } from "../index/membership";
+import { groupsByRow } from "./groupsplit";
 import { changeNoteIcon, noteIcons } from "./icons";
 import { TYPE_ICONS, TYPE_LABELS, bindHover, el, entityColor, glyph, helpTip, icon, openEntity, resourceUrl } from "../render/common";
 
@@ -184,7 +186,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		list("Partners", "heart", idx.partners(e.key).map((t) => ({ ...t.ref, sub: formatSpan(t.from, t.to, cal) || span(idx.get(t.ref.key)) })));
 		list("Children", "baby", idx.children(e.key).map((k) => refOf(k, span(idx.get(k)))));
 		list("Siblings", "users-round", idx.siblings(e.key).map((k) => refOf(k, span(idx.get(k)))), 8);
-		list("Groups", "flag", e.cultures.map((c) => ({ ...c.ref, sub: [c.role, formatSpan(c.from, c.to, cal)].filter(Boolean).join(" · ") })));
+		for (const [row, refs] of groupsByRow(p, e.cultures)) list(ROW_INFO[row].plural, GROUP_KINDS[row].icon, refs.map((c) => ({ ...c.ref, sub: [c.role, c.label, formatSpan(c.from, c.to, cal)].filter(Boolean).join(" · ") })));
 	}
 	if (e.type === "person" || e.type === "culture") {
 		list("Holds", "landmark", holdingsOf(tree, e.key).filter((k) => k !== e.key).map((k) => refOf(k, chainOf(tree, k).slice(0, -1).map((x) => idx.get(x)?.name).join(" › "))));

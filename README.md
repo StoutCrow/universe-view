@@ -139,6 +139,21 @@ relations:
     kind: mentor
 ```
 
+### What someone belongs to
+
+A person (or a place) can belong to groups, and UniverseView keeps five questions apart: their **realm** (which realm they live under or serve, with dates when it changes), their **house** (their family or lineage), their **culture** (the people they are of), their **faith**, and any **organisations** (guilds, orders, armies, companies). Anything else is an *other group*. The edit form has a row for each, and the inspector, the hover card and the family tree show them the same way.
+
+Each answer comes from the *kind* of the group note it links to, which you set on the group (`kind: house`, `#Group_House`; a realm keeps its tier word, such as kingdom or county). Write them in whichever property you like: `allegiance:` and `realm:` are realms, `family:` and `house:` are houses, `faith:` and `religion:` are faiths, and the general `cultures:` holds the rest.
+
+```yaml
+# People/Henry VII.md
+allegiance: "[[England]]"
+family: "[[House of Tudor]]"
+faith: "[[Church of England]]"
+```
+
+*Fix kinds and tags* proposes a kind for groups that have none, worked out from their name and tags, for you to review.
+
 ```yaml
 # Places/London.md                     # Places/Greyford.md (on an image map)
 type: place                            type: place

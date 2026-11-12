@@ -7,6 +7,7 @@ import { applyMigration, migrateBodyTags, migrateTags, migrationKind, tidyKinds,
 import { factsFromPath, tagFixes, type TagFix, type TagNote } from "../index/tagrules";
 import { el, openEntity } from "../render/common";
 import { kindFix, knownKindWords } from "../index/kindcheck";
+import { groupKind } from "../render/houses";
 import { CATEGORY_KEYS } from "../index/reader";
 
 /** What UniverseView knows about a note that a tag might state. */
@@ -42,12 +43,18 @@ export function schemeMigrations(plugin: UniverseViewPlugin): { entity: Entity; 
 		for (const t of cache?.tags ?? []) all.push(t.tag.replace(/^#/, ""));
 		return [...new Map(all.map((t) => [t.toLowerCase(), t])).values()];
 	};
+	/** A group with no kind yet: what its name and tags say it is, when they say (never for a realm, whose tier is its kind). */
+	const guessedKind = (e: Entity): string | undefined => {
+		if (e.type !== "culture" || tree.nodes.has(e.key)) return undefined;
+		const kind = groupKind(plugin, e);
+		return kind === "group" ? undefined : kind;
+	};
 	const noteOf = (e: Entity): MigrateNote => {
 		const node = tree.nodes.get(e.key);
 		return {
 			type: e.type,
 			name: e.name,
-			kind: e.category,
+			kind: e.category ?? guessedKind(e),
 			tags: ownTags(e),
 			land: node ? { nature: node.nature, tier: node.nature === "realm" && node.rank < 9 ? tierName(node.rank) : undefined } : undefined,
 			world: plugin.index.worldFor(e.path)?.name,
@@ -60,6 +67,11 @@ export function schemeMigrations(plugin: UniverseViewPlugin): { entity: Entity; 
 	const used = new Map<string, number>();
 	for (const p of plugin.index.all("place")) if (p.category) used.set(p.category, (used.get(p.category) ?? 0) + 1);
 	const byKey = new Map<string, Migration>();
+	// Groups with no kind: propose the one their name and tags point to (house, faith, organisation, culture).
+	for (const e of plugin.index.all("culture")) {
+		const guess = !e.category ? guessedKind(e) : undefined;
+		if (guess) byKey.set(e.key, { kind: { from: "", to: guess, why: "worked out from its name and tags" }, rename: [], drop: [], add: [] });
+	}
 	for (const e of plugin.index.all("place")) {
 		const fix = kindFix(e.category, known, (w) => used.get(w) ?? 0);
 		if (fix) byKey.set(e.key, { kind: { from: fix.from, to: fix.to, why: fix.why }, rename: [], drop: [], add: fix.add });
@@ -178,7 +190,7 @@ export class NormaliseTagsModal extends Modal {
 				this.updateCount();
 			});
 		};
-		if ("kind" in row.fix && row.fix.kind) chip("kind", `kind: ${row.fix.kind.from} → ${row.fix.kind.to}`, `Change the kind from ${row.fix.kind.from} to ${row.fix.kind.to}: ${row.fix.kind.why}`);
+		if ("kind" in row.fix && row.fix.kind) chip("kind", row.fix.kind.from ? `kind: ${row.fix.kind.from} → ${row.fix.kind.to}` : `kind → ${row.fix.kind.to}`, `Change the kind from ${row.fix.kind.from} to ${row.fix.kind.to}: ${row.fix.kind.why}`);
 		for (const t of row.fix.add) chip(t, `+ #${t}`, `Add #${t}`);
 		for (const [from, to] of row.fix.rename) chip(from, `#${from} → #${to}`, `Rename #${from} to #${to}`);
 		if ("drop" in row.fix) for (const t of row.fix.drop) chip("-" + t, `− #${t}`, `Remove #${t}`);
@@ -198,6 +210,7 @@ export class NormaliseTagsModal extends Modal {
 						const clean = (v: unknown) => (typeof v === "string" ? v.replace(/^\[\[|\]\]$/g, "").replace(/^#/, "").trim().toLowerCase().replace(/[\s_-]+/g, " ") : "");
 						const key = CATEGORY_KEYS.find((k) => clean(front[k]) === kind.from);
 						if (key) front[key] = kind.to;
+						else if (!kind.from) plugin.setKindMark(front, row.entity.category, kind.to);
 					}
 					const field = "tags" in front || !("tag" in front) ? "tags" : "tag";
 					const swap = new Map(rename.map(([from, to]) => [from.toLowerCase(), to]));

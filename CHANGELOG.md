@@ -2,6 +2,18 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.0.0 — 2026-11-12
+
+What someone belongs to, in five separate questions.
+
+### Realm, house, culture, faith, organisation
+- **Five rows instead of one list of groups.** The edit form, the inspector, the hover card and the family tree now keep apart a person's **realm** (who they live under or serve, with dates), **house** (family and lineage), **culture** (the people they are of), **faith** and **organisations** (guilds, orders, armies), with anything else under *other groups*. Places get realm, culture and faith. Each row says in a line what it asks.
+- **A group's kind decides.** Set it on the group: `kind: house`, `#Group_Faith`. A realm keeps its tier word (kingdom, county). Family, dynasty and clan are houses. What the note says wins over a guess from its name.
+- **Your property names are kept.** An entry stays in the property it was written under (`allegiance:`, `family:`, `faith:`, `cultures:`) in its original order, and a new one goes to the property the note already uses for that question. Before, only one of a note's group properties could be edited in the form; the others were hidden. Links to groups with no note yet are placed by the property they are in.
+- Each row suggests only groups of that kind (and groups with no kind yet), and its chips have the pencil for dates, how it ended and your own text.
+- *Fix kinds and tags* now also proposes a kind for groups that have none, worked out from their name and tags, for you to review.
+- More property names are read as groups: `realm`, `dynasty`, `clan`, `ethnicity`, `faiths`, `organisations`, `guilds`.
+
 ## 3.4.1 — 2026-11-12
 
 ### Relationships
