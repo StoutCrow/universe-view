@@ -6,7 +6,6 @@ import { FUTURE_KINDS, MODERN_KINDS } from "../index/worldsetting";
 import { PLACE_GROUPS, PLACE_KINDS, TERRITORY_WORDS, groupOfKind, normaliseKind, type PlaceGroup } from "../index/placekinds";
 import { TextPrompt } from "../views/DashboardView";
 import { helpTip } from "../render/common";
-import { LANDFORMS } from "./tagstandard";
 
 const SIZE_KEYS = ["pin-size", "pin_size", "pinsize", "map-size", "size"];
 const LAYER_KEYS = ["layer", "map-layer", "map_layer", "zoom-layer", "zoom_layer"];
