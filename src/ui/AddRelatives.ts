@@ -1,5 +1,5 @@
 import { Menu, Modal, Notice, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { addSubmenu, el } from "../render/common";
 import { buildFieldAliases } from "../settings";
@@ -25,7 +25,7 @@ const ONE: Record<RelativeKind, string> = { parents: "Parent", children: "Child"
  * The "Add relative" entries of a right-click menu, the same on a person and on a relative with no note: add by name
  * (no notes are made), or start a new note for a child or parent.
  */
-export function relativeMenu(menu: Menu, plugin: ChroniclePlugin, target: RelTarget, section?: string) {
+export function relativeMenu(menu: Menu, plugin: UniverseViewPlugin, target: RelTarget, section?: string) {
 	addSubmenu(menu, "Add by name", "users-round", (m) => {
 		for (const k of KINDS) m.addItem((i) => i.setTitle(`${ONE[k.id]}…`).onClick(() => new AddRelativesModal(plugin, target, k.id).open()));
 	}, "Add relative", section);
@@ -46,14 +46,14 @@ export function relativeMenu(menu: Menu, plugin: ChroniclePlugin, target: RelTar
 export class AddRelativesModal extends Modal {
 	private kind: RelativeKind;
 
-	constructor(private plugin: ChroniclePlugin, private person: RelTarget, kind: RelativeKind = "children") {
+	constructor(private plugin: UniverseViewPlugin, private person: RelTarget, kind: RelativeKind = "children") {
 		super(plugin.app);
 		this.kind = kind;
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope");
 		this.titleEl.setText(`Add relatives of ${this.person.name}`);
 		const ghost = !hasNote(this.person);
 		const kinds = el("div", { cls: "uv-rel-kinds" }, this.contentEl);
@@ -69,7 +69,7 @@ export class AddRelativesModal extends Modal {
 			note.setText(`No notes are made. ${ghost ? k?.ghost : k?.own} Each name shows in the tree as a card you can write up later.`);
 		};
 		for (const k of KINDS) {
-			chips[k.id] = el("button", { cls: "chronicle-chip", text: k.label }, kinds);
+			chips[k.id] = el("button", { cls: "universeview-chip", text: k.label }, kinds);
 			chips[k.id].addEventListener("click", () => {
 				this.kind = k.id;
 				paint();

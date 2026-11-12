@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { formatDay } from "../dates/parser";
 import { REL_KINDS, presetKinds } from "../index/relkinds";
 import { SPEED_KM } from "../render/travel";
@@ -13,7 +13,7 @@ const MODES: [string, string][] = [["foot", "On foot"], ["horse", "By horse"], [
  * (made when the world doesn't have one), where they can also be edited as properties.
  */
 export class WorldSettingsModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private folder: string) {
+	constructor(private plugin: UniverseViewPlugin, private folder: string) {
 		super(plugin.app);
 	}
 
@@ -22,8 +22,8 @@ export class WorldSettingsModal extends Modal {
 		const idx = p.index;
 		const folder = this.folder;
 		const world = idx.worlds.get(folder);
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText(`World settings: ${folder || this.app.vault.getName()}`);
 		const box = this.contentEl;
 		el("div", { cls: "setting-item-description", text: world ? `Saved in ${world.path}.` : "Saving makes a world note for this folder; these settings then apply to every note in it." }, box);
@@ -72,9 +72,9 @@ export class WorldSettingsModal extends Modal {
 
 		el("h4", { text: "Travel speeds (km a day)" }, box);
 		el("div", { cls: "setting-item-description", text: "Used for journeys, travel times and the rings of how far you get in a day." }, box);
-		const speeds = el("div", { cls: "chronicle-world-speeds" }, box);
+		const speeds = el("div", { cls: "universeview-world-speeds" }, box);
 		for (const [k, label] of MODES) {
-			const cell = el("label", { cls: "chronicle-world-speed" }, speeds);
+			const cell = el("label", { cls: "universeview-world-speed" }, speeds);
 			el("span", { text: label }, cell);
 			const input = el("input", { attr: { type: "number", min: "1", step: "1" } }, cell);
 			input.value = String(v.travel[k] ?? "");
@@ -85,9 +85,9 @@ export class WorldSettingsModal extends Modal {
 
 		for (const [type, label] of [["person", "New people start with"], ["culture", "New groups start with"]] as const) {
 			el("h4", { text: label }, box);
-			const grid = el("div", { cls: "chronicle-world-kinds" }, box);
+			const grid = el("div", { cls: "universeview-world-kinds" }, box);
 			for (const k of REL_KINDS.filter((x) => x.on.includes(type))) {
-				const l = el("label", { cls: "chronicle-world-kind", attr: { title: k.desc } }, grid);
+				const l = el("label", { cls: "universeview-world-kind", attr: { title: k.desc } }, grid);
 				const cb = el("input", { attr: { type: "checkbox" } }, l);
 				cb.checked = v[type].has(k.key);
 				cb.addEventListener("change", () => (cb.checked ? v[type].add(k.key) : v[type].delete(k.key)));

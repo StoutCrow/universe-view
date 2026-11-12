@@ -1,16 +1,16 @@
 import { Modal, Platform } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el } from "../render/common";
 
 /** Every key and click UniverseView knows, in one place. Hotkeys that can be changed say so. */
 export class ShortcutsModal extends Modal {
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "uv-shortcuts");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "uv-shortcuts");
 		this.titleEl.setText("Shortcuts");
 		const mod = Platform.isMacOS ? "Cmd" : "Ctrl";
 		const alt = Platform.isMacOS ? "Option" : "Alt";

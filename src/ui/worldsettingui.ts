@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { TIER_NAME_PRESETS, tierPresetOf } from "../index/realms";
 import { WORLD_SETTINGS, guessSetting, settingWords, type WorldSetting } from "../index/worldsetting";
 import { BUILT_IN_PRESETS, applyLook, matchingPreset } from "./mappresets";
@@ -8,7 +8,7 @@ import { clickNotice } from "../render/common";
  * Switches the world's setting. Tier names and the map look follow it only while they are still
  * built-in ones: names or a look of the vault's own are kept.
  */
-export async function chooseWorldSetting(plugin: ChroniclePlugin, id: WorldSetting) {
+export async function chooseWorldSetting(plugin: UniverseViewPlugin, id: WorldSetting) {
 	const s = plugin.settings;
 	const w = settingWords(id);
 	s.worldSetting = id;
@@ -26,7 +26,7 @@ export async function chooseWorldSetting(plugin: ChroniclePlugin, id: WorldSetti
 }
 
 /** Once per vault: when its places look modern or futuristic and no setting was picked, offers the fitting one. */
-export function suggestWorldSetting(plugin: ChroniclePlugin) {
+export function suggestWorldSetting(plugin: UniverseViewPlugin) {
 	const s = plugin.settings;
 	if (s.worldSetting || s.worldSettingAsked) return;
 	const guess = guessSetting(plugin.index.all("place").map((p) => p.category));

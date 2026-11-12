@@ -1,12 +1,12 @@
 import { AbstractInputSuggest, type App } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { EntityType } from "../types";
 import { kindLabel } from "../index/reader";
 import { settingWords } from "../index/worldsetting";
 import { kindChoices, type KindChoice } from "../index/kinds";
 
 /** The kinds a type has in this vault and setting. */
-export function kindsFor(plugin: ChroniclePlugin, type: EntityType): KindChoice[] {
+export function kindsFor(plugin: UniverseViewPlugin, type: EntityType): KindChoice[] {
 	const hint = type === "place" ? "" : settingWords(plugin.settings.worldSetting).hints[type] ?? "";
 	return kindChoices(plugin.index.all().filter((e) => e.type === type).map((e) => e.category), hint);
 }

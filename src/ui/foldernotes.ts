@@ -1,6 +1,6 @@
 import { expandFolder, pluginEnabled } from "../internals";
 import { Keymap, Menu, Notice, TAbstractFile, TFile, TFolder, debounce, normalizePath } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { groupKind } from "../render/houses";
 import { fileColor } from "./icons";
@@ -14,7 +14,7 @@ import { fileColor } from "./icons";
 const NOTE_EXTS = ["md", "canvas", "base"];
 
 /** The folder's own note, if it has one. */
-export function folderNoteOf(plugin: ChroniclePlugin, folder: TFolder | string): TFile | undefined {
+export function folderNoteOf(plugin: UniverseViewPlugin, folder: TFolder | string): TFile | undefined {
 	const path = typeof folder === "string" ? folder : folder.path;
 	if (!path || path === "/") return undefined;
 	const name = path.split("/").pop();
@@ -31,13 +31,13 @@ export function isFolderNote(file: TAbstractFile | null | undefined): boolean {
 }
 
 /** Folder-note behaviour in the explorer: off when the Folder notes plugin is doing it already. */
-export function folderNotesActive(plugin: ChroniclePlugin): boolean {
+export function folderNotesActive(plugin: UniverseViewPlugin): boolean {
 	if (plugin.settings.folderNotes === false) return false;
 	return !pluginEnabled(plugin.app, "folder-notes");
 }
 
 /** Moves Note.md into a folder of its own (Note/Note.md) and returns it there. */
-export async function makeFolderNote(plugin: ChroniclePlugin, file: TFile): Promise<TFile> {
+export async function makeFolderNote(plugin: UniverseViewPlugin, file: TFile): Promise<TFile> {
 	if (isFolderNote(file)) return file;
 	const { vault, fileManager } = plugin.app;
 	const parent = file.parent?.path && file.parent.path !== "/" ? file.parent.path + "/" : "";
@@ -51,7 +51,7 @@ export async function makeFolderNote(plugin: ChroniclePlugin, file: TFile): Prom
 }
 
 /** Moves a folder note back out beside its folder, and removes the folder if that leaves it empty. */
-export async function unmakeFolderNote(plugin: ChroniclePlugin, file: TFile) {
+export async function unmakeFolderNote(plugin: UniverseViewPlugin, file: TFile) {
 	if (!isFolderNote(file)) return;
 	const folder = file.parent!;
 	const up = folder.parent?.path && folder.parent.path !== "/" ? folder.parent.path + "/" : "";
@@ -62,7 +62,7 @@ export async function unmakeFolderNote(plugin: ChroniclePlugin, file: TFile) {
 }
 
 /** Makes a note for a folder (from the folder-note template, else the type's template) and opens it. */
-export async function createFolderNote(plugin: ChroniclePlugin, folder: TFolder, open = true): Promise<TFile> {
+export async function createFolderNote(plugin: UniverseViewPlugin, folder: TFolder, open = true): Promise<TFile> {
 	const have = folderNoteOf(plugin, folder);
 	if (have) return have;
 	const path = normalizePath(`${folder.path}/${folder.name}.md`);
@@ -109,7 +109,7 @@ export interface PlacementLinks {
  * place lies in, the realm a title is under, or where an event happened. Beside that note when it has
  * no folder of its own (or inside a new one, when set to make them). Undefined: use the type's folder.
  */
-export function placementFor(plugin: ChroniclePlugin, type: EntityType, links: PlacementLinks): Placement | undefined {
+export function placementFor(plugin: UniverseViewPlugin, type: EntityType, links: PlacementLinks): Placement | undefined {
 	const mode = plugin.settings.placeNewNotes ?? "parent";
 	if (mode === "off") return undefined;
 	const find = (names: string[] = []) => names.map((n) => plugin.index.findByName(n.replace(/^\[\[|\]\]$/g, "").split("|")[0])).filter((e): e is Entity => !!e);
@@ -154,7 +154,7 @@ export function placementFor(plugin: ChroniclePlugin, type: EntityType, links: P
  * Inside the chosen folder, the subfolder that fits: Living or Dead for people (when the folder has
  * them), or the type's own folder (People, Places, Events) when there is one.
  */
-function subfolderFor(plugin: ChroniclePlugin, folder: string, type: EntityType, dead: boolean | undefined, under: Entity): string {
+function subfolderFor(plugin: UniverseViewPlugin, folder: string, type: EntityType, dead: boolean | undefined, under: Entity): string {
 	const dir = plugin.app.vault.getAbstractFileByPath(folder || "/");
 	if (!(dir instanceof TFolder)) return folder;
 	const subs = dir.children.filter((c): c is TFolder => c instanceof TFolder);
@@ -175,7 +175,7 @@ function subfolderFor(plugin: ChroniclePlugin, folder: string, type: EntityType,
 }
 
 /** Folder notes in the file explorer and the note's path: open on click, hide, highlight, keep names in step. */
-export function folderNotes(plugin: ChroniclePlugin) {
+export function folderNotes(plugin: UniverseViewPlugin) {
 	const { app } = plugin;
 	const explorers = () => app.workspace.getLeavesOfType("file-explorer");
 

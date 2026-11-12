@@ -1,11 +1,11 @@
 import { Modal, Notice, TFile, TFolder, normalizePath } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { TYPE_ICONS, el, icon } from "../render/common";
 import { isFolderNote, placementFor, type PlacementLinks } from "./foldernotes";
 
 /** What a note already links to, as placement reads it, with its place in the realm tree first. */
-export function entityLinks(plugin: ChroniclePlugin, e: Entity): PlacementLinks {
+export function entityLinks(plugin: UniverseViewPlugin, e: Entity): PlacementLinks {
 	const names = (refs: { name: string; resolved: boolean }[]) => refs.filter((r) => r.resolved).map((r) => r.name);
 	const tree = plugin.realms();
 	const under = tree.nodes.get(e.key)?.under;
@@ -32,7 +32,7 @@ export interface Move {
  * House Whitmore/, a fort beside its county instead of inside it. Notes already somewhere inside that
  * folder (in Dead/, in a subfolder of their own) are left where they are, as are folder notes.
  */
-export function tidyPlan(plugin: ChroniclePlugin, scope?: string): Move[] {
+export function tidyPlan(plugin: UniverseViewPlugin, scope?: string): Move[] {
 	const moves: Move[] = [];
 	for (const e of plugin.index.all()) {
 		if (scope && !e.path.startsWith(scope + "/")) continue;
@@ -51,7 +51,7 @@ export function tidyPlan(plugin: ChroniclePlugin, scope?: string): Move[] {
 	return moves.sort((a, b) => a.to.localeCompare(b.to) || a.file.basename.localeCompare(b.file.basename));
 }
 
-async function moveTo(plugin: ChroniclePlugin, file: TFile, folder: string): Promise<boolean> {
+async function moveTo(plugin: UniverseViewPlugin, file: TFile, folder: string): Promise<boolean> {
 	const target = normalizePath(`${folder}/${file.name}`);
 	if (plugin.app.vault.getAbstractFileByPath(target)) return false;
 	if (!(plugin.app.vault.getAbstractFileByPath(folder) instanceof TFolder)) await plugin.app.vault.createFolder(folder);
@@ -61,13 +61,13 @@ async function moveTo(plugin: ChroniclePlugin, file: TFile, folder: string): Pro
 
 /** The moves, each to tick or untick, before anything is moved. */
 export class TidyModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private world?: string) {
+	constructor(private plugin: UniverseViewPlugin, private world?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-tidy");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal", "uv-tidy");
 		this.titleEl.setText("Move notes into their folder notes");
 		const moves = tidyPlan(this.plugin, this.world);
 		const { contentEl } = this;
@@ -75,7 +75,7 @@ export class TidyModal extends Modal {
 			el("p", { text: "Every note already sits inside the folder note of what it belongs to." }, contentEl);
 			return;
 		}
-		el("p", { cls: "chronicle-dash-muted", text: `${moves.length} note${moves.length === 1 ? "" : "s"} could go inside the folder note of the house, realm or place they belong to. Links keep working: Obsidian updates them as notes move. Untick any to leave.` }, contentEl);
+		el("p", { cls: "universeview-dash-muted", text: `${moves.length} note${moves.length === 1 ? "" : "s"} could go inside the folder note of the house, realm or place they belong to. Links keep working: Obsidian updates them as notes move. Untick any to leave.` }, contentEl);
 		const picked = new Set(moves);
 		const list = el("div", { cls: "uv-tidy-list" }, contentEl);
 		let group = "";
@@ -85,7 +85,7 @@ export class TidyModal extends Modal {
 				const head = el("div", { cls: "uv-tidy-head" }, list);
 				icon(el("span", {}, head), "folder-tree");
 				el("strong", { text: m.under }, head);
-				el("span", { cls: "chronicle-dash-muted", text: m.to }, head);
+				el("span", { cls: "universeview-dash-muted", text: m.to }, head);
 			}
 			const row = el("label", { cls: "uv-tidy-row" }, list);
 			const box = el("input", { attr: { type: "checkbox" } }, row);
@@ -94,7 +94,7 @@ export class TidyModal extends Modal {
 			const e = this.plugin.index.get(m.file.path);
 			if (e) icon(el("span", { cls: "uv-tidy-icon" }, row), TYPE_ICONS[e.type]);
 			el("span", { text: m.file.basename }, row);
-			el("span", { cls: "chronicle-dash-muted", text: `from ${m.file.parent?.path || "the vault root"}` }, row);
+			el("span", { cls: "universeview-dash-muted", text: `from ${m.file.parent?.path || "the vault root"}` }, row);
 		}
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
 		el("button", { text: "Cancel" }, footer).addEventListener("click", () => this.close());
@@ -135,7 +135,7 @@ function ask(text: string, buttons: [string, () => void][], ms = 12000) {
  * Keeping the vault in order as notes change: someone given a death date offers to move from Living/
  * to Dead/, and renaming a note offers to update the tags made from its name (#House_Whitmore).
  */
-export function tidyWatchers(plugin: ChroniclePlugin) {
+export function tidyWatchers(plugin: UniverseViewPlugin) {
 	const { app } = plugin;
 	const asked = new Set<string>();
 	plugin.registerEvent(app.metadataCache.on("changed", (file) => {
@@ -176,7 +176,7 @@ export function tidyWatchers(plugin: ChroniclePlugin) {
 	}));
 }
 
-async function retag(plugin: ChroniclePlugin, files: TFile[], oldTag: string, newTag: string) {
+async function retag(plugin: UniverseViewPlugin, files: TFile[], oldTag: string, newTag: string) {
 	const esc = oldTag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const body = new RegExp(`#((?:[\\w-]+_)?)${esc}(?![\\w/-])`, "gi");
 	const bare = new RegExp(`^((?:[\\w-]+_)?)${esc}$`, "i");

@@ -1,6 +1,6 @@
 import { pluginEnabled } from "../internals";
 import { Modal, Notice, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { ENTITY_TYPES, Entity, EntityType } from "../types";
 import { KinFinding, NoteInfo, TypeGuess, findKinship, guessType, incomingLinks } from "../detect/classify";
 import { TAG_TYPES } from "../index/reader";
@@ -41,14 +41,14 @@ export class DetectModal extends Modal {
 	private bodies = new Map<string, string>();
 	private showSkipped = false;
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
 	async onOpen() {
-		this.modalEl.addClass("chronicle-detect-modal", "chronicle-scope");
+		this.modalEl.addClass("universeview-detect-modal", "universeview-scope");
 		this.titleEl.setText("Detect note types & relationships");
-		this.contentEl.createDiv({ cls: "chronicle-detect-loading", text: "Reading notes…" });
+		this.contentEl.createDiv({ cls: "universeview-detect-loading", text: "Reading notes…" });
 		await this.scan();
 		this.render();
 	}
@@ -175,18 +175,18 @@ export class DetectModal extends Modal {
 		const skipped = this.typeRows.filter((r) => !r.guess.type);
 		const styleText = this.style === "tag" ? "type tags (like #Character)" : this.style === "cr_type" ? "Charted Roots’ cr_type" : "a type property";
 		el("p", {
-			cls: "chronicle-detect-intro",
+			cls: "universeview-detect-intro",
 			text: `Nothing changes until you press Apply. Types are written as ${styleText}, matching how this vault already marks notes.`,
 		}, contentEl);
 
 		// ---- Types ----
-		const typesHead = el("div", { cls: "chronicle-detect-head" }, contentEl);
+		const typesHead = el("div", { cls: "universeview-detect-head" }, contentEl);
 		el("h3", { text: `Notes without a type (${suggested.length} look like entities)` }, typesHead);
-		const list = el("div", { cls: "chronicle-detect-list" }, contentEl);
-		if (!this.typeRows.length) el("div", { cls: "chronicle-detect-empty", text: "Every note that looks like an entity already has a type." }, list);
+		const list = el("div", { cls: "universeview-detect-list" }, contentEl);
+		if (!this.typeRows.length) el("div", { cls: "universeview-detect-empty", text: "Every note that looks like an entity already has a type." }, list);
 		for (const row of suggested) this.typeRow(list, row);
 		if (skipped.length) {
-			const toggle = el("button", { cls: "chronicle-chip", text: `${this.showSkipped ? "Hide" : "Show"} ${skipped.length} notes that look like concepts or articles` }, list);
+			const toggle = el("button", { cls: "universeview-chip", text: `${this.showSkipped ? "Hide" : "Show"} ${skipped.length} notes that look like concepts or articles` }, list);
 			toggle.addEventListener("click", () => {
 				this.showSkipped = !this.showSkipped;
 				this.render();
@@ -195,14 +195,14 @@ export class DetectModal extends Modal {
 		}
 
 		// ---- Relationships ----
-		el("h3", { cls: "chronicle-detect-h", text: `Relationships written in the text (${this.kinRows.length})` }, contentEl);
-		const kin = el("div", { cls: "chronicle-detect-list" }, contentEl);
-		if (!this.kinRows.length) el("div", { cls: "chronicle-detect-empty", text: "No new family relationships found in people’s notes." }, kin);
+		el("h3", { cls: "universeview-detect-h", text: `Relationships written in the text (${this.kinRows.length})` }, contentEl);
+		const kin = el("div", { cls: "universeview-detect-list" }, contentEl);
+		if (!this.kinRows.length) el("div", { cls: "universeview-detect-empty", text: "No new family relationships found in people’s notes." }, kin);
 		for (const row of this.kinRows) this.kinRow(kin, row);
 
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
 		const count = this.typeRows.filter((r) => r.checked && r.chosen).length + this.kinRows.filter((r) => r.checked).length;
-		el("span", { cls: "chronicle-detect-count", text: `${count} change${count === 1 ? "" : "s"} selected` }, footer);
+		el("span", { cls: "universeview-detect-count", text: `${count} change${count === 1 ? "" : "s"} selected` }, footer);
 		const cancel = el("button", { text: "Cancel" }, footer);
 		cancel.addEventListener("click", () => this.close());
 		const apply = el("button", { cls: "mod-cta", text: "Apply" }, footer);
@@ -211,19 +211,19 @@ export class DetectModal extends Modal {
 	}
 
 	private typeRow(parent: HTMLElement, row: TypeRow) {
-		const r = el("div", { cls: "chronicle-detect-row" }, parent);
+		const r = el("div", { cls: "universeview-detect-row" }, parent);
 		const cb = el("input", { attr: { type: "checkbox" } }, r);
 		cb.checked = row.checked;
 		cb.addEventListener("change", () => {
 			row.checked = cb.checked;
 			this.render();
 		});
-		const main = el("div", { cls: "chronicle-detect-main" }, r);
+		const main = el("div", { cls: "universeview-detect-main" }, r);
 		const name = el("a", { cls: "internal-link", text: row.file.basename }, main);
 		name.addEventListener("click", (evt) => openEntity(this.plugin, row.file.path, evt));
-		el("div", { cls: "chronicle-detect-sub", text: row.file.parent?.path && row.file.parent.path !== "/" ? row.file.parent.path : "Vault root" }, main);
-		if (row.guess.reasons.length) el("div", { cls: "chronicle-detect-why", text: row.guess.reasons.join(" · ") }, main);
-		const side = el("div", { cls: "chronicle-detect-side" }, r);
+		el("div", { cls: "universeview-detect-sub", text: row.file.parent?.path && row.file.parent.path !== "/" ? row.file.parent.path : "Vault root" }, main);
+		if (row.guess.reasons.length) el("div", { cls: "universeview-detect-why", text: row.guess.reasons.join(" · ") }, main);
+		const side = el("div", { cls: "universeview-detect-side" }, r);
 		const select = el("select", { cls: "dropdown" }, side);
 		for (const [v, label] of [["", "Not an entity"], ...ENTITY_TYPES.map((t) => [t, TYPE_LABELS[t]])] as [string, string][]) {
 			const o = el("option", { text: label }, select);
@@ -235,26 +235,26 @@ export class DetectModal extends Modal {
 			row.checked = !!row.chosen;
 			this.render();
 		});
-		el("div", { cls: "chronicle-detect-write", text: this.describeWrite(row) }, side);
+		el("div", { cls: "universeview-detect-write", text: this.describeWrite(row) }, side);
 	}
 
 	private kinRow(parent: HTMLElement, row: KinRow) {
-		const r = el("div", { cls: "chronicle-detect-row" }, parent);
+		const r = el("div", { cls: "universeview-detect-row" }, parent);
 		const cb = el("input", { attr: { type: "checkbox" } }, r);
 		cb.checked = row.checked;
 		cb.addEventListener("change", () => {
 			row.checked = cb.checked;
 			this.render();
 		});
-		const main = el("div", { cls: "chronicle-detect-main" }, r);
-		const line = el("div", { cls: "chronicle-detect-kin" }, main);
+		const main = el("div", { cls: "universeview-detect-main" }, r);
+		const line = el("div", { cls: "universeview-detect-kin" }, main);
 		const who = el("a", { cls: "internal-link", text: row.person.name }, line);
 		who.addEventListener("click", (evt) => openEntity(this.plugin, row.person.key, evt));
-		const arrow = el("span", { cls: "chronicle-detect-arrow" }, line);
+		const arrow = el("span", { cls: "universeview-detect-arrow" }, line);
 		icon(arrow, "arrow-right");
 		el("code", { text: `${row.field}: [[${row.finding.target}]]` }, line);
-		el("div", { cls: "chronicle-detect-quote", text: `“${row.finding.sentence}”` }, main);
-		const side = el("div", { cls: "chronicle-detect-side" }, r);
+		el("div", { cls: "universeview-detect-quote", text: `“${row.finding.sentence}”` }, main);
+		const side = el("div", { cls: "universeview-detect-side" }, r);
 		const select = el("select", { cls: "dropdown" }, side);
 		for (const f of ["father", "mother", "parents", "spouse", "partners", "children", "betrothed"]) {
 			const o = el("option", { text: f }, select);

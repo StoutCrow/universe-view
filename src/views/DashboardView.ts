@@ -1,11 +1,11 @@
 import { MarkdownRenderer, Menu, Modal, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Board, BoardModule, ModuleKind } from "../settings";
 import { buildBlock, Renderer } from "../codeblocks";
 import { el, icon, iconButton, toggleChip } from "../render/common";
 import { ListKind, kinCount, listRows, renderList, renderStats } from "../render/panels";
 import { EntityInputSuggest } from "../ui/suggest";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 import { TextPrompt } from "../ui/TextPrompt";
 import { COLS, settle } from "../render/layout";
 
@@ -57,7 +57,7 @@ function mod(kind: ModuleKind, x: number, y: number, w: number, h: number, sourc
 }
 
 /** Ready-made boards for common kinds of project. */
-export const PRESETS: { id: string; name: string; icon: string; desc: string; make: (p: ChroniclePlugin, scope: string) => BoardModule[] }[] = [
+export const PRESETS: { id: string; name: string; icon: string; desc: string; make: (p: UniverseViewPlugin, scope: string) => BoardModule[] }[] = [
 	{
 		id: "world",
 		name: "World overview",
@@ -99,7 +99,7 @@ export const PRESETS: { id: string; name: string; icon: string; desc: string; ma
 ];
 
 /** A dashboard of movable, resizable modules: several timelines, maps, trees and lists side by side. */
-export class DashboardView extends ChronicleView {
+export class DashboardView extends UniverseViewBase {
 	private scroller!: HTMLElement;
 	private boardEl!: HTMLElement;
 	private hosts = new Map<string, ModuleHost>();
@@ -145,8 +145,8 @@ export class DashboardView extends ChronicleView {
 		const s = this.plugin.settings;
 		if (!s.boards.length) s.boards.push(this.newBoard("My board", this.defaultScope() ?? "", "world"));
 		if (!this.board) this.boardId = s.boards.find((b) => b.id === s.activeBoard)?.id ?? s.boards[0].id;
-		this.scroller = el("div", { cls: "chronicle-board-scroll" }, this.body);
-		this.boardEl = el("div", { cls: "chronicle-board" }, this.scroller);
+		this.scroller = el("div", { cls: "universeview-board-scroll" }, this.body);
+		this.boardEl = el("div", { cls: "universeview-board" }, this.scroller);
 		this.bindLinking();
 		this.resizeObs = new ResizeObserver(() => this.layout(false));
 		this.resizeObs.observe(this.scroller);
@@ -175,7 +175,7 @@ export class DashboardView extends ChronicleView {
 			const s = this.plugin.settings;
 			const board = this.board!;
 			const left = this.group();
-			const select = el("select", { cls: "dropdown chronicle-select", attr: { "aria-label": "Board" } }, left);
+			const select = el("select", { cls: "dropdown universeview-select", attr: { "aria-label": "Board" } }, left);
 			for (const b of s.boards) {
 				const o = el("option", { text: b.name }, select);
 				o.value = b.id;
@@ -205,8 +205,8 @@ export class DashboardView extends ChronicleView {
 				if (v) new Notice("Linked: click a person, place, group or event in any module to focus the whole board on it. Ctrl-click still opens it.");
 			}).setAttribute("title", "Picking something in one module focuses every module on it");
 			const mid = this.group();
-			const add = el("button", { cls: "chronicle-chip mod-cta-chip" }, mid);
-			const ic = el("span", { cls: "chronicle-chip-icon" }, add);
+			const add = el("button", { cls: "universeview-chip mod-cta-chip" }, mid);
+			const ic = el("span", { cls: "universeview-chip-icon" }, add);
 			icon(ic, "plus");
 			el("span", { text: "Add module" }, add);
 			add.addEventListener("click", (evt) => this.addMenu(evt));
@@ -329,7 +329,7 @@ export class DashboardView extends ChronicleView {
 		this.boardEl.empty();
 		this.boardEl.toggleClass("is-locked", this.locked);
 		this.boardEl.toggleClass("is-linked", !!board.linked);
-		this.placeholder = el("div", { cls: "chronicle-board-placeholder" }, this.boardEl);
+		this.placeholder = el("div", { cls: "universeview-board-placeholder" }, this.boardEl);
 		board.modules.forEach((m, i) => {
 			const host = new ModuleHost(this, this.plugin, m, board);
 			host.el.style.setProperty("--i", String(i));
@@ -337,9 +337,9 @@ export class DashboardView extends ChronicleView {
 		});
 		this.layout(false);
 		if (!board.modules.length) {
-			const empty = el("div", { cls: "chronicle-board-empty" }, this.boardEl);
-			el("div", { cls: "chronicle-empty-title", text: "This board is empty" }, empty);
-			el("div", { cls: "chronicle-empty-body", text: "Add a module, or start from a template." }, empty);
+			const empty = el("div", { cls: "universeview-board-empty" }, this.boardEl);
+			el("div", { cls: "universeview-empty-title", text: "This board is empty" }, empty);
+			el("div", { cls: "universeview-empty-body", text: "Add a module, or start from a template." }, empty);
 			const b = el("button", { cls: "mod-cta", text: "Add module" }, empty);
 			b.addEventListener("click", (evt) => this.addMenu(evt));
 		}
@@ -478,7 +478,7 @@ export class DashboardView extends ChronicleView {
 		this.registerDomEvent(this.boardEl, "click", (evt: MouseEvent) => {
 			if (!this.board?.linked || evt.ctrlKey || evt.metaKey) return;
 			const t = evt.target as HTMLElement;
-			if (!t.closest(".chronicle-module-body")) return;
+			if (!t.closest(".universeview-module-body")) return;
 			const hit = t.closest<HTMLElement>("[data-key]");
 			const key = hit?.dataset.key;
 			if (!key || !this.plugin.index.get(key)) return;
@@ -497,21 +497,21 @@ class ModuleHost {
 	private renderer?: Renderer;
 	private refreshSoon = debounce(() => this.refreshNow(), 300, true);
 
-	constructor(private view: DashboardView, private plugin: ChroniclePlugin, private m: BoardModule, private board: Board) {
+	constructor(private view: DashboardView, private plugin: UniverseViewPlugin, private m: BoardModule, private board: Board) {
 		const info = MODULE_KINDS[m.kind];
-		this.el = el("section", { cls: `chronicle-module kind-${m.kind}` }, view.boardElement);
-		const head = el("header", { cls: "chronicle-module-head" }, this.el);
-		const grip = el("span", { cls: "chronicle-module-grip" }, head);
+		this.el = el("section", { cls: `universeview-module kind-${m.kind}` }, view.boardElement);
+		const head = el("header", { cls: "universeview-module-head" }, this.el);
+		const grip = el("span", { cls: "universeview-module-grip" }, head);
 		icon(grip, "grip-vertical");
-		const ic = el("span", { cls: "chronicle-module-icon" }, head);
+		const ic = el("span", { cls: "universeview-module-icon" }, head);
 		icon(ic, info.icon);
-		this.titleEl = el("span", { cls: "chronicle-module-title" }, head);
-		const tools = el("div", { cls: "chronicle-module-tools" }, head);
+		this.titleEl = el("span", { cls: "universeview-module-title" }, head);
+		const tools = el("div", { cls: "universeview-module-tools" }, head);
 		iconButton(tools, "sliders-horizontal", "Module options", () => this.openSettings());
 		if (info.view) iconButton(tools, "maximize-2", "Open as a full view", () => this.expand());
 		iconButton(tools, "x", "Remove module", () => view.removeModule(m.id));
-		this.bodyEl = el("div", { cls: "chronicle-module-body chronicle-block-host" }, this.el);
-		const handle = el("div", { cls: "chronicle-module-resize", title: "Drag to resize" }, this.el);
+		this.bodyEl = el("div", { cls: "universeview-module-body universeview-block-host" }, this.el);
+		const handle = el("div", { cls: "universeview-module-resize", title: "Drag to resize" }, this.el);
 		this.bindDrag(head);
 		this.bindResize(handle);
 		head.addEventListener("contextmenu", (evt) => {
@@ -525,7 +525,7 @@ class ModuleHost {
 			menu.showAtMouseEvent(evt);
 		});
 		head.addEventListener("dblclick", (evt) => {
-			if ((evt.target as HTMLElement).closest(".chronicle-module-tools")) return;
+			if ((evt.target as HTMLElement).closest(".universeview-module-tools")) return;
 			this.openSettings();
 		});
 		this.mount();
@@ -585,7 +585,7 @@ class ModuleHost {
 				this.renderer = buildBlock(info.block, this.sourceWithScope(), this.bodyEl, "");
 			} else this.renderStatic();
 		} catch (err) {
-			const box = el("div", { cls: "chronicle-module-error" }, this.bodyEl);
+			const box = el("div", { cls: "universeview-module-error" }, this.bodyEl);
 			el("div", { text: (err as Error).message }, box);
 			const b = el("button", { text: "Edit options" }, box);
 			b.addEventListener("click", () => this.openSettings());
@@ -595,7 +595,7 @@ class ModuleHost {
 	private renderStatic() {
 		const p = this.plugin;
 		const scope = this.board.scope || undefined;
-		const box = el("div", { cls: "chronicle-module-scroll" }, this.bodyEl);
+		const box = el("div", { cls: "universeview-module-scroll" }, this.bodyEl);
 		const limit = Number(this.options().limit) || 10;
 		switch (this.m.kind) {
 			case "stats":
@@ -606,10 +606,10 @@ class ModuleHost {
 				const name = (this.options().note ?? this.board.focus)?.replace(/^\[\[|\]\]$/g, "");
 				const file = name ? p.app.metadataCache.getFirstLinkpathDest(name, "") : null;
 				if (!(file instanceof TFile)) {
-					el("div", { cls: "chronicle-ov-none", text: name ? `No note called “${name}”.` : "Choose a note in the module options." }, box);
+					el("div", { cls: "universeview-ov-none", text: name ? `No note called “${name}”.` : "Choose a note in the module options." }, box);
 					break;
 				}
-				box.addClass("markdown-rendered", "chronicle-module-note");
+				box.addClass("markdown-rendered", "universeview-module-note");
 				void p.app.vault.cachedRead(file).then((text) => {
 					const md = text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "");
 					void MarkdownRenderer.render(p.app, md, box, file.path, this.view);
@@ -674,7 +674,7 @@ class ModuleHost {
 	private bindDrag(head: HTMLElement) {
 		head.addEventListener("pointerdown", (evt) => {
 			if (evt.button !== 0 || this.view.isLocked || this.view.isStacked) return;
-			if ((evt.target as HTMLElement).closest(".chronicle-module-tools, button, input, select")) return;
+			if ((evt.target as HTMLElement).closest(".universeview-module-tools, button, input, select")) return;
 			evt.preventDefault();
 			const start = { px: evt.clientX, py: evt.clientY, left: this.el.offsetLeft, top: this.el.offsetTop };
 			let target = { ...this.m };
@@ -745,13 +745,13 @@ class ModuleHost {
 
 /** Title, main subject and options of a module. */
 class ModuleSettingsModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private m: BoardModule, private onSave: () => void) {
+	constructor(private plugin: UniverseViewPlugin, private m: BoardModule, private onSave: () => void) {
 		super(plugin.app);
 	}
 
 	onOpen() {
 		const info = MODULE_KINDS[this.m.kind];
-		this.modalEl.addClass("chronicle-module-modal", "chronicle-scope");
+		this.modalEl.addClass("universeview-module-modal", "universeview-scope");
 		this.titleEl.setText(`${info.name} options`);
 		let title = this.m.title ?? "";
 		let source = this.m.source;
@@ -774,11 +774,11 @@ class ModuleSettingsModal extends Modal {
 		}
 		if (info.block || info.help !== "(no options)") {
 			const s = new Setting(this.contentEl).setName("Options").setDesc("One “key: value” per line, as in an embedded code block.");
-			s.settingEl.addClass("chronicle-module-options");
-			area = el("textarea", { cls: "chronicle-module-source", attr: { rows: "6", spellcheck: "false" } }, this.contentEl);
+			s.settingEl.addClass("universeview-module-options");
+			area = el("textarea", { cls: "universeview-module-source", attr: { rows: "6", spellcheck: "false" } }, this.contentEl);
 			area.value = source;
 			area.addEventListener("input", () => (source = area!.value));
-			const help = el("details", { cls: "chronicle-module-help" }, this.contentEl);
+			const help = el("details", { cls: "universeview-module-help" }, this.contentEl);
 			el("summary", { text: "Available options" }, help);
 			el("pre", { text: info.help }, help);
 		}

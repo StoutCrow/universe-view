@@ -1,12 +1,12 @@
 /* Calendar additions */
 
 /* ---- Calendar: week, go to, heat, anniversaries ---- */
-.chronicle-cal-week .chronicle-cal-day { min-height: 260px; }
-.chronicle-cal-week .chronicle-cal-weekday { font-size: var(--font-ui-smaller); }
-.chronicle-cal-week-of { font-size: var(--font-ui-smaller); color: var(--text-muted); margin-right: 6px; }
-.chronicle-cal-goto { margin-left: auto; width: 150px; height: 26px; font-size: var(--font-ui-smaller); }
-.chronicle-cal-goto.is-error { border-color: var(--color-red); }
-.chronicle-cal-mini-day[style*="--heat"] { background: color-mix(in srgb, var(--interactive-accent) calc(var(--heat) * 55%), transparent); border-radius: var(--uv-r-sm); }
-.chronicle-cal-mini-day.is-selected { outline: 1.5px solid var(--interactive-accent); border-radius: var(--uv-r-sm); }
-.chronicle-cal-chip.kind-anniversary { opacity: 0.75; font-style: italic; }
-.chronicle-cal:focus { outline: none; }
+.universeview-cal-week .universeview-cal-day { min-height: 260px; }
+.universeview-cal-week .universeview-cal-weekday { font-size: var(--font-ui-smaller); }
+.universeview-cal-week-of { font-size: var(--font-ui-smaller); color: var(--text-muted); margin-right: 6px; }
+.universeview-cal-goto { margin-left: auto; width: 150px; height: 26px; font-size: var(--font-ui-smaller); }
+.universeview-cal-goto.is-error { border-color: var(--color-red); }
+.universeview-cal-mini-day[style*="--heat"] { background: color-mix(in srgb, var(--interactive-accent) calc(var(--heat) * 55%), transparent); border-radius: var(--uv-r-sm); }
+.universeview-cal-mini-day.is-selected { outline: 1.5px solid var(--interactive-accent); border-radius: var(--uv-r-sm); }
+.universeview-cal-chip.kind-anniversary { opacity: 0.75; font-style: italic; }
+.universeview-cal:focus { outline: none; }

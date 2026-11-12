@@ -1,6 +1,6 @@
 /* ==== Dashboard (files, relationships, settings) ================================================ */
 
-.chronicle-dash {
+.universeview-dash {
 	position: absolute;
 	inset: 0;
 	display: flex;
@@ -10,13 +10,13 @@
 	box-sizing: border-box;
 	overflow: hidden;
 }
-.chronicle-dash-stats {
+.universeview-dash-stats {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 	flex-shrink: 0;
 }
-button.chronicle-dash-stat {
+button.universeview-dash-stat {
 	display: flex;
 	align-items: center;
 	gap: 9px;
@@ -29,66 +29,66 @@ button.chronicle-dash-stat {
 	color: var(--text-normal);
 	cursor: pointer;
 }
-button.chronicle-dash-stat:hover {
+button.universeview-dash-stat:hover {
 	background: var(--background-modifier-hover);
 }
-button.chronicle-dash-stat.is-active {
+button.universeview-dash-stat.is-active {
 	background: var(--background-modifier-hover);
 	box-shadow: none;
 }
-.chronicle-dash-stat-icon {
+.universeview-dash-stat-icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	color: var(--stat-color);
 }
-.chronicle-dash-stat-icon svg {
+.universeview-dash-stat-icon svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-dash-stat-text {
+.universeview-dash-stat-text {
 	display: flex;
 	align-items: baseline;
 	gap: 5px;
 }
-.chronicle-dash-stat-value {
+.universeview-dash-stat-value {
 	font-size: var(--font-ui-small);
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
-	font-family: var(--chronicle-font-display);
+	font-family: var(--universeview-font-display);
 }
-.chronicle-dash-stat-label {
+.universeview-dash-stat-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
-.chronicle-dash-main {
+.universeview-dash-main {
 	flex: 1;
 	min-height: 0;
 	display: grid;
 	grid-template-columns: var(--uv-tree-w, 340px) 12px minmax(0, 1fr);
 }
-.chronicle-dash-main.is-stacked {
+.universeview-dash-main.is-stacked {
 	grid-template-columns: minmax(0, 1fr);
 	grid-template-rows: var(--uv-tree-h, 45%) 12px minmax(0, 1fr);
 }
-.chronicle-dash-main.is-tree-only {
+.universeview-dash-main.is-tree-only {
 	grid-template-columns: minmax(0, 1fr);
 	grid-template-rows: minmax(0, 1fr);
 }
-.chronicle-dash-main.is-tree-only > .chronicle-dash-grip,
-.chronicle-dash-main.is-tree-only > .chronicle-dash-detail {
+.universeview-dash-main.is-tree-only > .universeview-dash-grip,
+.universeview-dash-main.is-tree-only > .universeview-dash-detail {
 	display: none;
 }
-.chronicle-dash-grip {
+.universeview-dash-grip {
 	position: relative;
 	cursor: col-resize;
 	touch-action: none;
 }
-.chronicle-dash-main.is-stacked > .chronicle-dash-grip {
+.universeview-dash-main.is-stacked > .universeview-dash-grip {
 	cursor: row-resize;
 }
 /* Always in view, so it's clear the two sides can be resized. */
-.chronicle-dash-grip::after {
+.universeview-dash-grip::after {
 	content: "";
 	position: absolute;
 	top: 50%;
@@ -98,37 +98,37 @@ button.chronicle-dash-stat.is-active {
 	border-radius: var(--uv-r-sm);
 	background: var(--background-modifier-border-hover);
 	transform: translate(-50%, -50%);
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-dash-main.is-stacked > .chronicle-dash-grip::after {
+.universeview-dash-main.is-stacked > .universeview-dash-grip::after {
 	width: 36px;
 	height: 4px;
 }
-.chronicle-dash-grip:hover::after {
+.universeview-dash-grip:hover::after {
 	background: var(--text-muted);
 }
-.chronicle-dash-tree {
+.universeview-dash-tree {
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: calc(var(--chronicle-radius) + 2px);
+	border-radius: calc(var(--universeview-radius) + 2px);
 	background: var(--background-secondary);
 	overflow: hidden;
 }
-.chronicle-dash-tree-head {
+.universeview-dash-tree-head {
 	padding: 8px;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
-.chronicle-dash-tree-head .chronicle-search {
+.universeview-dash-tree-head .universeview-search {
 	width: 100%;
 }
-.chronicle-dash-list {
+.universeview-dash-list {
 	flex: 1;
 	overflow: auto;
 	padding: 4px 6px 12px;
 }
-.chronicle-dash-row {
+.universeview-dash-row {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -140,41 +140,41 @@ button.chronicle-dash-stat.is-active {
 	user-select: none;
 }
 /* A narrow tree keeps the names: counts and kinds step aside. */
-.chronicle-dash-list {
+.universeview-dash-list {
 	container-type: inline-size;
 }
 @container (max-width: 260px) {
-	.chronicle-dash-counts,
-	.chronicle-dash-row-meta {
+	.universeview-dash-counts,
+	.universeview-dash-row-meta {
 		display: none;
 	}
 }
-.chronicle-dash-list.is-compact .chronicle-dash-row {
+.universeview-dash-list.is-compact .universeview-dash-row {
 	min-height: 22px;
 	padding-top: 0;
 	padding-bottom: 0;
 }
-.chronicle-dash-row .uv-file-icons {
+.universeview-dash-row .uv-file-icons {
 	margin: 0;
 	flex: none;
 }
-.chronicle-dash-row.is-file {
+.universeview-dash-row.is-file {
 	padding-left: calc(26px + var(--depth, 0) * 14px);
 }
-.chronicle-dash-row:hover {
+.universeview-dash-row:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-dash-row.is-selected {
+.universeview-dash-row.is-selected {
 	background: var(--background-modifier-hover);
 }
-.chronicle-dash-row.is-plain {
+.universeview-dash-row.is-plain {
 	color: var(--text-muted);
 }
-.chronicle-dash-row.is-drop-target {
+.universeview-dash-row.is-drop-target {
 	background: var(--background-modifier-hover);
 	box-shadow: inset 0 0 0 1px var(--interactive-accent);
 }
-.chronicle-dash-list.is-drop-root {
+.universeview-dash-list.is-drop-root {
 	box-shadow: inset 0 0 0 1px var(--interactive-accent);
 }
 .uv-tree-ghost {
@@ -194,27 +194,27 @@ button.chronicle-dash-stat.is-active {
 	text-overflow: ellipsis;
 	pointer-events: none;
 }
-.chronicle-dash-row.is-folder {
+.universeview-dash-row.is-folder {
 	font-weight: var(--font-semibold);
 }
-.chronicle-dash-chev {
+.universeview-dash-chev {
 	display: flex;
 	color: var(--text-faint);
-	transition: transform var(--chronicle-fast) var(--chronicle-ease);
+	transition: transform var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-dash-chev.is-open {
+.universeview-dash-chev.is-open {
 	transform: rotate(90deg);
 }
-.chronicle-dash-chev svg,
-.chronicle-dash-row-icon svg {
+.universeview-dash-chev svg,
+.universeview-dash-row-icon svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-dash-row-icon {
+.universeview-dash-row-icon {
 	display: flex;
 	color: var(--row-color, var(--text-muted));
 }
-.chronicle-dash-row-name {
+.universeview-dash-row-name {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
@@ -222,7 +222,7 @@ button.chronicle-dash-stat.is-active {
 	white-space: nowrap;
 }
 /* Gives way before the name does. */
-.chronicle-dash-row-meta {
+.universeview-dash-row-meta {
 	flex: 0 10000 auto;
 	min-width: 0;
 	overflow: hidden;
@@ -232,13 +232,13 @@ button.chronicle-dash-stat.is-active {
 	white-space: nowrap;
 	font-weight: normal;
 }
-.chronicle-dash-counts {
+.universeview-dash-counts {
 	display: flex;
 	flex: none;
 	gap: 3px;
 	font-weight: normal;
 }
-.chronicle-dash-count {
+.universeview-dash-count {
 	display: inline-block;
 	min-width: 18px;
 	padding: 0 5px;
@@ -250,14 +250,14 @@ button.chronicle-dash-stat.is-active {
 	font-variant-numeric: tabular-nums;
 	color: var(--dot-color);
 }
-.chronicle-dash-legend-row .chronicle-dash-count {
+.universeview-dash-legend-row .universeview-dash-count {
 	min-width: 10px;
 	width: 10px;
 	height: 10px;
 	padding: 0;
 	background: var(--dot-color);
 }
-.chronicle-dash-issue {
+.universeview-dash-issue {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -270,27 +270,27 @@ button.chronicle-dash-stat.is-active {
 	background: var(--text-error);
 	flex-shrink: 0;
 }
-.chronicle-dash-empty {
+.universeview-dash-empty {
 	padding: 20px 10px;
 	color: var(--text-muted);
 	text-align: center;
 }
-.chronicle-dash-detail {
+.universeview-dash-detail {
 	min-height: 0;
 	overflow: auto;
 	padding: 2px 4px 16px 2px;
 }
-.chronicle-dash-head {
+.universeview-dash-head {
 	padding: 4px 2px 4px;
-	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation: universeview-fade var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-dash-title-row {
+.universeview-dash-title-row {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	flex-wrap: wrap;
 }
-.chronicle-dash-title-icon {
+.universeview-dash-title-icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -300,12 +300,12 @@ button.chronicle-dash-stat.is-active {
 	color: var(--head-color, var(--interactive-accent));
 	background: color-mix(in srgb, var(--head-color, var(--interactive-accent)) 16%, transparent);
 }
-.chronicle-dash-title {
+.universeview-dash-title {
 	margin: 0;
 	font-size: 1.45em;
-	font-family: var(--chronicle-font-display);
+	font-family: var(--universeview-font-display);
 }
-.chronicle-dash-badge {
+.universeview-dash-badge {
 	padding: 2px 10px;
 	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
@@ -313,20 +313,20 @@ button.chronicle-dash-stat.is-active {
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
 }
-.chronicle-dash-path {
+.universeview-dash-path {
 	margin-top: 4px;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 	font-family: var(--font-monospace);
 	word-break: break-all;
 }
-.chronicle-dash-actions {
+.universeview-dash-actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
 	margin-top: 10px;
 }
-.chronicle-dash-actions button {
+.universeview-dash-actions button {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -336,43 +336,43 @@ button.chronicle-dash-stat.is-active {
 	font-size: var(--font-ui-small);
 }
 /* Each action is named; an icon on every one of them adds nothing. */
-.chronicle-dash-btn-icon {
+.universeview-dash-btn-icon {
 	display: none;
 }
-.chronicle-dash-btn-icon svg {
+.universeview-dash-btn-icon svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-dash-grid {
+.universeview-dash-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 	gap: 12px;
 	margin-top: 12px;
 	align-items: start;
 }
-.chronicle-dash-card {
+.universeview-dash-card {
 	min-width: 0;
 	/* Sections, not boxes: a hairline on top and the content below it. */
 	padding: 10px 2px 4px;
 	border-top: 1px solid var(--background-modifier-border);
-	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation: universeview-fade var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-dash-card.is-wide {
+.universeview-dash-card.is-wide {
 	grid-column: 1 / -1;
 }
 /* A note: basics on the left, relationships beside them; everything else full width. */
-.chronicle-dash-grid.is-note {
+.universeview-dash-grid.is-note {
 	grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
 }
 @container (max-width: 1000px) {
-	.chronicle-dash-grid.is-note {
+	.universeview-dash-grid.is-note {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
-.chronicle-dash-card.is-relations .chronicle-dash-ego {
+.universeview-dash-card.is-relations .universeview-dash-ego {
 	max-height: 260px;
 }
-.chronicle-dash-card-title {
+.universeview-dash-card-title {
 	display: flex;
 	align-items: center;
 	gap: 7px;
@@ -382,46 +382,46 @@ button.chronicle-dash-stat.is-active {
 	color: var(--text-normal);
 }
 /* The heading says what the section is; an icon beside it adds nothing. */
-.chronicle-dash-card-icon {
+.universeview-dash-card-icon {
 	display: none;
 }
-.chronicle-dash-card-icon svg {
+.universeview-dash-card-icon svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-dash-card .setting-item {
+.universeview-dash-card .setting-item {
 	padding: 8px 0;
 	border-top: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
 }
-.chronicle-dash-card .setting-item:first-child {
+.universeview-dash-card .setting-item:first-child {
 	border-top: none;
 }
 /* In a narrow card the name keeps its width and the control drops below it, instead of the name
    being squeezed down to a letter per line. */
-.chronicle-dash-card .setting-item,
-.chronicle-inspector .setting-item {
+.universeview-dash-card .setting-item,
+.universeview-inspector .setting-item {
 	flex-wrap: wrap;
 	gap: 6px 12px;
 }
 /* No flex-basis: a theme (or Obsidian) may stack these top to bottom, and a basis would become a height. */
-.chronicle-dash-card .setting-item-info:not(#uv-strong),
-.chronicle-inspector .setting-item-info:not(#uv-strong) {
+.universeview-dash-card .setting-item-info:not(#uv-strong),
+.universeview-inspector .setting-item-info:not(#uv-strong) {
 	flex-grow: 1;
 	flex-basis: auto;
 	min-width: min(120px, 100%);
 	margin-inline-end: 0;
 }
-.chronicle-dash-card .setting-item-control:not(#uv-strong),
-.chronicle-inspector .setting-item-control:not(#uv-strong) {
+.universeview-dash-card .setting-item-control:not(#uv-strong),
+.universeview-inspector .setting-item-control:not(#uv-strong) {
 	flex-grow: 1;
 	flex-basis: auto;
 	min-width: 0;
 	justify-content: flex-end;
 }
-.chronicle-dash-card .setting-item-control > input[type="text"],
-.chronicle-dash-card .setting-item-control > select,
-.chronicle-inspector .setting-item-control > input[type="text"],
-.chronicle-inspector .setting-item-control > select {
+.universeview-dash-card .setting-item-control > input[type="text"],
+.universeview-dash-card .setting-item-control > select,
+.universeview-inspector .setting-item-control > input[type="text"],
+.universeview-inspector .setting-item-control > select {
 	min-width: 0;
 	max-width: 100%;
 }
@@ -541,34 +541,34 @@ button.chronicle-dash-stat.is-active {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 }
-.chronicle-dash-card .setting-item-description.mod-warning {
+.universeview-dash-card .setting-item-description.mod-warning {
 	color: var(--text-error);
 }
-.chronicle-dash-card textarea {
+.universeview-dash-card textarea {
 	width: 100%;
 	min-width: 180px;
 }
-.chronicle-dash-muted {
+.universeview-dash-muted {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 	padding: 4px 2px;
 }
-.chronicle-dash-problem {
+.universeview-dash-problem {
 	font-size: var(--font-ui-small);
 	color: var(--text-error);
 	padding: 3px 0;
 }
-.chronicle-dash-rel-groups {
+.universeview-dash-rel-groups {
 	/* Up to two columns, each at least 260px. */
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(max(260px, calc((100% - 20px) / 2)), 1fr));
 	gap: 0 20px;
 	align-items: start;
 }
-.chronicle-dash-rel-group {
+.universeview-dash-rel-group {
 	margin-bottom: 12px;
 }
-.chronicle-dash-rel-head {
+.universeview-dash-rel-head {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -577,11 +577,11 @@ button.chronicle-dash-stat.is-active {
 	font-weight: 600;
 	color: var(--text-muted);
 }
-.chronicle-dash-rel-head svg {
+.universeview-dash-rel-head svg {
 	width: 13px;
 	height: 13px;
 }
-button.chronicle-dash-rel {
+button.universeview-dash-rel {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -599,35 +599,35 @@ button.chronicle-dash-rel {
 	color: var(--text-normal);
 	cursor: pointer;
 }
-button.chronicle-dash-rel:hover {
+button.universeview-dash-rel:hover {
 	background: var(--background-modifier-hover);
 }
-button.chronicle-dash-rel.is-missing {
+button.universeview-dash-rel.is-missing {
 	color: var(--text-faint);
 	font-style: italic;
 }
-button.chronicle-dash-rel.is-error .chronicle-dash-rel-name {
+button.universeview-dash-rel.is-error .universeview-dash-rel-name {
 	color: var(--text-error);
 }
-button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
+button.universeview-dash-rel.is-warning .universeview-dash-rel-name {
 	color: var(--text-warning, var(--color-orange));
 }
-.chronicle-dash-rel-icon {
+.universeview-dash-rel-icon {
 	display: flex;
 	color: var(--row-color, var(--text-faint));
 	flex-shrink: 0;
 }
-.chronicle-dash-rel-icon svg {
+.universeview-dash-rel-icon svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-dash-rel-name {
+.universeview-dash-rel-name {
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.chronicle-dash-rel-note {
+.universeview-dash-rel-note {
 	margin-left: auto;
 	padding-left: 8px;
 	font-size: var(--font-ui-smaller);
@@ -637,75 +637,75 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	text-overflow: ellipsis;
 	max-width: 55%;
 }
-.chronicle-dash-ego {
+.universeview-dash-ego {
 	display: block;
 	width: 100%;
 	max-height: 300px;
 	margin: 0 0 10px;
 	overflow: visible;
 }
-.chronicle-dash-ego-line {
+.universeview-dash-ego-line {
 	stroke: var(--line-color);
 	stroke-opacity: 0.4;
 	stroke-width: 1.5;
 }
-.chronicle-dash-ego-node,
-.chronicle-dash-ego-center {
+.universeview-dash-ego-node,
+.universeview-dash-ego-center {
 	cursor: pointer;
 }
-.chronicle-dash-ego-node circle,
-.chronicle-dash-ego-center circle {
+.universeview-dash-ego-node circle,
+.universeview-dash-ego-center circle {
 	fill: var(--node-color);
 	stroke: var(--background-primary);
 	stroke-width: 2;
-	transition: r var(--chronicle-fast) var(--chronicle-ease);
+	transition: r var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-dash-ego-node {
-	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
+.universeview-dash-ego-node {
+	animation: universeview-svg-in var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-dash-ego-node:hover circle {
+.universeview-dash-ego-node:hover circle {
 	r: 9;
 }
-.chronicle-dash-ego-node.is-missing circle {
+.universeview-dash-ego-node.is-missing circle {
 	fill: var(--background-primary);
 	stroke: var(--text-faint);
 	stroke-dasharray: 2 2;
 }
-.chronicle-dash-ego text {
+.universeview-dash-ego text {
 	font-size: 11px;
 	fill: var(--text-normal);
 	paint-order: stroke;
 	stroke: var(--background-primary);
 	stroke-width: 3px;
 }
-.chronicle-dash-ego-center text {
+.universeview-dash-ego-center text {
 	font-size: 13px;
 	font-weight: 700;
 }
-.chronicle-dash-ego .chronicle-dash-ego-more {
+.universeview-dash-ego .universeview-dash-ego-more {
 	fill: var(--text-faint);
 	font-size: 10px;
 }
-@keyframes chronicle-svg-in {
+@keyframes universeview-svg-in {
 	from {
 		opacity: 0;
 	}
 }
-.chronicle-dash-props {
+.universeview-dash-props {
 	display: grid;
 	grid-template-columns: minmax(80px, max-content) minmax(0, 1fr);
 	gap: 4px 14px;
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-dash-prop-key {
+.universeview-dash-prop-key {
 	color: var(--text-muted);
 	font-family: var(--font-monospace);
 }
-.chronicle-dash-prop-value {
+.universeview-dash-prop-value {
 	word-break: break-word;
 	color: var(--text-normal);
 }
-.chronicle-dash-bar {
+.universeview-dash-bar {
 	display: flex;
 	height: 10px;
 	border-radius: var(--uv-r-sm);
@@ -713,23 +713,23 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	margin: 4px 0 10px;
 	background: var(--background-modifier-border);
 }
-.chronicle-dash-bar-seg {
+.universeview-dash-bar-seg {
 	background: var(--seg-color);
 	min-width: 3px;
 }
-.chronicle-dash-legend-row {
+.universeview-dash-legend-row {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	font-size: var(--font-ui-small);
 	padding: 2px 0;
 }
-.chronicle-dash-table {
+.universeview-dash-table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: var(--font-ui-small);
 }
-.chronicle-dash-table th {
+.universeview-dash-table th {
 	position: sticky;
 	top: 0;
 	text-align: left;
@@ -742,10 +742,10 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	user-select: none;
 	white-space: nowrap;
 }
-.chronicle-dash-table th:hover {
+.universeview-dash-table th:hover {
 	color: var(--text-normal);
 }
-.chronicle-dash-table td {
+.universeview-dash-table td {
 	padding: 4px 8px;
 	border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
 	white-space: nowrap;
@@ -753,30 +753,30 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	text-overflow: ellipsis;
 	max-width: 260px;
 }
-.chronicle-dash-table tbody tr {
+.universeview-dash-table tbody tr {
 	cursor: pointer;
 }
-.chronicle-dash-table tbody tr:hover {
+.universeview-dash-table tbody tr:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-dash-table td.is-name {
+.universeview-dash-table td.is-name {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	font-weight: 500;
 }
-.chronicle-dash-table td.is-num {
+.universeview-dash-table td.is-num {
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-dash-table td.is-warning {
+.universeview-dash-table td.is-warning {
 	color: var(--text-error);
 	font-weight: 700;
 }
 
 /* ==== Organisation chart ======================================================================== */
 
-.chronicle-org {
+.universeview-org {
 	--org-timeline: 38%;
 	position: absolute;
 	inset: 0;
@@ -784,21 +784,21 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	flex-direction: column;
 	overflow: hidden;
 }
-.chronicle-org-chart {
+.universeview-org-chart {
 	position: relative;
 	flex: 1 1 auto;
 	min-height: 0;
 }
-.chronicle-org-chart > svg {
+.universeview-org-chart > svg {
 	width: 100%;
 	height: 100%;
 	display: block;
 }
-.chronicle-org-splitter,
-.chronicle-org-timeline {
+.universeview-org-splitter,
+.universeview-org-timeline {
 	display: none;
 }
-.chronicle-org.has-timeline .chronicle-org-splitter {
+.universeview-org.has-timeline .universeview-org-splitter {
 	display: block;
 	flex: 0 0 7px;
 	cursor: row-resize;
@@ -807,7 +807,7 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	border-bottom: 1px solid var(--background-modifier-border);
 	position: relative;
 }
-.chronicle-org-splitter::after {
+.universeview-org-splitter::after {
 	content: "";
 	position: absolute;
 	left: 50%;
@@ -818,10 +818,10 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	border-radius: var(--uv-r-sm);
 	background: var(--text-faint);
 }
-.chronicle-org-splitter:hover {
+.universeview-org-splitter:hover {
 	background: color-mix(in srgb, var(--interactive-accent) 20%, var(--background-secondary));
 }
-.chronicle-org.has-timeline .chronicle-org-timeline {
+.universeview-org.has-timeline .universeview-org-timeline {
 	display: block;
 	flex: 0 0 var(--org-timeline);
 	overflow-y: auto;
@@ -829,316 +829,316 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	scrollbar-gutter: stable;
 	background: var(--background-primary);
 }
-.chronicle-org-card {
-	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
+.universeview-org-card {
+	animation: universeview-svg-in var(--universeview-med) var(--universeview-ease) backwards;
 }
 /* Once a view has opened (views/base.ts), a redraw is the same view a moment later: nothing fades or pops in again. */
-.uv-shown .chronicle-view-body > *:not(#uv-strong),
-.uv-shown .chronicle-org-card,
-.uv-shown .chronicle-dash-ego-node,
-.uv-shown .chronicle-fan-cell,
-.uv-shown .chronicle-lineage-item,
-.uv-shown .chronicle-pin-dot,
-.uv-shown .chronicle-pin-label,
-.uv-shown .chronicle-pin-count,
-.uv-shown .chronicle-dash-card,
-.uv-shown .chronicle-dash-head {
+.uv-shown .universeview-view-body > *:not(#uv-strong),
+.uv-shown .universeview-org-card,
+.uv-shown .universeview-dash-ego-node,
+.uv-shown .universeview-fan-cell,
+.uv-shown .universeview-lineage-item,
+.uv-shown .universeview-pin-dot,
+.uv-shown .universeview-pin-label,
+.uv-shown .universeview-pin-count,
+.uv-shown .universeview-dash-card,
+.uv-shown .universeview-dash-head {
 	animation: none;
 }
-.chronicle-org-card-bg {
+.universeview-org-card-bg {
 	fill: var(--background-primary);
 	stroke: var(--background-modifier-border);
 	stroke-width: 1;
-	transition: stroke var(--chronicle-fast) var(--chronicle-ease);
+	transition: stroke var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-card.is-top .chronicle-org-card-bg {
+.universeview-org-card.is-top .universeview-org-card-bg {
 	stroke: color-mix(in srgb, var(--item-color) 70%, transparent);
 	stroke-width: 2;
 }
-.chronicle-org-card.is-hl .chronicle-org-card-bg,
-.chronicle-org-card:hover .chronicle-org-card-bg {
+.universeview-org-card.is-hl .universeview-org-card-bg,
+.universeview-org-card:hover .universeview-org-card-bg {
 	stroke: var(--interactive-accent);
 	stroke-width: 2;
 }
-.chronicle-org-card-band {
+.universeview-org-card-band {
 	fill: var(--item-color);
 }
-.chronicle-org-head {
+.universeview-org-head {
 	cursor: pointer;
 }
-.chronicle-org-name {
+.universeview-org-name {
 	font-size: 14px;
 	font-weight: 700;
 	fill: var(--text-normal);
-	font-family: var(--chronicle-font-display);
+	font-family: var(--universeview-font-display);
 }
-.chronicle-org-head:hover .chronicle-org-name {
+.universeview-org-head:hover .universeview-org-name {
 	fill: var(--text-accent);
 }
-.chronicle-org-sub {
+.universeview-org-sub {
 	font-size: 11px;
 	fill: var(--text-muted);
 }
-.chronicle-org-divider {
+.universeview-org-divider {
 	stroke: var(--background-modifier-border);
 }
-.chronicle-org-row {
+.universeview-org-row {
 	cursor: pointer;
 }
-.chronicle-org-row-bg {
+.universeview-org-row-bg {
 	fill: transparent;
-	transition: fill var(--chronicle-fast) var(--chronicle-ease);
+	transition: fill var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-row:hover .chronicle-org-row-bg {
+.universeview-org-row:hover .universeview-org-row-bg {
 	fill: var(--background-modifier-hover);
 }
-.chronicle-org-row.is-hl .chronicle-org-row-bg {
+.universeview-org-row.is-hl .universeview-org-row-bg {
 	fill: color-mix(in srgb, var(--interactive-accent) 20%, transparent);
 }
-.chronicle-org-row.is-leader .chronicle-org-row-bg {
+.universeview-org-row.is-leader .universeview-org-row-bg {
 	fill: color-mix(in srgb, var(--item-color) 9%, transparent);
 }
-.chronicle-org-avatar {
+.universeview-org-avatar {
 	fill: var(--avatar);
 	stroke: var(--background-primary);
 	stroke-width: 1.5;
 }
-.chronicle-org-row.is-leader .chronicle-org-avatar {
+.universeview-org-row.is-leader .universeview-org-avatar {
 	stroke: #d4a017;
 	stroke-width: 2;
 }
-.chronicle-org-star {
+.universeview-org-star {
 	font-size: 10px;
 	fill: #fff;
 	pointer-events: none;
 }
-.chronicle-org-person {
+.universeview-org-person {
 	font-size: 12px;
 	fill: var(--text-normal);
 }
-.chronicle-org-row.is-leader .chronicle-org-person {
+.universeview-org-row.is-leader .universeview-org-person {
 	font-weight: 700;
 }
-.chronicle-org-role {
+.universeview-org-role {
 	font-size: 10.5px;
 	fill: color-mix(in srgb, var(--item-color) 65%, var(--text-muted));
 	font-style: italic;
 }
-.chronicle-org-more {
+.universeview-org-more {
 	font-size: 10.5px;
 	fill: var(--text-faint);
 }
-.chronicle-org-logo {
+.universeview-org-logo {
 	pointer-events: none;
 }
-.chronicle-org-link {
+.universeview-org-link {
 	fill: none;
 	stroke: var(--text-faint);
 	stroke-width: 1.5;
 	stroke-linejoin: round;
 }
-.chronicle-org-tl {
+.universeview-org-tl {
 	display: block;
 }
-.chronicle-org-lane {
+.universeview-org-lane {
 	cursor: pointer;
 }
-.chronicle-org-lane-bg {
+.universeview-org-lane-bg {
 	fill: var(--text-normal);
 	fill-opacity: 0.03;
 }
-.chronicle-org-lane:hover .chronicle-org-lane-bg {
+.universeview-org-lane:hover .universeview-org-lane-bg {
 	fill: var(--interactive-accent);
 	fill-opacity: 0.12;
 }
-.chronicle-org-lane-label {
+.universeview-org-lane-label {
 	font-size: 11px;
 	fill: var(--text-muted);
 }
-.chronicle-org-lane.is-org .chronicle-org-lane-label {
+.universeview-org-lane.is-org .universeview-org-lane-label {
 	font-weight: 700;
 	fill: var(--text-normal);
 }
-.chronicle-org-lane.is-leader .chronicle-org-lane-label {
+.universeview-org-lane.is-leader .universeview-org-lane-label {
 	fill: var(--text-normal);
 	font-weight: 600;
 }
-.chronicle-org-bar {
+.universeview-org-bar {
 	fill: color-mix(in srgb, var(--item-color) 55%, var(--background-primary));
-	transition: fill var(--chronicle-fast) var(--chronicle-ease);
+	transition: fill var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-lane.is-org .chronicle-org-bar,
-.chronicle-org-lane.is-leader .chronicle-org-bar {
+.universeview-org-lane.is-org .universeview-org-bar,
+.universeview-org-lane.is-leader .universeview-org-bar {
 	fill: var(--item-color);
 }
-.chronicle-org-lane:hover .chronicle-org-bar {
+.universeview-org-lane:hover .universeview-org-bar {
 	fill: var(--interactive-accent);
 }
-.chronicle-org-bar.is-ongoing {
+.universeview-org-bar.is-ongoing {
 	fill-opacity: 0.7;
 }
-.chronicle-org-bar.is-undated {
+.universeview-org-bar.is-undated {
 	fill-opacity: 0.15;
 	stroke: var(--item-color);
 	stroke-dasharray: 3 3;
 }
-.chronicle-org-cursor {
+.universeview-org-cursor {
 	stroke: var(--interactive-accent);
 	stroke-width: 2;
 	pointer-events: none;
 }
-.chronicle-org-axis-hit {
+.universeview-org-axis-hit {
 	fill: transparent;
 	cursor: pointer;
 }
-.chronicle-org-axis-hit:hover {
+.universeview-org-axis-hit:hover {
 	fill: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
 }
-.chronicle-org-timeline-empty {
+.universeview-org-timeline-empty {
 	padding: 18px;
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
 
 /* Logos */
-.chronicle-org-stats {
+.universeview-org-stats {
 	font-size: 10.5px;
 	fill: var(--text-faint);
 }
-.chronicle-org-logo-box {
+.universeview-org-logo-box {
 	cursor: pointer;
 }
 /* The logo space is neutral; only the monogram and the card's top edge carry the group's colour. */
-.chronicle-org-logo-bg {
+.universeview-org-logo-bg {
 	fill: var(--background-modifier-hover);
 }
-.chronicle-org-logo-ring {
+.universeview-org-logo-ring {
 	fill: none;
 	stroke: var(--background-modifier-border);
 	stroke-width: 1.5;
-	transition: stroke var(--chronicle-fast) var(--chronicle-ease);
+	transition: stroke var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-logo-box.is-empty .chronicle-org-logo-ring {
+.universeview-org-logo-box.is-empty .universeview-org-logo-ring {
 	stroke-dasharray: 4 3;
 }
-.chronicle-org-logo-box:hover .chronicle-org-logo-ring {
+.universeview-org-logo-box:hover .universeview-org-logo-ring {
 	stroke: var(--interactive-accent);
 	stroke-width: 2;
 }
-.chronicle-org-monogram {
-	font-family: var(--chronicle-font-display);
+.universeview-org-monogram {
+	font-family: var(--universeview-font-display);
 	font-size: 19px;
 	font-weight: 700;
 	fill: color-mix(in srgb, var(--item-color) 75%, var(--text-normal));
 	pointer-events: none;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-logo-add {
+.universeview-org-logo-add {
 	font-size: 10px;
 	font-weight: 600;
 	fill: var(--text-accent);
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-logo-box.is-empty:hover .chronicle-org-monogram {
+.universeview-org-logo-box.is-empty:hover .universeview-org-monogram {
 	opacity: 0;
 }
-.chronicle-org-logo-box.is-empty:hover .chronicle-org-logo-add {
+.universeview-org-logo-box.is-empty:hover .universeview-org-logo-add {
 	opacity: 1;
 }
 
 /* Relationships: one colour per kind of tie, shared by the lines, chips, labels and legend. */
-.chronicle-org {
+.universeview-org {
 	--org-tone: var(--text-faint);
 }
-.chronicle-org .tone-ally { --org-tone: #2f9e5b; }
-.chronicle-org .tone-hostile { --org-tone: #d64545; }
-.chronicle-org .tone-rank { --org-tone: #7d5bd0; }
-.chronicle-org .tone-trade { --org-tone: #c98a1b; }
-.chronicle-org .tone-bond { --org-tone: #d2649a; }
-.chronicle-org .tone-neutral { --org-tone: #7a8594; }
-.theme-dark .chronicle-org .tone-ally { --org-tone: #4cc07c; }
-.theme-dark .chronicle-org .tone-hostile { --org-tone: #f06a6a; }
-.theme-dark .chronicle-org .tone-rank { --org-tone: #a58af0; }
-.theme-dark .chronicle-org .tone-trade { --org-tone: #e3a948; }
-.theme-dark .chronicle-org .tone-bond { --org-tone: #ee8bbc; }
-.theme-dark .chronicle-org .tone-neutral { --org-tone: #98a2ae; }
-.chronicle-org-arrowhead { fill: var(--org-tone); }
-.chronicle-org-tie {
+.universeview-org .tone-ally { --org-tone: #2f9e5b; }
+.universeview-org .tone-hostile { --org-tone: #d64545; }
+.universeview-org .tone-rank { --org-tone: #7d5bd0; }
+.universeview-org .tone-trade { --org-tone: #c98a1b; }
+.universeview-org .tone-bond { --org-tone: #d2649a; }
+.universeview-org .tone-neutral { --org-tone: #7a8594; }
+.theme-dark .universeview-org .tone-ally { --org-tone: #4cc07c; }
+.theme-dark .universeview-org .tone-hostile { --org-tone: #f06a6a; }
+.theme-dark .universeview-org .tone-rank { --org-tone: #a58af0; }
+.theme-dark .universeview-org .tone-trade { --org-tone: #e3a948; }
+.theme-dark .universeview-org .tone-bond { --org-tone: #ee8bbc; }
+.theme-dark .universeview-org .tone-neutral { --org-tone: #98a2ae; }
+.universeview-org-arrowhead { fill: var(--org-tone); }
+.universeview-org-tie {
 	cursor: pointer;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-tie-line {
+.universeview-org-tie-line {
 	fill: none;
 	stroke: var(--org-tone);
 	stroke-width: 2;
 	stroke-linecap: round;
 }
-.chronicle-org-tie.is-person .chronicle-org-tie-line {
+.universeview-org-tie.is-person .universeview-org-tie-line {
 	stroke-width: 1.25;
 	stroke-dasharray: 2 4;
 }
-.chronicle-org .tone-hostile .chronicle-org-tie-line { stroke-dasharray: 7 5; }
-.chronicle-org .tone-trade .chronicle-org-tie-line { stroke-dasharray: 1 5; stroke-width: 2.5; }
-.chronicle-org-tie-hit {
+.universeview-org .tone-hostile .universeview-org-tie-line { stroke-dasharray: 7 5; }
+.universeview-org .tone-trade .universeview-org-tie-line { stroke-dasharray: 1 5; stroke-width: 2.5; }
+.universeview-org-tie-hit {
 	fill: none;
 	stroke: transparent;
 	stroke-width: 12;
 }
-.chronicle-org-tie:hover .chronicle-org-tie-line,
-.chronicle-org-tie.is-hl .chronicle-org-tie-line {
+.universeview-org-tie:hover .universeview-org-tie-line,
+.universeview-org-tie.is-hl .universeview-org-tie-line {
 	stroke-width: 3;
 }
-.chronicle-org-pill {
+.universeview-org-pill {
 	cursor: pointer;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-org-pill-bg {
+.universeview-org-pill-bg {
 	fill: var(--background-primary);
 	stroke: var(--org-tone);
 	stroke-width: 1.25;
 }
-.chronicle-org-pill.is-person .chronicle-org-pill-bg {
+.universeview-org-pill.is-person .universeview-org-pill-bg {
 	stroke-dasharray: 2 2;
 }
-.chronicle-org-pill-text {
+.universeview-org-pill-text {
 	font-size: 10.5px;
 	font-weight: 600;
 	fill: var(--text-normal);
 }
-.chronicle-org-pill.is-person {
+.universeview-org-pill.is-person {
 	opacity: 0.85;
 }
-.chronicle-org-pill:hover .chronicle-org-pill-bg,
-.chronicle-org-pill.is-hl .chronicle-org-pill-bg {
+.universeview-org-pill:hover .universeview-org-pill-bg,
+.universeview-org-pill.is-hl .universeview-org-pill-bg {
 	fill: color-mix(in srgb, var(--org-tone) 14%, var(--background-primary));
 }
 /* Hovering a card or a tie fades everything not involved. */
-.chronicle-org.is-focusing .chronicle-org-tie:not(.is-hl),
-.chronicle-org.is-focusing .chronicle-org-pill:not(.is-hl) {
+.universeview-org.is-focusing .universeview-org-tie:not(.is-hl),
+.universeview-org.is-focusing .universeview-org-pill:not(.is-hl) {
 	opacity: 0.12;
 }
-.chronicle-org-tie-chip {
+.universeview-org-tie-chip {
 	cursor: pointer;
 }
-.chronicle-org-tie-chip-bg {
+.universeview-org-tie-chip-bg {
 	fill: color-mix(in srgb, var(--org-tone) 12%, var(--background-primary));
 	stroke: color-mix(in srgb, var(--org-tone) 45%, transparent);
 }
-.chronicle-org-tie-chip:hover .chronicle-org-tie-chip-bg {
+.universeview-org-tie-chip:hover .universeview-org-tie-chip-bg {
 	fill: color-mix(in srgb, var(--org-tone) 24%, var(--background-primary));
 }
-.chronicle-org-tie-dot {
+.universeview-org-tie-dot {
 	fill: var(--org-tone);
 }
-.chronicle-org-tie-chip-text {
+.universeview-org-tie-chip-text {
 	font-size: 10px;
 	fill: var(--text-normal);
 }
 
 /* Legend: which kinds of tie are on the chart; click to hide or show them. */
-.chronicle-org-legend {
+.universeview-org-legend {
 	position: absolute;
 	right: 12px;
 	top: 12px;
@@ -1146,23 +1146,23 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	flex-direction: column;
 	gap: 2px;
 	padding: 8px 10px;
-	border-radius: var(--chronicle-radius, 10px);
+	border-radius: var(--universeview-radius, 10px);
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	box-shadow: var(--shadow-s);
 	z-index: 2;
 	max-width: 240px;
 }
-.chronicle-org-legend.is-empty {
+.universeview-org-legend.is-empty {
 	display: none;
 }
-.chronicle-org-legend-title {
+.universeview-org-legend-title {
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
 	color: var(--text-muted);
 	margin-bottom: 2px;
 }
-.chronicle-org-legend-row {
+.universeview-org-legend-row {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -1177,41 +1177,41 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	cursor: pointer;
 	justify-content: flex-start;
 }
-.chronicle-org-legend-row:hover {
+.universeview-org-legend-row:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-org-legend-row.is-off {
+.universeview-org-legend-row.is-off {
 	opacity: 0.4;
 }
-.chronicle-org-legend-row.is-off span {
+.universeview-org-legend-row.is-off span {
 	text-decoration: line-through;
 }
-.chronicle-org-legend-swatch {
+.universeview-org-legend-swatch {
 	flex: 0 0 auto;
 	overflow: visible;
 }
 
 /* ==== Map: pin sizes and zoom layers ============================================================ */
 
-.chronicle-pin-wrap {
-	transition: opacity var(--chronicle-med) var(--chronicle-ease);
+.universeview-pin-wrap {
+	transition: opacity var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-pin-wrap.is-layer-hidden {
+.universeview-pin-wrap.is-layer-hidden {
 	opacity: 0;
 	pointer-events: none;
 }
-.chronicle-pin-wrap.is-layer-hidden *:not(#uv-strong) {
+.universeview-pin-wrap.is-layer-hidden *:not(#uv-strong) {
 	pointer-events: none;
 }
-.chronicle-pin.pin-size-tiny .chronicle-pin-label,
-.chronicle-pin.pin-size-small .chronicle-pin-label {
+.universeview-pin.pin-size-tiny .universeview-pin-label,
+.universeview-pin.pin-size-small .universeview-pin-label {
 	font-size: 10.5px;
 }
-.chronicle-pin.pin-size-large .chronicle-pin-label {
+.universeview-pin.pin-size-large .universeview-pin-label {
 	font-size: 13px;
 	font-weight: 700;
 }
-.chronicle-pin.pin-size-huge .chronicle-pin-label {
+.universeview-pin.pin-size-huge .universeview-pin-label {
 	font-size: 14px;
 	font-weight: 700;
 	text-transform: uppercase;
@@ -1220,33 +1220,33 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 
 /* ==== Routes, heat map, overlays ================================================================ */
 
-.chronicle-route {
+.universeview-route {
 	stroke: var(--route-color, #8d6e63);
 	fill: none;
 	stroke-linecap: round;
 	stroke-linejoin: round;
 	stroke-opacity: 0.9;
 	cursor: pointer;
-	transition: stroke-width var(--chronicle-fast) var(--chronicle-ease);
+	transition: stroke-width var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-route:hover {
+.universeview-route:hover {
 	stroke-width: 6;
 }
-.chronicle-route.kind-road {
+.universeview-route.kind-road {
 	stroke: color-mix(in srgb, var(--route-color, #8d6e63) 55%, #6d4c2f);
 }
-.chronicle-route.kind-path {
+.universeview-route.kind-path {
 	stroke: color-mix(in srgb, var(--route-color, #8d6e63) 40%, #7a5a3a);
 	stroke-dasharray: 2 6;
 }
-.chronicle-route.kind-river {
+.universeview-route.kind-river {
 	/* The course down the middle: a faint current line (the water is .uv-river-water); visible from afar. */
 	stroke: #2f7bbf;
 	stroke-opacity: 0.55;
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
-.chronicle-route.kind-river:hover {
+.universeview-route.kind-river:hover {
 	stroke-width: 3;
 	stroke-opacity: 0.9;
 }
@@ -1260,44 +1260,44 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	stroke-linejoin: round;
 	pointer-events: none;
 }
-.chronicle-route.kind-river.is-draft {
+.universeview-route.kind-river.is-draft {
 	stroke: #3d8fd1;
 	stroke-opacity: 1;
 }
-.chronicle-route.kind-sea {
+.universeview-route.kind-sea {
 	stroke: #1f6f9e;
 	stroke-dasharray: 10 8;
 }
-.chronicle-route.kind-trade {
+.universeview-route.kind-trade {
 	stroke: #c9a227;
 	stroke-dasharray: 12 5 2 5;
 }
-.chronicle-route.kind-rail {
+.universeview-route.kind-rail {
 	stroke: #555;
 	stroke-dasharray: 1 5;
 	stroke-width: 5;
 }
-.chronicle-route.kind-border {
+.universeview-route.kind-border {
 	stroke: var(--route-color, #a33);
 	stroke-dasharray: 8 4 2 4;
 }
-.chronicle-route.is-draft {
+.universeview-route.is-draft {
 	stroke-opacity: 1;
 	filter: drop-shadow(0 0 2px var(--background-primary));
 }
-.chronicle-route-tip strong {
+.universeview-route-tip strong {
 	display: block;
 }
-.chronicle-route-travel {
+.universeview-route-travel {
 	color: var(--text-muted);
 	font-weight: normal;
 	font-size: 0.92em;
 }
-.chronicle-heat-wrap {
+.universeview-heat-wrap {
 	background: none;
 	border: none;
 }
-.chronicle-heat-spot {
+.universeview-heat-spot {
 	position: absolute;
 	transform: translate(-50%, -50%);
 	border-radius: 50%;
@@ -1305,26 +1305,26 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	mix-blend-mode: multiply;
 	pointer-events: none;
 }
-.theme-dark .chronicle-heat-spot {
+.theme-dark .universeview-heat-spot {
 	mix-blend-mode: screen;
 }
-.chronicle-map.hide-pins .chronicle-pin-wrap {
+.universeview-map.hide-pins .universeview-pin-wrap {
 	display: none;
 }
 /* A count is a number beside the label, not a badge. */
-.chronicle-chip-count {
+.universeview-chip-count {
 	font-size: var(--font-ui-smaller);
 	font-variant-numeric: tabular-nums;
 	color: var(--text-faint);
 }
-.chronicle-icon-btn.is-disabled {
+.universeview-icon-btn.is-disabled {
 	opacity: 0.35;
 	pointer-events: none;
 }
 
 /* ==== Timeline era bands ======================================================================== */
 
-.chronicle-tl-era {
+.universeview-tl-era {
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -1332,13 +1332,13 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	border-left: 1px solid color-mix(in srgb, var(--era-color, var(--interactive-accent)) 35%, transparent);
 	pointer-events: none;
 }
-.chronicle-tl-era.is-calendar {
+.universeview-tl-era.is-calendar {
 	background: transparent;
 }
-.chronicle-tl-era.is-calendar.is-alt {
+.universeview-tl-era.is-calendar.is-alt {
 	background: color-mix(in srgb, var(--text-normal) 3.5%, transparent);
 }
-.chronicle-tl-era-label {
+.universeview-tl-era-label {
 	position: sticky;
 	left: 4px;
 	display: inline-block;
@@ -1353,32 +1353,32 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	pointer-events: auto;
 	cursor: default;
 }
-.chronicle-tl-era.is-note .chronicle-tl-era-label {
+.universeview-tl-era.is-note .universeview-tl-era-label {
 	cursor: pointer;
 }
-.chronicle-lineage-grid.is-era {
+.universeview-lineage-grid.is-era {
 	stroke: var(--interactive-accent);
 	stroke-opacity: 0.45;
 }
 
 /* ==== Dashboard editing ========================================================================= */
 
-.chronicle-dash-rel-head .chronicle-dash-rel-add {
+.universeview-dash-rel-head .universeview-dash-rel-add {
 	margin-left: auto;
 	padding: 2px;
 	opacity: 0.6;
 }
-.chronicle-dash-rel-head .chronicle-dash-rel-add:hover {
+.universeview-dash-rel-head .universeview-dash-rel-add:hover {
 	opacity: 1;
 }
-.chronicle-dash-rel-head .chronicle-dash-rel-add svg {
+.universeview-dash-rel-head .universeview-dash-rel-add svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-dash-rel-group.is-empty .chronicle-dash-rel-head {
+.universeview-dash-rel-group.is-empty .universeview-dash-rel-head {
 	color: var(--text-faint);
 }
-.chronicle-dash-rel-remove {
+.universeview-dash-rel-remove {
 	display: flex;
 	flex-shrink: 0;
 	padding: 2px;
@@ -1387,19 +1387,19 @@ button.chronicle-dash-rel.is-warning .chronicle-dash-rel-name {
 	border-radius: var(--uv-r-sm);
 	color: var(--text-faint);
 }
-button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
-.chronicle-dash-rel-remove:focus-visible {
+button.universeview-dash-rel:hover .universeview-dash-rel-remove,
+.universeview-dash-rel-remove:focus-visible {
 	opacity: 1;
 }
-.chronicle-dash-rel-remove:hover {
+.universeview-dash-rel-remove:hover {
 	color: var(--text-error);
 	background: color-mix(in srgb, var(--text-error) 12%, transparent);
 }
-.chronicle-dash-rel-remove svg {
+.universeview-dash-rel-remove svg {
 	width: 13px;
 	height: 13px;
 }
-.chronicle-dash-bulk {
+.universeview-dash-bulk {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -1409,44 +1409,44 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 	padding: 4px 8px;
 	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-small);
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-dash-bulk.is-active {
+.universeview-dash-bulk.is-active {
 	background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
 	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
 }
-.chronicle-dash-bulk select,
-.chronicle-dash-bulk button {
+.universeview-dash-bulk select,
+.universeview-dash-bulk button {
 	height: 26px;
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-dash-table .is-check {
+.universeview-dash-table .is-check {
 	width: 28px;
 	padding-right: 0;
 }
-.chronicle-dash-table tbody tr.is-selected {
+.universeview-dash-table tbody tr.is-selected {
 	background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
 }
-.chronicle-timeline.has-eras .chronicle-tl-lanes {
+.universeview-timeline.has-eras .universeview-tl-lanes {
 	padding-top: 24px;
 }
-.chronicle-tl-era.is-note {
+.universeview-tl-era.is-note {
 	display: flex;
 	justify-content: flex-end;
 	align-items: flex-start;
 }
-.chronicle-exporting:not(#uv-strong),
-.chronicle-exporting *:not(#uv-strong) {
+.universeview-exporting:not(#uv-strong),
+.universeview-exporting *:not(#uv-strong) {
 	animation: none;
 	transition: none;
 }
 
 /* ---- Timeline: battles and the picked item's card ---- */
-.chronicle-tl-item.is-battle .chronicle-tl-dot { width: 16px; height: 16px; margin-left: -1px; display: flex; align-items: center; justify-content: center; color: #fff; }
-.chronicle-tl-item.is-battle .chronicle-tl-dot svg:not(.uv-shape-art) { width: 10px; height: 10px; stroke-width: 2.6; }
-.chronicle-tl-item.is-selected .chronicle-tl-dot,
-.chronicle-tl-item.is-selected .chronicle-tl-bar { box-shadow: 0 0 0 3px color-mix(in srgb, var(--item-color) 55%, transparent); }
-.chronicle-tl-item.is-selected .chronicle-tl-label { color: var(--text-accent); font-weight: 600; }
+.universeview-tl-item.is-battle .universeview-tl-dot { width: 16px; height: 16px; margin-left: -1px; display: flex; align-items: center; justify-content: center; color: #fff; }
+.universeview-tl-item.is-battle .universeview-tl-dot svg:not(.uv-shape-art) { width: 10px; height: 10px; stroke-width: 2.6; }
+.universeview-tl-item.is-selected .universeview-tl-dot,
+.universeview-tl-item.is-selected .universeview-tl-bar { box-shadow: 0 0 0 3px color-mix(in srgb, var(--item-color) 55%, transparent); }
+.universeview-tl-item.is-selected .universeview-tl-label { color: var(--text-accent); font-weight: 600; }
 .uv-tl-card { position: absolute; top: 40px; right: 12px; z-index: 6; width: 290px; max-width: calc(100% - 24px); max-height: calc(100% - 56px); overflow-y: auto; padding: 12px 14px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--item-color); box-shadow: var(--shadow-l); cursor: default; user-select: text; font-size: var(--font-ui-small); animation: uv-card-in 140ms ease-out; }
 @keyframes uv-card-in { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .uv-tl-card { animation: none; } }
@@ -1467,26 +1467,26 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 .uv-tl-card-actions button { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; font-size: var(--font-ui-smaller); }
 .uv-tl-card-actions button svg { width: 13px; height: 13px; }
 /* Points too close to tell apart: one marker with a count. */
-.chronicle-tl-item.is-cluster .uv-tl-cluster-dot { width: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--uv-r-md); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; margin-left: 0; }
-.chronicle-tl-item.is-cluster { cursor: zoom-in; }
-.chronicle-tl-item.is-cluster .chronicle-tl-label { font-style: italic; }
+.universeview-tl-item.is-cluster .uv-tl-cluster-dot { width: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--uv-r-md); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; margin-left: 0; }
+.universeview-tl-item.is-cluster { cursor: zoom-in; }
+.universeview-tl-item.is-cluster .universeview-tl-label { font-style: italic; }
 
 /* ---- Family tree: titles held, folding branches, found card ---- */
-.chronicle-card-meta.is-titles { display: flex; align-items: center; gap: 3px; color: var(--text-accent); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.chronicle-card-meta.is-titles span:last-child { overflow: hidden; text-overflow: ellipsis; }
-.chronicle-card-crown svg { width: 11px; height: 11px; }
-.chronicle-card { position: relative; }
-.chronicle-card-fold { position: absolute; right: 4px; bottom: 3px; display: inline-flex; align-items: center; gap: 2px; height: 16px; padding: 0 4px; border-radius: var(--uv-r-md); font-size: 10px; font-weight: 600; background: var(--background-secondary); color: var(--text-muted); box-shadow: none; opacity: 0; transition: opacity 120ms ease; cursor: pointer; }
-.chronicle-card-fold svg { width: 11px; height: 11px; }
-.chronicle-card:hover .chronicle-card-fold, .chronicle-card-fold.is-folded { opacity: 1; }
-.chronicle-card-fold.is-folded { background: var(--interactive-accent); color: var(--text-on-accent); }
-.chronicle-card.is-found { animation: uv-found 1.1s ease-out 2; }
+.universeview-card-meta.is-titles { display: flex; align-items: center; gap: 3px; color: var(--text-accent); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.universeview-card-meta.is-titles span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.universeview-card-crown svg { width: 11px; height: 11px; }
+.universeview-card { position: relative; }
+.universeview-card-fold { position: absolute; right: 4px; bottom: 3px; display: inline-flex; align-items: center; gap: 2px; height: 16px; padding: 0 4px; border-radius: var(--uv-r-md); font-size: 10px; font-weight: 600; background: var(--background-secondary); color: var(--text-muted); box-shadow: none; opacity: 0; transition: opacity 120ms ease; cursor: pointer; }
+.universeview-card-fold svg { width: 11px; height: 11px; }
+.universeview-card:hover .universeview-card-fold, .universeview-card-fold.is-folded { opacity: 1; }
+.universeview-card-fold.is-folded { background: var(--interactive-accent); color: var(--text-on-accent); }
+.universeview-card.is-found { animation: uv-found 1.1s ease-out 2; }
 @keyframes uv-found { 0% { box-shadow: 0 0 0 0 var(--interactive-accent); } 100% { box-shadow: 0 0 0 14px transparent; } }
-@media (prefers-reduced-motion: reduce) { .chronicle-card.is-found { animation: none; outline: 3px solid var(--interactive-accent); } }
+@media (prefers-reduced-motion: reduce) { .universeview-card.is-found { animation: none; outline: 3px solid var(--interactive-accent); } }
 
 /* ---- Connections: a picked note, pinned notes ---- */
-.chronicle-net-node.is-picked .chronicle-net-shape { stroke: var(--text-normal); stroke-width: 3px; }
-.chronicle-net-node.is-pinned .chronicle-net-shape { stroke-dasharray: 3 2; stroke: var(--text-muted); stroke-width: 2px; }
+.universeview-net-node.is-picked .universeview-net-shape { stroke: var(--text-normal); stroke-width: 3px; }
+.universeview-net-node.is-pinned .universeview-net-shape { stroke-dasharray: 3 2; stroke: var(--text-muted); stroke-width: 2px; }
 .uv-net-card { position: absolute; top: 12px; right: 12px; z-index: 5; width: 260px; max-width: calc(100% - 24px); padding: 10px 12px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--node-color, var(--interactive-accent)); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); }
 .uv-net-card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .uv-net-card-name { font-weight: 600; font-size: var(--font-ui-medium); color: var(--text-normal); cursor: pointer; text-decoration: none; }
@@ -1495,10 +1495,10 @@ button.chronicle-dash-rel:hover .chronicle-dash-rel-remove,
 .uv-net-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .uv-net-card-actions button { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; font-size: var(--font-ui-smaller); }
 .uv-net-card-actions svg { width: 12px; height: 12px; }
-.chronicle-exporting .uv-net-card:not(#uv-strong) { display: none; }
+.universeview-exporting .uv-net-card:not(#uv-strong) { display: none; }
 
 /* Board linked: what you can pick shows it. */
-.chronicle-board.is-linked .chronicle-module-body [data-key] { cursor: crosshair; }
+.universeview-board.is-linked .universeview-module-body [data-key] { cursor: crosshair; }
 
 /* ---- Family tree: handles to add a parent, child or partner right on a card ---- */
 .uv-card-adds { position: absolute; inset: 0; pointer-events: none; }
@@ -1516,7 +1516,7 @@ button.uv-card-add {
 	box-shadow: none;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity var(--chronicle-fast, 120ms) ease-out, color var(--chronicle-fast, 120ms) ease-out;
+	transition: opacity var(--universeview-fast, 120ms) ease-out, color var(--universeview-fast, 120ms) ease-out;
 }
 button.uv-card-add svg { width: 12px; height: 12px; }
 button.uv-card-add.is-up { left: 50%; top: -10px; margin-left: -10px; }
@@ -1526,7 +1526,7 @@ button.uv-card-add.is-side { right: -10px; top: 50%; margin-top: -10px; }
 button.uv-card-add:hover { color: var(--text-on-accent); background: var(--interactive-accent); border-color: var(--interactive-accent); }
 /* A row the tree has just revealed */
 @keyframes uv-reveal { from { background: color-mix(in srgb, var(--interactive-accent) 35%, transparent); } to { background: transparent; } }
-.chronicle-dash-row.is-revealed { animation: uv-reveal 1.5s ease-out; }
+.universeview-dash-row.is-revealed { animation: uv-reveal 1.5s ease-out; }
 /* The family tree card the arrow keys are on */
-.uv-card-html.is-kb .chronicle-card { box-shadow: 0 0 0 3px var(--interactive-accent); }
-.chronicle-family:focus-visible { outline: none; }
+.uv-card-html.is-kb .universeview-card { box-shadow: 0 0 0 3px var(--interactive-accent); }
+.universeview-family:focus-visible { outline: none; }

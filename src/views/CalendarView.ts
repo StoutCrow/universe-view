@@ -1,15 +1,15 @@
 import { Modal, Setting, type ViewStateResult } from "obsidian";
 import { optionsButton, type OptionEntry } from "../render/optionsmenu";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { CalendarOptions, CalendarRenderer, DEFAULT_CALENDAR_OPTIONS, moonIcon, type CalendarMode } from "../render/calendar";
 import { convertDay, moonPhase, phaseName, seasonOf } from "../dates/calendars";
 import { formatDay } from "../dates/parser";
 import { dropdown, el, iconButton } from "../render/common";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_CALENDAR = "chronicle-calendar";
 
-export class CalendarView extends ChronicleView {
+export class CalendarView extends UniverseViewBase {
 	private options: CalendarOptions = { ...DEFAULT_CALENDAR_OPTIONS };
 	private renderer?: CalendarRenderer;
 
@@ -120,39 +120,39 @@ export class CalendarView extends ChronicleView {
 
 /** One date shown in every calendar: weekday, season and moons included. */
 export class ConvertModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private from?: string, private day?: number) {
+	constructor(private plugin: UniverseViewPlugin, private from?: string, private day?: number) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Convert a date");
 		const cals = this.plugin.calendars.all();
 		let from = this.from ?? cals[0].id;
 		let text = this.day !== undefined ? formatDay(this.day, this.plugin.calendars.get(from)) : "";
-		const out = el("div", { cls: "chronicle-convert" });
+		const out = el("div", { cls: "universeview-convert" });
 		const show = () => {
 			out.empty();
 			const d = text.trim() ? this.plugin.parseDate(text, from) : null;
 			if (!d) {
-				el("div", { cls: "chronicle-dash-muted", text: text.trim() ? "Couldn't read that date in this calendar." : "Type a date to see it in every calendar." }, out);
+				el("div", { cls: "universeview-dash-muted", text: text.trim() ? "Couldn't read that date in this calendar." : "Type a date to see it in every calendar." }, out);
 				return;
 			}
 			for (const r of convertDay(d.start, cals)) {
-				const row = el("div", { cls: "chronicle-convert-row" + (r.cal.id === from ? " is-from" : "") }, out);
-				el("div", { cls: "chronicle-convert-cal", text: r.cal.name }, row);
-				el("div", { cls: "chronicle-convert-date", text: `${r.weekday ? r.weekday + ", " : ""}${formatDay(d.start, r.cal)}` }, row);
-				const extra = el("div", { cls: "chronicle-convert-extra" }, row);
+				const row = el("div", { cls: "universeview-convert-row" + (r.cal.id === from ? " is-from" : "") }, out);
+				el("div", { cls: "universeview-convert-cal", text: r.cal.name }, row);
+				el("div", { cls: "universeview-convert-date", text: `${r.weekday ? r.weekday + ", " : ""}${formatDay(d.start, r.cal)}` }, row);
+				const extra = el("div", { cls: "universeview-convert-extra" }, row);
 				const season = seasonOf(r.cal, d.start);
 				if (season) el("span", { text: season.name }, extra);
 				for (const mo of r.cal.moons) {
 					const p = moonPhase(d.start, mo);
-					const m = el("span", { cls: "chronicle-convert-moon", attr: { title: `${mo.name}: ${phaseName(p).toLowerCase()}` } }, extra);
+					const m = el("span", { cls: "universeview-convert-moon", attr: { title: `${mo.name}: ${phaseName(p).toLowerCase()}` } }, extra);
 					m.appendChild(moonIcon(p, 14, mo.color));
 				}
 			}
-			el("div", { cls: "chronicle-dash-muted", text: "Calendars line up through their epoch (Settings → Calendars). One without an epoch starts its year 1 on 1 January 1970." }, out);
+			el("div", { cls: "universeview-dash-muted", text: "Calendars line up through their epoch (Settings → Calendars). One without an epoch starts its year 1 on 1 January 1970." }, out);
 		};
 		new Setting(this.contentEl).setName("Date").addText((t) => {
 			t.setPlaceholder("E.g. 14 Highsun SE 3").setValue(text).onChange((v) => {

@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { ChronDate, Entity } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { spacedLabels, yearTicks } from "../dates/calendars";
@@ -16,8 +16,8 @@ export class ArcRenderer {
 	private root: HTMLElement;
 	private resizeObs: ResizeObserver;
 
-	constructor(private container: HTMLElement, private plugin: ChroniclePlugin, public person: string | undefined, private hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
-		this.root = el("div", { cls: "chronicle-arc" }, container);
+	constructor(private container: HTMLElement, private plugin: UniverseViewPlugin, public person: string | undefined, private hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
+		this.root = el("div", { cls: "universeview-arc" }, container);
 		let w = 0;
 		this.resizeObs = new ResizeObserver(() => {
 			if (Math.abs(this.root.clientWidth - w) < 4) return;
@@ -153,31 +153,31 @@ export class ArcRenderer {
 		const LANE = 30;
 		const AXIS = 24;
 		const height = AXIS + lanes.length * LANE + 8;
-		const s = svg("svg", { width, height, class: "chronicle-arc-svg" }, this.root);
+		const s = svg("svg", { width, height, class: "universeview-arc-svg" }, this.root);
 		const yearPx = (plot / (max - min)) * YEAR;
 		const nice = [1, 2, 5, 10, 20, 25, 50, 100];
 		const step = nice.find((n) => n * yearPx >= 60) ?? 100;
 		const ticks = yearTicks(cal, cal.fromDays(min).y, cal.fromDays(max).y, step, step * 5).map((t) => ({ ...t, x: x(cal.toDays(t.year, 1, 1)), label: cal.formatYear(t.year) })).filter((t) => t.x >= LABEL);
 		const shown = spacedLabels(ticks);
 		for (const t of ticks) {
-			svg("line", { x1: t.x, x2: t.x, y1: AXIS - 4, y2: height, class: "chronicle-lineage-grid" }, s);
+			svg("line", { x1: t.x, x2: t.x, y1: AXIS - 4, y2: height, class: "universeview-lineage-grid" }, s);
 			if (!shown.has(t)) continue;
-			const tx = svg("text", { x: t.x, y: AXIS - 8, "text-anchor": "middle", class: "chronicle-lineage-tick" }, s);
+			const tx = svg("text", { x: t.x, y: AXIS - 8, "text-anchor": "middle", class: "universeview-lineage-tick" }, s);
 			tx.textContent = t.label;
 		}
 		const ageAt = (d: number) => (p.start ? ` (aged ${Math.floor((d - p.start.start) / YEAR)})` : "");
 		lanes.forEach((lane, i) => {
 			const y = AXIS + i * LANE;
-			if (i % 2 === 0) svg("rect", { x: 0, y, width, height: LANE, class: "chronicle-org-lane-bg" }, s);
-			const lt = svg("text", { x: 8, y: y + 19, class: "chronicle-arc-lane" }, s);
+			if (i % 2 === 0) svg("rect", { x: 0, y, width, height: LANE, class: "universeview-org-lane-bg" }, s);
+			const lt = svg("text", { x: 8, y: y + 19, class: "universeview-arc-lane" }, s);
 			lt.textContent = lane.label.length > 16 ? lane.label.slice(0, 15) + "…" : lane.label;
 			for (const b of lane.bars) {
-				const g = svg("g", { class: "chronicle-arc-bar" + (b.open ? " is-open" : "") }, s);
+				const g = svg("g", { class: "universeview-arc-bar" + (b.open ? " is-open" : "") }, s);
 				g.setAttribute("style", `--item-color: ${b.color}`);
 				const w = Math.max(4, x(b.b) - x(b.a));
 				svg("rect", { x: x(b.a), y: y + 7, width: w, height: 16, rx: 8 }, g);
 				if (w > b.text.length * 6 + 14) {
-					const t = svg("text", { x: x(b.a) + 7, y: y + 19, class: "chronicle-arc-text" }, g);
+					const t = svg("text", { x: x(b.a) + 7, y: y + 19, class: "universeview-arc-text" }, g);
 					t.textContent = b.text;
 				}
 				const tt = svg("title", {}, g);
@@ -186,12 +186,12 @@ export class ArcRenderer {
 			}
 			let lastLabelEnd = -Infinity;
 			for (const d of lane.dots) {
-				const g = svg("g", { class: "chronicle-arc-dot" }, s);
+				const g = svg("g", { class: "universeview-arc-dot" }, s);
 				g.setAttribute("style", `--item-color: ${d.color}`);
 				const cx = x(d.d);
 				svg("circle", { cx, cy: y + 15, r: 5 }, g);
 				if (cx > lastLabelEnd + 6) {
-					const t = svg("text", { x: cx + 8, y: y + 19, class: "chronicle-arc-text is-dot" }, g);
+					const t = svg("text", { x: cx + 8, y: y + 19, class: "universeview-arc-text is-dot" }, g);
 					t.textContent = d.text.length > 22 ? d.text.slice(0, 21) + "…" : d.text;
 					lastLabelEnd = cx + 8 + Math.min(22, d.text.length) * 6;
 				}
@@ -212,7 +212,7 @@ export class ArcRenderer {
  * An infobox for a note, kept up to date from its properties: picture, kind, dates with age or
  * duration, family, roles, places and population, like the box at the top of an encyclopedia article.
  */
-export function renderFacts(plugin: ChroniclePlugin, host: HTMLElement, key: string | undefined, hoverParent: { hoverPopover: unknown } | HTMLElement = host) {
+export function renderFacts(plugin: UniverseViewPlugin, host: HTMLElement, key: string | undefined, hoverParent: { hoverPopover: unknown } | HTMLElement = host) {
 	host.empty();
 	const idx = plugin.index;
 	const e = idx.get(key);
@@ -221,20 +221,20 @@ export function renderFacts(plugin: ChroniclePlugin, host: HTMLElement, key: str
 		return;
 	}
 	const cal = plugin.calendars.get(e.calendar);
-	const box = el("div", { cls: "chronicle-facts" }, host);
+	const box = el("div", { cls: "universeview-facts" }, host);
 	box.style.setProperty("--item-color", entityColor(plugin, e));
-	const title = el("div", { cls: "chronicle-facts-title" }, box);
+	const title = el("div", { cls: "universeview-facts-title" }, box);
 	const name = el("a", { cls: "internal-link", text: e.name }, title);
 	name.addEventListener("click", (evt) => openEntity(plugin, e.key, evt));
-	if (e.category) el("div", { cls: "chronicle-facts-kind", text: e.category.charAt(0).toUpperCase() + e.category.slice(1) }, title);
+	if (e.category) el("div", { cls: "universeview-facts-kind", text: e.category.charAt(0).toUpperCase() + e.category.slice(1) }, title);
 	const img = resourceUrl(plugin, e.image ?? e.logo);
-	if (img) el("img", { cls: "chronicle-facts-image", attr: { src: img, alt: "" } }, box);
-	const table = el("div", { cls: "chronicle-facts-rows" }, box);
+	if (img) el("img", { cls: "universeview-facts-image", attr: { src: img, alt: "" } }, box);
+	const table = el("div", { cls: "universeview-facts-rows" }, box);
 	const row = (label: string, ...values: (string | { key: string; name: string; note?: string } | undefined)[]) => {
 		const vals = values.filter((v): v is NonNullable<typeof v> => !!v);
 		if (!vals.length) return;
-		el("div", { cls: "chronicle-facts-label", text: label }, table);
-		const cell = el("div", { cls: "chronicle-facts-value" }, table);
+		el("div", { cls: "universeview-facts-label", text: label }, table);
+		const cell = el("div", { cls: "universeview-facts-value" }, table);
 		vals.forEach((v, i) => {
 			if (i) cell.append(", ");
 			if (typeof v === "string") cell.append(v);
@@ -297,5 +297,5 @@ export function renderFacts(plugin: ChroniclePlugin, host: HTMLElement, key: str
 			row("Places", String(idx.placesOnMap.get(e.key)?.size ?? 0));
 			break;
 	}
-	if (e.summary) el("div", { cls: "chronicle-facts-summary", text: e.summary }, box);
+	if (e.summary) el("div", { cls: "universeview-facts-summary", text: e.summary }, box);
 }

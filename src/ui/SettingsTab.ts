@@ -1,7 +1,7 @@
 import { pluginEnabled } from "../internals";
 import { buildLabel } from "../version";
 import { App, Component, Notice, PluginSettingTab, Setting, debounce, type SettingDefinition, type SettingDefinitionGroup, type SettingDefinitionItem, type SettingDefinitionPage } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import type { CalendarDef } from "../types";
 import { DEFAULT_FIELD_ALIASES, DEFAULT_SETTINGS, parseMapCategories, parseMappingLines } from "../settings";
@@ -36,7 +36,7 @@ import { ConfirmPrompt } from "./TextPrompt";
 
 /** The color a CSS variable currently resolves to, for the color pickers. */
 function resolveColor(key: string): string {
-	const name = key === "accent" ? "--chronicle-accent" : `--chronicle-${key}-color`;
+	const name = key === "accent" ? "--universeview-accent" : `--universeview-${key}-color`;
 	const probe = document.body.createDiv();
 	probe.style.color = `var(${name})`;
 	const rgb = getComputedStyle(probe).color;
@@ -87,7 +87,7 @@ const PAGE_DESC: Record<string, string> = {
 };
 
 /** What a page's entry shows beside its name, so the current choice is visible without opening it. */
-const PAGE_VALUES: Record<string, (p: ChroniclePlugin) => string> = {
+const PAGE_VALUES: Record<string, (p: UniverseViewPlugin) => string> = {
 	appearance: (p) => THEMES.find((t) => t.id === p.settings.theme)?.name ?? "",
 	surface: (p) => (p.settings.surfaceStyle === "tactile" ? "Tactile" : "Flat"),
 	about: (p) => buildLabel(p.manifest.version).short,
@@ -105,8 +105,8 @@ interface Section {
 	group: SettingDefinitionGroup;
 }
 
-export class ChronicleSettingTab extends PluginSettingTab {
-	constructor(app: App, private plugin: ChroniclePlugin) {
+export class UniverseViewSettingTab extends PluginSettingTab {
+	constructor(app: App, private plugin: UniverseViewPlugin) {
 		super(app, plugin);
 	}
 
@@ -163,7 +163,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 	/** Builds every row into a box off the page and sorts them into sections by heading. */
 	private collect(): { entries: Entry[]; sections: Section[] } {
-		const box = createDiv({ cls: "chronicle-settings" });
+		const box = createDiv({ cls: "universeview-settings" });
 		this.build(box);
 		const entries: Entry[] = [];
 		const sections: Section[] = [];
@@ -173,7 +173,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const text = (e: Element | null | undefined) => {
 			if (!e) return "";
 			const copy = e.cloneNode(true) as HTMLElement;
-			copy.querySelectorAll(".chronicle-help").forEach((x) => x.remove());
+			copy.querySelectorAll(".universeview-help").forEach((x) => x.remove());
 			return (copy.textContent ?? "").trim();
 		};
 		const section = (heading: string, help?: string) => {
@@ -181,12 +181,12 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			last = undefined;
 			sections.push({
 				heading,
-				group: { type: "group", heading: heading || undefined, cls: "chronicle-settings", items, extraButtons: help ? [(b) => b.setIcon("info").setTooltip(help)] : undefined, visible: heading === "Tactile style" ? () => this.plugin.settings.surfaceStyle === "tactile" : undefined },
+				group: { type: "group", heading: heading || undefined, cls: "universeview-settings", items, extraButtons: help ? [(b) => b.setIcon("info").setTooltip(help)] : undefined, visible: heading === "Tactile style" ? () => this.plugin.settings.surfaceStyle === "tactile" : undefined },
 			});
 		};
 		for (const child of Array.from(box.children) as HTMLElement[]) {
 			if (child.hasClass("setting-item-heading")) {
-				section(text(child.querySelector(".setting-item-name")), child.querySelector<HTMLElement>(".chronicle-help")?.dataset.help);
+				section(text(child.querySelector(".setting-item-name")), child.querySelector<HTMLElement>(".universeview-help")?.dataset.help);
 				continue;
 			}
 			if (!items) section("");
@@ -300,7 +300,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 	/** One page of settings, drawn straight into the dashboard. */
 	renderPage(id: string, host: HTMLElement) {
-		const box = el("div", { cls: "chronicle-settings" }, host);
+		const box = el("div", { cls: "universeview-settings" }, host);
 		this.build(box);
 		let page = PAGES[0].id;
 		let hidden = false;
@@ -351,7 +351,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Tag prefix")
-			.setDesc("Only match nested tags, e.g. “chronicle” matches #chronicle/person.")
+			.setDesc("Only match nested tags, e.g. “world” matches #world/person.")
 			.addText((t) => t.setPlaceholder("None").setValue(s.tagPrefix).onChange(async (v) => {
 				s.tagPrefix = v.trim();
 				await this.save();
@@ -411,7 +411,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			for (const type of ENTITY_TYPES) {
 				const wrap = el("label", { cls: "uv-mini-field" }, olderRow.controlEl);
 				el("span", { text: TYPE_LABELS[type] }, wrap);
-				const input = el("input", { cls: "chronicle-tag-input", attr: { type: "text", placeholder: type } }, wrap);
+				const input = el("input", { cls: "universeview-tag-input", attr: { type: "text", placeholder: type } }, wrap);
 				input.value = s.typeTags[type];
 				input.addEventListener("change", () => void (async () => {
 					if (!input.value.trim()) return;
@@ -574,10 +574,10 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 		// ---- Relationships ------------------------------------------------------------------
 		new Setting(containerEl).setName("Relationships").setHeading();
-		const kinds = el("details", { cls: "chronicle-relkinds" }, containerEl);
+		const kinds = el("details", { cls: "universeview-relkinds" }, containerEl);
 		el("summary", { text: "The relationship properties UniverseView understands" }, kinds);
 		el("p", { cls: "setting-item-description", text: "Write a list of links under any of these in a person's or group's properties, e.g. `allies: [[House Vane]]`. Add dates with `- { name: [[House Vane]], from: SE 12, to: SE 40 }`. Writing one side is enough: the other note shows the inverse (vassals ↔ liege, mentors ↔ students). Other spellings in brackets work too; any other property name becomes a relationship of that name." }, kinds);
-		const table = el("table", { cls: "chronicle-relkinds-table" }, kinds);
+		const table = el("table", { cls: "universeview-relkinds-table" }, kinds);
 		const head = el("tr", {}, el("thead", {}, table));
 		for (const h of ["Property", "For", "Meaning", "Seen from the other side", "Also accepted"]) el("th", { text: h }, head);
 		const body = el("tbody", {}, table);
@@ -587,7 +587,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			el("td", { text: k.on.map((o) => (o === "person" ? "people" : "groups")).join(", ") }, tr);
 			el("td", { text: k.desc }, tr);
 			el("td", { text: relLabel(k.key, true) }, tr);
-			el("td", { cls: "chronicle-dash-muted", text: k.aliases.join(", ") }, tr);
+			el("td", { cls: "universeview-dash-muted", text: k.aliases.join(", ") }, tr);
 		}
 		new Setting(containerEl)
 			.setName("Ready-to-fill relationships on new notes")
@@ -656,7 +656,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 			.setName("World settings")
 			.setDesc("Each world (top-level folder) can have its own calendar, today's date, main map, travel speeds, succession and default relationships.")
 			.addButton((b) => b.setButtonText("Edit a world…").onClick(() => this.plugin.pickWorld("Settings for which world?", (w) => this.plugin.editWorld(w ?? ""))));
-		const calBox = el("div", { cls: "chronicle-calendars" }, containerEl);
+		const calBox = el("div", { cls: "universeview-calendars" }, containerEl);
 		s.calendars.forEach((c, i) => this.calendarEditor(calBox, c, i));
 		let preset = CALENDAR_PRESETS[0].id;
 		new Setting(containerEl)
@@ -973,8 +973,8 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		}, { blank: () => ({ word: "", rank: "4" }), addLabel: "Add a tier word" });
 
 		// How each tier is drawn on the map.
-		const styles = el("div", { cls: "chronicle-settings-rows" }, containerEl);
-		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from its kind and tags like #Place_Realm, #Place_Province or #Place_Size_Small.").settingEl.addClass("chronicle-settings-rows-head");
+		const styles = el("div", { cls: "universeview-settings-rows" }, containerEl);
+		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from its kind and tags like #Place_Realm, #Place_Province or #Place_Size_Small.").settingEl.addClass("universeview-settings-rows-head");
 		const saveStyles = debounce(async () => {
 			await this.save(false);
 			this.plugin.restyleTerritories?.();
@@ -997,8 +997,8 @@ export class ChronicleSettingTab extends PluginSettingTab {
 
 	/** A heading, a line of help, and rows with proper controls in place of a block of text. */
 	private rows<T extends Record<string, unknown>>(parent: HTMLElement, name: string, desc: string, fields: Field<T>[], initial: T[], onChange: (rows: T[]) => void | Promise<void>, opts: RowEditorOptions<T>): HTMLElement {
-		const box = el("div", { cls: "chronicle-settings-rows" }, parent);
-		new Setting(box).setName(name).setDesc(desc).settingEl.addClass("chronicle-settings-rows-head");
+		const box = el("div", { cls: "universeview-settings-rows" }, parent);
+		new Setting(box).setName(name).setDesc(desc).settingEl.addClass("universeview-settings-rows-head");
 		rowEditor(this.app, box, fields, initial, (rows) => void onChange(rows), opts);
 		return box;
 	}
@@ -1028,15 +1028,15 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		const colors = new Setting(containerEl)
 			.setName("Colors")
 			.setDesc("Override the theme's accent and type colors. Clear one to go back to the theme's.");
-		colors.settingEl.addClass("chronicle-color-setting");
+		colors.settingEl.addClass("universeview-color-setting");
 		const swatches: [keyof typeof s.colors, string][] = [["accent", "Accent"], ["event", "Events"], ["person", "People"], ["culture", "Cultures"], ["place", "Places"]];
-		const row = el("div", { cls: "chronicle-color-row" }, colors.controlEl);
+		const row = el("div", { cls: "universeview-color-row" }, colors.controlEl);
 		for (const [key, label] of swatches) {
-			const wrap = el("label", { cls: "chronicle-color-pick" + (s.colors[key] ? " is-set" : "") }, row);
+			const wrap = el("label", { cls: "universeview-color-pick" + (s.colors[key] ? " is-set" : "") }, row);
 			const input = el("input", { attr: { type: "color", "aria-label": label } }, wrap);
 			input.value = s.colors[key] || resolveColor(key);
 			el("span", { text: label }, wrap);
-			const clear = el("span", { cls: "chronicle-color-clear", title: "Use the theme's color" }, wrap);
+			const clear = el("span", { cls: "universeview-color-clear", title: "Use the theme's color" }, wrap);
 			icon(clear, "x");
 			input.addEventListener("input", () => void (async () => {
 				s.colors[key] = input.value;
@@ -1268,7 +1268,7 @@ export class ChronicleSettingTab extends PluginSettingTab {
 		// Fonts: any font installed on your computer, or one of the suggestions; empty keeps the theme's.
 		const fontsHead = new Setting(containerEl).setName("Fonts").setHeading();
 		helpTip(fontsHead.nameEl, "Type a font's name (any font installed on your computer) or pick a suggestion. Leave it empty to use the UniverseView theme's font, or Obsidian's.");
-		const fontList = "chronicle-font-suggestions";
+		const fontList = "universeview-font-suggestions";
 		if (!document.getElementById(fontList)) {
 			const dl = document.body.createEl("datalist", { attr: { id: fontList } });
 			for (const f of ["Cinzel", "Garamond", "EB Garamond", "Palatino Linotype", "Book Antiqua", "Georgia", "Libre Baskerville", "Cormorant Garamond", "Merriweather", "Inter", "Segoe UI", "Roboto", "Open Sans", "Lato", "Trebuchet MS", "Verdana", "Consolas", "Cascadia Code", "Orbitron", "Uncial Antiqua", "MedievalSharp", "IM Fell English"]) dl.createEl("option", { attr: { value: f } });
@@ -1503,12 +1503,12 @@ export class ChronicleSettingTab extends PluginSettingTab {
 	/** A calendar as a card: what it's like at a glance, and buttons to edit, copy or delete it. */
 	private calendarEditor(parent: HTMLElement, c: CalendarDef, index: number) {
 		const s = this.plugin.settings;
-		const card = el("div", { cls: "chronicle-calendar-card" }, parent);
-		const head = el("div", { cls: "chronicle-calendar-head" }, card);
+		const card = el("div", { cls: "universeview-calendar-card" }, parent);
+		const head = el("div", { cls: "universeview-calendar-head" }, card);
 		icon(el("span", {}, head), "calendar-days");
 		el("strong", { text: c.name }, head);
 		el("code", { text: c.id }, head);
-		const preview = el("div", { cls: "chronicle-calendar-preview" }, card);
+		const preview = el("div", { cls: "universeview-calendar-preview" }, card);
 		try {
 			const cal = new CustomCalendar(c);
 			const y = c.eras[0]?.startYear ?? 1;

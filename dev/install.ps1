@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot)
 # A Node.js that isn't on the PATH can be named in UV_NODE_BIN (the folder holding node.exe).
 if ($env:UV_NODE_BIN) { $env:PATH = $env:UV_NODE_BIN + ";" + $env:PATH }
-elseif (Test-Path "$env:USERPROFILE\.chronicle-node\package\bin") { $env:PATH = "$env:USERPROFILE\.chronicle-node\package\bin;" + $env:PATH }
+elseif (Test-Path "$env:USERPROFILE\.universeview-node\package\bin") { $env:PATH = "$env:USERPROFILE\.universeview-node\package\bin;" + $env:PATH }
 $enc = New-Object System.Text.UTF8Encoding($false)
 if ($Version) {
 	# package.json's own version (the first "version", never the script of that name)…

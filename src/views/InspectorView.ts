@@ -1,6 +1,6 @@
 import { ItemView, Menu, Notice, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { QuickCreator } from "../ui/QuickCreator";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el, entityColor, helpTip, icon, tuckDescriptions, TYPE_ICONS } from "../render/common";
 import type { Entity, EntityType } from "../types";
 import { chainOf, holdingsOf } from "../index/realms";
@@ -35,7 +35,7 @@ export class InspectorView extends ItemView {
 	/** Making a new note here, rather than showing one. */
 	private creator?: QuickCreator;
 
-	constructor(leaf: WorkspaceLeaf, private plugin: ChroniclePlugin) {
+	constructor(leaf: WorkspaceLeaf, private plugin: UniverseViewPlugin) {
 		super(leaf);
 		// The tab notes open on (Settings → Look & cards → Inspector).
 		this.tab = (plugin.settings.inspectorDefaultTab as InspectorTab | undefined) ?? "about";
@@ -66,9 +66,9 @@ export class InspectorView extends ItemView {
 
 	async onOpen() {
 		this.contentEl.empty();
-		this.contentEl.addClass("chronicle-inspector", "chronicle-scope");
-		this.headEl = el("div", { cls: "chronicle-insp-head" }, this.contentEl);
-		this.bodyEl = el("div", { cls: "chronicle-insp-body" }, this.contentEl);
+		this.contentEl.addClass("universeview-inspector", "universeview-scope");
+		this.headEl = el("div", { cls: "universeview-insp-head" }, this.contentEl);
+		this.bodyEl = el("div", { cls: "universeview-insp-body" }, this.contentEl);
 		this.registerEvent(this.app.workspace.on("file-open", (f: TFile | null) => f && this.follow(f.path)));
 		this.registerEvent(this.plugin.index.on("changed", () => this.onIndexChanged()));
 		const active = this.app.workspace.getActiveFile();
@@ -91,7 +91,7 @@ export class InspectorView extends ItemView {
 		const p = this.plugin;
 		const id = (h: Element) => (h.textContent ?? "").replace(/\(\d+\)|\?/g, "").trim();
 		const folded = new Set(p.settings.inspectorCollapsed ?? []);
-		for (const head of Array.from(this.bodyEl.querySelectorAll<HTMLElement>(".chronicle-insp-section > .chronicle-insp-section-head, .chronicle-ep-section > .chronicle-ep-section-head"))) {
+		for (const head of Array.from(this.bodyEl.querySelectorAll<HTMLElement>(".universeview-insp-section > .universeview-insp-section-head, .universeview-ep-section > .universeview-ep-section-head"))) {
 			const section = head.parentElement!;
 			const key = id(head);
 			if (!key) continue;
@@ -101,7 +101,7 @@ export class InspectorView extends ItemView {
 			icon(chev, "chevron-down");
 			head.addEventListener("click", (evt) => {
 				// The help mark and any buttons in the heading keep their own clicks.
-				if ((evt.target as Element).closest(".chronicle-help, button, a, [role=button]:not(.chronicle-insp-section-head)")) return;
+				if ((evt.target as Element).closest(".universeview-help, button, a, [role=button]:not(.universeview-insp-section-head)")) return;
 				const now = !section.hasClass("is-folded");
 				section.toggleClass("is-folded", now);
 				const list = new Set(p.settings.inspectorCollapsed ?? []);
@@ -211,10 +211,10 @@ export class InspectorView extends ItemView {
 		body.empty();
 		const e = this.key ? this.plugin.index.get(this.key) : undefined;
 		// Find any note, right here.
-		const find = el("div", { cls: "chronicle-insp-find" }, head);
+		const find = el("div", { cls: "universeview-insp-find" }, head);
 		const input = el("input", { attr: { type: "search", placeholder: e ? `Inspecting ${e.name}… (type to switch)` : "Find a note to inspect…" } }, find);
 		new EntityInputSuggest(this.app, input, this.plugin, undefined, (x) => this.show(x.key));
-		const lock = el("button", { cls: "clickable-icon chronicle-insp-lock" + (this.locked ? " is-active" : ""), attr: { "aria-label": this.locked ? "Locked to this note: click to follow the open note again" : "Follows the note you open: click to keep this one" } }, find);
+		const lock = el("button", { cls: "clickable-icon universeview-insp-lock" + (this.locked ? " is-active" : ""), attr: { "aria-label": this.locked ? "Locked to this note: click to follow the open note again" : "Follows the note you open: click to keep this one" } }, find);
 		icon(lock, this.locked ? "lock" : "lock-open");
 		lock.addEventListener("click", () => {
 			this.locked = !this.locked;
@@ -233,8 +233,8 @@ export class InspectorView extends ItemView {
 			return this.creator.mount(body);
 		}
 		if (!e) {
-			const empty = el("div", { cls: "chronicle-insp-empty" }, body);
-			icon(el("div", { cls: "chronicle-insp-empty-icon" }, empty), "panel-right");
+			const empty = el("div", { cls: "universeview-insp-empty" }, body);
+			icon(el("div", { cls: "universeview-insp-empty-icon" }, empty), "panel-right");
 			el("div", { text: "Open or pick a person, place, event or group in any view, and it shows here to read and edit." }, empty);
 			return;
 		}
@@ -242,7 +242,7 @@ export class InspectorView extends ItemView {
 		const strip = this.plugin.settings.inspectorHeader !== false;
 		this.contentEl.toggleClass("has-id", strip);
 		if (strip) identityHeader(this.plugin, head, e, (k) => this.show(k));
-		const tabs = el("div", { cls: "chronicle-insp-tabs" }, head);
+		const tabs = el("div", { cls: "universeview-insp-tabs" }, head);
 		// Reading, editing (named for what the note is), then whichever of timeline, map, links and the note's own reading it has.
 		if (this.tab === "realm") this.tab = "edit";
 		const hidden = new Set(this.plugin.settings.inspectorHiddenTabs ?? []);
@@ -250,7 +250,7 @@ export class InspectorView extends ItemView {
 		if (!have.includes(this.tab)) this.tab = "about";
 		const tabList: [InspectorTab, string, string][] = have.map((id) => (id === "edit" ? [id, this.editLabel(e), "pencil"] : id === "about" ? [id, "About", TYPE_ICONS[e.type]] : [id, TAB_INFO[id][0], TAB_INFO[id][1]]));
 		for (const [id, label, ic] of tabList) {
-			const b = el("button", { cls: "chronicle-insp-tab" + (this.tab === id ? " is-active" : ""), attr: { "aria-label": label } }, tabs);
+			const b = el("button", { cls: "universeview-insp-tab" + (this.tab === id ? " is-active" : ""), attr: { "aria-label": label } }, tabs);
 			icon(el("span", {}, b), ic);
 			el("span", { text: label }, b);
 			b.addEventListener("click", () => {
@@ -286,16 +286,16 @@ export class InspectorView extends ItemView {
 		}
 		// Realm and map first (they save as you change them), then the note's own fields with a save bar.
 		this.renderRealm(body, e);
-		const details = el("section", { cls: "chronicle-insp-section" }, body);
-		const dh = el("div", { cls: "chronicle-insp-section-head" }, details);
+		const details = el("section", { cls: "universeview-insp-section" }, body);
+		const dh = el("div", { cls: "universeview-insp-section-head" }, details);
 		icon(el("span", {}, dh), "pencil");
 		el("span", { text: "Details" }, dh);
 		helpTip(dh, "The note's own properties, in layers: the basics first, then dates, family and relationships. Like everything in this panel, changes save themselves (a moment after you stop typing, or when you leave the field), and Undo takes them back.");
-		const form = el("div", { cls: "chronicle-insp-form" }, details);
+		const form = el("div", { cls: "universeview-insp-form" }, details);
 		this.renderRemove(body, e);
 		// One line saying where the edits stand, with Undo: no Save button to forget.
-		const bar = el("div", { cls: "chronicle-insp-savebar is-auto" }, body);
-		const status = el("span", { cls: "chronicle-insp-status", text: "Changes save as you make them" }, bar);
+		const bar = el("div", { cls: "universeview-insp-savebar is-auto" }, body);
+		const status = el("span", { cls: "universeview-insp-status", text: "Changes save as you make them" }, bar);
 		const undo = el("button", { cls: "is-hidden", text: "Undo" }, bar);
 		undo.addEventListener("click", () => void this.plugin.undo());
 		// Blank properties a template left behind: one click clears them (and Undo brings them back).
@@ -312,7 +312,7 @@ export class InspectorView extends ItemView {
 			void this.plugin.redo();
 			redo.addClass("is-hidden");
 		});
-		this.registerEvent(this.app.workspace.on("chronicle:history-changed" as "quit", () => redo.toggleClass("is-hidden", !this.plugin.redoLabel)));
+		this.registerEvent(this.app.workspace.on("universeview:history-changed" as "quit", () => redo.toggleClass("is-hidden", !this.plugin.redoLabel)));
 		let timer = 0;
 		const flush = async () => {
 			window.clearTimeout(timer);
@@ -363,12 +363,12 @@ export class InspectorView extends ItemView {
 		const p = this.plugin;
 		const file = this.app.vault.getAbstractFileByPath(e.key);
 		if (!(file instanceof TFile)) return;
-		const s = el("section", { cls: "chronicle-insp-section chronicle-insp-danger" }, body);
-		const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+		const s = el("section", { cls: "universeview-insp-section universeview-insp-danger" }, body);
+		const h = el("div", { cls: "universeview-insp-section-head" }, s);
 		icon(el("span", {}, h), "trash-2");
 		el("span", { text: "Remove" }, h);
 		helpTip(h, "Remove from the map takes away its pin or painted areas but keeps the note and everything in it; Undo (Ctrl+Alt+Z) brings them back.\n\nDelete note moves the note itself to Obsidian's trash (as set in Settings → Files and links). Links to it from other notes stay, as unresolved links.");
-		const row = el("div", { cls: "chronicle-insp-actions" }, s);
+		const row = el("div", { cls: "universeview-insp-actions" }, s);
 		const pinKeys = ["position", "map-position", "pos", "xy", "coordinates", "coords", "latlng", "lat-lng", "custom_coordinates", "custom_coordinates_x", "custom_coordinates_y", "custom_coordinates_map", "coordinates_lat", "coordinates_long"];
 		const hasPin = !!(e.position || e.coords);
 		const areas = e.territories.length;
@@ -412,8 +412,8 @@ export class InspectorView extends ItemView {
 		const p = this.plugin;
 		const file = this.app.vault.getAbstractFileByPath(e.key);
 		if (!(file instanceof TFile)) return;
-		const s = el("section", { cls: "chronicle-insp-section" }, body);
-		const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+		const s = el("section", { cls: "universeview-insp-section" }, body);
+		const h = el("div", { cls: "universeview-insp-section-head" }, s);
 		icon(el("span", {}, h), o.icon);
 		el("span", { text: o.title }, h);
 		helpTip(h, o.help);
@@ -479,17 +479,17 @@ export class InspectorView extends ItemView {
 		if (!battle && !war && !e.sides?.length) return;
 		this.renderRows(body, e, { title: "Sides", icon: "swords", field: "sides", add: "Add a party", help: "Who fought, on which side, and how it ended for them. Parties with the same side fought together (A and B, or names like the Crown and the Rebels). Outcome: won, lost or draw. The map colours a battle's crossed swords by the winner; a war's winner is its own, or whoever won most of its battles. Written as `sides:` (or the short `victor:` and `defeated:`).", cols: [{ key: "party", ph: "Who", link: ["culture", "person", "place"] }, { key: "side", ph: "Side (A, B…)" }, { key: "outcome", ph: "Won, lost…" }] });
 		const parent = battle && !e.sides ? warOf(idx, e) : undefined;
-		if (parent?.sides) el("p", { cls: "chronicle-dash-muted", text: `Fought by the sides of ${parent.name}. Add parties only where this battle differs.` }, body);
+		if (parent?.sides) el("p", { cls: "universeview-dash-muted", text: `Fought by the sides of ${parent.name}. Add parties only where this battle differs.` }, body);
 		const file = this.app.vault.getAbstractFileByPath(e.key);
 		if (!(file instanceof TFile)) return;
-		const s = el("section", { cls: "chronicle-insp-section" }, body);
-		const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+		const s = el("section", { cls: "universeview-insp-section" }, body);
+		const h = el("div", { cls: "universeview-insp-section-head" }, s);
 		icon(el("span", {}, h), battle ? "flag" : "list-ordered");
 		el("span", { text: battle ? "Part of a war" : "Battles" }, h);
 		if (battle) {
 			helpTip(h, "The war or campaign this battle was fought in. The map joins a war's battles in the order fought, and the war's page lists them with each side's wins. Written as `war:`.");
-			const row = el("div", { cls: "chronicle-insp-pick" }, s);
-			el("span", { cls: "chronicle-insp-pick-label", text: "War" }, row);
+			const row = el("div", { cls: "universeview-insp-pick" }, s);
+			el("span", { cls: "universeview-insp-pick-label", text: "War" }, row);
 			const input = el("input", { attr: { type: "text", placeholder: "None (type to choose)" } }, row);
 			input.value = warOf(idx, e)?.name ?? "";
 			const put = (name: string | null) =>
@@ -512,7 +512,7 @@ export class InspectorView extends ItemView {
 		helpTip(h, "The battles that name this war as theirs (their `war:`), in the order fought, and how each party fared across them.");
 		const battles = battlesOf(idx, e);
 		if (!battles.length) {
-			el("div", { cls: "chronicle-insp-empty", text: "No battles name this war yet. On a battle, choose it under Part of a war." }, s);
+			el("div", { cls: "universeview-insp-empty", text: "No battles name this war yet. On a battle, choose it under Part of a war." }, s);
 			return;
 		}
 		const list = el("div", { cls: "uv-war-battles" }, s);
@@ -543,8 +543,8 @@ export class InspectorView extends ItemView {
 		const p = this.plugin;
 		const file = this.app.vault.getAbstractFileByPath(e.key);
 		if (!(file instanceof TFile)) return;
-		const s = el("section", { cls: "chronicle-insp-section" }, body);
-		const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+		const s = el("section", { cls: "universeview-insp-section" }, body);
+		const h = el("div", { cls: "universeview-insp-section-head" }, s);
 		icon(el("span", {}, h), "history");
 		el("span", { text: "Names over time" }, h);
 		helpTip(h, "Earlier or later names, each with when it applied. The map shows the name for the time slider's date, and the timeline and lineage show each renaming. Leave a date empty for open-ended. Written as `names:`.");
@@ -595,14 +595,14 @@ export class InspectorView extends ItemView {
 	/** What kind of land it is, asked the standard way, with the tags that says written on Apply. */
 	private renderLand(body: HTMLElement, e: Entity) {
 		const p = this.plugin;
-		const s = el("section", { cls: "chronicle-insp-section" }, body);
-		const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+		const s = el("section", { cls: "universeview-insp-section" }, body);
+		const h = el("div", { cls: "universeview-insp-section-head" }, s);
 		icon(el("span", {}, h), "shapes");
 		el("span", { text: "What it is" }, h);
 		helpTip(h, "Ruled land is a title: a kingdom, a duchy, a county or a city, held by someone and answering to the title above. Geography is a region: a continent, a sub-continent, an island or a forest. Nobody rules it and it's never anyone's liege, so a kingdom lying in a sub-continent stays sovereign.\n\nApply writes the standard tags (#Title #Province #Region_Small, or #Region #Region_Enormous) and keeps the rest, like #Nation_United_States.");
 		const choice = readChoice(p, e);
 		const before = e.tags.map((t) => t.replace(/^#/, ""));
-		const row = el("div", { cls: "chronicle-insp-actions" }, s);
+		const row = el("div", { cls: "universeview-insp-actions" }, s);
 		const apply = el("button", { cls: "mod-cta", text: "Apply" }, row);
 		apply.disabled = true;
 		standardFields(s, choice, () => (apply.disabled = false), { kinds: false });
@@ -625,15 +625,15 @@ export class InspectorView extends ItemView {
 		const node = tree.nodes.get(e.key);
 		// Explanations sit behind a "?" by each heading.
 		const section = (title: string, ic: string, help?: string) => {
-			const s = el("section", { cls: "chronicle-insp-section" }, body);
-			const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+			const s = el("section", { cls: "universeview-insp-section" }, body);
+			const h = el("div", { cls: "universeview-insp-section-head" }, s);
 			icon(el("span", {}, h), ic);
 			el("span", { text: title }, h);
 			if (help) helpTip(h, help);
 			return s;
 		};
 		// Linked titles as the same chips the About tab uses.
-		const chips = (parent: HTMLElement) => el("div", { cls: "chronicle-ep chronicle-ep-people" }, parent);
+		const chips = (parent: HTMLElement) => el("div", { cls: "universeview-ep universeview-ep-people" }, parent);
 		const link = (parent: HTMLElement, key: string, extra?: string) => noteChip(p, parent, { key, name: idx.get(key)?.name ?? key }, { pick: (k) => this.show(k), host: this.contentEl }, extra);
 		const write = (label: string, fn: (fm: Record<string, unknown>) => void) => {
 			const file = this.app.vault.getAbstractFileByPath(e.key);
@@ -641,8 +641,8 @@ export class InspectorView extends ItemView {
 		};
 		// A field with a picker: shows the current link, type to change it, × to clear it.
 		const picker = (parent: HTMLElement, label: string, current: string | undefined, types: EntityType[], put: (name: string | null) => void) => {
-			const row = el("div", { cls: "chronicle-insp-pick" }, parent);
-			el("span", { cls: "chronicle-insp-pick-label", text: label }, row);
+			const row = el("div", { cls: "universeview-insp-pick" }, parent);
+			el("span", { cls: "universeview-insp-pick-label", text: label }, row);
 			const input = el("input", { attr: { type: "text", placeholder: "None (type to choose)" } }, row);
 			input.value = current ?? "";
 			new EntityInputSuggest(this.app, input, p, types, (x) => put(x.name));
@@ -704,8 +704,8 @@ export class InspectorView extends ItemView {
 			);
 			// Who it answers to in the end, when that's someone other than its holder.
 			if (node.ruler && node.ruler.key !== node.holder?.key) {
-				const row = el("div", { cls: "chronicle-insp-pick" }, s);
-				el("span", { cls: "chronicle-insp-pick-label", text: "Ruler" }, row);
+				const row = el("div", { cls: "universeview-insp-pick" }, s);
+				el("span", { cls: "universeview-insp-pick-label", text: "Ruler" }, row);
 				const c = chips(row);
 				noteChip(p, c, node.ruler, { pick: (k) => this.show(k), host: this.contentEl }, "from the realm above");
 			}
@@ -728,7 +728,7 @@ export class InspectorView extends ItemView {
 			const m = section("On the map", "map-pin", "Kind sets the pin's colour and icon (from `kind:` or a tag like #City).\n\nPin size and layer say how big it is and how far in you must zoom before it shows; Automatic takes them from its kind, or from its tier as a title.");
 			placeStyleFields(m, p, e);
 		}
-		const actions = el("div", { cls: "chronicle-insp-actions" }, body);
+		const actions = el("div", { cls: "universeview-insp-actions" }, body);
 		const action = (ic: string, label: string, run: () => void) => {
 			const b = el("button", {}, actions);
 			icon(el("span", {}, b), ic);

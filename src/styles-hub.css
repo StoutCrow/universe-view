@@ -86,7 +86,7 @@ button.uv-hub-section {
 	color: var(--text-muted);
 	cursor: pointer;
 	user-select: none;
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease), color var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--universeview-fast) var(--universeview-ease), color var(--universeview-fast) var(--universeview-ease);
 }
 button.uv-hub-section:hover {
 	color: var(--text-normal);
@@ -134,11 +134,11 @@ button.uv-hub-section.is-moving {
 	cursor: col-resize;
 	touch-action: none;
 	border-left: 1px solid var(--uv-hub-line);
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--universeview-fast) var(--universeview-ease);
 }
 .uv-hub-grip:hover,
 .uv-hub.is-resizing .uv-hub-grip {
-	background: color-mix(in srgb, var(--chronicle-accent) 30%, transparent);
+	background: color-mix(in srgb, var(--universeview-accent) 30%, transparent);
 }
 
 /* ---- Small tabs ---- */
@@ -181,14 +181,14 @@ button.uv-hub-tab {
 	font-weight: 500;
 	color: var(--text-muted);
 	cursor: pointer;
-	transition: color var(--chronicle-fast) var(--chronicle-ease), border-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: color var(--universeview-fast) var(--universeview-ease), border-color var(--universeview-fast) var(--universeview-ease);
 }
 button.uv-hub-tab:hover {
 	color: var(--text-normal);
 	background: transparent;
 }
 button.uv-hub-tab.is-active {
-	border-bottom-color: var(--chronicle-accent);
+	border-bottom-color: var(--universeview-accent);
 	font-weight: 600;
 	color: var(--text-normal);
 }
@@ -295,7 +295,7 @@ button.uv-hub-action {
 	white-space: normal;
 	color: var(--text-normal);
 	cursor: pointer;
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--universeview-fast) var(--universeview-ease);
 }
 button.uv-hub-action:hover {
 	background: var(--background-modifier-hover);
@@ -316,10 +316,10 @@ button.uv-hub-action:hover {
 }
 
 /* The dashboard's own tabs do what Overview's tiles do. */
-.uv-hub .chronicle-ov-tiles {
+.uv-hub .universeview-ov-tiles {
 	display: none;
 }
-button.chronicle-ov-tile .chronicle-ov-tile-icon {
+button.universeview-ov-tile .universeview-ov-tile-icon {
 	justify-content: flex-start;
 	width: auto;
 	height: auto;
@@ -328,8 +328,8 @@ button.chronicle-ov-tile .chronicle-ov-tile-icon {
 }
 
 /* Pages here are ready before they're shown: no fade-in. */
-.uv-hub-pane .chronicle-view-body > *,
-.uv-files-view .chronicle-view-body > * {
+.uv-hub-pane .universeview-view-body > *,
+.uv-files-view .universeview-view-body > * {
 	animation: none;
 }
 
@@ -381,7 +381,7 @@ button.chronicle-ov-tile .chronicle-ov-tile-icon {
 }
 
 /* ---- The inspector, in the dashboard's style: hairline sections, plain headings ---- */
-.chronicle-ep .chronicle-ep-section {
+.universeview-ep .universeview-ep-section {
 	margin-top: 6px;
 	padding: 10px 0 4px;
 	border: none;
@@ -390,25 +390,25 @@ button.chronicle-ov-tile .chronicle-ov-tile-icon {
 	background: none;
 	box-shadow: none;
 }
-.chronicle-ep .chronicle-ep-tile {
+.universeview-ep .universeview-ep-tile {
 	border: none;
 	background: none;
 	box-shadow: none;
 }
-.chronicle-ep-tile-icon {
+.universeview-ep-tile-icon {
 	color: var(--text-muted);
 }
-.chronicle-ep-facts {
+.universeview-ep-facts {
 	display: grid;
 	grid-template-columns: max-content minmax(0, 1fr);
 	gap: 4px 12px;
 	margin: 6px 0 0;
 	font-size: var(--font-ui-small);
 }
-.chronicle-ep-facts dt {
+.universeview-ep-facts dt {
 	color: var(--text-muted);
 }
-.chronicle-ep-facts dd {
+.universeview-ep-facts dd {
 	margin: 0;
 	overflow-wrap: anywhere;
 }
@@ -488,10 +488,10 @@ button.uv-painter-row.is-active {
 .is-arranging > [data-card] {
 	animation: none;
 }
-.is-arranging > .chronicle-ov-actions {
+.is-arranging > .universeview-ov-actions {
 	padding-right: 76px;
 }
-.is-arranging .chronicle-ov-more {
+.is-arranging .universeview-ov-more {
 	display: none;
 }
 .uv-cards-bar {
@@ -560,7 +560,7 @@ button.uv-cards-hidden {
 	cursor: nwse-resize;
 	touch-action: none;
 	opacity: 0;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
 [data-card]:hover > .uv-card-corner,
 .is-arranging .uv-card-corner {
@@ -568,7 +568,7 @@ button.uv-cards-hidden {
 }
 
 /* ---- The files panel in Obsidian's sidebar ---- */
-.uv-files-view .chronicle-toolbar {
+.uv-files-view .universeview-toolbar {
 	flex-wrap: wrap;
 	gap: 2px;
 	padding: 4px 6px;
@@ -580,10 +580,10 @@ button.uv-cards-hidden {
 	flex-direction: column;
 	padding: 4px 6px 0;
 }
-.uv-files .chronicle-search {
+.uv-files .universeview-search {
 	width: 100%;
 }
-.uv-files .chronicle-dash-list {
+.uv-files .universeview-dash-list {
 	padding: 4px 0 12px;
 }
 

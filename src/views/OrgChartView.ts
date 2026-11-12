@@ -2,14 +2,14 @@ import type { ViewStateResult } from "obsidian";
 import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { DEFAULT_ORG_OPTIONS, OrgChartRenderer, OrgOptions, type OrgMode } from "../render/orgchart";
 import { dropdown, iconButton } from "../render/common";
-import { ChronicleView, TimeSlider } from "./base";
+import { UniverseViewBase, TimeSlider } from "./base";
 import { VIEW_HOUSES } from "./HousesView";
 
 export const VIEW_ORG = "chronicle-orgchart";
 
 const MODES: [OrgMode, string][] = [["realms", "Realms"], ["dynasties", "Dynasties"], ["orgs", "Organisations"]];
 
-export class OrgChartView extends ChronicleView {
+export class OrgChartView extends UniverseViewBase {
 	protected exportable = true;
 	private options: OrgOptions = { ...DEFAULT_ORG_OPTIONS };
 	private renderer?: OrgChartRenderer;

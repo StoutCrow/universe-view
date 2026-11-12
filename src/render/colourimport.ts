@@ -1,5 +1,5 @@
 import { Modal, Notice } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { el, entityColor } from "./common";
 import { hex, type ColourArea } from "./colours";
@@ -14,7 +14,7 @@ export class ColourImportModal extends Modal {
 	private picks: (Entity | undefined)[];
 	private replace = true;
 
-	constructor(private plugin: ChroniclePlugin, private areas: ColourArea[], private onImport: (rows: { e: Entity; area: ColourArea }[], replace: boolean) => Promise<void>, world?: string) {
+	constructor(private plugin: UniverseViewPlugin, private areas: ColourArea[], private onImport: (rows: { e: Entity; area: ColourArea }[], replace: boolean) => Promise<void>, world?: string) {
 		super(plugin.app);
 		// Only lands of this map's world, and not families (a house's colour isn't its land).
 		const tree = plugin.realms();
@@ -43,11 +43,11 @@ export class ColourImportModal extends Modal {
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-cimport");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal", "uv-cimport");
 		this.titleEl.setText("Import borders from the map's colours");
 		const { contentEl } = this;
-		el("p", { cls: "chronicle-dash-muted", text: `${this.areas.length} flat colours found. Each is matched to the realm or place whose colour is nearest; pick a different one, or leave a colour empty to skip it (the sea, say). Each imported colour becomes that note's area on this map, islands and all.` }, contentEl);
+		el("p", { cls: "universeview-dash-muted", text: `${this.areas.length} flat colours found. Each is matched to the realm or place whose colour is nearest; pick a different one, or leave a colour empty to skip it (the sea, say). Each imported colour becomes that note's area on this map, islands and all.` }, contentEl);
 		const list = el("div", { cls: "uv-cimport-list" }, contentEl);
 		this.areas.forEach((a, i) => {
 			const row = el("div", { cls: "uv-cimport-row" }, list);

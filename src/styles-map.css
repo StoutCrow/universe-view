@@ -1,53 +1,53 @@
 /* Map: realm tiers, legend, territory looks, picking and editing */
 
 /* ---- Map tiers ---- */
-.chronicle-territory {
-	transition: opacity var(--chronicle-tier-fade, 300ms) ease, fill-opacity var(--chronicle-tier-fade, 300ms) ease, stroke-width var(--chronicle-tier-fade, 300ms) ease, stroke-opacity var(--chronicle-tier-fade, 300ms) ease;
+.universeview-territory {
+	transition: opacity var(--universeview-tier-fade, 300ms) ease, fill-opacity var(--universeview-tier-fade, 300ms) ease, stroke-width var(--universeview-tier-fade, 300ms) ease, stroke-opacity var(--universeview-tier-fade, 300ms) ease;
 }
-.chronicle-territory.is-tier-hidden {
+.universeview-territory.is-tier-hidden {
 	opacity: 0;
 	pointer-events: none;
 }
-.chronicle-territory.is-tier-merged {
+.universeview-territory.is-tier-merged {
 	fill-opacity: 0.26;
 	stroke-opacity: 0.18;
 	stroke-width: 1;
 }
-.chronicle-territory.is-tier-merged:hover {
+.universeview-territory.is-tier-merged:hover {
 	fill-opacity: 0.36;
 }
-.chronicle-territory.is-tier-outline {
+.universeview-territory.is-tier-outline {
 	fill-opacity: 0;
 	stroke-width: 3.5;
 	stroke-opacity: 0.9;
 	pointer-events: stroke;
 	cursor: zoom-out;
 }
-.chronicle-territory.is-tier-outline:hover {
+.universeview-territory.is-tier-outline:hover {
 	stroke-width: 6;
 }
-.chronicle-territory-label.is-tier-hidden:not(#uv-strong),
-.chronicle-territory-label.is-crowded:not(#uv-strong) {
+.universeview-territory-label.is-tier-hidden:not(#uv-strong),
+.universeview-territory-label.is-crowded:not(#uv-strong) {
 	opacity: 0;
 }
-.chronicle-territory-label.is-realm {
+.universeview-territory-label.is-realm {
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
 }
-.chronicle-pin-label:not(#uv-strong),
-.chronicle-territory-label:not(#uv-strong) {
-	transition: opacity var(--chronicle-label-fade, 150ms) ease;
+.universeview-pin-label:not(#uv-strong),
+.universeview-territory-label:not(#uv-strong) {
+	transition: opacity var(--universeview-label-fade, 150ms) ease;
 }
 /* Just redrawn (map.ts draw): states apply at once, nothing fades into them. */
-.chronicle-map.uv-settling .chronicle-territory:not(#uv-strong),
-.chronicle-map.uv-settling .chronicle-territory-label:not(#uv-strong),
-.chronicle-map.uv-settling .chronicle-pin-label:not(#uv-strong),
-.chronicle-map.uv-settling .uv-realm-name:not(#uv-strong),
-.chronicle-map.uv-settling .uv-terr-overlay,
-.chronicle-map.uv-settling .uv-terr-texture {
+.universeview-map.uv-settling .universeview-territory:not(#uv-strong),
+.universeview-map.uv-settling .universeview-territory-label:not(#uv-strong),
+.universeview-map.uv-settling .universeview-pin-label:not(#uv-strong),
+.universeview-map.uv-settling .uv-realm-name:not(#uv-strong),
+.universeview-map.uv-settling .uv-terr-overlay,
+.universeview-map.uv-settling .uv-terr-texture {
 	transition: none;
 }
-.chronicle-map-crumbs {
+.universeview-map-crumbs {
 	position: absolute;
 	top: 10px;
 	left: 54px;
@@ -63,7 +63,7 @@
 	box-shadow: var(--shadow-s);
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-map-crumbs .chronicle-map-crumb {
+.universeview-map-crumbs .universeview-map-crumb {
 	/* Not styled as a button. */
 	appearance: none;
 	display: inline;
@@ -90,42 +90,42 @@
 	border-radius: var(--radius-s);
 	color: var(--text-muted);
 }
-.chronicle-map-crumbs .chronicle-map-crumb:hover {
+.universeview-map-crumbs .universeview-map-crumb:hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
-.chronicle-map-crumbs .chronicle-map-crumb:last-child {
+.universeview-map-crumbs .universeview-map-crumb:last-child {
 	color: var(--text-normal);
 	font-weight: 600;
 }
-.chronicle-map-crumb-sep {
+.universeview-map-crumb-sep {
 	color: var(--text-faint);
 }
 
 /* ---- Legend: holder line and zoom button ---- */
-.chronicle-legend .chronicle-legend-label {
+.universeview-legend .universeview-legend-label {
 	display: flex;
 	flex-direction: column;
 	line-height: 1.2;
 	min-width: 0;
 }
-.chronicle-legend .chronicle-legend-label > span {
+.universeview-legend .universeview-legend-label > span {
 	overflow-wrap: anywhere;
 }
-.chronicle-legend-detail {
+.universeview-legend-detail {
 	color: var(--text-faint);
 	font-size: 0.85em;
 }
-.chronicle-legend .chronicle-legend-go {
+.universeview-legend .universeview-legend-go {
 	flex-shrink: 0;
 	padding: 2px;
 	opacity: 0;
 	transition: opacity 150ms ease;
 }
-.chronicle-legend-row:hover .chronicle-legend-go {
+.universeview-legend-row:hover .universeview-legend-go {
 	opacity: 1;
 }
-.chronicle-legend-go svg {
+.universeview-legend-go svg {
 	width: 13px;
 	height: 13px;
 }
@@ -151,8 +151,8 @@
 
 /* ---- Renamings and editing ---- */
 .uv-lin-rename-label { font-size: 9.5px; fill: var(--text-muted); font-style: italic; }
-.chronicle-vertex.is-handle.is-selected { box-shadow: 0 0 0 3px var(--interactive-accent); }
-.chronicle-vertex.is-handle.is-shared { outline: 2px solid var(--background-primary); outline-offset: 1px; box-shadow: 0 0 0 4px var(--terr-color); }
+.universeview-vertex.is-handle.is-selected { box-shadow: 0 0 0 3px var(--interactive-accent); }
+.universeview-vertex.is-handle.is-shared { outline: 2px solid var(--background-primary); outline-offset: 1px; box-shadow: 0 0 0 4px var(--terr-color); }
 .uv-names { display: flex; flex-direction: column; gap: 4px; }
 .uv-names-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 4px; align-items: center; }
 .uv-names-row input { min-width: 0; font-size: var(--font-ui-small); }
@@ -160,11 +160,11 @@
 .uv-names-add svg { width: 13px; height: 13px; }
 
 /* ---- A realm picked on the map ---- */
-.chronicle-territory.is-picked { filter: drop-shadow(0 0 6px var(--terr-color)); }
-.chronicle-territory.is-picked:not(#uv-strong) { stroke-width: 3.5px; stroke-opacity: 1; fill-opacity: 0.38; }
+.universeview-territory.is-picked { filter: drop-shadow(0 0 6px var(--terr-color)); }
+.universeview-territory.is-picked:not(#uv-strong) { stroke-width: 3.5px; stroke-opacity: 1; fill-opacity: 0.38; }
 .uv-map-picked { position: absolute; left: 56px; top: 12px; z-index: 1000; min-width: 200px; max-width: min(340px, calc(100% - 80px)); padding: 8px 10px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--terr-color); box-shadow: var(--shadow-s); }
 .uv-map-picked-head { display: flex; align-items: center; gap: 6px; }
-.uv-map-picked-head strong { font-family: var(--chronicle-font-display, inherit); }
+.uv-map-picked-head strong { font-family: var(--universeview-font-display, inherit); }
 .uv-map-picked-head .clickable-icon { margin-left: auto; }
 .uv-map-picked-sub { font-size: var(--font-ui-smaller); color: var(--text-muted); margin-top: 2px; }
 .uv-map-picked-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
@@ -182,15 +182,15 @@
 .uv-shade-ends { display: flex; justify-content: space-between; margin-top: 2px; font-variant-numeric: tabular-nums; }
 /* ---- Touch screens: bigger targets, no hover-only controls ---- */
 @media (pointer: coarse) {
-	.chronicle-vertex.is-handle { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
-	.chronicle-vertex.is-mid { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
-	.chronicle-icon-btn, .chronicle-toolbar .clickable-icon { min-width: 36px; min-height: 36px; }
-	.chronicle-toolbar select, .chronicle-toolbar input { min-height: 36px; }
-	.chronicle-chip, .uv-lin-chip, .uv-quickadd-chip { min-height: 32px; }
+	.universeview-vertex.is-handle { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+	.universeview-vertex.is-mid { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+	.universeview-icon-btn, .universeview-toolbar .clickable-icon { min-width: 36px; min-height: 36px; }
+	.universeview-toolbar select, .universeview-toolbar input { min-height: 36px; }
+	.universeview-chip, .uv-lin-chip, .uv-quickadd-chip { min-height: 32px; }
 	.uv-today-row, .uv-tidy-row, .uv-names-row input { min-height: 34px; }
-	.chronicle-map-banner button, .uv-map-picked-actions button, .uv-notice-actions button { min-height: 36px; padding: 0 12px; }
+	.universeview-map-banner button, .uv-map-picked-actions button, .uv-notice-actions button { min-height: 36px; padding: 0 12px; }
 	/* No hovering on a touch screen: the timer ring would never show anything useful. */
-	.chronicle-hover-ring { display: none; }
+	.universeview-hover-ring { display: none; }
 	.uv-map-picked { left: 8px; right: 8px; top: auto; bottom: 12px; max-width: none; }
 }
 @media (max-width: 600px) {
@@ -258,8 +258,8 @@
 .uv-borders-new-btn svg { width: 14px; height: 14px; color: var(--interactive-accent); }
 
 /* ---- Map tool banners: same look as the sheets, with a real switch ---- */
-.chronicle-map-banner { box-shadow: var(--shadow-s); }
-.chronicle-map-banner:not(#uv-strong) { border-radius: var(--uv-r-lg); }
+.universeview-map-banner { box-shadow: var(--shadow-s); }
+.universeview-map-banner:not(#uv-strong) { border-radius: var(--uv-r-lg); }
 .uv-banner-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: var(--font-ui-small); padding: 3px 10px 3px 4px; border-radius: 999px; color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }
 .uv-banner-switch input { position: absolute; opacity: 0; pointer-events: none; }
 .uv-banner-switch-track { position: relative; width: 30px; height: 17px; border-radius: 999px; background: color-mix(in srgb, currentColor 30%, transparent); transition: background 150ms ease; flex: none; }
@@ -294,11 +294,11 @@
 .uv-brush-stroke.is-erasing { stroke: var(--background-primary); stroke-opacity: 0.7; stroke-dasharray: 2 6; }
 .uv-brush-cursor { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 1.5px solid var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 12%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--background-primary) 70%, transparent); pointer-events: none; }
 .uv-brush-cursor.is-erasing { border-style: dashed; border-color: var(--color-red); background: color-mix(in srgb, var(--color-red) 10%, transparent); }
-.chronicle-map.is-brushing .leaflet-container { cursor: none; }
+.universeview-map.is-brushing .leaflet-container { cursor: none; }
 /* While drawing, a finger draws: the browser mustn't take the touch for scrolling (which cancels the stroke). Two fingers still pinch the map. */
-.chronicle-map.is-painting .leaflet-container, .chronicle-map.is-filling .leaflet-container { touch-action: none; }
-.chronicle-map.is-brushing.is-brush-panning .leaflet-container { cursor: grab; }
-.chronicle-map.is-brush-panning .uv-brush-cursor { display: none; }
+.universeview-map.is-painting .leaflet-container, .universeview-map.is-filling .leaflet-container { touch-action: none; }
+.universeview-map.is-brushing.is-brush-panning .leaflet-container { cursor: grab; }
+.universeview-map.is-brush-panning .uv-brush-cursor { display: none; }
 .uv-grow-lasso { stroke-dasharray: 5 5; }
 /* ---- Phones: Obsidian's bar floats over the bottom of the view (--uv-bottom-inset, measured in main.ts) ---- */
 body.is-mobile .leaflet-bottom { bottom: var(--uv-bottom-inset, 0px); }
@@ -308,22 +308,22 @@ body.is-mobile .uv-terr-tool { width: 62px; height: 54px; }
 body.is-mobile .has-terr-editor .leaflet-bottom { display: none; }
 body.is-mobile .uv-map-picked { bottom: calc(var(--uv-bottom-inset, 0px) + 12px); }
 body.is-mobile .uv-shade-legend { bottom: calc(var(--uv-bottom-inset, 0px) + 26px); }
-body.is-mobile .chronicle-map-hint:not(#uv-strong) { bottom: calc(var(--uv-bottom-inset, 0px) + 16px); }
+body.is-mobile .universeview-map-hint:not(#uv-strong) { bottom: calc(var(--uv-bottom-inset, 0px) + 16px); }
 /* A tool's banner: its words across the top, its buttons in a row under them. */
-body.is-mobile .chronicle-map-banner.has-actions { width: auto; max-width: none; margin: 0; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 8px 8px 8px 12px; font-size: var(--font-ui-smaller); }
-body.is-mobile .chronicle-map-banner.has-actions:not(#uv-strong) { left: 8px; right: 8px; }
-body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 1 1 100%; }
+body.is-mobile .universeview-map-banner.has-actions { width: auto; max-width: none; margin: 0; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 8px 8px 8px 12px; font-size: var(--font-ui-smaller); }
+body.is-mobile .universeview-map-banner.has-actions:not(#uv-strong) { left: 8px; right: 8px; }
+body.is-mobile .universeview-map-banner.has-actions .universeview-banner-text { flex: 1 1 100%; }
 /* ---- Quick delete ---- */
 /* Delete sits apart at the far end, away from Edit. */
 .uv-map-picked-actions .uv-map-picked-delete { color: var(--color-red); margin-left: auto; }
 .uv-map-picked-actions .uv-map-picked-delete:hover { background: color-mix(in srgb, var(--color-red) 12%, var(--background-secondary)); }
-.chronicle-popup-actions .uv-popup-delete { margin-left: auto; padding: 0 8px; color: var(--text-muted); }
-.chronicle-popup-actions .uv-popup-delete:hover { color: var(--color-red); background: color-mix(in srgb, var(--color-red) 12%, transparent); }
-.chronicle-popup-actions .uv-popup-delete svg { width: 14px; height: 14px; }
+.universeview-popup-actions .uv-popup-delete { margin-left: auto; padding: 0 8px; color: var(--text-muted); }
+.universeview-popup-actions .uv-popup-delete:hover { color: var(--color-red); background: color-mix(in srgb, var(--color-red) 12%, transparent); }
+.universeview-popup-actions .uv-popup-delete svg { width: 14px; height: 14px; }
 /* While splitting, the two pieces are what you click: tools otherwise make territories ignore clicks. */
-.chronicle-territory.is-faded-out:not(#uv-strong) { pointer-events: none; }
-.chronicle-map.is-tool .chronicle-territory.uv-split-piece { cursor: pointer; }
-.chronicle-map.is-tool .chronicle-territory.uv-split-piece:not(#uv-strong) { pointer-events: auto; }
+.universeview-territory.is-faded-out:not(#uv-strong) { pointer-events: none; }
+.universeview-map.is-tool .universeview-territory.uv-split-piece { cursor: pointer; }
+.universeview-map.is-tool .universeview-territory.uv-split-piece:not(#uv-strong) { pointer-events: auto; }
 /* The territory editor sits along the bottom: the map's bottom controls (legend, scale) lift above it. */
 .has-terr-editor .leaflet-bottom { bottom: 112px; transition: bottom 150ms ease; }
 .uv-banner-segments { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--uv-r-md); background: color-mix(in srgb, currentColor 14%, transparent); }
@@ -341,18 +341,18 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 @keyframes uv-battle-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--battle-color, #b03a2e) 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
 .uv-battle-tip .is-title { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .uv-battle.is-latest { animation: none; } }
-.chronicle-toolbar .chronicle-chip .chronicle-chip-count:empty { display: none; }
+.universeview-toolbar .universeview-chip .universeview-chip-count:empty { display: none; }
 
 /* ---- Export: the map as a picture, without the buttons and pop-ups around it ---- */
-.chronicle-exporting .leaflet-control-zoom:not(#uv-strong),
-.chronicle-exporting .leaflet-control-attribution:not(#uv-strong),
-.chronicle-exporting .leaflet-popup-pane:not(#uv-strong),
-.chronicle-exporting .chronicle-map-crumbs:not(#uv-strong),
-.chronicle-exporting .chronicle-map-banner:not(#uv-strong),
-.chronicle-exporting .chronicle-map-hint:not(#uv-strong),
-.chronicle-exporting .uv-terr-editor:not(#uv-strong),
-.chronicle-exporting .uv-map-picked:not(#uv-strong) { display: none; }
-.chronicle-exporting .uv-battle.is-latest { animation: none; }
+.universeview-exporting .leaflet-control-zoom:not(#uv-strong),
+.universeview-exporting .leaflet-control-attribution:not(#uv-strong),
+.universeview-exporting .leaflet-popup-pane:not(#uv-strong),
+.universeview-exporting .universeview-map-crumbs:not(#uv-strong),
+.universeview-exporting .universeview-map-banner:not(#uv-strong),
+.universeview-exporting .universeview-map-hint:not(#uv-strong),
+.universeview-exporting .uv-terr-editor:not(#uv-strong),
+.universeview-exporting .uv-map-picked:not(#uv-strong) { display: none; }
+.universeview-exporting .uv-battle.is-latest { animation: none; }
 
 /* ---- Border check panel ---- */
 .uv-check-panel { position: absolute; top: 52px; right: 12px; z-index: 900; width: 330px; max-width: calc(100% - 24px); max-height: calc(100% - 80px); display: flex; flex-direction: column; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); overflow: hidden; }
@@ -381,26 +381,26 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .uv-check-row-actions svg { width: 12px; height: 12px; }
 .uv-check-mark { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: 3px solid var(--color-red); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6); animation: uv-check-ping 1.2s ease-out 3; pointer-events: none; }
 @keyframes uv-check-ping { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.6); opacity: 0.2; } }
-.chronicle-territory.uv-check-flash { animation: uv-check-flash 0.6s ease-in-out 3; }
+.universeview-territory.uv-check-flash { animation: uv-check-flash 0.6s ease-in-out 3; }
 @keyframes uv-check-flash { 50% { stroke-width: 6px; fill-opacity: 0.55; } }
-@media (prefers-reduced-motion: reduce) { .uv-check-mark, .chronicle-territory.uv-check-flash { animation: none; } }
-.chronicle-exporting .uv-check-panel:not(#uv-strong) { display: none; }
+@media (prefers-reduced-motion: reduce) { .uv-check-mark, .universeview-territory.uv-check-flash { animation: none; } }
+.universeview-exporting .uv-check-panel:not(#uv-strong) { display: none; }
 
 /* ---- Strategy look: political colours, a border hierarchy, names across the land ---- */
 /* From afar (--uv-political 1) the colours are solid; close up (0) the drawn map shows through. */
-.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft) {
+.universeview-map.uv-strategy .universeview-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft) {
 	stroke: color-mix(in srgb, var(--terr-color) 55%, #000);
 }
-.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft):not(#uv-strong) {
+.universeview-map.uv-strategy .universeview-territory:not(.is-tier-hidden):not(.is-tier-outline):not(.is-draft):not(#uv-strong) {
 	/* Scaled by the tier's own fill (Territory styles), 0.2 being the usual. */
 	fill-opacity: calc((0.1 + 0.62 * var(--uv-political, 0)) * var(--uv-tf, 0.2) * 5);
 	stroke-width: 0.8px;
 	stroke-opacity: calc(0.75 - 0.45 * var(--uv-political, 0));
 }
-.chronicle-map.uv-strategy .chronicle-territory.is-tier-merged:not(#uv-strong) { stroke-opacity: 0; }
-.chronicle-map.uv-strategy .chronicle-territory.is-tier-outline:not(#uv-strong) { stroke-opacity: 0; }
-.chronicle-map.uv-strategy .chronicle-territory:not(.is-tier-hidden):hover:not(#uv-strong) { fill-opacity: calc(0.2 + 0.55 * var(--uv-political, 0)); }
-.chronicle-map.uv-strategy .uv-terr-overlay, .chronicle-map.uv-strategy .uv-terr-texture { opacity: calc(1 - 0.4 * var(--uv-political, 0)); }
+.universeview-map.uv-strategy .universeview-territory.is-tier-merged:not(#uv-strong) { stroke-opacity: 0; }
+.universeview-map.uv-strategy .universeview-territory.is-tier-outline:not(#uv-strong) { stroke-opacity: 0; }
+.universeview-map.uv-strategy .universeview-territory:not(.is-tier-hidden):hover:not(#uv-strong) { fill-opacity: calc(0.2 + 0.55 * var(--uv-political, 0)); }
+.universeview-map.uv-strategy .uv-terr-overlay, .universeview-map.uv-strategy .uv-terr-texture { opacity: calc(1 - 0.4 * var(--uv-political, 0)); }
 /* One border round each realm: a dark line on a light halo, thickest for the top realm. */
 .uv-realm-edge { stroke: color-mix(in srgb, var(--terr-color) 35%, #120d08); stroke-linejoin: round; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(255, 248, 230, 0.75)); }
 .uv-realm-edge.depth-0 { stroke-width: 3.6px; }
@@ -420,16 +420,16 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .uv-tier-7 { --uv-tw: var(--uv-tier-7-line, 2px); --uv-tf: var(--uv-tier-7-fill, 0.2); }
 /* Names: spaced serif capitals across the land, dark on a pale halo. */
 .uv-realm-name { overflow: visible; pointer-events: none; }
-.uv-realm-name text { font-family: var(--chronicle-font-map, "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia, serif); font-weight: 700; fill: rgba(28, 20, 12, 0.86); stroke: rgba(255, 246, 225, 0.7); stroke-width: 0.09em; paint-order: stroke; letter-spacing: 0.08em; }
+.uv-realm-name text { font-family: var(--universeview-font-map, "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia, serif); font-weight: 700; fill: rgba(28, 20, 12, 0.86); stroke: rgba(255, 246, 225, 0.7); stroke-width: 0.09em; paint-order: stroke; letter-spacing: 0.08em; }
 .uv-realm-name.depth-0 text { fill: rgba(22, 15, 8, 0.9); }
 .uv-realm-name.depth-2 text, .uv-realm-name.depth-3 text { font-weight: 600; fill: rgba(40, 30, 18, 0.8); }
 .theme-dark .uv-realm-name text { fill: rgba(250, 242, 222, 0.92); stroke: rgba(10, 8, 5, 0.75); }
 .uv-realm-arms { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45)); }
 /* In the strategy look the realm names replace the small area labels (geography keeps its own). */
-.chronicle-map.uv-strategy .chronicle-territory-label:not(.is-region) { display: none; }
+.universeview-map.uv-strategy .universeview-territory-label:not(.is-region) { display: none; }
 /* Terrain mode: no colour, just the borders over the drawn map. */
-.chronicle-map.uv-paint-terrain .chronicle-territory:not(#uv-strong) { fill-opacity: 0; }
-.chronicle-map.uv-paint-terrain .uv-realm-name text { fill: rgba(28, 20, 12, 0.7); }
+.universeview-map.uv-paint-terrain .universeview-territory:not(#uv-strong) { fill-opacity: 0; }
+.universeview-map.uv-paint-terrain .uv-realm-name text { fill: rgba(28, 20, 12, 0.7); }
 @media (prefers-reduced-motion: no-preference) { .uv-realm-name { transition: opacity 200ms ease; } }
 
 /* A phone with no copy of a huge map picture yet: why, over the map. */
@@ -438,54 +438,54 @@ body.is-mobile .chronicle-map-banner.has-actions .chronicle-banner-text { flex: 
 .uv-picture-note > span:nth-child(2) { flex: 1; }
 
 /* ---- Territory tiers: the look of each tier, its values set from Maps & realms > Territory styles ---- */
-.chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-0-width, 2px); stroke-dasharray: var(--uv-tier-0-dash, none); fill-opacity: var(--uv-tier-0-fill, 0.2); }
-.chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-0-fill-hover, 0.32); }
-body.uv-tier-0-glow .chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-0-blur, 4px) var(--terr-color)); }
-body.uv-tier-0-shadow .chronicle-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-0-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-0-width, 2px); stroke-dasharray: var(--uv-tier-0-dash, none); fill-opacity: var(--uv-tier-0-fill, 0.2); }
+.universeview-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-0-fill-hover, 0.32); }
+body.uv-tier-0-glow .universeview-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-0-blur, 4px) var(--terr-color)); }
+body.uv-tier-0-shadow .universeview-territory.uv-tier-0:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-0-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-0 { --uv-band: var(--uv-tier-0-band, 6px); }
-.chronicle-territory.uv-tier-0.is-tier-outline { stroke-width: var(--uv-tier-0-outline, 3.5px); }
-.chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-1-width, 2px); stroke-dasharray: var(--uv-tier-1-dash, none); fill-opacity: var(--uv-tier-1-fill, 0.2); }
-.chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-1-fill-hover, 0.32); }
-body.uv-tier-1-glow .chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-1-blur, 4px) var(--terr-color)); }
-body.uv-tier-1-shadow .chronicle-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-1-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-0.is-tier-outline { stroke-width: var(--uv-tier-0-outline, 3.5px); }
+.universeview-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-1-width, 2px); stroke-dasharray: var(--uv-tier-1-dash, none); fill-opacity: var(--uv-tier-1-fill, 0.2); }
+.universeview-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-1-fill-hover, 0.32); }
+body.uv-tier-1-glow .universeview-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-1-blur, 4px) var(--terr-color)); }
+body.uv-tier-1-shadow .universeview-territory.uv-tier-1:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-1-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-1 { --uv-band: var(--uv-tier-1-band, 6px); }
-.chronicle-territory.uv-tier-1.is-tier-outline { stroke-width: var(--uv-tier-1-outline, 3.5px); }
-.chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-2-width, 2px); stroke-dasharray: var(--uv-tier-2-dash, none); fill-opacity: var(--uv-tier-2-fill, 0.2); }
-.chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-2-fill-hover, 0.32); }
-body.uv-tier-2-glow .chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-2-blur, 4px) var(--terr-color)); }
-body.uv-tier-2-shadow .chronicle-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-2-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-1.is-tier-outline { stroke-width: var(--uv-tier-1-outline, 3.5px); }
+.universeview-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-2-width, 2px); stroke-dasharray: var(--uv-tier-2-dash, none); fill-opacity: var(--uv-tier-2-fill, 0.2); }
+.universeview-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-2-fill-hover, 0.32); }
+body.uv-tier-2-glow .universeview-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-2-blur, 4px) var(--terr-color)); }
+body.uv-tier-2-shadow .universeview-territory.uv-tier-2:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-2-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-2 { --uv-band: var(--uv-tier-2-band, 6px); }
-.chronicle-territory.uv-tier-2.is-tier-outline { stroke-width: var(--uv-tier-2-outline, 3.5px); }
-.chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-3-width, 2px); stroke-dasharray: var(--uv-tier-3-dash, none); fill-opacity: var(--uv-tier-3-fill, 0.2); }
-.chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-3-fill-hover, 0.32); }
-body.uv-tier-3-glow .chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-3-blur, 4px) var(--terr-color)); }
-body.uv-tier-3-shadow .chronicle-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-3-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-2.is-tier-outline { stroke-width: var(--uv-tier-2-outline, 3.5px); }
+.universeview-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-3-width, 2px); stroke-dasharray: var(--uv-tier-3-dash, none); fill-opacity: var(--uv-tier-3-fill, 0.2); }
+.universeview-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-3-fill-hover, 0.32); }
+body.uv-tier-3-glow .universeview-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-3-blur, 4px) var(--terr-color)); }
+body.uv-tier-3-shadow .universeview-territory.uv-tier-3:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-3-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-3 { --uv-band: var(--uv-tier-3-band, 6px); }
-.chronicle-territory.uv-tier-3.is-tier-outline { stroke-width: var(--uv-tier-3-outline, 3.5px); }
-.chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-4-width, 2px); stroke-dasharray: var(--uv-tier-4-dash, none); fill-opacity: var(--uv-tier-4-fill, 0.2); }
-.chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-4-fill-hover, 0.32); }
-body.uv-tier-4-glow .chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-4-blur, 4px) var(--terr-color)); }
-body.uv-tier-4-shadow .chronicle-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-4-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-3.is-tier-outline { stroke-width: var(--uv-tier-3-outline, 3.5px); }
+.universeview-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-4-width, 2px); stroke-dasharray: var(--uv-tier-4-dash, none); fill-opacity: var(--uv-tier-4-fill, 0.2); }
+.universeview-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-4-fill-hover, 0.32); }
+body.uv-tier-4-glow .universeview-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-4-blur, 4px) var(--terr-color)); }
+body.uv-tier-4-shadow .universeview-territory.uv-tier-4:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-4-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-4 { --uv-band: var(--uv-tier-4-band, 6px); }
-.chronicle-territory.uv-tier-4.is-tier-outline { stroke-width: var(--uv-tier-4-outline, 3.5px); }
-.chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-5-width, 2px); stroke-dasharray: var(--uv-tier-5-dash, none); fill-opacity: var(--uv-tier-5-fill, 0.2); }
-.chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-5-fill-hover, 0.32); }
-body.uv-tier-5-glow .chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-5-blur, 4px) var(--terr-color)); }
-body.uv-tier-5-shadow .chronicle-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-5-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-4.is-tier-outline { stroke-width: var(--uv-tier-4-outline, 3.5px); }
+.universeview-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-5-width, 2px); stroke-dasharray: var(--uv-tier-5-dash, none); fill-opacity: var(--uv-tier-5-fill, 0.2); }
+.universeview-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-5-fill-hover, 0.32); }
+body.uv-tier-5-glow .universeview-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-5-blur, 4px) var(--terr-color)); }
+body.uv-tier-5-shadow .universeview-territory.uv-tier-5:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-5-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-5 { --uv-band: var(--uv-tier-5-band, 6px); }
-.chronicle-territory.uv-tier-5.is-tier-outline { stroke-width: var(--uv-tier-5-outline, 3.5px); }
-.chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-6-width, 2px); stroke-dasharray: var(--uv-tier-6-dash, none); fill-opacity: var(--uv-tier-6-fill, 0.2); }
-.chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-6-fill-hover, 0.32); }
-body.uv-tier-6-glow .chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-6-blur, 4px) var(--terr-color)); }
-body.uv-tier-6-shadow .chronicle-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-6-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-5.is-tier-outline { stroke-width: var(--uv-tier-5-outline, 3.5px); }
+.universeview-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-6-width, 2px); stroke-dasharray: var(--uv-tier-6-dash, none); fill-opacity: var(--uv-tier-6-fill, 0.2); }
+.universeview-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-6-fill-hover, 0.32); }
+body.uv-tier-6-glow .universeview-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-6-blur, 4px) var(--terr-color)); }
+body.uv-tier-6-shadow .universeview-territory.uv-tier-6:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-6-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-6 { --uv-band: var(--uv-tier-6-band, 6px); }
-.chronicle-territory.uv-tier-6.is-tier-outline { stroke-width: var(--uv-tier-6-outline, 3.5px); }
-.chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-7-width, 2px); stroke-dasharray: var(--uv-tier-7-dash, none); fill-opacity: var(--uv-tier-7-fill, 0.2); }
-.chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-7-fill-hover, 0.32); }
-body.uv-tier-7-glow .chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-7-blur, 4px) var(--terr-color)); }
-body.uv-tier-7-shadow .chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-7-blur, 3px) rgba(0, 0, 0, 0.55)); }
+.universeview-territory.uv-tier-6.is-tier-outline { stroke-width: var(--uv-tier-6-outline, 3.5px); }
+.universeview-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { stroke-width: var(--uv-tier-7-width, 2px); stroke-dasharray: var(--uv-tier-7-dash, none); fill-opacity: var(--uv-tier-7-fill, 0.2); }
+.universeview-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft):hover { fill-opacity: var(--uv-tier-7-fill-hover, 0.32); }
+body.uv-tier-7-glow .universeview-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 0 var(--uv-tier-7-blur, 4px) var(--terr-color)); }
+body.uv-tier-7-shadow .universeview-territory.uv-tier-7:not(.is-tier-merged):not(.is-tier-outline):not(.is-tier-hidden):not(.is-draft) { filter: drop-shadow(0 1px var(--uv-tier-7-blur, 3px) rgba(0, 0, 0, 0.55)); }
 .uv-terr-overlay.uv-tier-7 { --uv-band: var(--uv-tier-7-band, 6px); }
-.chronicle-territory.uv-tier-7.is-tier-outline { stroke-width: var(--uv-tier-7-outline, 3.5px); }
+.universeview-territory.uv-tier-7.is-tier-outline { stroke-width: var(--uv-tier-7-outline, 3.5px); }
 
 
 /* Simplify: the corners left to edit, and the count on the banner. */
@@ -508,30 +508,30 @@ body.uv-tier-7-shadow .chronicle-territory.uv-tier-7:not(.is-tier-merged):not(.i
 .uv-realm-band.depth-1 { --band-w: 14px; --band-a: calc(0.35 - 0.2 * var(--uv-political, 0)); }
 .uv-realm-band.layer-1 { stroke-width: calc(var(--band-w) * 0.62); }
 .uv-realm-band.layer-2 { stroke-width: calc(var(--band-w) * 0.3); stroke-opacity: calc(var(--band-a) * 0.45); }
-.chronicle-map.uv-paint-terrain .uv-realm-band { display: none; }
+.universeview-map.uv-paint-terrain .uv-realm-band { display: none; }
 
 /* Map look: a stronger border band when chosen; the river's water colour. */
 body.uv-band-strong .uv-realm-band { --band-a: calc(0.85 - 0.4 * var(--uv-political, 0)); }
 body.uv-band-strong .uv-realm-band.depth-0 { --band-w: 32px; }
 
 /* The map's own panes (Leaflet names them leaflet-<name>-pane): heat over the areas (overlay pane 400), then realm borders, realm names and territory names, all under the pins (600). */
-.leaflet-chronicle-heat-pane { z-index: 420; pointer-events: none; }
+.leaflet-universeview-heat-pane { z-index: 420; pointer-events: none; }
 .leaflet-uv-realm-edges-pane { z-index: 430; pointer-events: none; }
 .leaflet-uv-realm-names-pane { z-index: 440; pointer-events: none; }
-.leaflet-chronicle-territory-labels-pane { z-index: 450; pointer-events: none; }
+.leaflet-universeview-territory-labels-pane { z-index: 450; pointer-events: none; }
 
 /* ---- Inked chart: calligraphic names, paper, a ruled frame and a compass rose (Settings → Maps → Map look) ---- */
-body.uv-map-labels-calligraphic .chronicle-territory-name,
-body.uv-map-labels-calligraphic .chronicle-pin-label {
+body.uv-map-labels-calligraphic .universeview-territory-name,
+body.uv-map-labels-calligraphic .universeview-pin-label {
 	text-transform: none;
 	letter-spacing: 0.01em;
 	font-style: normal;
 	font-weight: 400;
-	font-family: var(--chronicle-font-map, "Pinyon Script", "Snell Roundhand", "Apple Chancery", "Zapfino", "URW Chancery L", "Segoe Script", "Lucida Handwriting", cursive);
+	font-family: var(--universeview-font-map, "Pinyon Script", "Snell Roundhand", "Apple Chancery", "Zapfino", "URW Chancery L", "Segoe Script", "Lucida Handwriting", cursive);
 	font-size: 1.2em;
 	line-height: 1.1;
 }
-body.uv-map-labels-calligraphic .chronicle-territory-name {
+body.uv-map-labels-calligraphic .universeview-territory-name {
 	color: #3a2a14;
 }
 
@@ -547,7 +547,7 @@ body.uv-map-paper-sea {
 	--uv-paper-tint: rgba(150, 175, 170, 0.34);
 	--uv-paper-edge: rgba(40, 70, 70, 0.45);
 }
-:is(body.uv-map-paper-parchment, body.uv-map-paper-vellum, body.uv-map-paper-sea) .chronicle-map::before {
+:is(body.uv-map-paper-parchment, body.uv-map-paper-vellum, body.uv-map-paper-sea) .universeview-map::before {
 	content: "";
 	position: absolute;
 	inset: 0;
@@ -561,7 +561,7 @@ body.uv-map-paper-sea {
 		linear-gradient(var(--uv-paper-tint), var(--uv-paper-tint));
 }
 
-body.uv-map-frame .chronicle-map::after {
+body.uv-map-frame .universeview-map::after {
 	content: "";
 	position: absolute;
 	inset: 10px;
@@ -575,7 +575,7 @@ body.uv-map-frame .chronicle-map::after {
 		url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' fill='none' stroke='%234a3318' stroke-width='2'><path d='M38 2V30Q38 38 30 38H2'/><circle cx='30' cy='30' r='3' fill='%234a3318'/></svg>") 100% 100% / 40px 40px no-repeat;
 	opacity: 0.8;
 }
-body.uv-map-compass .chronicle-map:not(.is-embedded) .chronicle-map-canvas::after {
+body.uv-map-compass .universeview-map:not(.is-embedded) .universeview-map-canvas::after {
 	content: "";
 	position: absolute;
 	right: 34px;
@@ -589,18 +589,18 @@ body.uv-map-compass .chronicle-map:not(.is-embedded) .chronicle-map-canvas::afte
 }
 
 /* ---- Editing a border: clearer corners ---- */
-.chronicle-vertex.is-handle { cursor: grab; transition: transform 0.12s ease; }
-.chronicle-vertex.is-handle:active { cursor: grabbing; }
-.chronicle-vertex.is-handle::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; }
-.chronicle-vertex.is-handle:hover { transform: translate(-50%, -50%) scale(1.25); }
+.universeview-vertex.is-handle { cursor: grab; transition: transform 0.12s ease; }
+.universeview-vertex.is-handle:active { cursor: grabbing; }
+.universeview-vertex.is-handle::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; }
+.universeview-vertex.is-handle:hover { transform: translate(-50%, -50%) scale(1.25); }
 /* A corner shared with a neighbour is a diamond, so it reads apart from a corner of its own. */
-.chronicle-vertex.is-handle.is-shared { border-radius: 2px; transform: translate(-50%, -50%) rotate(45deg); }
-.chronicle-vertex.is-handle.is-shared:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.25); }
+.universeview-vertex.is-handle.is-shared { border-radius: 2px; transform: translate(-50%, -50%) rotate(45deg); }
+.universeview-vertex.is-handle.is-shared:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.25); }
 /* A small plus between corners: click it to add a corner. */
-.chronicle-vertex.is-mid { display: grid; place-items: center; opacity: 0.5; }
-.chronicle-vertex.is-mid::before { content: "+"; font: 700 11px/1 var(--font-interface); color: var(--terr-color, var(--interactive-accent)); }
-.chronicle-vertex.is-mid:hover { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+.universeview-vertex.is-mid { display: grid; place-items: center; opacity: 0.5; }
+.universeview-vertex.is-mid::before { content: "+"; font: 700 11px/1 var(--font-interface); color: var(--terr-color, var(--interactive-accent)); }
+.universeview-vertex.is-mid:hover { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
 /* Reshaping: the lands whose shared corners move with the one being edited. */
-.chronicle-territory.is-linked { stroke: var(--interactive-accent); stroke-width: 3; stroke-dasharray: 8 5; fill-opacity: 0.3; }
+.universeview-territory.is-linked { stroke: var(--interactive-accent); stroke-width: 3; stroke-dasharray: 8 5; fill-opacity: 0.3; }
 /* Simplify and Grow, tried on: the outline as it is now stays under the new one, dashed. */
 .uv-simplify-orig { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; opacity: 0.85; pointer-events: none; }

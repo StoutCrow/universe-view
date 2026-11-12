@@ -1,5 +1,5 @@
 import { Modal, Notice } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { parseDate } from "../dates/parser";
 import { readNote, type Finding, type ReadField } from "../detect/reader";
@@ -28,14 +28,14 @@ export class SmartReaderModal extends Modal {
 	private applyBtn?: HTMLButtonElement;
 
 	/** With `only`, just that note. */
-	constructor(private plugin: ChroniclePlugin, private only?: Entity) {
+	constructor(private plugin: UniverseViewPlugin, private only?: Entity) {
 		super(plugin.app);
 	}
 
 	async onOpen() {
-		this.modalEl.addClass("chronicle-detect-modal", "chronicle-scope");
+		this.modalEl.addClass("universeview-detect-modal", "universeview-scope");
 		this.titleEl.setText(this.only ? `Smart reader: ${this.only.name}` : "Smart reader");
-		const status = this.contentEl.createDiv({ cls: "chronicle-detect-loading", text: "Reading notes…" });
+		const status = this.contentEl.createDiv({ cls: "universeview-detect-loading", text: "Reading notes…" });
 		await this.scan(status);
 		this.render();
 	}
@@ -90,13 +90,13 @@ export class SmartReaderModal extends Modal {
 	private render() {
 		const { contentEl } = this;
 		contentEl.empty();
-		el("p", { cls: "chronicle-detect-intro", text: "Facts written in your notes that their properties don't have yet. Nothing changes until you press Add, and Undo takes it all back in one step." }, contentEl);
-		const list = el("div", { cls: "chronicle-detect-list" }, contentEl);
-		if (!this.rows.length) el("div", { cls: "chronicle-detect-empty", text: "Nothing new: your notes' properties already say what their text does." }, list);
+		el("p", { cls: "universeview-detect-intro", text: "Facts written in your notes that their properties don't have yet. Nothing changes until you press Add, and Undo takes it all back in one step." }, contentEl);
+		const list = el("div", { cls: "universeview-detect-list" }, contentEl);
+		if (!this.rows.length) el("div", { cls: "universeview-detect-empty", text: "Nothing new: your notes' properties already say what their text does." }, list);
 		for (const row of this.rows.slice(0, MAX_SHOWN)) this.row(list, row);
-		if (this.rows.length > MAX_SHOWN) el("div", { cls: "chronicle-detect-empty", text: `Showing the first ${MAX_SHOWN} of ${this.rows.length.toLocaleString()}. Add these, then run it again for the rest.` }, list);
+		if (this.rows.length > MAX_SHOWN) el("div", { cls: "universeview-detect-empty", text: `Showing the first ${MAX_SHOWN} of ${this.rows.length.toLocaleString()}. Add these, then run it again for the rest.` }, list);
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
-		this.countEl = el("span", { cls: "chronicle-detect-count" }, footer);
+		this.countEl = el("span", { cls: "universeview-detect-count" }, footer);
 		el("button", { text: "Cancel" }, footer).addEventListener("click", () => this.close());
 		this.applyBtn = el("button", { cls: "mod-cta", text: "Add" }, footer);
 		this.applyBtn.addEventListener("click", () => void this.apply());
@@ -114,21 +114,21 @@ export class SmartReaderModal extends Modal {
 	}
 
 	private row(parent: HTMLElement, row: Row) {
-		const r = el("div", { cls: "chronicle-detect-row" }, parent);
+		const r = el("div", { cls: "universeview-detect-row" }, parent);
 		const cb = el("input", { attr: { type: "checkbox", "aria-label": `Add ${LABELS[row.finding.field]} to ${row.target.name}` } }, r);
 		cb.checked = row.checked;
 		cb.addEventListener("change", () => {
 			row.checked = cb.checked;
 			this.updateCount();
 		});
-		const main = el("div", { cls: "chronicle-detect-main" }, r);
-		const line = el("div", { cls: "chronicle-detect-kin" }, main);
+		const main = el("div", { cls: "universeview-detect-main" }, r);
+		const line = el("div", { cls: "universeview-detect-kin" }, main);
 		const who = el("a", { cls: "internal-link", text: row.target.name }, line);
 		who.addEventListener("click", (evt) => openEntity(this.plugin, row.target.key, evt));
-		icon(el("span", { cls: "chronicle-detect-arrow" }, line), "arrow-right");
+		icon(el("span", { cls: "universeview-detect-arrow" }, line), "arrow-right");
 		el("span", { text: LABELS[row.finding.field] }, line);
-		el("div", { cls: "chronicle-detect-quote", text: `“${row.finding.quote}”${row.source !== row.target ? `, in ${row.source.name}` : ""}` }, main);
-		const side = el("div", { cls: "chronicle-detect-side" }, r);
+		el("div", { cls: "universeview-detect-quote", text: `“${row.finding.quote}”${row.source !== row.target ? `, in ${row.source.name}` : ""}` }, main);
+		const side = el("div", { cls: "universeview-detect-side" }, r);
 		const value = el("input", { attr: { type: "text", "aria-label": "Value" } }, side);
 		value.value = row.finding.value;
 		value.addEventListener("input", () => {

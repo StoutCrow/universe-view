@@ -1,6 +1,6 @@
 import { revealInExplorer } from "../internals";
 import { TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { formatSpan } from "../dates/parser";
 import { tierLabel } from "../index/realms";
@@ -21,7 +21,7 @@ export function aliasesOf(e: Entity): string[] {
  * tier, region or realm), its span with an age or length, where it's filed, and one-click ways to
  * every view it appears in.
  */
-export function identityHeader(p: ChroniclePlugin, parent: HTMLElement, e: Entity, pick: (key: string) => void) {
+export function identityHeader(p: UniverseViewPlugin, parent: HTMLElement, e: Entity, pick: (key: string) => void) {
 	const box = el("div", { cls: "uv-id" }, parent);
 	box.style.setProperty("--id-color", entityColor(p, e));
 	const tree = p.realms();

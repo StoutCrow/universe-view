@@ -3,7 +3,7 @@ import type { Entity, EntityType } from "../types";
 import { buildFieldAliases, type FieldName } from "../settings";
 import { dropdown, el, entityColor, icon, iconButton, openEntity, showEntityMenu, TYPE_LABELS } from "../render/common";
 import { TextPrompt } from "../ui/TextPrompt";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 import { asText } from "../index/text";
 
 export const VIEW_TABLE = "chronicle-table";
@@ -95,7 +95,7 @@ const unlink = (v: unknown): string => {
  * of links are written as comma-separated names, and each value goes into the property the note
  * already uses for it. Sort by any column, filter, and add columns for any other property.
  */
-export class TableView extends ChronicleView {
+export class TableView extends UniverseViewBase {
 	private state: TableState = { type: "person", extra: [] };
 	private tableEl?: HTMLElement;
 
@@ -126,13 +126,13 @@ export class TableView extends ChronicleView {
 	protected build() {
 		this.state.folder ??= this.defaultScope();
 		this.fillToolbar();
-		this.tableEl = el("div", { cls: "chronicle-table-wrap" }, this.body);
+		this.tableEl = el("div", { cls: "universeview-table-wrap" }, this.body);
 		this.draw();
 	}
 
 	protected onIndexChanged() {
 		// Don't redraw under someone typing in a cell.
-		if (this.tableEl?.querySelector(".chronicle-cell-input")) return;
+		if (this.tableEl?.querySelector(".universeview-cell-input")) return;
 		this.draw();
 	}
 
@@ -217,17 +217,17 @@ export class TableView extends ChronicleView {
 			if (Number.isNaN(r)) r = 0;
 			return (s.sort!.desc ? -r : r) || a.name.localeCompare(b.name);
 		});
-		el("div", { cls: "chronicle-table-count", text: `${rows.length} ${rows.length === 1 ? "note" : "notes"} · click a cell to change it` }, box);
-		const scroller = el("div", { cls: "chronicle-table-scroll" }, box);
-		const table = el("table", { cls: "chronicle-table" }, scroller);
+		el("div", { cls: "universeview-table-count", text: `${rows.length} ${rows.length === 1 ? "note" : "notes"} · click a cell to change it` }, box);
+		const scroller = el("div", { cls: "universeview-table-scroll" }, box);
+		const table = el("table", { cls: "universeview-table" }, scroller);
 		const head = el("tr", {}, el("thead", {}, table));
 		const th = (text: string, id: string, width?: number) => {
 			const h = el("th", {}, head);
 			if (width) h.style.minWidth = `${width}px`;
-			const b = el("button", { cls: "chronicle-table-sort", text }, h);
+			const b = el("button", { cls: "universeview-table-sort", text }, h);
 			if (s.sort?.col === id) {
 				b.addClass("is-sorted");
-				icon(el("span", { cls: "chronicle-table-sort-icon" }, b), s.sort.desc ? "arrow-down" : "arrow-up");
+				icon(el("span", { cls: "universeview-table-sort-icon" }, b), s.sort.desc ? "arrow-down" : "arrow-up");
 			}
 			b.addEventListener("click", () => {
 				s.sort = s.sort?.col === id ? (s.sort.desc ? undefined : { col: id, desc: true }) : { col: id, desc: false };
@@ -235,7 +235,7 @@ export class TableView extends ChronicleView {
 				this.draw();
 			});
 			if (id.startsWith("extra:")) {
-				const x = el("button", { cls: "chronicle-table-remove-col clickable-icon", attr: { "aria-label": "Remove this column" } }, h);
+				const x = el("button", { cls: "universeview-table-remove-col clickable-icon", attr: { "aria-label": "Remove this column" } }, h);
 				icon(x, "x");
 				x.addEventListener("click", () => {
 					s.extra = s.extra.filter((p) => `extra:${p}` !== id);
@@ -249,8 +249,8 @@ export class TableView extends ChronicleView {
 		const body = el("tbody", {}, table);
 		for (const e of rows) {
 			const tr = el("tr", {}, body);
-			const name = el("td", { cls: "chronicle-table-name" }, tr);
-			const dot = el("span", { cls: "chronicle-table-dot" }, name);
+			const name = el("td", { cls: "universeview-table-name" }, tr);
+			const dot = el("span", { cls: "universeview-table-dot" }, name);
 			dot.style.background = entityColor(this.plugin, e);
 			const a = el("a", { text: e.name }, name);
 			a.addEventListener("click", (evt) => openEntity(this.plugin, e.key, evt));
@@ -260,13 +260,13 @@ export class TableView extends ChronicleView {
 			});
 			for (const c of cols) this.cell(tr, e, c);
 		}
-		if (!rows.length) el("div", { cls: "chronicle-dash-muted chronicle-table-empty", text: s.search ? "No rows match." : `No ${(TYPE_LABELS[s.type] ?? s.type).toLowerCase()} notes here yet.` }, box);
+		if (!rows.length) el("div", { cls: "universeview-dash-muted universeview-table-empty", text: s.search ? "No rows match." : `No ${(TYPE_LABELS[s.type] ?? s.type).toLowerCase()} notes here yet.` }, box);
 	}
 
 	private cell(tr: HTMLElement, e: Entity, c: Column) {
-		const td = el("td", { cls: `chronicle-table-cell kind-${c.kind}` }, tr);
+		const td = el("td", { cls: `universeview-table-cell kind-${c.kind}` }, tr);
 		const value = this.raw(e, c);
-		el("span", { cls: "chronicle-cell-text", text: value || "—" }, td).toggleClass("is-empty", !value);
+		el("span", { cls: "universeview-cell-text", text: value || "—" }, td).toggleClass("is-empty", !value);
 		if (c.kind === "date" && value && !this.plugin.parseDate(value, e.calendar)) {
 			td.addClass("is-invalid");
 			td.setAttribute("title", "This date couldn't be read");
@@ -274,9 +274,9 @@ export class TableView extends ChronicleView {
 		td.addEventListener("click", () => {
 			if (td.querySelector("input")) return;
 			td.empty();
-			const input = el("input", { cls: "chronicle-cell-input", attr: { type: c.kind === "number" ? "number" : "text", placeholder: c.kind === "links" ? "Names, separated by commas" : c.kind === "date" ? "A date" : "" } }, td);
+			const input = el("input", { cls: "universeview-cell-input", attr: { type: c.kind === "number" ? "number" : "text", placeholder: c.kind === "links" ? "Names, separated by commas" : c.kind === "date" ? "A date" : "" } }, td);
 			input.value = value;
-			const hint = el("div", { cls: "chronicle-cell-hint" }, td);
+			const hint = el("div", { cls: "universeview-cell-hint" }, td);
 			const check = () => {
 				if (c.kind !== "date") return;
 				const v = input.value.trim();
@@ -295,7 +295,7 @@ export class TableView extends ChronicleView {
 				const next = input.value.trim();
 				// Back to plain text straight away; the index update then shows the saved value.
 				td.empty();
-				el("span", { cls: "chronicle-cell-text", text: (save ? next : value) || "—" }, td);
+				el("span", { cls: "universeview-cell-text", text: (save ? next : value) || "—" }, td);
 				if (save && next !== value) void this.write(e, c, next);
 			};
 			input.addEventListener("keydown", (evt) => {

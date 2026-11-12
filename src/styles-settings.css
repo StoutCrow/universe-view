@@ -10,26 +10,26 @@
 .setting-item.uv-setting-with-extra > :not(.setting-item-info):not(.setting-item-control) {
 	flex: 1 0 100%;
 }
-.chronicle-calendar-inline {
+.universeview-calendar-inline {
 	margin: 8px 0 16px;
 	padding: 12px 0 0;
 	border-top: 1px solid var(--background-modifier-border);
 }
-.chronicle-calendar-inline:not(#uv-strong) {
+.universeview-calendar-inline:not(#uv-strong) {
 	width: auto;
 }
-.chronicle-calendar-inline-title {
+.universeview-calendar-inline-title {
 	margin: 0 0 8px;
 }
 /* Fonts from the settings (empty variables fall back to the theme's). */
-.chronicle-scope {
-	font-family: var(--chronicle-font-ui, inherit);
+.universeview-scope {
+	font-family: var(--universeview-font-ui, inherit);
 }
-.chronicle-pin-label {
-	font-family: var(--chronicle-font-map, inherit);
+.universeview-pin-label {
+	font-family: var(--universeview-font-map, inherit);
 }
-.chronicle-territory-label {
-	font-family: var(--chronicle-font-map, var(--chronicle-font-display, inherit));
+.universeview-territory-label {
+	font-family: var(--universeview-font-map, var(--universeview-font-display, inherit));
 }
 
 /* What's new: one fold per version, the newest open. */
@@ -40,7 +40,7 @@
 .uv-whatsnew-entry:first-child { border-top: none; }
 .uv-whatsnew-entry > summary { cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 4px 0; list-style: none; }
 .uv-whatsnew-entry > summary::-webkit-details-marker { display: none; }
-.uv-whatsnew-entry > summary::before { content: '▸'; color: var(--text-faint); transition: transform var(--chronicle-fast, 120ms); }
+.uv-whatsnew-entry > summary::before { content: '▸'; color: var(--text-faint); transition: transform var(--universeview-fast, 120ms); }
 .uv-whatsnew-entry[open] > summary::before { transform: rotate(90deg); }
 .uv-whatsnew-version { font-weight: 700; font-size: var(--font-ui-medium); }
 .uv-whatsnew-date { color: var(--text-muted); font-size: var(--font-ui-smaller); }
@@ -73,4 +73,4 @@
 /* Explanations tucked behind a "?": the description is hidden, and the name shows the help when hovered. */
 .setting-item-description.is-tucked { display: none; }
 .setting-item-name.has-tucked-help { cursor: help; }
-.setting-item-name .chronicle-help { margin-left: 6px; }
+.setting-item-name .universeview-help { margin-left: 6px; }

@@ -1,5 +1,5 @@
 import { Modal, Notice } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { DEFAULT_REGION_WORDS, chainOf, holdingsOf, tierName, tierWords, tierWordsWith } from "../index/realms";
 import { typeFromTag } from "../index/reader";
@@ -8,7 +8,7 @@ import { factsFromPath, tagFixes, type TagFix, type TagNote } from "../index/tag
 import { el, openEntity } from "../render/common";
 
 /** What UniverseView knows about a note that a tag might state. */
-export function tagFacts(plugin: ChroniclePlugin, e: Entity): string[] {
+export function tagFacts(plugin: UniverseViewPlugin, e: Entity): string[] {
 	const idx = plugin.index;
 	const tree = plugin.realms();
 	// The titles above it, not itself: a realm doesn't belong to itself.
@@ -25,7 +25,7 @@ export function tagFacts(plugin: ChroniclePlugin, e: Entity): string[] {
 }
 
 /** Everything a note's tags go through to reach the tag scheme (`tagscheme.ts`). */
-export function schemeMigrations(plugin: ChroniclePlugin): { entity: Entity; fix: Migration }[] {
+export function schemeMigrations(plugin: UniverseViewPlugin): { entity: Entity; fix: Migration }[] {
 	const s = plugin.settings;
 	const words: MigrateWords = {
 		bareType: (w) => (w.includes("_") ? null : typeFromTag(w, "", s.typeTags)),
@@ -80,13 +80,13 @@ export class NormaliseTagsModal extends Modal {
 	private applyBtn?: HTMLButtonElement;
 
 	/** `scheme`: moves older tags to the tag scheme instead (Type_Kind, Type_Kind_Name, Type_Field_Value). */
-	constructor(private plugin: ChroniclePlugin, private scheme = false) {
+	constructor(private plugin: UniverseViewPlugin, private scheme = false) {
 		super(plugin.app);
 	}
 
 	onOpen() {
 		const { plugin } = this;
-		this.modalEl.addClass("chronicle-detect-modal", "chronicle-scope");
+		this.modalEl.addClass("universeview-detect-modal", "universeview-scope");
 		this.titleEl.setText(this.scheme ? "Move tags to the tag scheme" : "Normalise all tags");
 		if (this.scheme) {
 			this.rows = schemeMigrations(plugin).map(({ entity, fix }) => ({ entity, fix, off: new Set<string>() }));
@@ -108,12 +108,12 @@ export class NormaliseTagsModal extends Modal {
 		const intro = this.scheme
 			? "Rewrites tags into one scheme: what a note is (#Place_County, #Character_Person), what it belongs to (#Group_Nation_United_States) and facts (#Character_Status_Dead, #Place_Size_Small). #Title and bare type tags go: the kind says it. Tags in the properties and in the text change (not in code). Click a change to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step."
 			: undefined;
-		el("p", { cls: "chronicle-detect-intro", text: intro ?? "Brings every note to the tags your vault already uses: each spelling becomes the usual one, and a note gains the tags its folders, realm, kind and dates say it should have. Click a tag to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step." }, contentEl);
-		const list = el("div", { cls: "chronicle-detect-list" }, contentEl);
-		if (!this.rows.length) el("div", { cls: "chronicle-detect-empty", text: "Every note already follows your tags." }, list);
+		el("p", { cls: "universeview-detect-intro", text: intro ?? "Brings every note to the tags your vault already uses: each spelling becomes the usual one, and a note gains the tags its folders, realm, kind and dates say it should have. Click a tag to leave it out. Nothing changes until you press Apply, and Undo takes it all back in one step." }, contentEl);
+		const list = el("div", { cls: "universeview-detect-list" }, contentEl);
+		if (!this.rows.length) el("div", { cls: "universeview-detect-empty", text: "Every note already follows your tags." }, list);
 		for (const row of this.rows) this.row(list, row);
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
-		this.countEl = el("span", { cls: "chronicle-detect-count" }, footer);
+		this.countEl = el("span", { cls: "universeview-detect-count" }, footer);
 		el("button", { text: "Cancel" }, footer).addEventListener("click", () => this.close());
 		this.applyBtn = el("button", { cls: "mod-cta", text: "Apply" }, footer);
 		this.applyBtn.addEventListener("click", () => void this.apply());
@@ -139,8 +139,8 @@ export class NormaliseTagsModal extends Modal {
 	}
 
 	private row(parent: HTMLElement, row: Row) {
-		const r = el("div", { cls: "chronicle-detect-row" }, parent);
-		const main = el("div", { cls: "chronicle-detect-main" }, r);
+		const r = el("div", { cls: "universeview-detect-row" }, parent);
+		const main = el("div", { cls: "universeview-detect-main" }, r);
 		const name = el("a", { cls: "internal-link", text: row.entity.name }, main);
 		name.addEventListener("click", (evt) => openEntity(this.plugin, row.entity.key, evt));
 		const tags = el("div", { cls: "uv-creator-tag-list" }, main);

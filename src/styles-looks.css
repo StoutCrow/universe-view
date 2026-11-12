@@ -8,24 +8,24 @@ body.uv-btn-quiet { --uvb-bg: transparent; --uvb-bd: transparent; --uvb-fg: var(
 	--uvb-obg: var(--background-modifier-hover); --uvb-obd: var(--background-modifier-border); --uvb-ofg: var(--text-normal); }
 body.uv-btn-outlined { --uvb-bg: transparent; --uvb-bd: color-mix(in srgb, var(--text-normal) 38%, transparent); --uvb-bw: 1.5px; --uvb-fg: var(--text-normal); --uvb-sh: none; --uvb-r: var(--uv-r-md); --uvb-px: 11px;
 	--uvb-hbg: var(--background-modifier-hover); --uvb-hbd: var(--text-normal); --uvb-hfg: var(--text-normal);
-	--uvb-obg: color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 13%, transparent); --uvb-obd: var(--chronicle-accent, var(--interactive-accent)); --uvb-ofg: var(--chronicle-accent, var(--interactive-accent)); }
+	--uvb-obg: color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 13%, transparent); --uvb-obd: var(--universeview-accent, var(--interactive-accent)); --uvb-ofg: var(--universeview-accent, var(--interactive-accent)); }
 body.uv-btn-filled { --uvb-bg: var(--background-modifier-border); --uvb-bd: transparent; --uvb-fg: var(--text-normal); --uvb-sh: none; --uvb-r: var(--uv-r-md); --uvb-px: 12px;
 	--uvb-hbg: var(--background-modifier-border-hover); --uvb-hbd: transparent; --uvb-hfg: var(--text-normal);
 	--uvb-obg: var(--text-normal); --uvb-obd: var(--text-normal); --uvb-ofg: var(--background-primary); }
 body.uv-btn-pill { --uvb-bg: transparent; --uvb-bd: var(--background-modifier-border-hover); --uvb-fg: var(--text-muted); --uvb-sh: none; --uvb-r: 999px; --uvb-px: 16px;
 	--uvb-hbg: var(--background-modifier-hover); --uvb-hbd: var(--text-muted); --uvb-hfg: var(--text-normal);
-	--uvb-obg: var(--chronicle-accent, var(--interactive-accent)); --uvb-obd: var(--chronicle-accent, var(--interactive-accent)); --uvb-ofg: var(--text-on-accent); }
+	--uvb-obg: var(--universeview-accent, var(--interactive-accent)); --uvb-obd: var(--universeview-accent, var(--interactive-accent)); --uvb-ofg: var(--text-on-accent); }
 body.uv-btn-stamp { --uvb-bg: var(--background-primary); --uvb-bd: var(--text-normal); --uvb-bw: 2px; --uvb-fg: var(--text-normal); --uvb-sh: 2px 2px 0 var(--text-normal); --uvb-r: var(--uv-r-sm); --uvb-px: 12px;
 	--uvb-hbg: var(--background-secondary); --uvb-hbd: var(--text-normal); --uvb-hfg: var(--text-normal); --uvb-hsh: 3px 3px 0 var(--text-normal);
-	--uvb-obg: color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 22%, var(--background-primary)); --uvb-obd: var(--text-normal); --uvb-ofg: var(--text-normal); --uvb-osh: 0 0 0 var(--text-normal); --uvb-ot: translate(2px, 2px); }
-body.uv-btn-glow { --uvb-bg: color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 7%, transparent); --uvb-bd: color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 50%, transparent); --uvb-fg: var(--text-normal); --uvb-sh: 0 0 0 transparent; --uvb-r: var(--uv-r-sm); --uvb-px: 12px;
-	--uvb-hbg: color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 14%, transparent); --uvb-hbd: var(--chronicle-accent, var(--interactive-accent)); --uvb-hfg: var(--text-normal); --uvb-hsh: 0 0 10px color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 40%, transparent);
-	--uvb-obg: color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 24%, transparent); --uvb-obd: var(--chronicle-accent, var(--interactive-accent)); --uvb-ofg: var(--chronicle-accent, var(--interactive-accent)); --uvb-osh: 0 0 14px color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 55%, transparent); }
+	--uvb-obg: color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 22%, var(--background-primary)); --uvb-obd: var(--text-normal); --uvb-ofg: var(--text-normal); --uvb-osh: 0 0 0 var(--text-normal); --uvb-ot: translate(2px, 2px); }
+body.uv-btn-glow { --uvb-bg: color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 7%, transparent); --uvb-bd: color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 50%, transparent); --uvb-fg: var(--text-normal); --uvb-sh: 0 0 0 transparent; --uvb-r: var(--uv-r-sm); --uvb-px: 12px;
+	--uvb-hbg: color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 14%, transparent); --uvb-hbd: var(--universeview-accent, var(--interactive-accent)); --uvb-hfg: var(--text-normal); --uvb-hsh: 0 0 10px color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 40%, transparent);
+	--uvb-obg: color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 24%, transparent); --uvb-obd: var(--universeview-accent, var(--interactive-accent)); --uvb-ofg: var(--universeview-accent, var(--interactive-accent)); --uvb-osh: 0 0 14px color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 55%, transparent); }
 body.uv-btn-ruled { --uvb-bg: transparent; --uvb-bd: transparent; --uvb-fg: var(--text-muted); --uvb-sh: inset 0 -1px 0 var(--text-faint); --uvb-r: 0; --uvb-px: 8px; --uvb-fv: small-caps; --uvb-ls: 0.05em;
 	--uvb-hbg: transparent; --uvb-hbd: transparent; --uvb-hfg: var(--text-normal); --uvb-hsh: inset 0 -2px 0 var(--text-normal);
-	--uvb-obg: transparent; --uvb-obd: transparent; --uvb-ofg: var(--text-normal); --uvb-osh: inset 0 -2px 0 var(--chronicle-accent, var(--interactive-accent)); }
+	--uvb-obg: transparent; --uvb-obd: transparent; --uvb-ofg: var(--text-normal); --uvb-osh: inset 0 -2px 0 var(--universeview-accent, var(--interactive-accent)); }
 
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .chronicle-ov-action, .uv-lin-chip):not(.uv-pv *) {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action, .uv-lin-chip):not(.uv-pv *) {
 	background: var(--uvb-bg);
 	border: var(--uvb-bw, 1px) solid var(--uvb-bd);
 	border-radius: var(--uvb-r);
@@ -35,29 +35,29 @@ body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .
 	letter-spacing: var(--uvb-ls, normal);
 	transform: none;
 }
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .chronicle-ov-action, .uv-lin-chip):not(.uv-pv *):hover {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action, .uv-lin-chip):not(.uv-pv *):hover {
 	background: var(--uvb-hbg);
 	border-color: var(--uvb-hbd);
 	box-shadow: var(--uvb-hsh, var(--uvb-sh));
 	color: var(--uvb-hfg);
 }
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon), .uv-lin-chip):not(.uv-pv *):is(.is-active, :active):not(.uv-pv *) {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .uv-lin-chip):not(.uv-pv *):is(.is-active, :active):not(.uv-pv *) {
 	background: var(--uvb-obg);
 	border-color: var(--uvb-obd);
 	box-shadow: var(--uvb-osh, var(--uvb-sh));
 	color: var(--uvb-ofg);
 	transform: var(--uvb-ot, none);
 }
-body[class*="uv-btn-"]:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .uv-lin-chip):not(.uv-pv *) {
+body[class*="uv-btn-"]:not(#uv-strong) :is(.universeview-chip:not(.mod-cta-chip), .uv-lin-chip):not(.uv-pv *) {
 	padding-inline: var(--uvb-px);
 }
-body.chronicle-theme-parchment.uv-btn-outlined:not(#uv-strong) :is(.chronicle-chip:not(.mod-cta-chip), .chronicle-icon-btn:not(.mod-cta-icon)):not(.uv-pv *) {
+body.universeview-theme-parchment.uv-btn-outlined:not(#uv-strong) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon)):not(.uv-pv *) {
 	box-shadow: inset 0 0 0 2px var(--background-primary), inset 0 0 0 3px color-mix(in srgb, var(--text-normal) 22%, transparent);
 }
 
 /* ---- Tabs: the dashboard's, the inspector's and the sub-tabs ---- */
 /* Shared: every style starts from a clean tab, then adds its own. */
-body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
+body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) {
 	height: 36px;
 	margin-bottom: 0;
 	padding: 0 14px;
@@ -72,37 +72,37 @@ body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-t
 	font-variant: normal;
 	font-weight: normal;
 }
-body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *):hover {
+body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *):hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
-body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+body[class*="uv-tabs-"]:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	color: var(--text-normal);
 	font-weight: 600;
 }
 /* Underline: a heavy accent bar under the open tab. */
-body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) { border-bottom: 2px solid transparent; }
-body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
-	border-bottom-color: var(--chronicle-accent, var(--interactive-accent));
+body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) { border-bottom: 2px solid transparent; }
+body.uv-tabs-underline:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+	border-bottom-color: var(--universeview-accent, var(--interactive-accent));
 	background: transparent;
 }
 /* Folder: raised tabs that join the page below. */
 body.uv-tabs-folder:not(#uv-strong) .uv-hub-bar { align-items: flex-end; padding-top: 8px; }
-body.uv-tabs-folder:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .uv-subtabs):not(.uv-pv *) { gap: 4px; }
-body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
+body.uv-tabs-folder:not(#uv-strong) :is(.uv-hub-tabs, .universeview-insp-tabs, .uv-subtabs):not(.uv-pv *) { gap: 4px; }
+body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) {
 	height: 34px;
 	margin-bottom: -1px;
 	border-color: var(--background-modifier-border-hover);
 	border-radius: var(--uv-r-lg) var(--uv-r-lg) 0 0;
 	background: var(--background-secondary);
 }
-body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+body.uv-tabs-folder:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	background: var(--background-primary);
 	border-bottom-color: var(--background-primary);
-	border-top: 3px solid var(--chronicle-accent, var(--interactive-accent));
+	border-top: 3px solid var(--universeview-accent, var(--interactive-accent));
 }
 /* Segmented: one rounded strip with a raised thumb. */
-body.uv-tabs-segmented:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .uv-subtabs):not(.uv-pv *) {
+body.uv-tabs-segmented:not(#uv-strong) :is(.uv-hub-tabs, .universeview-insp-tabs, .uv-subtabs):not(.uv-pv *) {
 	flex: 0 1 auto;
 	align-self: center;
 	gap: 2px;
@@ -111,17 +111,17 @@ body.uv-tabs-segmented:not(#uv-strong) :is(.uv-hub-tabs, .chronicle-insp-tabs, .
 	background: var(--background-modifier-border);
 	border-bottom: none;
 }
-body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) { height: 30px; border-radius: var(--uv-r-sm); }
-body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) { height: 30px; border-radius: var(--uv-r-sm); }
+body.uv-tabs-segmented:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	background: var(--background-primary);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 /* Plain: words only; the open one is bold, in the accent, with a dot. */
-body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
-	color: var(--chronicle-accent, var(--interactive-accent));
+body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+	color: var(--universeview-accent, var(--interactive-accent));
 	font-weight: 700;
 }
-body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *)::before {
+body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *)::before {
 	content: "";
 	width: 6px;
 	height: 6px;
@@ -130,33 +130,33 @@ body.uv-tabs-plain:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-i
 	background: currentcolor;
 }
 /* Block: the open tab is a solid accent block. */
-body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) { border-radius: var(--uv-r-sm); }
-body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
-	background: var(--chronicle-accent, var(--interactive-accent));
+body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) { border-radius: var(--uv-r-sm); }
+body.uv-tabs-block:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+	background: var(--universeview-accent, var(--interactive-accent));
 	color: var(--text-on-accent);
 	box-shadow: 3px 3px 0 var(--text-normal);
 }
 /* Glow: spaced capitals, and the open tab lights up. */
-body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
+body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) {
 	border-bottom: 2px solid transparent;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
 	font-size: var(--font-ui-smaller);
 }
-body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
-	color: var(--chronicle-accent, var(--interactive-accent));
-	border-bottom-color: var(--chronicle-accent, var(--interactive-accent));
-	background: linear-gradient(to top, color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 16%, transparent), transparent);
-	text-shadow: 0 0 10px color-mix(in srgb, var(--chronicle-accent, var(--interactive-accent)) 70%, transparent);
-	box-shadow: 0 8px 12px -8px var(--chronicle-accent, var(--interactive-accent));
+body.uv-tabs-glow:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+	color: var(--universeview-accent, var(--interactive-accent));
+	border-bottom-color: var(--universeview-accent, var(--interactive-accent));
+	background: linear-gradient(to top, color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 16%, transparent), transparent);
+	text-shadow: 0 0 10px color-mix(in srgb, var(--universeview-accent, var(--interactive-accent)) 70%, transparent);
+	box-shadow: 0 8px 12px -8px var(--universeview-accent, var(--interactive-accent));
 }
 /* Rule: small capitals; the open tab sits between two thin rules. */
-body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab, .chronicle-insp-tab, .uv-subtab):not(.uv-pv *) {
+body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab, .universeview-insp-tab, .uv-subtab):not(.uv-pv *) {
 	font-variant: small-caps;
 	letter-spacing: 0.06em;
 	font-size: calc(var(--font-ui-small) * 1.1);
 }
-body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	box-shadow: inset 0 1px 0 var(--text-normal), inset 0 -1px 0 var(--text-normal);
 }
 
@@ -166,15 +166,15 @@ body.uv-tabs-rule:not(#uv-strong) :is(button.uv-hub-tab.is-active, .chronicle-in
    coloured edge) and bars (the line under the toolbar and the dashboard's tab bar). */
 body.uv-edge-clean { --uve-r: var(--uv-r-lg); --uve-bd: 1px solid var(--background-modifier-border); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: none; --uve-bar-b: 1px solid var(--background-modifier-border); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none; }
 body.uv-edge-double { --uve-r: var(--uv-r-sm); --uve-bd: 1px solid var(--background-modifier-border-hover); --uve-o: 1px solid var(--background-modifier-border-hover); --uve-oo: -5px; --uve-clip: none; --uve-bi: none; --uve-bar-b: 4px double var(--background-modifier-border-hover); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none; }
-body.uv-edge-ornate { --oc: var(--chronicle-accent, var(--interactive-accent)); --uve-r: 2px; --uve-bd: 1px solid color-mix(in srgb, var(--oc) 45%, var(--background-modifier-border)); --uve-o: 1px solid color-mix(in srgb, var(--oc) 30%, var(--background-modifier-border)); --uve-oo: -4px; --uve-clip: none; --uve-bar-b: 4px double color-mix(in srgb, var(--oc) 55%, var(--background-modifier-border)); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none;
+body.uv-edge-ornate { --oc: var(--universeview-accent, var(--interactive-accent)); --uve-r: 2px; --uve-bd: 1px solid color-mix(in srgb, var(--oc) 45%, var(--background-modifier-border)); --uve-o: 1px solid color-mix(in srgb, var(--oc) 30%, var(--background-modifier-border)); --uve-oo: -4px; --uve-clip: none; --uve-bar-b: 4px double color-mix(in srgb, var(--oc) 55%, var(--background-modifier-border)); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none;
 	--uve-bi: linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)), linear-gradient(var(--oc), var(--oc)); }
 body.uv-edge-stitched { --uve-r: var(--uv-r-lg); --uve-bd: 1px solid var(--background-modifier-border); --uve-o: 1.5px dashed var(--text-faint); --uve-oo: -5px; --uve-clip: none; --uve-bi: none; --uve-bar-b: 2px dashed var(--text-faint); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none; }
 body.uv-edge-sketch { --uve-r: 16px 4px 18px 5px / 5px 18px 4px 16px; --uve-bd: var(--uve-bw, 1.5px) solid var(--text-muted); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: none; --uve-bar-b: 2px solid var(--text-muted); --uve-bar-t: 0 solid transparent; --uve-bar-sh: none; }
-body.uv-edge-chamfer { --oc: var(--chronicle-accent, var(--interactive-accent)); --uve-r: 0; --uve-bd: 1px solid color-mix(in srgb, var(--oc) 55%, transparent); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: linear-gradient(135deg, transparent calc(50% - 0.5px), var(--oc) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)), linear-gradient(135deg, transparent calc(50% - 0.5px), var(--oc) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)); --uve-bs: 12px 12px, 12px 12px; --uve-bp: left top, right bottom; --uve-bar-b: 1px solid var(--oc); --uve-bar-t: 0 solid transparent; --uve-bar-sh: 0 1px 12px -5px var(--oc); }
+body.uv-edge-chamfer { --oc: var(--universeview-accent, var(--interactive-accent)); --uve-r: 0; --uve-bd: 1px solid color-mix(in srgb, var(--oc) 55%, transparent); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: linear-gradient(135deg, transparent calc(50% - 0.5px), var(--oc) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)), linear-gradient(135deg, transparent calc(50% - 0.5px), var(--oc) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)); --uve-bs: 12px 12px, 12px 12px; --uve-bp: left top, right bottom; --uve-bar-b: 1px solid var(--oc); --uve-bar-t: 0 solid transparent; --uve-bar-sh: 0 1px 12px -5px var(--oc); }
 body.uv-edge-ledger { --uve-r: 0; --uve-bd: 0 solid transparent; --uve-bt: 2px solid var(--text-normal); --uve-bb: 1px solid var(--text-normal); --uve-o: 0 solid transparent; --uve-oo: 0; --uve-clip: none; --uve-bi: none; --uve-bar-b: 1px solid var(--text-normal); --uve-bar-t: 3px solid var(--text-normal); --uve-bar-sh: none; }
 
 /* Panels: the full frame. */
-body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-module, .chronicle-ov-panel, button.chronicle-ov-tile, .chronicle-dash-card, .uv-options, .chronicle-hovercard, .uv-pv-card):not(.uv-pv *) {
+body[class*="uv-edge-"]:not(#uv-strong) :is(.universeview-module, .universeview-ov-panel, button.universeview-ov-tile, .universeview-dash-card, .uv-options, .universeview-hovercard, .uv-pv-card):not(.uv-pv *) {
 	border: var(--uve-bd);
 	border-top: var(--uve-bt, var(--uve-bd));
 	border-bottom: var(--uve-bb, var(--uve-bd));
@@ -187,13 +187,13 @@ body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-module, .chronicle-ov-pan
 	background-position: var(--uve-bp, left 7px top 7px, left 7px top 7px, right 7px top 7px, right 7px top 7px, left 7px bottom 7px, left 7px bottom 7px, right 7px bottom 7px, right 7px bottom 7px);
 }
 /* Cards, the map's banner and popups: the shape and inner line, never the border (they keep their coloured edge). */
-body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-card:not(.is-found), .chronicle-map-banner, .uv-map-picked, .leaflet-popup-content-wrapper):not(.uv-pv *) {
+body[class*="uv-edge-"]:not(#uv-strong) :is(.universeview-card:not(.is-found), .universeview-map-banner, .uv-map-picked, .leaflet-popup-content-wrapper):not(.uv-pv *) {
 	border-radius: var(--uve-r);
 	outline: var(--uve-o);
 	outline-offset: var(--uve-oo);
 }
 /* The lines that carry the frame across a view: under the toolbar and under the dashboard's tabs. */
-body[class*="uv-edge-"]:not(#uv-strong) :is(.chronicle-toolbar, .uv-hub-bar):not(.uv-pv *) {
+body[class*="uv-edge-"]:not(#uv-strong) :is(.universeview-toolbar, .uv-hub-bar):not(.uv-pv *) {
 	border-top: var(--uve-bar-t);
 	border-bottom: var(--uve-bar-b);
 	box-shadow: var(--uve-bar-sh);
@@ -206,8 +206,8 @@ body.uv-font-humanist { --uvf-d: "Gill Sans", "Gill Sans MT", Candara, Optima, "
 body.uv-font-modern { --uvf-d: "Inter", "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; --uvf-u: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
 body.uv-font-technical { --uvf-d: "Orbitron", "Bahnschrift", "Eurostile", "Rajdhani", "Segoe UI", sans-serif; --uvf-u: "Rajdhani", "Bahnschrift", "Segoe UI", system-ui, sans-serif; }
 body.uv-font-typewriter { --uvf-d: "American Typewriter", "Courier New", Courier, monospace; --uvf-u: "Courier New", Courier, monospace; }
-body[class*="uv-font-"]:not(#uv-strong) { --chronicle-font-display: var(--uvf-d); }
-body[class*="uv-font-"]:not(#uv-strong) .chronicle-scope:not(.uv-pv *) { --font-interface: var(--uvf-u); font-family: var(--uvf-u); }
+body[class*="uv-font-"]:not(#uv-strong) { --universeview-font-display: var(--uvf-d); }
+body[class*="uv-font-"]:not(#uv-strong) .universeview-scope:not(.uv-pv *) { --font-interface: var(--uvf-u); font-family: var(--uvf-u); }
 .uv-pv[class*="uv-font-"] { font-family: var(--uvf-u); }
 
 /* ==== The picker cards in Settings → Look ======================================================= */
@@ -254,7 +254,7 @@ div.uv-sp-card.is-active {
 .uv-sp-view button.uv-hub-tab { height: 28px; padding: 0 8px; font-size: var(--font-ui-smaller); }
 .uv-pv-card { width: 100%; padding: 8px 10px; background: var(--background-primary); }
 .uv-pv-line { height: 5px; margin-top: 5px; border-radius: 3px; background: var(--background-modifier-border-hover); }
-.uv-pv-title { font-family: var(--chronicle-font-display); font-size: 1.25em; line-height: 1.1; color: var(--text-normal); }
+.uv-pv-title { font-family: var(--universeview-font-display); font-size: 1.25em; line-height: 1.1; color: var(--text-normal); }
 .uv-pv-sample { font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .uv-pv { display: flex; align-items: center; gap: 6px; }
 .uv-pv.uv-sp-full, .uv-pv.uv-sp-full .uv-pv-card { width: 100%; }
@@ -268,22 +268,22 @@ div.uv-sp-card:focus-visible { outline: 2px solid var(--interactive-accent); out
 body.uv-icons-light { --uvi-w: 1.25px; }
 body.uv-icons-regular { --uvi-w: 1.75px; }
 body.uv-icons-bold { --uvi-w: 2.5px; }
-body[class*="uv-icons-"]:not(#uv-strong) :is(.chronicle-view, .chronicle-scope, .uv-hub, .chronicle-hovercard, .uv-options, .uv-pv) svg.svg-icon:not(.uv-pv *) { stroke-width: var(--uvi-w); }
+body[class*="uv-icons-"]:not(#uv-strong) :is(.universeview-view, .universeview-scope, .uv-hub, .universeview-hovercard, .uv-options, .uv-pv) svg.svg-icon:not(.uv-pv *) { stroke-width: var(--uvi-w); }
 .uv-sp-icon { display: inline-flex; color: var(--text-normal); }
 .uv-sp-icon svg { width: 20px; height: 20px; }
 
 /* ==== Headings: how titles and group names are marked ========================================= */
-body.uv-head-ruled:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head):not(.uv-pv *) { text-decoration: underline; }
-body.uv-head-smallcaps:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head):not(.uv-pv *) { font-variant: small-caps; letter-spacing: 0.06em; }
-body.uv-head-capitals:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label, .chronicle-legend-head):not(.uv-pv *) { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.86em; }
-body.uv-head-flourish:not(#uv-strong) :is(.chronicle-ov-title, .chronicle-module-title, .chronicle-ov-panel-head h3, .chronicle-tl-lane-label):not(.uv-pv *)::after {
+body.uv-head-ruled:not(#uv-strong) :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3, .universeview-tl-lane-label, .universeview-legend-head):not(.uv-pv *) { text-decoration: underline; }
+body.uv-head-smallcaps:not(#uv-strong) :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3, .universeview-tl-lane-label, .universeview-legend-head):not(.uv-pv *) { font-variant: small-caps; letter-spacing: 0.06em; }
+body.uv-head-capitals:not(#uv-strong) :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3, .universeview-tl-lane-label, .universeview-legend-head):not(.uv-pv *) { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.86em; }
+body.uv-head-flourish:not(#uv-strong) :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3, .universeview-tl-lane-label):not(.uv-pv *)::after {
 	content: "";
 	display: inline-block;
 	width: 26px;
 	height: 9px;
 	margin-left: 8px;
 	vertical-align: middle;
-	background: var(--chronicle-accent, var(--interactive-accent));
+	background: var(--universeview-accent, var(--interactive-accent));
 	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 9'%3E%3Cpath d='M0 4.5H9M17 4.5H26' stroke='black' stroke-width='1'/%3E%3Cpath d='M13 0.5L17 4.5L13 8.5L9 4.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
 	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 9'%3E%3Cpath d='M0 4.5H9M17 4.5H26' stroke='black' stroke-width='1'/%3E%3Cpath d='M13 0.5L17 4.5L13 8.5L9 4.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }

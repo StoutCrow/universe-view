@@ -53,8 +53,8 @@ const wrap = (box: HTMLElement, kind: string, id: string) => el("div", { cls: id
 export const previewButtons: StylePreview = (box, id) => {
 	const w = wrap(box, "btn", id);
 	w.addClass("uv-sp-row");
-	el("span", { cls: "chronicle-chip", text: "Show" }, w);
-	el("span", { cls: "chronicle-chip is-active", text: "On" }, w);
+	el("span", { cls: "universeview-chip", text: "Show" }, w);
+	el("span", { cls: "universeview-chip is-active", text: "On" }, w);
 };
 
 /** Three tabs, the middle one open. */
@@ -94,6 +94,6 @@ export const previewIcons: StylePreview = (box, id) => {
 export const previewHeadings: StylePreview = (box, id) => {
 	const w = wrap(box, "head", id);
 	w.addClass("uv-sp-col");
-	el("div", { cls: "chronicle-module-title", text: "House of Tudor" }, w);
+	el("div", { cls: "universeview-module-title", text: "House of Tudor" }, w);
 	el("div", { cls: "uv-pv-sample", text: "Born 1457" }, w);
 };

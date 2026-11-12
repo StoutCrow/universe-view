@@ -1,149 +1,149 @@
 /* ==== Modern layer: motion, boards, hover cards, map tools, settings ============================
-   Durations scale with --chronicle-speed (the "Motion" setting); easing is --chronicle-ease.
+   Durations scale with --universeview-speed (the "Motion" setting); easing is --universeview-ease.
    Entrance animations use fill-mode "backwards" so they never pin a transform after finishing. */
 
-@keyframes chronicle-rise {
+@keyframes universeview-rise {
 	from { opacity: 0; transform: translateY(10px); }
 	to { opacity: 1; transform: none; }
 }
-@keyframes chronicle-fade {
+@keyframes universeview-fade {
 	from { opacity: 0; }
 	to { opacity: 1; }
 }
-@keyframes chronicle-pop {
+@keyframes universeview-pop {
 	0% { opacity: 0; transform: scale(0.4); }
 	70% { opacity: 1; }
 	100% { opacity: 1; transform: scale(1); }
 }
-@keyframes chronicle-leave {
+@keyframes universeview-leave {
 	to { opacity: 0; transform: scale(0.94); }
 }
-@keyframes chronicle-shimmer {
+@keyframes universeview-shimmer {
 	to { background-position: -200% 0; }
 }
 
-.chronicle-view.chronicle-scope {
+.universeview-view.universeview-scope {
 	background: var(--background-primary);
 	color: var(--text-normal);
 }
-.chronicle-view-body {
-	background: var(--chronicle-backdrop, linear-gradient(transparent, transparent)), var(--background-primary);
+.universeview-view-body {
+	background: var(--universeview-backdrop, linear-gradient(transparent, transparent)), var(--background-primary);
 }
-.chronicle-view-body > *:not(.chronicle-map-banner):not(.chronicle-map-hint) {
-	animation: chronicle-fade var(--chronicle-slow) var(--chronicle-ease) backwards;
+.universeview-view-body > *:not(.universeview-map-banner):not(.universeview-map-hint) {
+	animation: universeview-fade var(--universeview-slow) var(--universeview-ease) backwards;
 }
-.chronicle-toolbar {
+.universeview-toolbar {
 	position: relative;
 	z-index: 6;
-	gap: calc(6px * var(--chronicle-density)) calc(10px * var(--chronicle-density));
-	padding: calc(7px * var(--chronicle-density)) 12px;
+	gap: calc(6px * var(--universeview-density)) calc(10px * var(--universeview-density));
+	padding: calc(7px * var(--universeview-density)) 12px;
 	background: var(--background-primary);
 }
-.chronicle-toolbar .dropdown,
-.chronicle-picker input,
-.chronicle-toolbar .chronicle-search input {
+.universeview-toolbar .dropdown,
+.universeview-picker input,
+.universeview-toolbar .universeview-search input {
 	border-radius: var(--uv-r-md);
-	transition: box-shadow var(--chronicle-fast) var(--chronicle-ease), border-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: box-shadow var(--universeview-fast) var(--universeview-ease), border-color var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-chip,
-.chronicle-icon-btn,
-.chronicle-scope button {
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease), color var(--chronicle-fast) var(--chronicle-ease),
-		border-color var(--chronicle-fast) var(--chronicle-ease), transform var(--chronicle-fast) var(--chronicle-ease),
-		box-shadow var(--chronicle-fast) var(--chronicle-ease);
+.universeview-chip,
+.universeview-icon-btn,
+.universeview-scope button {
+	transition: background-color var(--universeview-fast) var(--universeview-ease), color var(--universeview-fast) var(--universeview-ease),
+		border-color var(--universeview-fast) var(--universeview-ease), transform var(--universeview-fast) var(--universeview-ease),
+		box-shadow var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-chip:active,
-.chronicle-icon-btn:active,
-.chronicle-scope button:active {
+.universeview-chip:active,
+.universeview-icon-btn:active,
+.universeview-scope button:active {
 	transform: scale(0.96);
 }
-.chronicle-chip.mod-cta-chip {
+.universeview-chip.mod-cta-chip {
 	background: var(--interactive-accent);
 	border-color: transparent;
 	color: var(--text-on-accent);
 }
-.chronicle-chip.mod-cta-chip:hover {
+.universeview-chip.mod-cta-chip:hover {
 	background: var(--interactive-accent-hover);
 	color: var(--text-on-accent);
 }
-.chronicle-icon-btn {
+.universeview-icon-btn {
 	border-radius: var(--uv-r-md);
 }
 
 /* Display font for names and titles (themes change it). */
-.chronicle-ov-title,
-.chronicle-ov-tile-title,
-.chronicle-hc-name,
-.chronicle-card-name,
-.chronicle-module-title,
-.chronicle-popup-title,
-.chronicle-territory-label,
-.chronicle-lineage-label,
-.chronicle-stat-value,
-.chronicle-theme-name {
-	font-family: var(--chronicle-font-display);
+.universeview-ov-title,
+.universeview-ov-tile-title,
+.universeview-hc-name,
+.universeview-card-name,
+.universeview-module-title,
+.universeview-popup-title,
+.universeview-territory-label,
+.universeview-lineage-label,
+.universeview-stat-value,
+.universeview-theme-name {
+	font-family: var(--universeview-font-display);
 }
 
 /* ---- Overview ---- */
-.chronicle-ov-hero {
-	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+.universeview-ov-hero {
+	animation: universeview-rise var(--universeview-slow) var(--universeview-ease) backwards;
 }
-.chronicle-ov-title {
+.universeview-ov-title {
 	font-size: 2.2em;
 	letter-spacing: -0.01em;
 }
-button.chronicle-ov-tile,
-.chronicle-ov-panel {
-	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+button.universeview-ov-tile,
+.universeview-ov-panel {
+	animation: universeview-rise var(--universeview-slow) var(--universeview-ease) backwards;
 }
 /* The view index has no colour per row and no lift on hover: the row's name turns accent, that is all. */
-button.chronicle-ov-tile {
+button.universeview-ov-tile {
 	position: relative;
 }
-.chronicle-ov-panel {
+.universeview-ov-panel {
 	box-shadow: none;
 }
-.chronicle-ov-list li {
-	padding: calc(5px * var(--chronicle-density)) 4px;
+.universeview-ov-list li {
+	padding: calc(5px * var(--universeview-density)) 4px;
 	margin: 0 -4px;
 	border-radius: var(--uv-r-md);
-	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease);
+	animation: universeview-fade var(--universeview-med) var(--universeview-ease) backwards;
+	transition: background-color var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-ov-list li:hover {
+.universeview-ov-list li:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-ov-action {
+.universeview-ov-action {
 	border-radius: var(--uv-r-md);
 }
 
 /* ---- Family tree, timeline, graph, embeds ---- */
-.chronicle-card {
-	transition: border-color var(--chronicle-fast) var(--chronicle-ease), transform var(--chronicle-med) var(--chronicle-ease),
-		box-shadow var(--chronicle-med) var(--chronicle-ease);
+.universeview-card {
+	transition: border-color var(--universeview-fast) var(--universeview-ease), transform var(--universeview-med) var(--universeview-ease),
+		box-shadow var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-card:hover {
-	box-shadow: var(--chronicle-shadow-lift);
+.universeview-card:hover {
+	box-shadow: var(--universeview-shadow-lift);
 }
-.chronicle-tl-dot {
-	transition: transform var(--chronicle-fast) var(--chronicle-ease);
+.universeview-tl-dot {
+	transition: transform var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-tl-bar {
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease), box-shadow var(--chronicle-fast) var(--chronicle-ease);
+.universeview-tl-bar {
+	transition: background-color var(--universeview-fast) var(--universeview-ease), box-shadow var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-tl-item:hover .chronicle-tl-bar {
+.universeview-tl-item:hover .universeview-tl-bar {
 }
-.chronicle-net-shape {
-	transition: stroke var(--chronicle-fast) var(--chronicle-ease), stroke-width var(--chronicle-fast) var(--chronicle-ease);
+.universeview-net-shape {
+	transition: stroke var(--universeview-fast) var(--universeview-ease), stroke-width var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-block-host {
-	border-radius: calc(var(--chronicle-radius) + 2px);
-	box-shadow: var(--chronicle-shadow);
+.universeview-block-host {
+	border-radius: calc(var(--universeview-radius) + 2px);
+	box-shadow: var(--universeview-shadow);
 }
 
 /* ==== Hover cards ============================================================================ */
 
-.chronicle-hovercard {
+.universeview-hovercard {
 	position: fixed;
 	z-index: var(--layer-popover, 30);
 	width: 340px;
@@ -151,7 +151,7 @@ button.chronicle-ov-tile {
 	max-height: min(460px, calc(100vh - 16px));
 	overflow: hidden auto;
 	padding: 13px 14px 8px;
-	border-radius: calc(var(--chronicle-radius) + 4px);
+	border-radius: calc(var(--universeview-radius) + 4px);
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	box-shadow: var(--shadow-l);
@@ -165,31 +165,31 @@ button.chronicle-ov-tile {
 	/* A quick fade in. */
 	transition: opacity 160ms ease-out, transform 160ms ease-out;
 }
-.chronicle-hovercard[data-placement="above"] {
+.universeview-hovercard[data-placement="above"] {
 	transform: translateY(-6px) scale(0.97);
 	transform-origin: 24px bottom;
 }
-.chronicle-hovercard.is-visible {
+.universeview-hovercard.is-visible {
 	opacity: 1;
 	transform: none;
 }
-.chronicle-hovercard::before {
+.universeview-hovercard::before {
 	content: "";
 	position: absolute;
 	inset: 0 0 auto;
 	height: 2px;
 	background: var(--card-accent);
 }
-.chronicle-hc-head {
+.universeview-hc-head {
 	display: flex;
 	gap: 12px;
 	align-items: center;
 }
-.chronicle-hc-thumb {
+.universeview-hc-thumb {
 	flex-shrink: 0;
 	width: 52px;
 	height: 52px;
-	border-radius: calc(var(--chronicle-radius) + 2px);
+	border-radius: calc(var(--universeview-radius) + 2px);
 	overflow: hidden;
 	background: color-mix(in srgb, var(--card-accent) 18%, var(--background-secondary));
 	color: color-mix(in srgb, var(--card-accent) 80%, var(--text-normal));
@@ -200,25 +200,25 @@ button.chronicle-ov-tile {
 	font-size: 18px;
 	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--card-accent) 30%, transparent);
 }
-.chronicle-hc-thumb img {
+.universeview-hc-thumb img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 }
-.chronicle-hc-thumb svg {
+.universeview-hc-thumb svg {
 	width: 24px;
 	height: 24px;
 }
-.chronicle-hc-titles {
+.universeview-hc-titles {
 	min-width: 0;
 	flex: 1;
 }
-.chronicle-hc-eyebrow {
+.universeview-hc-eyebrow {
 	font-size: var(--font-ui-smaller);
 	font-weight: var(--font-semibold);
 	color: color-mix(in srgb, var(--card-accent) 75%, var(--text-muted));
 }
-.chronicle-hc-name {
+.universeview-hc-name {
 	display: block;
 	font-size: 1.15em;
 	font-weight: var(--font-bold);
@@ -229,14 +229,14 @@ button.chronicle-ov-tile {
 	text-overflow: ellipsis;
 	text-decoration: none;
 }
-.chronicle-hc-name:hover {
+.universeview-hc-name:hover {
 	color: var(--text-accent);
 }
-.chronicle-hc-sub {
+.universeview-hc-sub {
 	color: var(--text-muted);
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-hc-facts {
+.universeview-hc-facts {
 	display: grid;
 	grid-template-columns: auto 1fr;
 	gap: 3px 12px;
@@ -244,116 +244,116 @@ button.chronicle-ov-tile {
 	padding-top: 8px;
 	border-top: 1px solid var(--background-modifier-border);
 }
-.chronicle-hc-label {
+.universeview-hc-label {
 	color: var(--text-faint);
 	white-space: nowrap;
 }
-.chronicle-hc-value {
+.universeview-hc-value {
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.chronicle-hc-link {
+.universeview-hc-link {
 	color: var(--text-normal);
 	cursor: pointer;
 	text-decoration: none;
 	border-bottom: 1px solid color-mix(in srgb, var(--text-accent) 35%, transparent);
 }
-.chronicle-hc-link:hover {
+.universeview-hc-link:hover {
 	color: var(--text-accent);
 }
-.chronicle-hc-link.is-unresolved {
+.universeview-hc-link.is-unresolved {
 	color: var(--text-muted);
 	border-bottom-style: dashed;
 }
-.chronicle-hc-more {
+.universeview-hc-more {
 	color: var(--text-faint);
 }
-.chronicle-hc-excerpt {
+.universeview-hc-excerpt {
 	margin-top: 9px;
 	color: var(--text-muted);
 }
-.chronicle-hc-excerpt.is-loading {
+.universeview-hc-excerpt.is-loading {
 	height: 2.6em;
 	border-radius: var(--uv-r-md);
 	background: linear-gradient(90deg, var(--background-modifier-hover), transparent, var(--background-modifier-hover));
 	background-size: 200% 100%;
-	animation: chronicle-shimmer 1.2s linear infinite;
+	animation: universeview-shimmer 1.2s linear infinite;
 }
-.chronicle-hc-tags {
+.universeview-hc-tags {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
 	margin-top: 8px;
 }
-.chronicle-hc-tag {
+.universeview-hc-tag {
 	padding: 0 7px;
 	border-radius: var(--uv-r-md);
 	font-size: 11px;
 	background: var(--background-modifier-hover);
 	color: var(--text-muted);
 }
-.chronicle-hc-tag.is-warning {
+.universeview-hc-tag.is-warning {
 	background: color-mix(in srgb, var(--color-orange) 18%, transparent);
 	color: var(--color-orange);
 }
-.chronicle-hc-actions {
+.universeview-hc-actions {
 	display: flex;
 	gap: 2px;
 	margin: 8px -6px 0;
 	padding-top: 6px;
 	border-top: 1px solid var(--background-modifier-border);
 }
-.chronicle-hc-actions .chronicle-icon-btn svg {
+.universeview-hc-actions .universeview-icon-btn svg {
 	width: 15px;
 	height: 15px;
 }
 
 /* ==== Boards ================================================================================= */
 
-.chronicle-view-body > .chronicle-board-scroll {
+.universeview-view-body > .universeview-board-scroll {
 	overflow: auto;
 }
-.chronicle-board {
+.universeview-board {
 	position: relative;
 	min-height: 100%;
 }
-.chronicle-module {
+.universeview-module {
 	position: absolute;
 	display: flex;
 	flex-direction: column;
 	border-radius: var(--uv-r-lg);
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
-	box-shadow: var(--chronicle-shadow);
+	box-shadow: var(--universeview-shadow);
 	overflow: hidden;
-	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+	animation: universeview-rise var(--universeview-slow) var(--universeview-ease) backwards;
 }
-.chronicle-board.is-animating .chronicle-module:not(.is-dragging):not(.is-resizing) {
-	transition: left var(--chronicle-med) var(--chronicle-ease), top var(--chronicle-med) var(--chronicle-ease),
-		width var(--chronicle-med) var(--chronicle-ease), height var(--chronicle-med) var(--chronicle-ease);
+.universeview-board.is-animating .universeview-module:not(.is-dragging):not(.is-resizing) {
+	transition: left var(--universeview-med) var(--universeview-ease), top var(--universeview-med) var(--universeview-ease),
+		width var(--universeview-med) var(--universeview-ease), height var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-module:hover {
+.universeview-module:hover {
 	border-color: var(--background-modifier-border-hover);
 }
-.chronicle-module.is-dragging {
+.universeview-module.is-dragging {
 	z-index: 20;
 	box-shadow: var(--shadow-l), 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 50%, transparent);
 	cursor: grabbing;
 	opacity: 0.96;
 	scale: 1.015;
-	transition: scale var(--chronicle-fast) var(--chronicle-ease);
+	transition: scale var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-module.is-resizing {
+.universeview-module.is-resizing {
 	z-index: 20;
 }
-.chronicle-module.is-new {
-	animation: chronicle-pop var(--chronicle-slow) var(--chronicle-ease) backwards;
+.universeview-module.is-new {
+	animation: universeview-pop var(--universeview-slow) var(--universeview-ease) backwards;
 }
-.chronicle-module.is-leaving {
-	animation: chronicle-leave var(--chronicle-med) var(--chronicle-ease) forwards;
+.universeview-module.is-leaving {
+	animation: universeview-leave var(--universeview-med) var(--universeview-ease) forwards;
 }
-.chronicle-module-head {
+.universeview-module-head {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -365,39 +365,39 @@ button.chronicle-ov-tile {
 	user-select: none;
 	touch-action: none;
 }
-.chronicle-board.is-locked .chronicle-module-head,
-.chronicle-board.is-stacked .chronicle-module-head {
+.universeview-board.is-locked .universeview-module-head,
+.universeview-board.is-stacked .universeview-module-head {
 	cursor: default;
 }
-.chronicle-module-grip,
-.chronicle-module-icon {
+.universeview-module-grip,
+.universeview-module-icon {
 	display: flex;
 	color: var(--text-faint);
 }
 /* A module's title says what it is; the icon beside it is dropped. */
-.chronicle-module-icon {
+.universeview-module-icon {
 	display: none;
 }
-.chronicle-module-grip {
+.universeview-module-grip {
 	opacity: 0;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-module:hover .chronicle-module-grip {
+.universeview-module:hover .universeview-module-grip {
 	opacity: 1;
 }
-.chronicle-board.is-locked .chronicle-module-grip,
-.chronicle-board.is-stacked .chronicle-module-grip {
+.universeview-board.is-locked .universeview-module-grip,
+.universeview-board.is-stacked .universeview-module-grip {
 	display: none;
 }
-.chronicle-module-grip svg,
-.chronicle-module-icon svg {
+.universeview-module-grip svg,
+.universeview-module-icon svg {
 	width: 15px;
 	height: 15px;
 }
-.chronicle-module-icon {
+.universeview-module-icon {
 	color: var(--text-accent);
 }
-.chronicle-module-title {
+.universeview-module-title {
 	flex: 1;
 	min-width: 0;
 	font-weight: var(--font-semibold);
@@ -406,20 +406,20 @@ button.chronicle-ov-tile {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.chronicle-module-tools {
+.universeview-module-tools {
 	display: flex;
 	opacity: 0;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-module:hover .chronicle-module-tools,
-.chronicle-module:focus-within .chronicle-module-tools {
+.universeview-module:hover .universeview-module-tools,
+.universeview-module:focus-within .universeview-module-tools {
 	opacity: 1;
 }
-.chronicle-module-tools .chronicle-icon-btn svg {
+.universeview-module-tools .universeview-icon-btn svg {
 	width: 15px;
 	height: 15px;
 }
-.chronicle-module-body.chronicle-block-host {
+.universeview-module-body.universeview-block-host {
 	flex: 1;
 	min-height: 0;
 	border: none;
@@ -427,14 +427,14 @@ button.chronicle-ov-tile {
 	box-shadow: none;
 	background: transparent;
 }
-.chronicle-module-scroll {
+.universeview-module-scroll {
 	overflow: auto;
 	padding: 8px 14px 10px;
 }
-.chronicle-module-note {
+.universeview-module-note {
 	font-size: var(--font-text-size, 15px);
 }
-.chronicle-module-error {
+.universeview-module-error {
 	padding: 14px;
 	color: var(--text-error);
 	display: flex;
@@ -442,7 +442,7 @@ button.chronicle-ov-tile {
 	gap: 8px;
 	align-items: flex-start;
 }
-.chronicle-module-resize {
+.universeview-module-resize {
 	position: absolute;
 	right: 2px;
 	bottom: 2px;
@@ -451,31 +451,31 @@ button.chronicle-ov-tile {
 	z-index: 8;
 	cursor: nwse-resize;
 	opacity: 0;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 	background: linear-gradient(135deg, transparent 0 55%, var(--text-faint) 55% 62%, transparent 62% 72%, var(--text-faint) 72% 79%, transparent 79%);
 	touch-action: none;
 }
-.chronicle-module:hover .chronicle-module-resize {
+.universeview-module:hover .universeview-module-resize {
 	opacity: 0.8;
 }
-.chronicle-board.is-locked .chronicle-module-resize {
+.universeview-board.is-locked .universeview-module-resize {
 	display: none;
 }
-.chronicle-board-placeholder {
+.universeview-board-placeholder {
 	position: absolute;
-	border-radius: calc(var(--chronicle-radius) + 4px);
+	border-radius: calc(var(--universeview-radius) + 4px);
 	border: 2px dashed color-mix(in srgb, var(--interactive-accent) 70%, transparent);
 	background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
 	opacity: 0;
 	pointer-events: none;
-	transition: left var(--chronicle-fast) var(--chronicle-ease), top var(--chronicle-fast) var(--chronicle-ease),
-		width var(--chronicle-fast) var(--chronicle-ease), height var(--chronicle-fast) var(--chronicle-ease),
-		opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: left var(--universeview-fast) var(--universeview-ease), top var(--universeview-fast) var(--universeview-ease),
+		width var(--universeview-fast) var(--universeview-ease), height var(--universeview-fast) var(--universeview-ease),
+		opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-board-placeholder.is-visible {
+.universeview-board-placeholder.is-visible {
 	opacity: 1;
 }
-.chronicle-board-empty {
+.universeview-board-empty {
 	position: absolute;
 	inset: 60px 20px auto;
 	display: flex;
@@ -485,16 +485,16 @@ button.chronicle-ov-tile {
 	color: var(--text-muted);
 	text-align: center;
 }
-.chronicle-module-modal textarea.chronicle-module-source {
+.universeview-module-modal textarea.universeview-module-source {
 	width: 100%;
 	font-family: var(--font-monospace);
 	font-size: var(--font-ui-small);
 	margin: -6px 0 6px;
 }
-.chronicle-module-options {
+.universeview-module-options {
 	border-bottom: none;
 }
-.chronicle-module-help pre {
+.universeview-module-help pre {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	background: var(--background-secondary);
@@ -502,17 +502,17 @@ button.chronicle-ov-tile {
 	border-radius: var(--uv-r-md);
 	white-space: pre-wrap;
 }
-.chronicle-module-help summary {
+.universeview-module-help summary {
 	cursor: pointer;
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
-.chronicle-prompt-input {
+.universeview-prompt-input {
 	width: 100%;
 }
 
 /* "At a glance" numbers */
-.chronicle-stats {
+.universeview-stats {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 	gap: 0;
@@ -520,30 +520,30 @@ button.chronicle-ov-tile {
 	align-content: center;
 }
 /* Figures in one row, split by hairlines: no boxes, no icons. */
-.chronicle-stat {
+.universeview-stat {
 	display: block;
 	padding: 2px 16px;
 	border-left: 1px solid var(--background-modifier-border);
-	animation: chronicle-rise var(--chronicle-slow) var(--chronicle-ease) backwards;
+	animation: universeview-rise var(--universeview-slow) var(--universeview-ease) backwards;
 }
-.chronicle-stat:first-child {
+.universeview-stat:first-child {
 	border-left: none;
 	padding-left: 4px;
 }
-.chronicle-stat-icon {
+.universeview-stat-icon {
 	display: none;
 }
-.chronicle-stat-icon svg {
+.universeview-stat-icon svg {
 	width: 22px;
 	height: 22px;
 }
-.chronicle-stat-value {
+.universeview-stat-value {
 	font-size: 1.5em;
 	font-weight: var(--font-bold);
 	line-height: 1.1;
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-stat-label {
+.universeview-stat-label {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	overflow-wrap: anywhere;
@@ -551,88 +551,88 @@ button.chronicle-ov-tile {
 
 /* ==== Map: pins, legend, territories, tools ================================================== */
 
-.chronicle-pin-dot {
+.universeview-pin-dot {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: transform var(--chronicle-fast) var(--chronicle-ease), box-shadow var(--chronicle-fast) var(--chronicle-ease);
-	animation: chronicle-pop var(--chronicle-med) var(--chronicle-ease) backwards;
+	transition: transform var(--universeview-fast) var(--universeview-ease), box-shadow var(--universeview-fast) var(--universeview-ease);
+	animation: universeview-pop var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-pin-label,
-.chronicle-pin-count {
-	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
-	transition: opacity var(--chronicle-med) var(--chronicle-ease);
+.universeview-pin-label,
+.universeview-pin-count {
+	animation: universeview-fade var(--universeview-med) var(--universeview-ease) backwards;
+	transition: opacity var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-pin.has-glyph {
+.universeview-pin.has-glyph {
 	--dot: 24px;
 }
-.chronicle-pin.size-lg.has-glyph {
+.universeview-pin.size-lg.has-glyph {
 	--dot: 30px;
 }
-.chronicle-pin-dot.has-icon {
+.universeview-pin-dot.has-icon {
 	color: #fff;
 }
-.chronicle-pin-glyph {
+.universeview-pin-glyph {
 	display: flex;
 	line-height: 1;
 }
-.chronicle-pin-glyph svg {
+.universeview-pin-glyph svg {
 	width: calc(var(--dot) * 0.55);
 	height: calc(var(--dot) * 0.55);
 	stroke-width: 2.4;
 }
-.chronicle-pin-glyph.is-text-glyph {
+.universeview-pin-glyph.is-text-glyph {
 	font-size: calc(var(--dot) * 0.6);
 }
-.chronicle-pin-dot.has-logo {
+.universeview-pin-dot.has-logo {
 	background: var(--background-primary);
 	overflow: hidden;
 }
-.chronicle-pin-dot.has-logo img {
+.universeview-pin-dot.has-logo img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	border-radius: 50%;
 	pointer-events: none;
 }
-.chronicle-pin:hover .chronicle-pin-dot {
+.universeview-pin:hover .universeview-pin-dot {
 	box-shadow: 0 0 0 1px var(--pin-color), 0 0 0 5px color-mix(in srgb, var(--pin-color) 25%, transparent), 0 4px 10px rgba(0, 0, 0, 0.3);
 }
-.chronicle-pin-label.is-crowded {
+.universeview-pin-label.is-crowded {
 	opacity: 0;
 	pointer-events: none;
 }
-.chronicle-map.hide-labels .chronicle-pin:not(:hover) .chronicle-pin-label {
+.universeview-map.hide-labels .universeview-pin:not(:hover) .universeview-pin-label {
 	display: none;
 }
-.chronicle-pin:hover .chronicle-pin-label {
+.universeview-pin:hover .universeview-pin-label {
 	opacity: 1;
 	display: inline;
 }
 
-.chronicle-territory {
+.universeview-territory {
 	stroke: var(--terr-color, var(--interactive-accent));
 	fill: var(--terr-color, var(--interactive-accent));
 	stroke-linejoin: round;
 	stroke-opacity: 0.85;
-	transition: fill-opacity var(--chronicle-fast) var(--chronicle-ease), stroke-width var(--chronicle-fast) var(--chronicle-ease);
+	transition: fill-opacity var(--universeview-fast) var(--universeview-ease), stroke-width var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-territory:hover {
+.universeview-territory:hover {
 	fill-opacity: 0.32;
 	stroke-width: 3;
 }
-.chronicle-territory.is-draft {
+.universeview-territory.is-draft {
 	stroke-dasharray: 7 5;
 	fill-opacity: 0.22;
 }
-.chronicle-map.is-tool .chronicle-territory:not(.is-draft) {
+.universeview-map.is-tool .universeview-territory:not(.is-draft) {
 	pointer-events: none;
 }
-.chronicle-territory-label-wrap {
+.universeview-territory-label-wrap {
 	background: none;
 	border: none;
 }
-.chronicle-territory-label {
+.universeview-territory-label {
 	position: absolute;
 	transform: translate(-50%, -50%);
 	white-space: nowrap;
@@ -644,16 +644,16 @@ button.chronicle-ov-tile {
 	opacity: var(--uv-fade, 0.75);
 	text-shadow: 0 0 3px var(--background-primary), 0 0 8px var(--background-primary);
 	pointer-events: none;
-	transition: font-size var(--chronicle-med) var(--chronicle-ease), opacity var(--chronicle-med) var(--chronicle-ease);
+	transition: font-size var(--universeview-med) var(--universeview-ease), opacity var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-territory-label.is-tiny {
+.universeview-territory-label.is-tiny {
 	opacity: 0;
 }
-.chronicle-vertex-wrap {
+.universeview-vertex-wrap {
 	background: none;
 	border: none;
 }
-.chronicle-vertex {
+.universeview-vertex {
 	position: absolute;
 	width: 10px;
 	height: 10px;
@@ -664,39 +664,39 @@ button.chronicle-ov-tile {
 	border: 2px solid var(--terr-color, var(--interactive-accent));
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
-.chronicle-vertex.is-first {
+.universeview-vertex.is-first {
 	width: 14px;
 	height: 14px;
 	background: var(--terr-color, var(--interactive-accent));
 }
-.chronicle-vertex.is-handle {
+.universeview-vertex.is-handle {
 	width: 12px;
 	height: 12px;
 	border-radius: var(--uv-r-sm);
 	cursor: move;
 }
-.chronicle-vertex.is-mid {
+.universeview-vertex.is-mid {
 	width: 9px;
 	height: 9px;
 	opacity: 0.55;
 	cursor: copy;
 }
-.chronicle-vertex.is-mid:hover {
+.universeview-vertex.is-mid:hover {
 	opacity: 1;
 }
-.chronicle-draft-line {
+.universeview-draft-line {
 	stroke: var(--terr-color, var(--interactive-accent));
 	fill: none;
 }
-.chronicle-measure-line {
+.universeview-measure-line {
 	stroke: var(--interactive-accent);
 	fill: none;
 	stroke-linecap: round;
 }
-.chronicle-measure-line.is-rubber {
+.universeview-measure-line.is-rubber {
 	stroke-opacity: 0.6;
 }
-.leaflet-tooltip.chronicle-measure-tip {
+.leaflet-tooltip.universeview-measure-tip {
 	background: var(--background-primary);
 	color: var(--text-normal);
 	border: 1px solid var(--background-modifier-border);
@@ -705,40 +705,40 @@ button.chronicle-ov-tile {
 	font-weight: var(--font-semibold);
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-map.is-painting .leaflet-container,
-.chronicle-map.is-measuring .leaflet-container {
+.universeview-map.is-painting .leaflet-container,
+.universeview-map.is-measuring .leaflet-container {
 	cursor: crosshair;
 }
-.chronicle-map.is-filling .leaflet-container {
+.universeview-map.is-filling .leaflet-container {
 	cursor: cell;
 }
-.chronicle-map.is-filling.is-busy .leaflet-container {
+.universeview-map.is-filling.is-busy .leaflet-container {
 	cursor: progress;
 }
 /* "Marching ants" make a pale fill easy to see against any map. */
-.chronicle-territory.is-draft.is-fill {
+.universeview-territory.is-draft.is-fill {
 	stroke: color-mix(in srgb, var(--terr-color) 70%, var(--text-normal));
 	stroke-width: 2.5;
 	stroke-dasharray: 8 5;
-	animation: chronicle-fill-in var(--chronicle-med) var(--chronicle-ease) backwards, chronicle-ants 1.2s linear infinite;
+	animation: universeview-fill-in var(--universeview-med) var(--universeview-ease) backwards, universeview-ants 1.2s linear infinite;
 }
-@keyframes chronicle-fill-in {
+@keyframes universeview-fill-in {
 	from {
 		fill-opacity: 0;
 	}
 }
-@keyframes chronicle-ants {
+@keyframes universeview-ants {
 	to {
 		stroke-dashoffset: -26;
 	}
 }
 @media (prefers-reduced-motion: reduce) {
-	.chronicle-territory.is-draft.is-fill {
+	.universeview-territory.is-draft.is-fill {
 		animation: none;
 	}
 }
 /* Where a click or a dragged corner will snap: a ring on a corner, a square on an edge. */
-.chronicle-snap-ghost {
+.universeview-snap-ghost {
 	position: absolute;
 	width: 16px;
 	height: 16px;
@@ -750,14 +750,14 @@ button.chronicle-ov-tile {
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--background-primary) 70%, transparent);
 	pointer-events: none;
 }
-.chronicle-snap-ghost.is-edge {
+.universeview-snap-ghost.is-edge {
 	width: 12px;
 	height: 12px;
 	border-radius: var(--uv-r-sm);
 	transform: translate(-50%, -50%) rotate(45deg);
 }
 /* Timeline by category: a swatch of the category's colour on each lane and in the Categories menu. */
-.chronicle-tl-lane-label.is-category .chronicle-tl-lane-name::before,
+.universeview-tl-lane-label.is-category .universeview-tl-lane-name::before,
 .uv-cat-item .menu-item-title::before {
 	content: "";
 	display: inline-block;
@@ -769,21 +769,21 @@ button.chronicle-ov-tile {
 	vertical-align: 1px;
 }
 /* Snapped onto the coast or a river in the picture. */
-.chronicle-snap-ghost.is-water {
+.universeview-snap-ghost.is-water {
 	width: 14px;
 	height: 14px;
 	border-color: var(--color-blue);
 	background: color-mix(in srgb, var(--color-blue) 30%, transparent);
 }
-.chronicle-map-banner.has-actions.has-fill-controls {
+.universeview-map-banner.has-actions.has-fill-controls {
 	flex-wrap: wrap;
 	justify-content: flex-end;
 	padding: 6px 6px 6px 14px;
 }
-.chronicle-map-banner .chronicle-banner-text {
+.universeview-map-banner .universeview-banner-text {
 	flex: 1 1 220px;
 }
-.chronicle-fill-controls {
+.universeview-fill-controls {
 	order: 5;
 	flex: 1 1 100%;
 	display: flex;
@@ -793,22 +793,22 @@ button.chronicle-ov-tile {
 	padding: 6px 0 2px;
 	border-top: 1px solid var(--background-modifier-border);
 }
-.chronicle-fill-control {
+.universeview-fill-control {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-fill-control input[type="range"] {
+.universeview-fill-control input[type="range"] {
 	width: 110px;
 	accent-color: var(--interactive-accent);
 }
-.chronicle-fill-value {
+.universeview-fill-value {
 	min-width: 2ch;
 	font-variant-numeric: tabular-nums;
 	font-weight: var(--font-semibold);
 }
-.chronicle-map-banner select.chronicle-fill-select {
+.universeview-map-banner select.universeview-fill-select {
 	height: 26px;
 	font-size: var(--font-ui-smaller);
 	border-radius: var(--uv-r-md);
@@ -818,60 +818,60 @@ button.chronicle-ov-tile {
 	border: none;
 	box-shadow: none;
 }
-.chronicle-map-banner select.chronicle-fill-select option {
+.universeview-map-banner select.universeview-fill-select option {
 	color: var(--text-normal);
 	background: var(--background-primary);
 }
-.chronicle-fill-status {
+.universeview-fill-status {
 	font-size: var(--font-ui-smaller);
 	opacity: 0.85;
 }
-.chronicle-fill-status.is-warning {
+.universeview-fill-status.is-warning {
 	opacity: 1;
 	font-weight: var(--font-semibold);
 }
-.chronicle-map-banner.has-actions button.chronicle-banner-toggle {
+.universeview-map-banner.has-actions button.universeview-banner-toggle {
 	background: transparent;
 	border: 1px solid var(--background-modifier-border);
 }
-.chronicle-map-banner.has-actions button.chronicle-banner-toggle.is-active {
+.universeview-map-banner.has-actions button.universeview-banner-toggle.is-active {
 	background: var(--background-modifier-active-hover);
 	color: var(--text-normal);
 	border-color: var(--background-modifier-border-hover);
 }
-.chronicle-map-banner.has-actions button.chronicle-banner-toggle.is-active::before {
+.universeview-map-banner.has-actions button.universeview-banner-toggle.is-active::before {
 	content: "✓ ";
 }
 
 /* ==== On/off buttons ========================================================================== */
 /* A switched-on toggle is filled with the accent colour and shows a check; off is a plain outline. */
 
-.chronicle-chip.is-toggle .chronicle-chip-icon {
+.universeview-chip.is-toggle .universeview-chip-icon {
 	opacity: 0.75;
 }
-.chronicle-chip.is-toggle.is-active {
+.universeview-chip.is-toggle.is-active {
 	background: var(--background-modifier-hover);
 	border-color: var(--background-modifier-border-hover);
 	color: var(--text-normal);
 }
-.chronicle-chip.is-toggle.is-active .chronicle-chip-icon {
+.universeview-chip.is-toggle.is-active .universeview-chip-icon {
 	opacity: 1;
 	color: var(--text-accent);
 }
-.chronicle-chip.is-toggle.is-active:hover {
+.universeview-chip.is-toggle.is-active:hover {
 	background: var(--background-modifier-active-hover);
 	color: var(--text-normal);
 }
-.chronicle-chip-check {
+.universeview-chip-check {
 	display: inline-flex;
 	width: 0;
 	margin-left: -5px;
 	opacity: 0;
 	overflow: hidden;
-	transition: width var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease), margin var(--chronicle-fast) var(--chronicle-ease);
+	transition: width var(--universeview-fast) var(--universeview-ease), opacity var(--universeview-fast) var(--universeview-ease), margin var(--universeview-fast) var(--universeview-ease);
 }
 /* A nation is drawn by the lineage's own code: its row is only a holder. */
-.chronicle-tl-item.is-nation.is-span .chronicle-tl-bar:not(#uv-strong) {
+.universeview-tl-item.is-nation.is-span .universeview-tl-bar:not(#uv-strong) {
 	overflow: visible;
 	border: none;
 	background: none;
@@ -886,41 +886,41 @@ button.chronicle-ov-tile {
 }
 
 /* Each category's shape, on dots and bars alike. */
-.uv-shape-arrow .chronicle-tl-dot,
-.uv-shape-diamond .chronicle-tl-dot,
-.uv-shape-chevron .chronicle-tl-dot,
-.uv-shape-hatch .chronicle-tl-dot,
-.uv-shape-square .chronicle-tl-dot,
-.uv-shape-hexagon .chronicle-tl-dot,
-.uv-shape-triangle .chronicle-tl-dot,
-.uv-shape-star .chronicle-tl-dot {
+.uv-shape-arrow .universeview-tl-dot,
+.uv-shape-diamond .universeview-tl-dot,
+.uv-shape-chevron .universeview-tl-dot,
+.uv-shape-hatch .universeview-tl-dot,
+.uv-shape-square .universeview-tl-dot,
+.uv-shape-hexagon .universeview-tl-dot,
+.uv-shape-triangle .universeview-tl-dot,
+.uv-shape-star .universeview-tl-dot {
 	border: none;
 	border-radius: 0;
 	box-shadow: none;
 }
-.uv-shape-hatch .chronicle-tl-dot,
-.uv-shape-hatch .chronicle-tl-bar {
+.uv-shape-hatch .universeview-tl-dot,
+.uv-shape-hatch .universeview-tl-bar {
 	background: repeating-linear-gradient(45deg, var(--item-color) 0 2px, color-mix(in srgb, var(--item-color) 22%, var(--background-primary)) 2px 6px);
 }
-.chronicle-tl-item.uv-shape-hatch .chronicle-tl-bar,
-.chronicle-tl-item.uv-shape-square .chronicle-tl-bar { border-radius: var(--uv-r-sm); }
-.chronicle-tl-item.uv-shape-arrow .chronicle-tl-bar,
-.chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar,
-.chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar,
-.chronicle-tl-item.uv-shape-triangle .chronicle-tl-bar,
-.chronicle-tl-item.uv-shape-star .chronicle-tl-bar {
+.universeview-tl-item.uv-shape-hatch .universeview-tl-bar,
+.universeview-tl-item.uv-shape-square .universeview-tl-bar { border-radius: var(--uv-r-sm); }
+.universeview-tl-item.uv-shape-arrow .universeview-tl-bar,
+.universeview-tl-item.uv-shape-chevron .universeview-tl-bar,
+.universeview-tl-item.uv-shape-hexagon .universeview-tl-bar,
+.universeview-tl-item.uv-shape-triangle .universeview-tl-bar,
+.universeview-tl-item.uv-shape-star .universeview-tl-bar {
 	border-radius: 0;
 	background: color-mix(in srgb, var(--item-color) 32%, var(--background-primary));
 }
 /* Shapes with a slanted end are drawn as SVG by render/shapeart.ts (dots: one polygon; bars: a body block between small end caps). */
-.chronicle-tl-dot.has-art:not(#uv-strong) {
+.universeview-tl-dot.has-art:not(#uv-strong) {
 	position: relative;
 	background: none;
 	animation: none;
 	--uv-art-fill: var(--item-color);
 }
-.chronicle-tl-item.kind-death .chronicle-tl-dot.has-art:not(#uv-strong) { --uv-art-fill: var(--background-primary); }
-.chronicle-tl-dot.has-art > svg:not(.uv-shape-art) { position: relative; }
+.universeview-tl-item.kind-death .universeview-tl-dot.has-art:not(#uv-strong) { --uv-art-fill: var(--background-primary); }
+.universeview-tl-dot.has-art > svg:not(.uv-shape-art) { position: relative; }
 .uv-shape-art {
 	position: absolute;
 	top: 0;
@@ -929,7 +929,7 @@ button.chronicle-ov-tile {
 	height: 100%;
 	fill: var(--uv-art-fill);
 }
-.chronicle-tl-bar.has-art:not(#uv-strong) {
+.universeview-tl-bar.has-art:not(#uv-strong) {
 	border: none;
 	background: none;
 	animation: none;
@@ -937,7 +937,7 @@ button.chronicle-ov-tile {
 	--uv-art-fill: color-mix(in srgb, var(--item-color) 32%, var(--background-primary));
 	--uv-art-edge: color-mix(in srgb, var(--item-color) 85%, transparent);
 }
-.chronicle-tl-bar.has-art > .chronicle-tl-label { position: relative; }
+.universeview-tl-bar.has-art > .universeview-tl-label { position: relative; }
 .uv-art-body {
 	position: absolute;
 	top: 0;
@@ -965,10 +965,10 @@ button.chronicle-ov-tile {
 }
 .uv-art-cap polygon { stroke: none; }
 .uv-art-cap line { vector-effect: non-scaling-stroke; }
-.chronicle-tl-item.uv-shape-chevron .chronicle-tl-bar { padding-left: 10px; }
-.chronicle-tl-item.uv-shape-hexagon .chronicle-tl-bar { padding-left: 6px; }
-.chronicle-tl-item.uv-shape-triangle .chronicle-tl-bar { padding-left: 6px; }
-.chronicle-tl-item.uv-shape-star .chronicle-tl-bar { padding-left: 8px; }
+.universeview-tl-item.uv-shape-chevron .universeview-tl-bar { padding-left: 10px; }
+.universeview-tl-item.uv-shape-hexagon .universeview-tl-bar { padding-left: 6px; }
+.universeview-tl-item.uv-shape-triangle .universeview-tl-bar { padding-left: 6px; }
+.universeview-tl-item.uv-shape-star .universeview-tl-bar { padding-left: 8px; }
 .uv-tl-key {
 	display: inline-flex;
 	flex-wrap: wrap;
@@ -1016,43 +1016,43 @@ button.chronicle-ov-tile {
 .uv-tl-mark.is-on-bar:hover path {
 	fill: var(--mark-color);
 }
-.chronicle-tl-lane-label.is-movable {
+.universeview-tl-lane-label.is-movable {
 	cursor: grab;
 	touch-action: none;
 }
-.chronicle-tl-lane.is-moving {
+.universeview-tl-lane.is-moving {
 	opacity: 0.6;
 }
-.chronicle-chip-check svg {
+.universeview-chip-check svg {
 	width: 13px;
 	height: 13px;
 	stroke-width: 3;
 }
 /* "On" is said once, by the fill; a check mark as well says it twice. */
-.chronicle-chip.is-active .chronicle-chip-check {
+.universeview-chip.is-active .universeview-chip-check {
 	display: none;
 }
 /* Narrow toolbars hide chip labels; the fill alone shows the state there. */
 @container (max-width: 820px) {
-	.chronicle-toolbar .chronicle-chip-check {
+	.universeview-toolbar .universeview-chip-check {
 		display: none;
 	}
 }
-.chronicle-icon-btn.is-active {
+.universeview-icon-btn.is-active {
 	background: var(--background-modifier-active-hover);
 	color: var(--text-normal);
 }
-.chronicle-icon-btn.is-active:hover {
+.universeview-icon-btn.is-active:hover {
 	background: var(--background-modifier-border);
 	color: var(--text-normal);
 }
-.chronicle-icon-btn.is-active svg {
+.universeview-icon-btn.is-active svg {
 	color: var(--text-normal);
 }
-.chronicle-legend-row.is-off .chronicle-legend-label {
+.universeview-legend-row.is-off .universeview-legend-label {
 	text-decoration: line-through;
 }
-.chronicle-map-banner.has-actions {
+.universeview-map-banner.has-actions {
 	pointer-events: auto;
 	display: flex;
 	align-items: center;
@@ -1065,14 +1065,14 @@ button.chronicle-ov-tile {
 	padding: 5px 5px 5px 14px;
 	border-radius: var(--uv-r-lg);
 	line-height: 1.3;
-	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation: universeview-fade var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-map-banner.has-actions:not(#uv-strong) {
+.universeview-map-banner.has-actions:not(#uv-strong) {
 	/* Centred without a transform, so it can wrap to the map's full width. */
 	left: 0;
 	right: 0;
 }
-.chronicle-map-banner.has-actions button {
+.universeview-map-banner.has-actions button {
 	height: 26px;
 	padding: 0 12px;
 	border-radius: var(--uv-r-md);
@@ -1082,31 +1082,31 @@ button.chronicle-ov-tile {
 	box-shadow: none;
 	flex-shrink: 0;
 }
-.chronicle-map-banner.has-actions button:hover {
+.universeview-map-banner.has-actions button:hover {
 	background: var(--background-modifier-active-hover);
 }
-.chronicle-map-banner.has-actions button.mod-cta {
+.universeview-map-banner.has-actions button.mod-cta {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
-.chronicle-map-banner.has-actions button.mod-cta:hover {
+.universeview-map-banner.has-actions button.mod-cta:hover {
 	background: var(--interactive-accent-hover);
 }
-.chronicle-legend {
+.universeview-legend {
 	min-width: 170px;
 	max-width: 240px;
 	max-height: 45vh;
 	overflow-y: auto;
 	padding: 6px;
-	border-radius: calc(var(--chronicle-radius) + 2px);
+	border-radius: calc(var(--universeview-radius) + 2px);
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	box-shadow: var(--shadow-s);
 	color: var(--text-normal);
 	font-size: var(--font-ui-smaller);
-	animation: chronicle-rise var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation: universeview-rise var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-legend-head {
+.universeview-legend-head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1115,21 +1115,21 @@ button.chronicle-ov-tile {
 	color: var(--text-muted);
 	cursor: pointer;
 }
-.chronicle-legend-chev {
+.universeview-legend-chev {
 	display: flex;
-	transition: transform var(--chronicle-med) var(--chronicle-ease);
+	transition: transform var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-legend-chev svg {
+.universeview-legend-chev svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-legend.is-collapsed .chronicle-legend-chev {
+.universeview-legend.is-collapsed .universeview-legend-chev {
 	transform: rotate(-90deg);
 }
-.chronicle-legend.is-collapsed .chronicle-legend-list {
+.universeview-legend.is-collapsed .universeview-legend-list {
 	display: none;
 }
-button.chronicle-legend-row {
+button.universeview-legend-row {
 	/* Not styled as a button. */
 	appearance: none;
 	margin: 0;
@@ -1156,15 +1156,15 @@ button.chronicle-legend-row {
 	padding: 3px 6px;
 	border-radius: var(--uv-r-md);
 	cursor: pointer;
-	transition: background-color var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: background-color var(--universeview-fast) var(--universeview-ease), opacity var(--universeview-fast) var(--universeview-ease);
 }
-button.chronicle-legend-row:hover {
+button.universeview-legend-row:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-legend-row.is-off {
+.universeview-legend-row.is-off {
 	opacity: 0.4;
 }
-.chronicle-legend-swatch {
+.universeview-legend-swatch {
 	flex-shrink: 0;
 	width: 12px;
 	height: 12px;
@@ -1179,41 +1179,41 @@ button.chronicle-legend-row:hover {
 	box-shadow: none;
 	margin: 2px 4px 2px 2px;
 }
-.chronicle-legend-row.is-off .chronicle-legend-swatch {
+.universeview-legend-row.is-off .universeview-legend-swatch {
 	background: transparent;
 	color: var(--pin-color);
 	box-shadow: inset 0 0 0 1.5px var(--pin-color);
 }
-.chronicle-legend-swatch svg {
+.universeview-legend-swatch svg {
 	width: 8px;
 	height: 8px;
 	stroke-width: 2.6;
 }
-.chronicle-legend-label {
+.universeview-legend-label {
 	flex: 1;
 	min-width: 0;
 	overflow-wrap: anywhere;
 }
-.chronicle-legend-count {
+.universeview-legend-count {
 	color: var(--text-faint);
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-trace-stop {
-	animation: chronicle-fade var(--chronicle-med) var(--chronicle-ease) backwards;
+.universeview-trace-stop {
+	animation: universeview-fade var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-popup .leaflet-popup-content-wrapper {
-	animation: chronicle-rise var(--chronicle-med) var(--chronicle-ease) backwards;
+.universeview-popup .leaflet-popup-content-wrapper {
+	animation: universeview-rise var(--universeview-med) var(--universeview-ease) backwards;
 }
 
 /* ==== Settings: theme cards & colors ========================================================== */
 
-.chronicle-theme-grid {
+.universeview-theme-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 	gap: 12px;
 	margin: 8px 0 18px;
 }
-button.chronicle-theme-card {
+button.universeview-theme-card {
 	/* Not styled as a button. */
 	appearance: none;
 	margin: 0;
@@ -1241,17 +1241,17 @@ button.chronicle-theme-card {
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-primary);
 	cursor: pointer;
-	transition: transform var(--chronicle-med) var(--chronicle-ease), box-shadow var(--chronicle-med) var(--chronicle-ease),
-		border-color var(--chronicle-fast) var(--chronicle-ease);
+	transition: transform var(--universeview-med) var(--universeview-ease), box-shadow var(--universeview-med) var(--universeview-ease),
+		border-color var(--universeview-fast) var(--universeview-ease);
 }
-button.chronicle-theme-card:hover {
-	box-shadow: var(--chronicle-shadow-lift);
+button.universeview-theme-card:hover {
+	box-shadow: var(--universeview-shadow-lift);
 }
-button.chronicle-theme-card.is-active {
+button.universeview-theme-card.is-active {
 	border-color: var(--interactive-accent);
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 45%, transparent);
 }
-.chronicle-theme-preview {
+.universeview-theme-preview {
 	position: relative;
 	height: 82px;
 	margin-bottom: 4px;
@@ -1260,7 +1260,7 @@ button.chronicle-theme-card.is-active {
 	background: var(--pv-bg);
 	border: 1px solid rgba(128, 128, 128, 0.22);
 }
-.chronicle-pv-bar {
+.universeview-pv-bar {
 	display: flex;
 	gap: 4px;
 	align-items: center;
@@ -1268,23 +1268,23 @@ button.chronicle-theme-card.is-active {
 	padding: 0 6px;
 	background: var(--pv-panel);
 }
-.chronicle-pv-bar span {
+.universeview-pv-bar span {
 	width: 16px;
 	height: 5px;
 	border-radius: var(--uv-r-sm);
 	background: color-mix(in srgb, var(--pv-text) 25%, transparent);
 }
-.chronicle-pv-bar span:first-child {
+.universeview-pv-bar span:first-child {
 	background: var(--pv-accent);
 }
-.chronicle-pv-rows {
+.universeview-pv-rows {
 	position: absolute;
 	inset: 22px 6px 6px;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
 }
-.chronicle-pv-row {
+.universeview-pv-row {
 	height: 8px;
 	width: var(--pv-w);
 	margin-left: var(--pv-x);
@@ -1292,38 +1292,38 @@ button.chronicle-theme-card.is-active {
 	background: color-mix(in srgb, var(--pv-c) 32%, var(--pv-bg));
 	border-left: 3px solid var(--pv-c);
 }
-.chronicle-theme-preview.preview-starfield {
+.universeview-theme-preview.preview-starfield {
 	background:
 		radial-gradient(1px 1px at 18% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #cfe0ff, transparent),
 		radial-gradient(1px 1px at 40% 80%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent),
 		radial-gradient(60% 80% at 80% 100%, rgba(120, 80, 255, 0.35), transparent), var(--pv-bg);
 }
-.chronicle-theme-preview.preview-parchment {
+.universeview-theme-preview.preview-parchment {
 	background: radial-gradient(ellipse at center, transparent 50%, rgba(110, 70, 20, 0.25)), var(--pv-bg);
 }
-.chronicle-theme-preview.preview-atelier {
+.universeview-theme-preview.preview-atelier {
 	background: radial-gradient(80% 90% at 0% 0%, rgba(124, 92, 255, 0.22), transparent),
 		radial-gradient(70% 80% at 100% 100%, rgba(240, 138, 60, 0.18), transparent), var(--pv-bg);
 }
-.chronicle-theme-name {
+.universeview-theme-name {
 	font-weight: var(--font-semibold);
 }
-.chronicle-theme-for {
+.universeview-theme-for {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	line-height: 1.3;
 }
-.chronicle-color-setting {
+.universeview-color-setting {
 	flex-wrap: wrap;
 	gap: 8px;
 }
-.chronicle-color-row {
+.universeview-color-row {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 	justify-content: flex-end;
 }
-.chronicle-color-pick {
+.universeview-color-pick {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -1333,7 +1333,7 @@ button.chronicle-theme-card.is-active {
 	font-size: var(--font-ui-smaller);
 	cursor: pointer;
 }
-.chronicle-color-pick input[type="color"] {
+.universeview-color-pick input[type="color"] {
 	width: 22px;
 	height: 22px;
 	padding: 0;
@@ -1343,34 +1343,34 @@ button.chronicle-theme-card.is-active {
 	cursor: pointer;
 	overflow: hidden;
 }
-.chronicle-color-pick input[type="color"]::-webkit-color-swatch-wrapper {
+.universeview-color-pick input[type="color"]::-webkit-color-swatch-wrapper {
 	padding: 0;
 }
-.chronicle-color-pick input[type="color"]::-webkit-color-swatch {
+.universeview-color-pick input[type="color"]::-webkit-color-swatch {
 	border: none;
 	border-radius: 50%;
 }
-.chronicle-color-clear {
+.universeview-color-clear {
 	display: none;
 	color: var(--text-faint);
 }
-.chronicle-color-clear svg {
+.universeview-color-clear svg {
 	width: 12px;
 	height: 12px;
 }
-.chronicle-color-pick.is-set {
+.universeview-color-pick.is-set {
 	border-color: var(--interactive-accent);
 }
-.chronicle-color-pick.is-set .chronicle-color-clear {
+.universeview-color-pick.is-set .universeview-color-clear {
 	display: flex;
 }
-textarea.chronicle-mono {
+textarea.universeview-mono {
 	font-family: var(--font-monospace);
 	font-size: var(--font-ui-smaller);
 }
 
 /* Hover cards that stay: pinned, draggable, stacked. */
-.chronicle-hc-tools {
+.universeview-hc-tools {
 	position: absolute;
 	top: 6px;
 	right: 6px;
@@ -1380,28 +1380,28 @@ textarea.chronicle-mono {
 	transition: opacity 150ms ease;
 	z-index: 2;
 }
-.chronicle-hovercard:hover .chronicle-hc-tools,
-.chronicle-hovercard.is-pinned .chronicle-hc-tools {
+.universeview-hovercard:hover .universeview-hc-tools,
+.universeview-hovercard.is-pinned .universeview-hc-tools {
 	opacity: 1;
 }
-.chronicle-hc-tools .clickable-icon {
+.universeview-hc-tools .clickable-icon {
 	padding: 3px;
 }
-.chronicle-hc-tools svg {
+.universeview-hc-tools svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-hovercard.is-pinned .chronicle-hc-pin {
+.universeview-hovercard.is-pinned .universeview-hc-pin {
 	display: none;
 }
-.chronicle-hovercard {
+.universeview-hovercard {
 	cursor: default;
 }
-.chronicle-hovercard.is-pinned {
+.universeview-hovercard.is-pinned {
 	cursor: grab;
 	box-shadow: var(--shadow-l), 0 0 0 2px color-mix(in srgb, var(--card-accent, var(--interactive-accent)) 45%, transparent), 0 22px 46px rgba(0, 0, 0, 0.22);
 }
-.chronicle-hovercard.is-dragging {
+.universeview-hovercard.is-dragging {
 	cursor: grabbing;
 	transition: none;
 	user-select: none;
@@ -1502,15 +1502,15 @@ body.uv-t-panels .uv-options {
 /* ==== Stable type and fixed control widths =====================================================
    Kerning on, figures tabular, so changing a value never moves its neighbours. Controls get a
    fixed width and clip with an ellipsis instead of growing to fit their current text. */
-.chronicle-view.chronicle-scope,
-.chronicle-scope .uv-options,
-.chronicle-hovercard {
+.universeview-view.universeview-scope,
+.universeview-scope .uv-options,
+.universeview-hovercard {
 	font-kerning: normal;
 	font-variant-numeric: tabular-nums;
 	font-feature-settings: "kern" 1, "tnum" 1;
 	text-rendering: optimizeLegibility;
 }
-.chronicle-toolbar .dropdown {
+.universeview-toolbar .dropdown {
 	box-sizing: border-box;
 	flex: none;
 	width: 180px;
@@ -1519,29 +1519,29 @@ body.uv-t-panels .uv-options {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.chronicle-toolbar .chronicle-search,
-.chronicle-picker {
+.universeview-toolbar .universeview-search,
+.universeview-picker {
 	flex: none;
 }
-.chronicle-toolbar input[type="number"] {
+.universeview-toolbar input[type="number"] {
 	box-sizing: border-box;
 	width: 72px;
 	text-align: right;
 }
-.chronicle-toolbar .chronicle-chip,
-.chronicle-toolbar .chronicle-icon-btn {
+.universeview-toolbar .universeview-chip,
+.universeview-toolbar .universeview-icon-btn {
 	flex: none;
 }
-.chronicle-chip > span:not(.chronicle-chip-icon):not(.chronicle-chip-check):not(.chronicle-chip-count) {
+.universeview-chip > span:not(.universeview-chip-icon):not(.universeview-chip-check):not(.universeview-chip-count) {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.chronicle-chip-count {
+.universeview-chip-count {
 	display: inline-block;
 	min-width: 2ch;
 	text-align: right;
 }
-.chronicle-time-label {
+.universeview-time-label {
 	min-width: 7ch;
 	text-align: right;
 }
@@ -1560,7 +1560,7 @@ body.uv-t-panels .uv-options {
 .uv-chip-caret { display: inline-flex; margin-left: -2px; opacity: 0.6; }
 .uv-chip-caret svg { width: 12px; height: 12px; }
 /* The map's toolbar: the cluster of tools stays together at the right, wherever the toolbar wraps. */
-.chronicle-toolbar .uv-map-tools:not(#uv-strong) {
+.universeview-toolbar .uv-map-tools:not(#uv-strong) {
 	flex: 0 1 auto;
 	flex-wrap: wrap;
 	justify-content: flex-end;
@@ -1569,8 +1569,8 @@ body.uv-t-panels .uv-options {
 	border-left: none;
 	row-gap: 6px;
 }
-.chronicle-toolbar .uv-map-tools > .chronicle-toolbar-group { flex-wrap: nowrap; }
-.chronicle-toolbar .uv-map-tools > .chronicle-toolbar-group + .chronicle-toolbar-group:not(#uv-strong) { padding-left: 10px; border-left: 1px solid var(--background-modifier-border); }
+.universeview-toolbar .uv-map-tools > .universeview-toolbar-group { flex-wrap: nowrap; }
+.universeview-toolbar .uv-map-tools > .universeview-toolbar-group + .universeview-toolbar-group:not(#uv-strong) { padding-left: 10px; border-left: 1px solid var(--background-modifier-border); }
 /* Shortcuts window and the tidy-empty window */
 .uv-shortcuts-head { margin: 14px 0 6px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .uv-shortcuts-head:first-of-type { margin-top: 0; }
@@ -1579,6 +1579,6 @@ body.uv-t-panels .uv-options {
 .uv-tidy-status { min-height: 1.4em; font-variant-numeric: tabular-nums; }
 /* A narrow map toolbar: the tool chips keep their icons and lose their words (the tooltip still says what each is), so it wraps to fewer rows. */
 @container (max-width: 900px) {
-	.chronicle-toolbar .uv-map-tools .chronicle-chip > span:not(.chronicle-chip-icon):not(.uv-chip-caret) { display: none; }
-	.chronicle-toolbar .uv-map-tools .chronicle-chip { padding-left: 8px; padding-right: 8px; }
+	.universeview-toolbar .uv-map-tools .universeview-chip > span:not(.universeview-chip-icon):not(.uv-chip-caret) { display: none; }
+	.universeview-toolbar .uv-map-tools .universeview-chip { padding-left: 8px; padding-right: 8px; }
 }

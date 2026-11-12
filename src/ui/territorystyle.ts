@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { svgMarkup } from "../render/common";
 import { tierName } from "../index/realms";
 
@@ -19,7 +19,7 @@ export function tierNumber(rank: number | undefined, nature?: "realm" | "region"
 	return rank === undefined || rank >= 9 ? 0 : Math.max(1, Math.min(6, Math.round(rank)));
 }
 
-export function styleFor(plugin: ChroniclePlugin, tier: number): TierStyle {
+export function styleFor(plugin: UniverseViewPlugin, tier: number): TierStyle {
 	const list = plugin.settings.tierStyles?.length ? plugin.settings.tierStyles : DEFAULT_TIER_STYLES;
 	return { ...(DEFAULT_TIER_STYLES.find((s) => s.tier === tier) ?? DEFAULT_TIER_STYLES[0]), ...(list.find((s) => s.tier === tier) ?? {}) };
 }
@@ -57,7 +57,7 @@ export function tierClass(rank: number | undefined, nature?: "realm" | "region")
  * Draws each tier of title its own way: borders, line and fill from the settings (Maps & realms →
  * Territory styles). Only areas showing as themselves; merged and split ones keep their tier looks.
  */
-export function styleTerritories(plugin: ChroniclePlugin) {
+export function styleTerritories(plugin: UniverseViewPlugin) {
 	// The rules are fixed, in styles.css (one set per tier, 0–7); the settings only fill in their
 	// values, as CSS variables on the body, and a class for tiers drawn with a glow or a shadow.
 	const body = document.body;

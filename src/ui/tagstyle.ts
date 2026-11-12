@@ -1,5 +1,5 @@
 import { debounce } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { TAG_TYPES } from "../index/reader";
 import { tierWordsWith } from "../index/realms";
 import { parseTag } from "../index/tagscheme";
@@ -10,7 +10,7 @@ import { entityColor } from "../render/common";
  * that type's colour, #Nation_United_States in the United States' colour, #Region_Small muted. Built from the tags
  * the vault actually uses (tags are case-sensitive in the editor's markup), and redrawn as notes change.
  */
-export function styleTags(plugin: ChroniclePlugin) {
+export function styleTags(plugin: UniverseViewPlugin) {
 	// The rules depend on the tags the vault uses, so they can't sit in styles.css: they go in a
 	// constructed stylesheet (where a phone's browser lacks those, tags just keep their usual look).
 	const sheet = typeof CSSStyleSheet !== "undefined" && "replaceSync" in CSSStyleSheet.prototype && "adoptedStyleSheets" in document ? new CSSStyleSheet() : undefined;
@@ -38,13 +38,13 @@ export function styleTags(plugin: ChroniclePlugin) {
 			const type = custom.get(low) ?? TAG_TYPES[low];
 			// The tag scheme: a kind in its type's colour, a fact muted, a belonging tag in that note's colour.
 			const scheme = parseTag(tag);
-			if (scheme?.role === "kind") colour = `var(--chronicle-${scheme.type}-color)`;
+			if (scheme?.role === "kind") colour = `var(--universeview-${scheme.type}-color)`;
 			else if (scheme?.role === "fact") colour = "var(--text-muted)";
 			else if (scheme) {
 				const ref = plugin.index.findByName(scheme.name);
-				colour = ref ? entityColor(plugin, ref) : `var(--chronicle-${scheme.type}-color)`;
-			} else if (type) colour = `var(--chronicle-${type}-color)`;
-			else if (words[low] !== undefined) colour = words[low] <= 3 ? "var(--chronicle-culture-color)" : "var(--chronicle-place-color)";
+				colour = ref ? entityColor(plugin, ref) : `var(--universeview-${scheme.type}-color)`;
+			} else if (type) colour = `var(--universeview-${type}-color)`;
+			else if (words[low] !== undefined) colour = words[low] <= 3 ? "var(--universeview-culture-color)" : "var(--universeview-place-color)";
 			else if (parts.length > 1) {
 				// "Region_Small": a size; "Nation_United_States": that realm's colour; "Family_Noble": its type's.
 				const rest = tag.slice(parts[0].length + 1);
@@ -52,7 +52,7 @@ export function styleTags(plugin: ChroniclePlugin) {
 				else {
 					const ref = plugin.index.findByName(rest.replace(/_/g, " "));
 					const head = custom.get(parts[0]) ?? TAG_TYPES[parts[0]];
-					colour = ref ? entityColor(plugin, ref) : head ? `var(--chronicle-${head}-color)` : undefined;
+					colour = ref ? entityColor(plugin, ref) : head ? `var(--universeview-${head}-color)` : undefined;
 				}
 			}
 			if (colour) colours.set(tag, colour);

@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Notice, TFile, normalizePath } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { renderFacts } from "../render/arc";
@@ -33,10 +33,10 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .grid li{padding:4px 0;border-bottom:1px solid var(--rule)}.grid .when{display:block;color:var(--muted);font-size:.85em}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
 .page{display:grid;grid-template-columns:1fr 290px;gap:28px;align-items:start}@media (max-width:820px){.page{grid-template-columns:1fr}}
-aside .chronicle-facts{position:sticky;top:70px;border:1px solid var(--rule);border-top:4px solid var(--item-color,var(--accent));border-radius:8px;padding:12px 14px;font:14px/1.45 system-ui,sans-serif;background:var(--card)}
-.chronicle-facts-title a{font-weight:700;font-size:1.05em;color:var(--ink)}.chronicle-facts-kind{color:var(--muted);font-size:.9em}
-.chronicle-facts-image{width:100%;border-radius:6px;margin:8px 0}.chronicle-facts-rows{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:6px}
-.chronicle-facts-label{color:var(--muted)}.chronicle-facts-summary{margin-top:8px;font-style:italic}
+aside .universeview-facts{position:sticky;top:70px;border:1px solid var(--rule);border-top:4px solid var(--item-color,var(--accent));border-radius:8px;padding:12px 14px;font:14px/1.45 system-ui,sans-serif;background:var(--card)}
+.universeview-facts-title a{font-weight:700;font-size:1.05em;color:var(--ink)}.universeview-facts-kind{color:var(--muted);font-size:.9em}
+.universeview-facts-image{width:100%;border-radius:6px;margin:8px 0}.universeview-facts-rows{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:6px}
+.universeview-facts-label{color:var(--muted)}.universeview-facts-summary{margin-top:8px;font-style:italic}
 .body img{max-width:100%;border-radius:6px}.ties{font:15px/1.5 system-ui,sans-serif}.ties h3{font:600 1em system-ui,sans-serif;color:var(--muted);margin:1.2em 0 .3em;text-transform:uppercase;letter-spacing:.05em;font-size:.8em}
 .ties ul{margin:0;padding-left:1.1em}
 table{border-collapse:collapse;width:100%;font:15px/1.5 system-ui,sans-serif}td,th{border-bottom:1px solid var(--rule);padding:6px 8px;text-align:left;vertical-align:top}td.when{white-space:nowrap;color:var(--muted)}
@@ -67,7 +67,7 @@ export interface SitePage {
 }
 
 /** Every page and picture of the site, by path inside the site folder. */
-export async function buildWebsite(plugin: ChroniclePlugin, world: string | undefined): Promise<SitePage[]> {
+export async function buildWebsite(plugin: UniverseViewPlugin, world: string | undefined): Promise<SitePage[]> {
 	const idx = plugin.index;
 	const inScope = (e: Entity) => !world || e.path.startsWith(world + "/");
 	const entries = idx.all().filter(inScope).filter((e) => e.type !== "map").sort((a, b) => a.name.localeCompare(b.name));
@@ -172,7 +172,7 @@ export async function buildWebsite(plugin: ChroniclePlugin, world: string | unde
 		renderFacts(plugin, facts, e.key);
 		const body = createDiv();
 		body.className = "body";
-		const text = (await plugin.app.vault.cachedRead(e.file)).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```chronicle-[\s\S]*?```/g, "");
+		const text = (await plugin.app.vault.cachedRead(e.file)).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```(?:universeview|chronicle)-[\s\S]*?```/g, "");
 		await MarkdownRenderer.render(plugin.app, text, body, e.path, comp);
 		tidy(facts);
 		tidy(body);
@@ -201,7 +201,7 @@ export async function buildWebsite(plugin: ChroniclePlugin, world: string | unde
 	return out;
 }
 
-async function imageSize(plugin: ChroniclePlugin, path: string): Promise<[number, number] | null> {
+async function imageSize(plugin: UniverseViewPlugin, path: string): Promise<[number, number] | null> {
 	const f = plugin.app.vault.getAbstractFileByPath(path);
 	if (!(f instanceof TFile)) return null;
 	const url = plugin.app.vault.getResourcePath(f);
@@ -214,7 +214,7 @@ async function imageSize(plugin: ChroniclePlugin, path: string): Promise<[number
 }
 
 /** Writes the website into `UniverseView exports/<world> website/` and offers to open it. */
-export async function exportWebsite(plugin: ChroniclePlugin, world: string | undefined) {
+export async function exportWebsite(plugin: UniverseViewPlugin, world: string | undefined) {
 	const notice = new Notice("Building the website…", 0);
 	try {
 		const files = await buildWebsite(plugin, world);

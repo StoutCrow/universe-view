@@ -1,19 +1,19 @@
 import { Modal } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el } from "../render/common";
 
 /** A one-line text question ("Name of the new board?"). */
 export class TextPrompt extends Modal {
-	constructor(plugin: ChroniclePlugin, private heading: string, private value: string, private onSubmit: (v: string) => void) {
+	constructor(plugin: UniverseViewPlugin, private heading: string, private value: string, private onSubmit: (v: string) => void) {
 		super(plugin.app);
 	}
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope");
 		this.titleEl.setText(this.heading);
 		const input = el("input", { attr: { type: "text" } }, this.contentEl);
 		input.value = this.value;
-		input.addClass("chronicle-prompt-input");
+		input.addClass("universeview-prompt-input");
 		const submit = () => {
 			const v = input.value.trim();
 			if (!v) return;
@@ -35,12 +35,12 @@ export class TextPrompt extends Modal {
 
 /** A yes/no question before something that can't easily be undone ("Delete the calendar?"). */
 export class ConfirmPrompt extends Modal {
-	constructor(plugin: ChroniclePlugin, private heading: string, private message: string, private action: string, private onConfirm: () => void) {
+	constructor(plugin: UniverseViewPlugin, private heading: string, private message: string, private action: string, private onConfirm: () => void) {
 		super(plugin.app);
 	}
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope");
 		this.titleEl.setText(this.heading);
 		for (const para of this.message.split("\n\n")) el("p", { text: para }, this.contentEl);
 		const buttons = el("div", { cls: "modal-button-container" }, this.contentEl);

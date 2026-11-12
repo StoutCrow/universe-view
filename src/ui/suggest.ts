@@ -1,10 +1,10 @@
 import { AbstractInputSuggest, App, FuzzySuggestModal, TFile, prepareFuzzySearch } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { formatSpan } from "../dates/parser";
 import { TYPE_ICONS, icon } from "../render/common";
 
-function rank(plugin: ChroniclePlugin, query: string, types?: EntityType[]): Entity[] {
+function rank(plugin: UniverseViewPlugin, query: string, types?: EntityType[]): Entity[] {
 	const list = plugin.index.all().filter((e) => !types || types.includes(e.type));
 	const q = query.trim();
 	if (!q) return list.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 50);
@@ -23,16 +23,16 @@ function rank(plugin: ChroniclePlugin, query: string, types?: EntityType[]): Ent
 		.map((x) => x.e);
 }
 
-export function renderEntityRow(plugin: ChroniclePlugin, e: Entity, row: HTMLElement) {
-	row.addClass("chronicle-suggest-row");
-	const ic = row.createSpan({ cls: "chronicle-suggest-icon" });
+export function renderEntityRow(plugin: UniverseViewPlugin, e: Entity, row: HTMLElement) {
+	row.addClass("universeview-suggest-row");
+	const ic = row.createSpan({ cls: "universeview-suggest-icon" });
 	icon(ic, TYPE_ICONS[e.type]);
-	const main = row.createDiv({ cls: "chronicle-suggest-main" });
-	main.createDiv({ cls: "chronicle-suggest-title", text: e.name });
+	const main = row.createDiv({ cls: "universeview-suggest-main" });
+	main.createDiv({ cls: "universeview-suggest-title", text: e.name });
 	const span = formatSpan(e.start, e.end, plugin.calendars.get(e.calendar));
 	const folder = e.folder && e.folder !== "/" ? e.folder : "";
 	const note = [span, folder].filter(Boolean).join(" · ");
-	if (note) main.createDiv({ cls: "chronicle-suggest-note", text: note });
+	if (note) main.createDiv({ cls: "universeview-suggest-note", text: note });
 }
 
 /** Autocomplete for entity names in a text input. */
@@ -40,7 +40,7 @@ export class EntityInputSuggest extends AbstractInputSuggest<Entity> {
 	constructor(
 		app: App,
 		private input: HTMLInputElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		private types: EntityType[] | undefined,
 		private onPick: (e: Entity) => void,
 	) {
@@ -83,7 +83,7 @@ export class ImagePickerModal extends FuzzySuggestModal<TFile> {
 }
 
 /** Sets a group's (or anyone's) `logo:` to an image, undoably. */
-export function pickLogo(plugin: ChroniclePlugin, key: string) {
+export function pickLogo(plugin: UniverseViewPlugin, key: string) {
 	const note = plugin.app.vault.getAbstractFileByPath(key);
 	if (!(note instanceof TFile)) return;
 	new ImagePickerModal(plugin.app, (img) => {
@@ -99,7 +99,7 @@ export function pickLogo(plugin: ChroniclePlugin, key: string) {
 /** Modal picker for an entity (used by commands). */
 export class EntityPickerModal extends FuzzySuggestModal<Entity> {
 	constructor(
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		private types: EntityType[] | undefined,
 		private onPick: (e: Entity) => void,
 		placeholder = "Choose…",

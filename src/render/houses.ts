@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { formatSpan } from "../dates/parser";
 import { spacedLabels, yearTicks } from "../dates/calendars";
@@ -37,7 +37,7 @@ interface Band {
 }
 
 /** Whether a group is a family: by its kind, its name, or its members being related to each other. */
-export function isHouse(plugin: ChroniclePlugin, c: Entity): boolean {
+export function isHouse(plugin: UniverseViewPlugin, c: Entity): boolean {
 	if (HOUSE.test(`${c.category ?? ""} ${c.tags.join(" ")}`) || /^(house|clan|family|dynasty)\b/i.test(c.name)) return true;
 	// Churches, orders, realms and companies have related members too, but aren't families.
 	if (NOT_HOUSE.test(`${c.name} ${c.category ?? ""} ${c.tags.join(" ")}`)) return false;
@@ -60,16 +60,16 @@ export class HousesRenderer {
 	private pz: PanZoom;
 	private bbox = { x: 0, y: 0, width: 1, height: 1 };
 
-	constructor(private container: HTMLElement, private plugin: ChroniclePlugin, public options: HousesOptions, private embedded = false, private hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
-		this.root = el("div", { cls: "chronicle-houses" + (embedded ? " is-embedded" : "") }, container);
-		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.root);
+	constructor(private container: HTMLElement, private plugin: UniverseViewPlugin, public options: HousesOptions, private embedded = false, private hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
+		this.root = el("div", { cls: "universeview-houses" + (embedded ? " is-embedded" : "") }, container);
+		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.root);
 		const defs = svg("defs", {}, this.svgEl);
-		const clip = svg("clipPath", { id: "chronicle-house-logo" }, defs);
+		const clip = svg("clipPath", { id: "universeview-house-logo" }, defs);
 		svg("rect", { x: 0, y: 0, width: 40, height: 40, rx: 8 }, clip);
 		this.layer = svg("g", {}, this.svgEl);
 		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.1, maxScale: 4 });
 		if (embedded) {
-			const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
+			const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.25));
 			iconButton(box, "zoom-out", "Zoom out", () => this.pz.zoomBy(1 / 1.25));
 			iconButton(box, "maximize", "Fit", () => this.fit());
@@ -110,7 +110,7 @@ export class HousesRenderer {
 
 	refresh() {
 		this.layer.replaceChildren();
-		this.root.querySelector(".chronicle-empty")?.remove();
+		this.root.querySelector(".universeview-empty")?.remove();
 		const idx = this.plugin.index;
 		const o = this.options;
 		const inScope = (e: Entity) => !o.folder || e.path.startsWith(o.folder + "/");
@@ -204,16 +204,16 @@ export class HousesRenderer {
 
 	private drawAxis(min: number, max: number, x: (d: number) => number, h: number, plotW: number) {
 		const cal = this.cal();
-		const g = svg("g", { class: "chronicle-lineage-axis" }, this.layer);
+		const g = svg("g", { class: "universeview-lineage-axis" }, this.layer);
 		const yearPx = (plotW / (max - min)) * YEAR;
 		const nice = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
 		const step = nice.find((s) => s * yearPx >= 70) ?? 1000;
 		const ticks = yearTicks(cal, cal.fromDays(min).y, cal.fromDays(max).y, step, step * 5).map((t) => ({ ...t, x: x(cal.toDays(t.year, 1, 1)), label: cal.formatYear(t.year) }));
 		const labelled = spacedLabels(ticks);
 		for (const t of ticks) {
-			svg("line", { x1: t.x, x2: t.x, y1: 24, y2: h, class: "chronicle-lineage-grid" + (t.era ? " is-era" : "") }, g);
+			svg("line", { x1: t.x, x2: t.x, y1: 24, y2: h, class: "universeview-lineage-grid" + (t.era ? " is-era" : "") }, g);
 			if (!labelled.has(t)) continue;
-			const tx = svg("text", { x: t.x, y: 16, "text-anchor": "middle", class: "chronicle-lineage-tick" }, g);
+			const tx = svg("text", { x: t.x, y: 16, "text-anchor": "middle", class: "universeview-lineage-tick" }, g);
 			tx.textContent = t.label;
 		}
 	}
@@ -221,22 +221,22 @@ export class HousesRenderer {
 	private drawBand(band: Band, x: (d: number) => number, plotW: number, where: Map<string, { x1: number; x2: number; y: number; band: Band }>) {
 		const h = band.house;
 		const color = h.color ?? cultureColor(this.plugin, h.key);
-		const g = svg("g", { class: "chronicle-house", "data-key": h.key }, this.layer);
+		const g = svg("g", { class: "universeview-house", "data-key": h.key }, this.layer);
 		g.setAttribute("style", `--house-color: ${color}`);
-		svg("rect", { x: 8, y: band.y, width: LABEL_W + plotW - 8, height: band.h, rx: 12, class: "chronicle-house-bg" }, g);
+		svg("rect", { x: 8, y: band.y, width: LABEL_W + plotW - 8, height: band.h, rx: 12, class: "universeview-house-bg" }, g);
 		// The house's own span (founded to dissolved), as a tinted strip.
 		if (h.start || h.end) {
 			const a = Math.max(LABEL_W, x(h.start?.start ?? band.a));
 			const b = Math.min(LABEL_W + plotW, x(h.end?.end ?? band.b));
-			svg("rect", { x: a, y: band.y + 4, width: Math.max(4, b - a), height: band.h - 8, rx: 8, class: "chronicle-house-span" }, g);
+			svg("rect", { x: a, y: band.y + 4, width: Math.max(4, b - a), height: band.h - 8, rx: 8, class: "universeview-house-span" }, g);
 		}
 		// Logo (or a monogram) and name.
-		const logoBox = svg("g", { class: "chronicle-house-logo", transform: `translate(20,${band.y + 10})` }, g);
+		const logoBox = svg("g", { class: "universeview-house-logo", transform: `translate(20,${band.y + 10})` }, g);
 		const logo = resourceUrl(this.plugin, h.logo ?? h.image);
-		svg("rect", { width: 40, height: 40, rx: 8, class: "chronicle-house-logo-bg" }, logoBox);
-		if (logo) svg("image", { href: logo, width: 40, height: 40, preserveAspectRatio: "xMidYMid meet", "clip-path": "url(#chronicle-house-logo)" }, logoBox);
+		svg("rect", { width: 40, height: 40, rx: 8, class: "universeview-house-logo-bg" }, logoBox);
+		if (logo) svg("image", { href: logo, width: 40, height: 40, preserveAspectRatio: "xMidYMid meet", "clip-path": "url(#universeview-house-logo)" }, logoBox);
 		else {
-			const t = svg("text", { x: 20, y: 26, "text-anchor": "middle", class: "chronicle-house-mono" }, logoBox);
+			const t = svg("text", { x: 20, y: 26, "text-anchor": "middle", class: "universeview-house-mono" }, logoBox);
 			// "House of Tudor" → "T", "Clan Mac Neill" → "MN".
 			const words = h.name.replace(/^(the\s+)?(house|clan|family|dynasty|line)\s+(of\s+)?/i, "").split(/\s+/).filter((w) => !/^(of|the|and|de|von|van)$/i.test(w));
 			t.textContent = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? h.name)[0]).toUpperCase();
@@ -246,9 +246,9 @@ export class HousesRenderer {
 			evt.stopPropagation();
 			if (!this.pz.justPanned) pickLogo(this.plugin, h.key);
 		});
-		const name = svg("text", { x: 70, y: band.y + 26, class: "chronicle-house-name" }, g);
+		const name = svg("text", { x: 70, y: band.y + 26, class: "universeview-house-name" }, g);
 		name.textContent = h.name.length > 22 ? h.name.slice(0, 21) + "…" : h.name;
-		const sub = svg("text", { x: 70, y: band.y + 43, class: "chronicle-house-sub" }, g);
+		const sub = svg("text", { x: 70, y: band.y + 43, class: "universeview-house-sub" }, g);
 		const heads = band.members.filter((m) => m.head).length;
 		sub.textContent = [formatSpan(h.start, h.end, this.cal()), `${band.members.length} ${band.members.length === 1 ? "person" : "people"}`, heads ? `${heads} head${heads === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
 		name.addEventListener("click", (evt) => openEntity(this.plugin, h.key, evt));
@@ -263,10 +263,10 @@ export class HousesRenderer {
 			const x1 = x(m.a);
 			const x2 = Math.max(x(m.b), x1 + 6);
 			const yy = band.y + BAND_PAD - 8 + m.row * ROW_H;
-			const pg = svg("g", { class: "chronicle-house-person" + (m.head ? " is-head" : "") }, g);
+			const pg = svg("g", { class: "universeview-house-person" + (m.head ? " is-head" : "") }, g);
 			pg.setAttribute("style", `--person-color: ${entityColor(this.plugin, m.p)}`);
-			svg("rect", { x: x1, y: yy, width: x2 - x1, height: ROW_H - 6, rx: 7, class: "chronicle-house-life" + (m.p.end ? "" : " is-open") }, pg);
-			const label = svg("text", { x: x2 + 5, y: yy + 11, class: "chronicle-house-person-name" }, pg);
+			svg("rect", { x: x1, y: yy, width: x2 - x1, height: ROW_H - 6, rx: 7, class: "universeview-house-life" + (m.p.end ? "" : " is-open") }, pg);
+			const label = svg("text", { x: x2 + 5, y: yy + 11, class: "universeview-house-person-name" }, pg);
 			label.textContent = (m.head ? "♛ " : "") + m.p.name;
 			svg("title", {}, pg).textContent = `${m.p.name}\n${formatSpan(m.p.start, m.p.end, this.plugin.calendars.get(m.p.calendar))}${m.head ? "\nHead of the house" : ""}`;
 			pg.addEventListener("click", (evt) => {
@@ -285,7 +285,7 @@ export class HousesRenderer {
 		for (let i = 1; i < crowns.length; i++) {
 			const p = crowns[i - 1];
 			const q = crowns[i];
-			svg("path", { d: `M${p.cx},${p.cy} C${p.cx + 30},${p.cy} ${q.cx - 30},${q.cy} ${q.cx},${q.cy}`, class: "chronicle-house-succession" }, g);
+			svg("path", { d: `M${p.cx},${p.cy} C${p.cx + 30},${p.cy} ${q.cx - 30},${q.cy} ${q.cx},${q.cy}`, class: "universeview-house-succession" }, g);
 		}
 	}
 
@@ -297,7 +297,7 @@ export class HousesRenderer {
 				if (!parent || !order.includes(parent)) continue;
 				const at = Math.max(LABEL_W + 4, x(b.house.start?.start ?? b.a));
 				const top = parent.y + parent.h;
-				const g = svg("path", { d: `M${at},${top - 6} V${b.y + 6}`, class: "chronicle-house-branch" }, this.layer);
+				const g = svg("path", { d: `M${at},${top - 6} V${b.y + 6}`, class: "universeview-house-branch" }, this.layer);
 				svg("title", {}, g).textContent = `${b.house.name}, a branch of ${parent.house.name}`;
 			}
 		}
@@ -320,10 +320,10 @@ export class HousesRenderer {
 				const when = r.from?.start ?? (kids.length ? Math.min(...kids) - YEAR : Math.max(pos.x1, other.x1) === pos.x1 ? (p.start?.start ?? 0) + 22 * YEAR : (idx.get(r.ref.key)?.start?.start ?? 0) + 22 * YEAR);
 				const mx = Math.min(Math.max(x(when), Math.max(pos.x1, other.x1)), Math.min(pos.x2, other.x2) + 40);
 				const sameHouse = pos.band === other.band;
-				const g = svg("g", { class: "chronicle-house-marriage" + (sameHouse ? " is-within" : "") }, this.layer);
-				svg("line", { x1: mx, x2: mx, y1: pos.y, y2: other.y, class: "chronicle-house-marriage-line" }, g);
+				const g = svg("g", { class: "universeview-house-marriage" + (sameHouse ? " is-within" : "") }, this.layer);
+				svg("line", { x1: mx, x2: mx, y1: pos.y, y2: other.y, class: "universeview-house-marriage-line" }, g);
 				const hy = (pos.y + other.y) / 2;
-				const heart = svg("text", { x: mx, y: hy + 4, "text-anchor": "middle", class: "chronicle-house-heart" }, g);
+				const heart = svg("text", { x: mx, y: hy + 4, "text-anchor": "middle", class: "universeview-house-heart" }, g);
 				heart.textContent = "♥";
 				svg("title", {}, g).textContent = `${p.name} married ${idx.get(r.ref.key)?.name ?? ""}${r.from ? ` (${formatSpan(r.from, undefined, this.cal())})` : ""}${sameHouse ? "" : `\nJoining ${pos.band.house.name} and ${other.band.house.name}`}`;
 			}
@@ -338,7 +338,7 @@ const PEOPLE = /\b(culture|people|peoples|ethnicity|ethnic|race|species|folk|tri
 const ORG = /\b(guild|company|order|army|navy|fleet|council|league|society|bank|school|academy|college|university|faction|party|band|crew|brotherhood|sisterhood|circle|cabal|union|alliance|corporation|firm|mercenar\w*|knights?)\b/i;
 
 /** What a group note is, for labels and icons: a realm, a house, a faith, a people, an organisation or just a group. */
-export function groupKind(plugin: ChroniclePlugin, c: Entity): GroupKind {
+export function groupKind(plugin: UniverseViewPlugin, c: Entity): GroupKind {
 	if (c.type !== "culture") return "group";
 	if (plugin.realms().nodes.has(c.key)) return "realm";
 	if (isHouse(plugin, c)) return "house";

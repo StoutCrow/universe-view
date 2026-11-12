@@ -1,5 +1,5 @@
 import { Notice, TFolder } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 
 export const SAMPLE_FOLDER = "UniverseView sample";
 
@@ -41,7 +41,7 @@ const SPACE_NOTES: [string, string][] = [
 ];
 
 /** What the sample holds, for the first-run choice: the Tudors, or the Moon landing in a modern or futuristic world. */
-export function sampleBlurb(plugin: ChroniclePlugin): string {
+export function sampleBlurb(plugin: UniverseViewPlugin): string {
 	const space = plugin.settings.worldSetting === "modern" || plugin.settings.worldSetting === "futuristic";
 	return space
 		? `${SPACE_NOTES.length} notes on the first Moon landing, with astronauts, an agency, a space race and a spaceport on the map, in a folder called "${SAMPLE_FOLDER}". Delete it when you're done.`
@@ -49,7 +49,7 @@ export function sampleBlurb(plugin: ChroniclePlugin): string {
 }
 
 /** Writes the sample notes, leaving any that are already there. Delete the folder to remove them. */
-export async function addSampleWorld(plugin: ChroniclePlugin) {
+export async function addSampleWorld(plugin: UniverseViewPlugin) {
 	const { vault } = plugin.app;
 	const notes = plugin.settings.worldSetting === "modern" || plugin.settings.worldSetting === "futuristic" ? SPACE_NOTES : NOTES;
 	for (const sub of ["", "/People", "/Groups", "/Places", "/Events"]) {

@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting, normalizePath, stringifyYaml } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { GedData, parseGedcom } from "../import/gedcom";
 import { el } from "../render/common";
 
@@ -12,7 +12,7 @@ export class GedcomModal extends Modal {
 	private statusEl!: HTMLElement;
 	private importBtn!: HTMLButtonElement;
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 		this.folder = plugin.settings.newNoteFolders.person || "People";
 		this.placeFolder = plugin.settings.newNoteFolders.place || "Places";
@@ -45,7 +45,7 @@ export class GedcomModal extends Modal {
 			.setName("Also create events and places")
 			.setDesc("Births, marriages and deaths become event notes linked to place notes, so they show on the timeline and map.")
 			.addToggle((t) => t.setValue(this.withEvents).onChange((v) => (this.withEvents = v)));
-		this.statusEl = el("div", { cls: "chronicle-import-status", text: "No file chosen." }, contentEl);
+		this.statusEl = el("div", { cls: "universeview-import-status", text: "No file chosen." }, contentEl);
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
 		this.importBtn = el("button", { cls: "mod-cta", text: "Import" }, footer);
 		this.importBtn.disabled = true;

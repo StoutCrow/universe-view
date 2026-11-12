@@ -1,5 +1,5 @@
 import { setRoughEdges } from "./ui/roughedges";
-import type { ButtonStyle, ChronicleSettings, EdgeStyle, FontStyle, HeadingStyle, IconStyle, MotionId, TabStyle, TactilePart, ThemeId } from "./settings";
+import type { ButtonStyle, UniverseViewSettings, EdgeStyle, FontStyle, HeadingStyle, IconStyle, MotionId, TabStyle, TactilePart, ThemeId } from "./settings";
 export const BUTTON_STYLES: { id: ButtonStyle; name: string }[] = [
 	{ id: "quiet", name: "Quiet (text, fills on hover)" },
 	{ id: "outlined", name: "Outlined (a thin edge)" },
@@ -148,28 +148,28 @@ export const MOTIONS: { id: MotionId; name: string; desc: string; speed: number;
 const DENSITY = { compact: 0.85, cozy: 1, roomy: 1.18 };
 
 /** Animation length for JS-driven motion (map fly-to, pan/zoom), honoring the motion setting and reduced-motion. */
-export function motionMs(settings: ChronicleSettings, base: number): number {
+export function motionMs(settings: UniverseViewSettings, base: number): number {
 	if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return 0;
 	const m = MOTIONS.find((x) => x.id === settings.motion) ?? MOTIONS[2];
 	return m.id === "off" ? 0 : Math.round(base * m.speed);
 }
 
 const BODY_VARS = [
-	"--chronicle-user-accent", "--chronicle-user-event", "--chronicle-user-person", "--chronicle-user-culture", "--chronicle-user-place",
-	"--chronicle-user-speed", "--chronicle-ease", "--chronicle-density", "--chronicle-user-radius", "--uv-map-label-scale", "--uv-pin-scale",
-	"--chronicle-tl-row-height", "--chronicle-tl-font-size", "--chronicle-card-width", "--chronicle-card-height", "--chronicle-male-tint", "--chronicle-female-tint", "--uv-river-color", "--uv-t-depth", "--uv-t-folder",
+	"--universeview-user-accent", "--universeview-user-event", "--universeview-user-person", "--universeview-user-culture", "--universeview-user-place",
+	"--universeview-user-speed", "--universeview-ease", "--universeview-density", "--universeview-user-radius", "--uv-map-label-scale", "--uv-pin-scale",
+	"--universeview-tl-row-height", "--universeview-tl-font-size", "--universeview-card-width", "--universeview-card-height", "--universeview-male-tint", "--universeview-female-tint", "--uv-river-color", "--uv-t-depth", "--uv-t-folder",
 ];
 
 /** The theme whose buttons, tabs and edges apply: the chosen one, or the plain Obsidian set when the theme's styles are switched off. */
-export function looksOf(s: ChronicleSettings): ThemeInfo {
+export function looksOf(s: UniverseViewSettings): ThemeInfo {
 	return s.themeStyles === false ? THEMES[0] : (THEMES.find((x) => x.id === s.theme) ?? THEMES[0]);
 }
 
 /** Puts the chosen theme, colors, motion and density on <body> as classes and CSS variables. */
-export function applyAppearance(s: ChronicleSettings) {
+export function applyAppearance(s: UniverseViewSettings) {
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-")) body.classList.remove(c);
-	body.classList.add(`chronicle-theme-${s.theme}`, `chronicle-motion-${s.motion}`);
+	for (const c of Array.from(body.classList)) if (c.startsWith("universeview-theme-") || c.startsWith("universeview-motion-")) body.classList.remove(c);
+	body.classList.add(`universeview-theme-${s.theme}`, `universeview-motion-${s.motion}`);
 	// Buttons, tabs, edges, icons, headings and fonts: your pick, else the theme's own.
 	for (const c of Array.from(body.classList)) if (/^uv-(btn|tabs|edge|font|icons|head)-/.test(c)) body.classList.remove(c);
 	const th = looksOf(s);
@@ -177,29 +177,29 @@ export function applyAppearance(s: ChronicleSettings) {
 	if (s.fontStyle) body.classList.add(`uv-font-${s.fontStyle}`);
 	setRoughEdges(s.sketchRandom === true && (s.edgeStyle ?? th.edges) === "sketch");
 	const set = (name: string, v: string | undefined) => (v ? body.style.setProperty(name, v) : body.style.removeProperty(name));
-	set("--chronicle-user-accent", s.colors.accent);
+	set("--universeview-user-accent", s.colors.accent);
 	// Tooltip and fade timings and sizes (Settings → Hover cards and tips).
 	// Fonts (Settings → Look & cards): empty keeps the theme's.
 	const font = (v: string | undefined) => (v?.trim() ? (/[,"']/.test(v) ? v.trim() : `"${v.trim()}"`) : undefined);
-	set("--chronicle-font-ui", font(s.fontUi));
-	set("--chronicle-font-display", font(s.fontDisplay));
-	set("--chronicle-font-map", font(s.fontMap));
+	set("--universeview-font-ui", font(s.fontUi));
+	set("--universeview-font-display", font(s.fontDisplay));
+	set("--universeview-font-map", font(s.fontMap));
 	const ms = (v: number | undefined, d: number) => `${Math.max(0, v ?? d)}ms`;
-	body.style.setProperty("--chronicle-hc-fade", ms(s.hoverFadeMs, 220));
-	body.style.setProperty("--chronicle-hc-width", `${Math.max(240, s.hoverCardWidth ?? 340)}px`);
-	body.style.setProperty("--chronicle-ring-size", `${Math.max(10, s.hoverRingSize ?? 18)}px`);
-	body.style.setProperty("--chronicle-help-fade", ms(s.helpFadeMs, 220));
-	body.style.setProperty("--chronicle-tier-fade", ms(s.tierFadeMs, 300));
-	body.style.setProperty("--chronicle-label-fade", ms(s.labelFadeMs, 150));
-	set("--chronicle-user-event", s.colors.event);
-	set("--chronicle-user-person", s.colors.person);
-	set("--chronicle-user-culture", s.colors.culture);
-	set("--chronicle-user-place", s.colors.place);
+	body.style.setProperty("--universeview-hc-fade", ms(s.hoverFadeMs, 220));
+	body.style.setProperty("--universeview-hc-width", `${Math.max(240, s.hoverCardWidth ?? 340)}px`);
+	body.style.setProperty("--universeview-ring-size", `${Math.max(10, s.hoverRingSize ?? 18)}px`);
+	body.style.setProperty("--universeview-help-fade", ms(s.helpFadeMs, 220));
+	body.style.setProperty("--universeview-tier-fade", ms(s.tierFadeMs, 300));
+	body.style.setProperty("--universeview-label-fade", ms(s.labelFadeMs, 150));
+	set("--universeview-user-event", s.colors.event);
+	set("--universeview-user-person", s.colors.person);
+	set("--universeview-user-culture", s.colors.culture);
+	set("--universeview-user-place", s.colors.place);
 	const m = MOTIONS.find((x) => x.id === s.motion) ?? MOTIONS[2];
-	set("--chronicle-user-speed", String(m.speed));
-	set("--chronicle-ease", m.ease);
-	set("--chronicle-density", String(DENSITY[s.density] ?? 1));
-	set("--chronicle-user-radius", s.radius >= 0 ? `${s.radius}px` : undefined);
+	set("--universeview-user-speed", String(m.speed));
+	set("--universeview-ease", m.ease);
+	set("--universeview-density", String(DENSITY[s.density] ?? 1));
+	set("--universeview-user-radius", s.radius >= 0 ? `${s.radius}px` : undefined);
 	// Map look (Settings → Maps & realms → Map look): name and pin sizes, lettering, borders.
 	const clamp = (v: number | undefined, lo: number, hi: number, d: number) => String(Math.max(lo, Math.min(hi, v ?? d)));
 	set("--uv-map-label-scale", clamp(s.mapLabelScale, 0.5, 2.5, 1));
@@ -214,14 +214,14 @@ export function applyAppearance(s: ChronicleSettings) {
 	body.classList.toggle("uv-insp-compact", s.inspectorDensity === "compact");
 	// Views (Settings → Look & cards → Views): what Style Settings used to offer.
 	const px = (v: number | undefined) => (v ? `${v}px` : undefined);
-	set("--chronicle-tl-row-height", px(s.tlRowHeight));
-	set("--chronicle-tl-font-size", px(s.tlFontSize));
-	set("--chronicle-card-width", px(s.cardWidth));
-	set("--chronicle-card-height", px(s.cardHeight));
-	set("--chronicle-male-tint", s.tintMale);
-	set("--chronicle-female-tint", s.tintFemale);
-	body.classList.toggle("chronicle-gender-tint", !!s.genderTint);
-	body.classList.toggle("chronicle-flat", !!s.flatStyle);
+	set("--universeview-tl-row-height", px(s.tlRowHeight));
+	set("--universeview-tl-font-size", px(s.tlFontSize));
+	set("--universeview-card-width", px(s.cardWidth));
+	set("--universeview-card-height", px(s.cardHeight));
+	set("--universeview-male-tint", s.tintMale);
+	set("--universeview-female-tint", s.tintFemale);
+	body.classList.toggle("universeview-gender-tint", !!s.genderTint);
+	body.classList.toggle("universeview-flat", !!s.flatStyle);
 	const tactile = s.surfaceStyle === "tactile";
 	body.classList.toggle("uv-tactile", tactile);
 	for (const part of TACTILE_PARTS) body.classList.toggle(`uv-t-${part.id}`, tactile && !(s.tactileOff ?? []).includes(part.id));
@@ -236,6 +236,6 @@ export function applyAppearance(s: ChronicleSettings) {
 export function clearAppearance() {
 	setRoughEdges(false);
 	const body = document.body;
-	for (const c of Array.from(body.classList)) if (c.startsWith("chronicle-theme-") || c.startsWith("chronicle-motion-") || /^uv-(btn|tabs|edge|font|icons|head)-/.test(c) || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-map-frame" || c === "uv-map-compass" || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "chronicle-gender-tint" || c === "chronicle-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
+	for (const c of Array.from(body.classList)) if (c.startsWith("universeview-theme-") || c.startsWith("universeview-motion-") || /^uv-(btn|tabs|edge|font|icons|head)-/.test(c) || c.startsWith("uv-map-") || c.startsWith("uv-border-") || c === "uv-map-frame" || c === "uv-map-compass" || c === "uv-no-region-labels" || c === "uv-insp-compact" || c === "universeview-gender-tint" || c === "universeview-flat" || c === "uv-tactile" || c.startsWith("uv-t-") || c.startsWith("uv-band-")) body.classList.remove(c);
 	for (const v of BODY_VARS) body.style.removeProperty(v);
 }

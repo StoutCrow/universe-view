@@ -1,6 +1,6 @@
 import { tierLabel } from "../index/realms";
 import { MarkdownRenderChild, TFile, TFolder, debounce } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { TYPE_ICONS, el, glyph, icon, openEntity } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
@@ -36,7 +36,7 @@ function parse(source: string): Options {
  * realm's colour, and kept up to date as notes change.
  */
 class FolderOverview extends MarkdownRenderChild {
-	constructor(el: HTMLElement, private plugin: ChroniclePlugin, private opts: Options, private sourcePath: string) {
+	constructor(el: HTMLElement, private plugin: UniverseViewPlugin, private opts: Options, private sourcePath: string) {
 		super(el);
 	}
 
@@ -49,12 +49,12 @@ class FolderOverview extends MarkdownRenderChild {
 	private render() {
 		const root = this.containerEl;
 		root.empty();
-		root.addClass("uv-folder-overview", "chronicle-scope");
+		root.addClass("uv-folder-overview", "universeview-scope");
 		const p = this.plugin;
 		const dir = this.opts.folder ?? this.sourcePath.split("/").slice(0, -1).join("/");
 		const folder = p.app.vault.getAbstractFileByPath(dir || "/");
 		if (!(folder instanceof TFolder)) {
-			el("div", { cls: "chronicle-dash-problem", text: `No folder “${dir}”.` }, root);
+			el("div", { cls: "universeview-dash-problem", text: `No folder “${dir}”.` }, root);
 			return;
 		}
 		const files: TFile[] = [];
@@ -108,7 +108,7 @@ class FolderOverview extends MarkdownRenderChild {
 		const owner = p.index.get(this.sourcePath);
 		if (this.opts.title !== "none") el("div", { cls: "uv-fo-title", text: this.opts.title || `In ${owner?.name ?? folder.name}` }, root);
 		if (!groups.size) {
-			el("div", { cls: "chronicle-dash-muted", text: "Nothing inside yet. New people, places and titles that belong here are placed in this folder." }, root);
+			el("div", { cls: "universeview-dash-muted", text: "Nothing inside yet. New people, places and titles that belong here are placed in this folder." }, root);
 			return;
 		}
 		const grid = el("div", { cls: "uv-fo-grid" }, root);
@@ -147,7 +147,7 @@ class FolderOverview extends MarkdownRenderChild {
 	}
 }
 
-export function registerFolderOverview(plugin: ChroniclePlugin) {
+export function registerFolderOverview(plugin: UniverseViewPlugin) {
 	plugin.registerMarkdownCodeBlockProcessor(FOLDER_BLOCK, (source, elx, ctx) => {
 		ctx.addChild(new FolderOverview(elx, plugin, parse(source), ctx.sourcePath));
 	});

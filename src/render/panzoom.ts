@@ -98,7 +98,7 @@ export class PanZoom {
 		const onDown = (evt: PointerEvent) => {
 			if (evt.button !== 0 || this.pinch) return;
 			const t = evt.target as Element;
-			if (t.closest("[data-chronicle-drag]")) return;
+			if (t.closest("[data-universeview-drag]")) return;
 			this.dragging = { id: evt.pointerId, sx: evt.clientX, sy: evt.clientY, ox: this.x, oy: this.y, moved: false };
 		};
 		const onMove = (evt: PointerEvent) => {

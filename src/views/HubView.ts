@@ -1,11 +1,11 @@
 import { ItemView, Keymap, Menu, Notice, Platform, debounce, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { buildLabel } from "../version";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el, icon } from "../render/common";
 import { SETTINGS_GROUPS, pageLabel } from "../ui/SettingsTab";
 import { dragToReorder } from "../ui/cardlayout";
 import { renderWorldStats } from "../render/stats";
-import type { ChronicleView } from "./base";
+import type { UniverseViewBase } from "./base";
 import { CalendarView, VIEW_CALENDAR } from "./CalendarView";
 import { DashboardView, VIEW_DASHBOARD } from "./DashboardView";
 import { ExplorerView, VIEW_EXPLORER } from "./ExplorerView";
@@ -40,7 +40,7 @@ interface HubModule {
 	icon: string;
 	desc: string;
 	/** A full view, hosted in the dashboard. */
-	view?: (leaf: WorkspaceLeaf, plugin: ChroniclePlugin) => ChronicleView;
+	view?: (leaf: WorkspaceLeaf, plugin: UniverseViewPlugin) => UniverseViewBase;
 	/** A page drawn straight into the dashboard. */
 	draw?: (host: HTMLElement, hub: HubView) => void;
 	/** Lives in Obsidian's sidebar, not on a tab here. */
@@ -199,7 +199,7 @@ export const HUB_SECTIONS: HubSection[] = [
 ];
 
 /** Whether a view lives on a tab of the dashboard. */
-export function hostedInHub(plugin: ChroniclePlugin, type: string): boolean {
+export function hostedInHub(plugin: UniverseViewPlugin, type: string): boolean {
 	return plugin.moduleOn(type) && HUB_SECTIONS.some((s) => s.modules.some((m) => m.id === type && m.view));
 }
 
@@ -213,13 +213,13 @@ export class HubView extends ItemView {
 	private barEl!: HTMLElement;
 	private stageEl!: HTMLElement;
 	/** Pages already opened, kept alive so going back to one is instant and it stays as you left it. */
-	private panes = new Map<string, { el: HTMLElement; view?: ChronicleView; ready?: Promise<void>; module: HubModule }>();
+	private panes = new Map<string, { el: HTMLElement; view?: UniverseViewBase; ready?: Promise<void>; module: HubModule }>();
 
-	constructor(leaf: WorkspaceLeaf, private plugin: ChroniclePlugin) {
+	constructor(leaf: WorkspaceLeaf, private plugin: UniverseViewPlugin) {
 		super(leaf);
 	}
 
-	get owner(): ChroniclePlugin {
+	get owner(): UniverseViewPlugin {
 		return this.plugin;
 	}
 
@@ -263,7 +263,7 @@ export class HubView extends ItemView {
 	async onOpen() {
 		const root = this.contentEl;
 		root.empty();
-		root.addClass("uv-hub", "chronicle-scope");
+		root.addClass("uv-hub", "universeview-scope");
 		this.railEl = el("nav", { cls: "uv-hub-rail" }, root);
 		const grip = el("div", { cls: "uv-hub-grip", attr: { role: "separator", "aria-label": "Resize the sidebar" } }, root);
 		const main = el("div", { cls: "uv-hub-main" }, root);
@@ -293,7 +293,7 @@ export class HubView extends ItemView {
 	}
 
 	/** Keeps how a view was left, for the next time it opens. */
-	private remember(view?: ChronicleView) {
+	private remember(view?: UniverseViewBase) {
 		if (!view?.isReady) return;
 		const s = this.plugin.settings;
 		const type = view.getViewType();
@@ -584,7 +584,7 @@ export class HubView extends ItemView {
 		const found = this.panes.get(m.id);
 		if (found) return found;
 		const host = el("div", { cls: "uv-hub-pane" + (m.view ? "" : " is-page") }, this.stageEl);
-		const pane: { el: HTMLElement; view?: ChronicleView; ready?: Promise<void>; module: HubModule } = { el: host, module: m };
+		const pane: { el: HTMLElement; view?: UniverseViewBase; ready?: Promise<void>; module: HubModule } = { el: host, module: m };
 		this.panes.set(m.id, pane);
 		setIcon(el("div", { cls: "uv-hub-loading" }, host), LOGO_ICON);
 		pane.ready = new Promise<void>((done) => window.setTimeout(done, 16)).then(async () => {

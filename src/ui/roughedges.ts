@@ -1,5 +1,5 @@
 /** Hand-drawn edges, each one different: every frame the Hand-drawn edge style draws gets its own random wobble. */
-const SEL = ".chronicle-module, .chronicle-ov-panel, button.chronicle-ov-tile, .chronicle-dash-card, .uv-options, .chronicle-hovercard";
+const SEL = ".universeview-module, .universeview-ov-panel, button.universeview-ov-tile, .universeview-dash-card, .uv-options, .universeview-hovercard";
 const rnd = (lo: number, hi: number) => Math.round((lo + Math.random() * (hi - lo)) * 10) / 10;
 
 let observer: MutationObserver | undefined;

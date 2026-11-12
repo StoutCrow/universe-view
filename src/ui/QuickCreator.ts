@@ -1,5 +1,5 @@
 import { Notice, TFile, TFolder } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { CREATOR_FIELDS, parseQuickAdd, quickAddFrontmatter, withFields, type CreatorField, type QuickAdd } from "../import/quickadd";
@@ -66,7 +66,7 @@ export class QuickCreator {
 	private unknownEl!: HTMLElement;
 	private madeEl!: HTMLElement;
 
-	constructor(private plugin: ChroniclePlugin, private host: CreatorHost) {}
+	constructor(private plugin: UniverseViewPlugin, private host: CreatorHost) {}
 
 	private get cal() {
 		const idx = this.plugin.index;
@@ -173,10 +173,10 @@ export class QuickCreator {
 			this.chipEls.set(id, b);
 		}
 
-		this.input = el("textarea", { cls: "chronicle-quickadd-input", attr: { rows: "2", placeholder: "Name, date, at Place, son of Parent, of House…" } }, root);
+		this.input = el("textarea", { cls: "universeview-quickadd-input", attr: { rows: "2", placeholder: "Name, date, at Place, son of Parent, of House…" } }, root);
 		this.input.value = this.text;
 		const keys = el("div", { cls: "uv-quickadd-keys" }, root);
-		this.unknownEl = el("div", { cls: "chronicle-dash-problem" }, root);
+		this.unknownEl = el("div", { cls: "universeview-dash-problem" }, root);
 		this.batchEl = el("div", { cls: "uv-quickadd-card" }, root);
 		this.formEl = el("div", { cls: "uv-creator-form" }, root);
 		this.tagsEl = el("div", { cls: "uv-creator-tags" }, root);
@@ -184,7 +184,7 @@ export class QuickCreator {
 		// Where it goes: inside what it belongs to, or a folder typed here.
 		const where = el("div", { cls: "uv-quickadd-where" }, root);
 		this.whereHint = el("div", { cls: "uv-create-placement" }, where);
-		const folderWrap = el("div", { cls: "chronicle-create-folder" }, where);
+		const folderWrap = el("div", { cls: "universeview-create-folder" }, where);
 		icon(el("span", {}, folderWrap), "folder");
 		this.folderInput = el("input", { attr: { type: "text", placeholder: "Vault root", list: "uv-creator-folders", "aria-label": "Folder" } }, folderWrap);
 		const dl = el("datalist", { attr: { id: "uv-creator-folders" } }, folderWrap);
@@ -303,7 +303,7 @@ export class QuickCreator {
 		});
 		for (const f of CREATOR_FIELDS[q.type]) this.field(f, q);
 		if (q.type === "place" || kind === "realm") {
-			const box = el("details", { cls: "chronicle-create-relations uv-create-land" }, this.formEl);
+			const box = el("details", { cls: "universeview-create-relations uv-create-land" }, this.formEl);
 			box.open = this.stdUsed;
 			el("summary", { text: "What land it is: tier and size" }, box);
 			box.addEventListener("toggle", () => {
@@ -464,7 +464,7 @@ export class QuickCreator {
 				this.refresh();
 			});
 			const where = this.folderManual ? undefined : this.placement(q);
-			el("span", { cls: "chronicle-dash-muted uv-quickadd-folder", text: where ? `in ${where.under}` : `in ${this.folderManual ? this.folder || "the vault root" : this.typeFolder(q.type) || "the vault root"}` }, row);
+			el("span", { cls: "universeview-dash-muted uv-quickadd-folder", text: where ? `in ${where.under}` : `in ${this.folderManual ? this.folder || "the vault root" : this.typeFolder(q.type) || "the vault root"}` }, row);
 			if (idx.findByName(q.name)) el("span", { cls: "uv-quickadd-warn", text: "exists" }, row);
 			// How it links: to notes you have, to others in this batch, or to names with no note yet.
 			const links = [...q.parents.map((n) => ["child of", n]), ...q.cultures.map((n) => ["of", n]), ...q.places.map((n) => ["at", n]), ...q.participants.map((n) => ["with", n])] as [string, string][];
@@ -473,7 +473,7 @@ export class QuickCreator {
 				for (const [how, n] of links) {
 					const known = idx.findByName(n);
 					const here = batch.has(n.toLowerCase());
-					const chip = el("span", { cls: "chronicle-linkchip" + (known ? "" : here ? " is-batch" : " is-unresolved"), text: `${how} ${n}` }, lk);
+					const chip = el("span", { cls: "universeview-linkchip" + (known ? "" : here ? " is-batch" : " is-unresolved"), text: `${how} ${n}` }, lk);
 					chip.setAttribute("aria-label", known ? `Links to ${known.name}` : here ? "Made in this batch" : "No note yet: the link waits for one");
 				}
 			}
@@ -562,7 +562,7 @@ export class QuickCreator {
 	private showMade() {
 		this.madeEl.empty();
 		if (!this.made.length) return;
-		el("div", { cls: "chronicle-dash-muted", text: "Made just now" }, this.madeEl);
+		el("div", { cls: "universeview-dash-muted", text: "Made just now" }, this.madeEl);
 		for (const m of this.made.slice(0, 8)) {
 			const a = el("a", { cls: "uv-quickadd-made-item", text: m.name }, this.madeEl);
 			a.addEventListener("click", () => {

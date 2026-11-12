@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, Territory } from "../types";
 import { el, entityColor } from "../render/common";
 
@@ -9,7 +9,7 @@ const SVG = "http://www.w3.org/2000/svg";
  * borders inside it, and the realm it lies in drawn around it for context. A place without borders
  * of its own shows as a dot in its realm. Nothing is drawn when there's no shape to show.
  */
-export function miniMap(plugin: ChroniclePlugin, parent: HTMLElement, e: Entity): HTMLElement | undefined {
+export function miniMap(plugin: UniverseViewPlugin, parent: HTMLElement, e: Entity): HTMLElement | undefined {
 	const idx = plugin.index;
 	const tree = plugin.realms();
 	const node = tree.nodes.get(e.key);

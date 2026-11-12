@@ -1,6 +1,6 @@
 import { Menu, Notice, TFile, normalizePath, requestUrl, type App } from "obsidian";
 import { clickNotice } from "../render/common";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
@@ -123,18 +123,18 @@ async function embedImages(app: App, root: Element) {
  */
 export async function viewToSvg(app: App, target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
 	// Read styles with entrance animations finished (a half-faded card would export faded).
-	target.addClass("chronicle-exporting");
+	target.addClass("universeview-exporting");
 	void target.offsetHeight;
 	try {
 		return await snapshot(app, target);
 	} finally {
-		target.removeClass("chronicle-exporting");
+		target.removeClass("universeview-exporting");
 	}
 }
 
 async function snapshot(app: App, target: HTMLElement): Promise<{ svg: string; width: number; height: number }> {
 	const bg = getComputedStyle(document.body).getPropertyValue("--background-primary").trim() || "#ffffff";
-	const canvas = target.querySelector<SVGSVGElement>("svg.chronicle-canvas");
+	const canvas = target.querySelector<SVGSVGElement>("svg.universeview-canvas");
 	const layer = canvas?.querySelector(":scope > g:not(defs)") as SVGGElement | null;
 	if (canvas && layer && layer.getBBox().width > 0) {
 		const box = layer.getBBox();
@@ -207,7 +207,7 @@ async function svgToPng(svg: string, width: number, height: number): Promise<Blo
 	return await new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("The picture couldn't be made."))), "image/png"));
 }
 
-async function saveToVault(plugin: ChroniclePlugin, name: string, ext: string, data: ArrayBuffer): Promise<TFile> {
+async function saveToVault(plugin: UniverseViewPlugin, name: string, ext: string, data: ArrayBuffer): Promise<TFile> {
 	const { vault } = plugin.app;
 	if (!vault.getAbstractFileByPath(FOLDER)) await vault.createFolder(FOLDER);
 	const stamp = new Date().toISOString().slice(0, 16).replace("T", " ").replace(":", ".");
@@ -261,7 +261,7 @@ export function withCaption(snap: { svg: string; width: number; height: number }
 	return { svg, width: snap.width, height: h };
 }
 
-export async function exportView(plugin: ChroniclePlugin, target: HTMLElement, name: string, format: "png" | "svg" | "copy" | "decorated", caption?: string) {
+export async function exportView(plugin: UniverseViewPlugin, target: HTMLElement, name: string, format: "png" | "svg" | "copy" | "decorated", caption?: string) {
 	const notice = new Notice("Making the picture…", 0);
 	try {
 		let snap = await viewToSvg(plugin.app, target);
@@ -288,7 +288,7 @@ export async function exportView(plugin: ChroniclePlugin, target: HTMLElement, n
 	}
 }
 
-function done(plugin: ChroniclePlugin, file: TFile) {
+function done(plugin: UniverseViewPlugin, file: TFile) {
 	clickNotice(`Saved ${file.path}. Click to open it.`, 8000, () => void plugin.app.workspace.getLeaf(true).openFile(file));
 }
 
@@ -299,11 +299,11 @@ export interface ExportExtras {
 	extra?: (menu: Menu) => void;
 }
 
-export function exportMenu(plugin: ChroniclePlugin, target: HTMLElement, name: string, evt: MouseEvent, extras: ExportExtras = {}) {
+export function exportMenu(plugin: UniverseViewPlugin, target: HTMLElement, name: string, evt: MouseEvent, extras: ExportExtras = {}) {
 	const menu = new Menu();
 	const cap = () => extras.caption?.();
 	menu.addItem((i) => i.setTitle("Save as PNG image").setIcon("image").onClick(() => void exportView(plugin, target, name, "png", cap())));
-	if (target.querySelector(".chronicle-map")) menu.addItem((i) => i.setTitle("Save as a decorated map (PNG)").setIcon("scroll").onClick(() => void exportView(plugin, target, name, "decorated", cap())));
+	if (target.querySelector(".universeview-map")) menu.addItem((i) => i.setTitle("Save as a decorated map (PNG)").setIcon("scroll").onClick(() => void exportView(plugin, target, name, "decorated", cap())));
 	menu.addItem((i) => i.setTitle("Save as SVG (sharp at any size)").setIcon("file-code").onClick(() => void exportView(plugin, target, name, "svg", cap())));
 	menu.addItem((i) => i.setTitle("Copy as image").setIcon("copy").onClick(() => void exportView(plugin, target, name, "copy", cap())));
 	menu.addItem((i) => i.setTitle("Print or save as PDF…").setIcon("printer").onClick(() => void printView(plugin.app, target, name)));
@@ -319,7 +319,7 @@ export function exportMenu(plugin: ChroniclePlugin, target: HTMLElement, name: s
  * frame captioned with its date, plus a contact sheet of every frame on one page. All go into one
  * folder under the exports folder. Returns the contact sheet.
  */
-export async function exportTimelapse(plugin: ChroniclePlugin, target: HTMLElement, name: string, frames: { label: string; go: () => Promise<void> }[], restore: () => Promise<void>): Promise<TFile | undefined> {
+export async function exportTimelapse(plugin: UniverseViewPlugin, target: HTMLElement, name: string, frames: { label: string; go: () => Promise<void> }[], restore: () => Promise<void>): Promise<TFile | undefined> {
 	const { vault } = plugin.app;
 	const stamp = new Date().toISOString().slice(0, 16).replace("T", " ").replace(":", ".");
 	const safe = name.replace(/^Map:\s*/, "").replace(/[\\/:*?"<>|#^[\]]/g, "-");

@@ -1,25 +1,25 @@
 import { isHouse } from "../render/houses";
 import { Modal, Notice, Setting, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { completeness, findContradictions, findDuplicates, findOrphans, mergeFrontmatter, relink, type Orphan } from "../index/tidy";
 import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, openEntity } from "../render/common";
 import { TextPrompt } from "./TextPrompt";
 
-function noteRow(plugin: ChroniclePlugin, parent: HTMLElement, e: Entity, note: string | undefined, onClick?: (evt: MouseEvent) => void) {
-	const row = el("button", { cls: "chronicle-dash-rel" }, parent);
+function noteRow(plugin: UniverseViewPlugin, parent: HTMLElement, e: Entity, note: string | undefined, onClick?: (evt: MouseEvent) => void) {
+	const row = el("button", { cls: "universeview-dash-rel" }, parent);
 	row.style.setProperty("--row-color", entityColor(plugin, e));
-	const ic = el("span", { cls: "chronicle-dash-rel-icon" }, row);
+	const ic = el("span", { cls: "universeview-dash-rel-icon" }, row);
 	icon(ic, TYPE_ICONS[e.type]);
-	el("span", { cls: "chronicle-dash-rel-name", text: e.name }, row);
-	if (note) el("span", { cls: "chronicle-dash-rel-note", text: note }, row);
+	el("span", { cls: "universeview-dash-rel-name", text: e.name }, row);
+	if (note) el("span", { cls: "universeview-dash-rel-note", text: note }, row);
 	row.addEventListener("click", (evt) => (onClick ? onClick(evt) : openEntity(plugin, e.key, evt)));
 	plugin.hoverCards?.attach(row, e.key);
 	return row;
 }
 
-function backlinks(plugin: ChroniclePlugin): Map<string, string[]> {
+function backlinks(plugin: UniverseViewPlugin): Map<string, string[]> {
 	const resolved = (plugin.app.metadataCache as unknown as { resolvedLinks?: Record<string, Record<string, number>> }).resolvedLinks ?? {};
 	const map = new Map<string, string[]>();
 	for (const [from, to] of Object.entries(resolved)) for (const t of Object.keys(to)) map.set(t, [...(map.get(t) ?? []), from]);
@@ -32,7 +32,7 @@ function backlinks(plugin: ChroniclePlugin): Map<string, string[]> {
  * Merges `drop` into `keep`: properties combined (keep's win), drop's text appended under a heading,
  * every link to drop pointed at keep, and drop moved to the trash.
  */
-export async function mergeNotes(plugin: ChroniclePlugin, keep: Entity, drop: Entity) {
+export async function mergeNotes(plugin: UniverseViewPlugin, keep: Entity, drop: Entity) {
 	const { vault, metadataCache, fileManager } = plugin.app;
 	const dropFm = { ...((metadataCache.getFileCache(drop.file)?.frontmatter ?? {}) as Record<string, unknown>) };
 	delete dropFm.position;
@@ -54,13 +54,13 @@ export async function mergeNotes(plugin: ChroniclePlugin, keep: Entity, drop: En
 }
 
 export class DuplicatesModal extends Modal {
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Possible duplicates");
 		this.render();
 	}
@@ -69,16 +69,16 @@ export class DuplicatesModal extends Modal {
 		this.contentEl.empty();
 		const pairs = findDuplicates(this.plugin.index.all()).slice(0, 60);
 		if (!pairs.length) {
-			el("div", { cls: "chronicle-kin-answer", text: "No likely duplicates found." }, this.contentEl);
+			el("div", { cls: "universeview-kin-answer", text: "No likely duplicates found." }, this.contentEl);
 			return;
 		}
-		el("div", { cls: "chronicle-dash-muted", text: "Merging keeps one note, adds the other's properties and text to it, points every link at it, and moves the other to the trash. Text changes can't be undone from UniverseView, so check first." }, this.contentEl);
+		el("div", { cls: "universeview-dash-muted", text: "Merging keeps one note, adds the other's properties and text to it, points every link at it, and moves the other to the trash. Text changes can't be undone from UniverseView, so check first." }, this.contentEl);
 		for (const p of pairs) {
-			const box = el("div", { cls: "chronicle-dupe" }, this.contentEl);
-			el("div", { cls: "chronicle-dupe-reason", text: `${p.reason} · ${Math.round(p.score * 100)}% likely` }, box);
-			const sides = el("div", { cls: "chronicle-dupe-sides" }, box);
+			const box = el("div", { cls: "universeview-dupe" }, this.contentEl);
+			el("div", { cls: "universeview-dupe-reason", text: `${p.reason} · ${Math.round(p.score * 100)}% likely` }, box);
+			const sides = el("div", { cls: "universeview-dupe-sides" }, box);
 			for (const [keep, drop] of [[p.a, p.b], [p.b, p.a]] as [Entity, Entity][]) {
-				const side = el("div", { cls: "chronicle-dupe-side" }, sides);
+				const side = el("div", { cls: "universeview-dupe-side" }, sides);
 				noteRow(this.plugin, side, keep, `${keep.path}${keep.start ? ` · ${formatSpan(keep.start, keep.end, this.plugin.calendars.get(keep.calendar))}` : ""}`);
 				const b = el("button", { text: `Keep this one` }, side);
 				b.addEventListener("click", () => {
@@ -118,17 +118,17 @@ const ORPHAN_TITLES: Record<Orphan["problem"], string> = {
 };
 
 export class OrphansModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private world?: string) {
+	constructor(private plugin: UniverseViewPlugin, private world?: string) {
 		super(plugin.app);
 	}
 
 	/** Two notes that seem to be one: keep either, and the other is folded into it. */
 	private duplicateRow(parent: HTMLElement, a: Entity, b: Entity, why: string) {
-		const box = el("div", { cls: "chronicle-dupe" }, parent);
-		el("div", { cls: "chronicle-dupe-reason", text: why }, box);
-		const sides = el("div", { cls: "chronicle-dupe-sides" }, box);
+		const box = el("div", { cls: "universeview-dupe" }, parent);
+		el("div", { cls: "universeview-dupe-reason", text: why }, box);
+		const sides = el("div", { cls: "universeview-dupe-sides" }, box);
 		for (const [keep, drop] of [[a, b], [b, a]] as [Entity, Entity][]) {
-			const side = el("div", { cls: "chronicle-dupe-side" }, sides);
+			const side = el("div", { cls: "universeview-dupe-side" }, sides);
 			const links = (backlinks(this.plugin).get(keep.path) ?? []).length;
 			noteRow(this.plugin, side, keep, `${keep.path} · ${links} link${links === 1 ? "" : "s"} to it`);
 			const btn = el("button", { text: `Keep this, merge ${drop.name} in` }, side);
@@ -152,19 +152,19 @@ export class OrphansModal extends Modal {
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Loose ends");
 		const links = backlinks(this.plugin);
 		const all = findOrphans(this.plugin.index, (p) => (links.get(p) ?? []).filter((x) => x !== p).length, (g) => isHouse(this.plugin, g)).filter((o) => !this.world || o.e.path.startsWith(this.world + "/"));
 		if (!all.length) {
-			el("div", { cls: "chronicle-kin-answer", text: "No loose ends: everything is connected." }, this.contentEl);
+			el("div", { cls: "universeview-kin-answer", text: "No loose ends: everything is connected." }, this.contentEl);
 			return;
 		}
 		for (const problem of Object.keys(ORPHAN_TITLES) as Orphan["problem"][]) {
 			const list = all.filter((o) => o.problem === problem);
 			if (!list.length) continue;
-			const details = el("details", { cls: "chronicle-orphans" }, this.contentEl);
+			const details = el("details", { cls: "universeview-orphans" }, this.contentEl);
 			if (list.length <= 8) details.open = true;
 			el("summary", { text: `${ORPHAN_TITLES[problem]} (${list.length})` }, details);
 			const shownPairs = new Set<string>();
@@ -198,13 +198,13 @@ export class OrphansModal extends Modal {
 export class CleanupModal extends Modal {
 	private tab: "kinds" | "tags" = "kinds";
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Tidy kinds and tags");
 		this.render();
 	}
@@ -212,9 +212,9 @@ export class CleanupModal extends Modal {
 	private render() {
 		const c = this.contentEl;
 		c.empty();
-		const tabs = el("div", { cls: "chronicle-tabs" }, c);
+		const tabs = el("div", { cls: "universeview-tabs" }, c);
 		for (const [k, label] of [["kinds", "Kinds"], ["tags", "Tags"]] as const) {
-			const b = el("button", { cls: "chronicle-chip" + (this.tab === k ? " is-active" : ""), text: label }, tabs);
+			const b = el("button", { cls: "universeview-chip" + (this.tab === k ? " is-active" : ""), text: label }, tabs);
 			b.addEventListener("click", () => {
 				this.tab = k;
 				this.render();
@@ -225,7 +225,7 @@ export class CleanupModal extends Modal {
 	}
 
 	private kinds(c: HTMLElement) {
-		el("div", { cls: "chronicle-dash-muted", text: "Rename a kind to change it on every note; rename it to one that already exists to merge them. Undo puts them back." }, c);
+		el("div", { cls: "universeview-dash-muted", text: "Rename a kind to change it on every note; rename it to one that already exists to merge them. Undo puts them back." }, c);
 		const counts = new Map<string, Entity[]>();
 		for (const e of this.plugin.index.all()) if (e.category) counts.set(`${e.type}:${e.category}`, [...(counts.get(`${e.type}:${e.category}`) ?? []), e]);
 		const rows = [...counts.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
@@ -248,10 +248,10 @@ export class CleanupModal extends Modal {
 	}
 
 	private tags(c: HTMLElement) {
-		el("div", { cls: "chronicle-dash-muted", text: "Renames the tag in properties and in the text of every note (including nested tags like #old/child). Changes to the text itself can't be undone from UniverseView." }, c);
+		el("div", { cls: "universeview-dash-muted", text: "Renames the tag in properties and in the text of every note (including nested tags like #old/child). Changes to the text itself can't be undone from UniverseView." }, c);
 		const tags = (this.app.metadataCache as unknown as { getTags?: () => Record<string, number> }).getTags?.() ?? {};
 		const rows = Object.entries(tags).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 300);
-		if (!rows.length) el("div", { cls: "chronicle-dash-muted", text: "No tags in this vault." }, c);
+		if (!rows.length) el("div", { cls: "universeview-dash-muted", text: "No tags in this vault." }, c);
 		for (const [tag, n] of rows) {
 			new Setting(c)
 				.setName(tag)
@@ -305,29 +305,29 @@ export class CleanupModal extends Modal {
 
 // ---- How complete is the world? ---------------------------------------------------------------------
 
-export function renderCompleteness(plugin: ChroniclePlugin, host: HTMLElement, world?: string, onPick?: (e: Entity) => void) {
+export function renderCompleteness(plugin: UniverseViewPlugin, host: HTMLElement, world?: string, onPick?: (e: Entity) => void) {
 	const rows = completeness(plugin.index, world);
 	if (!rows.length) {
-		el("div", { cls: "chronicle-dash-muted", text: "Nothing to measure yet." }, host);
+		el("div", { cls: "universeview-dash-muted", text: "Nothing to measure yet." }, host);
 		return;
 	}
 	// Each check counts equally, so the rows covering every note (summaries, pictures) don't swamp the rest.
 	const scored = rows.filter((r) => r.total > 0);
 	const share = scored.reduce((s, r) => s + r.done / r.total, 0) / Math.max(1, scored.length);
-	const overall = el("div", { cls: "chronicle-complete-overall" }, host);
+	const overall = el("div", { cls: "universeview-complete-overall" }, host);
 	el("strong", { text: `${Math.round(share * 100)}%` }, overall);
 	el("span", { text: " filled in overall" }, overall);
 	for (const r of rows) {
 		const pct = Math.round((r.done / r.total) * 100);
-		const row = el("div", { cls: "chronicle-complete-row" }, host);
-		const head = el("div", { cls: "chronicle-complete-head" }, row);
+		const row = el("div", { cls: "universeview-complete-row" }, host);
+		const head = el("div", { cls: "universeview-complete-head" }, row);
 		el("span", { text: r.label }, head);
-		el("span", { cls: "chronicle-complete-num", text: `${r.done} of ${r.total}` }, head);
-		const track = el("div", { cls: "chronicle-complete-track", attr: { role: "progressbar", "aria-valuenow": String(pct), "aria-valuemin": "0", "aria-valuemax": "100", "aria-label": r.label } }, row);
-		const bar = el("div", { cls: "chronicle-complete-bar" + (pct === 100 ? " is-done" : "") }, track);
+		el("span", { cls: "universeview-complete-num", text: `${r.done} of ${r.total}` }, head);
+		const track = el("div", { cls: "universeview-complete-track", attr: { role: "progressbar", "aria-valuenow": String(pct), "aria-valuemin": "0", "aria-valuemax": "100", "aria-label": r.label } }, row);
+		const bar = el("div", { cls: "universeview-complete-bar" + (pct === 100 ? " is-done" : "") }, track);
 		bar.style.width = `${pct}%`;
 		if (r.missing.length) {
-			const more = el("details", { cls: "chronicle-complete-missing" }, row);
+			const more = el("details", { cls: "universeview-complete-missing" }, row);
 			el("summary", { text: `Show the ${r.missing.length} missing` }, more);
 			for (const e of r.missing.slice(0, 40)) noteRow(plugin, more, e, e.path.split("/").slice(0, -1).join("/"), onPick ? () => onPick(e) : undefined);
 		}
@@ -335,13 +335,13 @@ export function renderCompleteness(plugin: ChroniclePlugin, host: HTMLElement, w
 }
 
 export class CompletenessModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private world?: string) {
+	constructor(private plugin: UniverseViewPlugin, private world?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText(this.world ? `How complete is ${this.world}?` : "How complete is the world?");
 		renderCompleteness(this.plugin, this.contentEl, this.world, (e) => {
 			this.close();
@@ -357,15 +357,15 @@ export class CompletenessModal extends Modal {
 // ---- Text that disagrees with properties ------------------------------------------------------------
 
 export class ContradictionsModal extends Modal {
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
 	async onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Text that disagrees with properties");
-		const status = el("div", { cls: "chronicle-dash-muted", text: "Reading notes…" }, this.contentEl);
+		const status = el("div", { cls: "universeview-dash-muted", text: "Reading notes…" }, this.contentEl);
 		const idx = this.plugin.index;
 		const found: { e: Entity; text: string; about: string }[] = [];
 		for (const e of idx.all()) {

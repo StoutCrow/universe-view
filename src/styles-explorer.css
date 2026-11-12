@@ -56,20 +56,20 @@
 	height: 16px;
 }
 /* Inspector picture: click to change the icon; the type's icon as a corner badge. */
-.chronicle-ep .chronicle-ep-pic {
+.universeview-ep .universeview-ep-pic {
 	position: relative;
 	overflow: visible;
 }
-.chronicle-ep .chronicle-ep-pic.is-clickable {
+.universeview-ep .universeview-ep-pic.is-clickable {
 	cursor: pointer;
 }
-.chronicle-ep .chronicle-ep-pic.is-clickable:hover {
+.universeview-ep .universeview-ep-pic.is-clickable:hover {
 	box-shadow: 0 0 0 2px var(--ep-accent);
 }
-.chronicle-ep .chronicle-ep-pic > img {
+.universeview-ep .universeview-ep-pic > img {
 	border-radius: inherit;
 }
-.chronicle-ep .chronicle-ep-pic-badge {
+.universeview-ep .universeview-ep-pic-badge {
 	position: absolute;
 	right: -5px;
 	bottom: -5px;
@@ -83,7 +83,7 @@
 	box-shadow: 0 0 0 1px var(--background-modifier-border);
 	color: var(--text-muted);
 }
-.chronicle-ep .chronicle-ep-pic-badge svg {
+.universeview-ep .universeview-ep-pic-badge svg {
 	width: 11px;
 	height: 11px;
 }
@@ -163,15 +163,15 @@
 /* ---- Move into folder notes ---- */
 .uv-tidy-list { max-height: 55vh; overflow: auto; border: 1px solid var(--background-modifier-border); border-radius: var(--uv-r-md); padding: 4px 10px; }
 .uv-tidy-head { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; font-size: var(--font-ui-small); }
-.uv-tidy-head .chronicle-dash-muted { margin-left: auto; font-size: var(--font-ui-smaller); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+.uv-tidy-head .universeview-dash-muted { margin-left: auto; font-size: var(--font-ui-smaller); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
 .uv-tidy-head svg { width: 14px; height: 14px; color: var(--interactive-accent); }
 .uv-tidy-row { display: flex; align-items: center; gap: 6px; padding: 2px 0 2px 18px; font-size: var(--font-ui-small); }
-.uv-tidy-row .chronicle-dash-muted { margin-left: auto; font-size: var(--font-ui-smaller); }
+.uv-tidy-row .universeview-dash-muted { margin-left: auto; font-size: var(--font-ui-smaller); }
 .uv-tidy-icon svg { width: 13px; height: 13px; color: var(--text-muted); }
 
 /* ---- Folder overview ---- */
 .uv-folder-overview { border: 1px solid var(--background-modifier-border); border-radius: var(--uv-r-lg); padding: 12px 14px; background: var(--background-secondary); }
-.uv-fo-title { font-family: var(--chronicle-font-display, inherit); font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
+.uv-fo-title { font-family: var(--universeview-font-display, inherit); font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
 .uv-fo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 18px; }
 .uv-fo-head { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 3px; margin-bottom: 4px; }
 .uv-fo-head svg { width: 13px; height: 13px; }

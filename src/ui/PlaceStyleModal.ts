@@ -1,5 +1,5 @@
 import { Setting, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { PIN_SIZES, type Entity, type PinSize } from "../types";
 import { CATEGORY_SCALE, parseMapCategories, placeCategories } from "../settings";
 import { FUTURE_KINDS, MODERN_KINDS } from "../index/worldsetting";
@@ -14,7 +14,7 @@ const LAYER_KEYS = ["layer", "map-layer", "map_layer", "zoom-layer", "zoom_layer
 export const LAYER_NAMES = ["Always shown", "Shown from a little zoom", "Shown when zoomed in", "Shown when zoomed in close", "Only when zoomed right in"];
 
 /** Every kind of place worth offering: common ones, the settings' and the vault's own. */
-export function placeKinds(plugin: ChroniclePlugin): string[] {
+export function placeKinds(plugin: UniverseViewPlugin): string[] {
 	return placeKindGroups(plugin).flatMap(([, kinds]) => kinds);
 }
 
@@ -28,7 +28,7 @@ const notAKind = (k: string) => TERRITORY_WORDS.includes(k) || normaliseKind(k).
  * The kinds of place to offer, grouped by type of place (index/placekinds.ts). Land, water and sites are always
  * listed; settlements, structures and space show what a vault's setting or its own notes use.
  */
-export function placeKindGroups(plugin: ChroniclePlugin): [string, string[]][] {
+export function placeKindGroups(plugin: UniverseViewPlugin): [string, string[]][] {
 	const setting = plugin.settings.worldSetting;
 	const later = setting === "modern" || setting === "futuristic";
 	const inSettings = new Set(parseMapCategories(plugin.settings.mapCategories).keys());
@@ -54,7 +54,7 @@ export function placeKindGroups(plugin: ChroniclePlugin): [string, string[]][] {
 	return [...groups.filter(([name]) => name !== "Space" || space), ...(others.size ? [["Other", [...others].sort()] as [string, string[]]] : [])];
 }
 /** What a place gets when it doesn't say: its kind's size and layer from the settings, or built-in ones. */
-export function kindDefaults(plugin: ChroniclePlugin, kind?: string): { size?: PinSize; layer: number } {
+export function kindDefaults(plugin: UniverseViewPlugin, kind?: string): { size?: PinSize; layer: number } {
 	if (!kind) return { layer: 1 };
 	const cat = placeCategories(plugin.settings.mapCategories).get(kind);
 	const builtin = CATEGORY_SCALE[kind];
@@ -62,7 +62,7 @@ export function kindDefaults(plugin: ChroniclePlugin, kind?: string): { size?: P
 }
 
 /** Writes a place's kind, pin size and layer, reusing whichever property name the note already has. */
-export async function savePlaceStyle(plugin: ChroniclePlugin, key: string, values: { kind?: string | null; size?: PinSize | null; layer?: number | null }) {
+export async function savePlaceStyle(plugin: UniverseViewPlugin, key: string, values: { kind?: string | null; size?: PinSize | null; layer?: number | null }) {
 	const file = plugin.app.vault.getAbstractFileByPath(key);
 	if (!(file instanceof TFile)) return;
 	const current = plugin.index.get(key)?.category;
@@ -89,7 +89,7 @@ function tipped(container: HTMLElement, name: string, help: string): Setting {
 }
 
 /** Kind, size and layer pickers for a place, saved as they change. */
-export function placeStyleFields(container: HTMLElement, plugin: ChroniclePlugin, place: Entity, onSaved?: () => void) {
+export function placeStyleFields(container: HTMLElement, plugin: UniverseViewPlugin, place: Entity, onSaved?: () => void) {
 	const save = (v: Parameters<typeof savePlaceStyle>[2]) => void savePlaceStyle(plugin, place.key, v).then(() => onSaved?.());
 	let kind = place.category;
 	const defaults = () => kindDefaults(plugin, kind);

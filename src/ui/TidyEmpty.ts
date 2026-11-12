@@ -1,5 +1,5 @@
 import { Modal, Notice, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el } from "../render/common";
 
 type Where = "note" | "folder" | "vault";
@@ -11,7 +11,7 @@ type Where = "note" | "folder" | "vault";
 export class TidyEmptyModal extends Modal {
 	private where: Where = "note";
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
@@ -29,8 +29,8 @@ export class TidyEmptyModal extends Modal {
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope");
 		this.titleEl.setText("Remove empty properties");
 		el("p", { cls: "setting-item-description", text: "Blank properties (a name with nothing after it, or an empty list) add clutter: UniverseView reads a missing property the same way. Zero, false and anything filled in stay." }, this.contentEl);
 		const chips = el("div", { cls: "uv-rel-kinds" }, this.contentEl);
@@ -53,7 +53,7 @@ export class TidyEmptyModal extends Modal {
 			ok.disabled = !props;
 		};
 		for (const [id, label] of names) {
-			btns[id] = el("button", { cls: "chronicle-chip", text: label }, chips);
+			btns[id] = el("button", { cls: "universeview-chip", text: label }, chips);
 			btns[id].addEventListener("click", () => {
 				this.where = id;
 				paint();

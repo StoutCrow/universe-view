@@ -7,7 +7,7 @@ import { bindHover, el, entityColor, helpTip, icon, iconButton, resourceUrl, sho
 import { EntityPickerModal } from "../ui/suggest";
 import { moveInto } from "../ui/mapsync";
 import { entityPanel } from "../ui/EntityPanel";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_REALMS = "chronicle-realms";
 
@@ -28,7 +28,7 @@ interface RealmsState {
  * branches, and every other group (faiths, peoples, guilds). Pick one to see everything about it
  * beside the list: who holds it, its vassals, members, events and relationships.
  */
-export class RealmsView extends ChronicleView {
+export class RealmsView extends UniverseViewBase {
 	private state: RealmsState = { tab: "realms", search: "", closed: [] };
 	private listEl!: HTMLElement;
 	private detailEl!: HTMLElement;
@@ -61,9 +61,9 @@ export class RealmsView extends ChronicleView {
 		this.fillToolbar();
 		// One wrapper fills the view (its children are laid out side by side): every direct child of
 		// a view's body is stretched over the whole of it, as maps and charts need.
-		const wrap = el("div", { cls: "chronicle-realms" }, this.body);
-		this.listEl = el("div", { cls: "chronicle-realms-list" }, wrap);
-		this.detailEl = el("div", { cls: "chronicle-realms-detail" }, wrap);
+		const wrap = el("div", { cls: "universeview-realms" }, this.body);
+		this.listEl = el("div", { cls: "universeview-realms-list" }, wrap);
+		this.detailEl = el("div", { cls: "universeview-realms-detail" }, wrap);
 		this.render();
 	}
 
@@ -89,9 +89,9 @@ export class RealmsView extends ChronicleView {
 		this.rebuildToolbar(() => {
 			const s = this.state;
 			const left = this.group();
-			const tabs = el("div", { cls: "chronicle-segmented" }, left);
+			const tabs = el("div", { cls: "universeview-segmented" }, left);
 			for (const [id, label, ic] of [["realms", "Realms", "crown"], ["houses", GROUP_KINDS.house.plural, GROUP_KINDS.house.icon], ["cultures", "Peoples & groups", "flag"]] as const) {
-				const b = el("button", { cls: "chronicle-segment" + (s.tab === id ? " is-active" : "") }, tabs);
+				const b = el("button", { cls: "universeview-segment" + (s.tab === id ? " is-active" : "") }, tabs);
 				icon(el("span", {}, b), ic);
 				el("span", { text: label }, b);
 				b.addEventListener("click", () => {
@@ -140,10 +140,10 @@ export class RealmsView extends ChronicleView {
 		// With a filter, everything matching shows, with the rows above it for context.
 		const matches = (e: Entity) => !q || e.name.toLowerCase().includes(q);
 		const row = (parent: HTMLElement, e: Entity, depth: number, sub: string, kids: string[], extra?: string) => {
-			const r = el("div", { cls: "chronicle-realms-row" + (s.selected === e.key ? " is-selected" : "") + (matches(e) ? "" : " is-context") }, parent);
+			const r = el("div", { cls: "universeview-realms-row" + (s.selected === e.key ? " is-selected" : "") + (matches(e) ? "" : " is-context") }, parent);
 			r.style.setProperty("--depth", String(depth));
 			r.style.setProperty("--row-color", entityColor(this.plugin, e));
-			const twisty = el("span", { cls: "chronicle-realms-twisty" + (kids.length ? "" : " is-leaf") }, r);
+			const twisty = el("span", { cls: "universeview-realms-twisty" + (kids.length ? "" : " is-leaf") }, r);
 			if (kids.length) {
 				icon(twisty, closed.has(e.key) && !q ? "chevron-right" : "chevron-down");
 				twisty.addEventListener("click", (evt) => {
@@ -154,14 +154,14 @@ export class RealmsView extends ChronicleView {
 					this.renderList();
 				});
 			}
-			const pic = el("span", { cls: "chronicle-realms-pic" }, r);
+			const pic = el("span", { cls: "universeview-realms-pic" }, r);
 			const url = resourceUrl(this.plugin, e.logo ?? e.image);
 			if (url) el("img", { attr: { src: url, alt: "" } }, pic);
 			else icon(pic, e.icon ? "circle" : TYPE_ICONS[e.type]);
-			const text = el("span", { cls: "chronicle-realms-text" }, r);
-			el("span", { cls: "chronicle-realms-name", text: e.name }, text);
-			if (sub) el("span", { cls: "chronicle-realms-sub", text: sub }, text);
-			if (extra) el("span", { cls: "chronicle-realms-badge", text: extra }, r);
+			const text = el("span", { cls: "universeview-realms-text" }, r);
+			el("span", { cls: "universeview-realms-name", text: e.name }, text);
+			if (sub) el("span", { cls: "universeview-realms-sub", text: sub }, text);
+			if (extra) el("span", { cls: "universeview-realms-badge", text: extra }, r);
 			r.addEventListener("click", () => this.select(e.key));
 			bindHover(this.plugin, r, e.key, this.hoverHost);
 			this.makeDraggable(r, e);
@@ -190,8 +190,8 @@ export class RealmsView extends ChronicleView {
 			if (row(parent, e, depth, sub(e), kids, badge(e, kids))) for (const c of kids) walk(parent, c, depth + 1, kidsOf, sub, badge, seen);
 		};
 		const empty = (title: string, text: string) => {
-			const d = el("div", { cls: "chronicle-realms-empty" }, box);
-			el("div", { cls: "chronicle-realms-empty-title", text: title }, d);
+			const d = el("div", { cls: "universeview-realms-empty" }, box);
+			el("div", { cls: "universeview-realms-empty-title", text: title }, d);
 			el("div", { text }, d);
 		};
 		if (s.tab === "realms") {
@@ -242,7 +242,7 @@ export class RealmsView extends ChronicleView {
 			};
 			const seen = new Set<string>();
 			for (const [kind, list] of [...byKind].sort((a, b) => a[0].localeCompare(b[0]))) {
-				el("div", { cls: "chronicle-realms-heading", text: kind }, box);
+				el("div", { cls: "universeview-realms-heading", text: kind }, box);
 				for (const g of list.sort((a, b) => a.name.localeCompare(b.name))) walk(box, g.key, 0, kidsOf, sub, () => undefined, seen);
 			}
 		}
@@ -328,8 +328,8 @@ export class RealmsView extends ChronicleView {
 		box.empty();
 		const e = this.state.selected ? this.plugin.index.get(this.state.selected) : undefined;
 		if (!e) {
-			const d = el("div", { cls: "chronicle-realms-empty" }, box);
-			icon(el("div", { cls: "chronicle-realms-empty-icon" }, d), "crown");
+			const d = el("div", { cls: "universeview-realms-empty" }, box);
+			icon(el("div", { cls: "universeview-realms-empty-icon" }, d), "crown");
 			el("div", { text: "Pick a realm, house or culture to see who holds it, what it holds, its people, events and relationships." }, d);
 			return;
 		}

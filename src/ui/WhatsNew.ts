@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Modal, type App } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { compareVersions, parseChangelog, type ChangelogEntry } from "../index/changelog";
 
 /** The changelog, put into the code when it's built (CHANGELOG.md), so the history travels with the plugin. */
@@ -30,13 +30,13 @@ export function renderHistory(app: App, host: HTMLElement, entries: ChangelogEnt
 export class WhatsNewModal extends Modal {
 	private component = new Component();
 
-	constructor(private plugin: ChroniclePlugin, private since?: string) {
+	constructor(private plugin: UniverseViewPlugin, private since?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
 		this.component.load();
-		this.modalEl.addClass("uv-whatsnew", "chronicle-scope");
+		this.modalEl.addClass("uv-whatsnew", "universeview-scope");
 		this.render(this.since);
 	}
 

@@ -1,5 +1,5 @@
 import { Modal, Setting, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { formatSpan } from "../dates/parser";
 import { el, openEntity } from "../render/common";
 import { pickerSetting } from "./people";
@@ -9,19 +9,19 @@ import { pickerSetting } from "./people";
  * and `led-to:` on either note), and the chain of what it led to, a few steps each way.
  */
 export class CauseChainModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private key?: string) {
+	constructor(private plugin: UniverseViewPlugin, private key?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Why did this happen?");
 		pickerSetting(this.plugin, this.contentEl, "Event", ["event"], this.key, (k) => {
 			this.key = k;
 			this.show();
 		});
-		this.out = el("div", { cls: "chronicle-causes" }, this.contentEl);
+		this.out = el("div", { cls: "universeview-causes" }, this.contentEl);
 		this.show();
 	}
 
@@ -33,33 +33,33 @@ export class CauseChainModal extends Modal {
 		const idx = this.plugin.index;
 		const e = idx.get(this.key);
 		if (!e) {
-			el("div", { cls: "chronicle-dash-muted", text: "Pick an event. Link events with `caused-by: [[Earlier event]]` or `led-to: [[Later event]]` on either note." }, out);
+			el("div", { cls: "universeview-dash-muted", text: "Pick an event. Link events with `caused-by: [[Earlier event]]` or `led-to: [[Later event]]` on either note." }, out);
 			return;
 		}
-		const cols = el("div", { cls: "chronicle-causes-cols" }, out);
+		const cols = el("div", { cls: "universeview-causes-cols" }, out);
 		const side = (title: string, map: Map<string, Set<string>>, empty: string) => {
-			const col = el("div", { cls: "chronicle-causes-col" }, cols);
-			el("div", { cls: "chronicle-causes-title", text: title }, col);
+			const col = el("div", { cls: "universeview-causes-col" }, cols);
+			el("div", { cls: "universeview-causes-title", text: title }, col);
 			const seen = new Set<string>([e.key]);
 			const walk = (key: string, parent: HTMLElement, depth: number) => {
 				const next = [...(map.get(key) ?? [])].filter((k) => !seen.has(k)).sort((a, b) => (idx.get(a)?.start?.start ?? 0) - (idx.get(b)?.start?.start ?? 0));
 				if (!next.length) return false;
-				const ul = el("ul", { cls: "chronicle-causes-list" }, parent);
+				const ul = el("ul", { cls: "universeview-causes-list" }, parent);
 				for (const k of next) {
 					seen.add(k);
 					const li = el("li", {}, ul);
 					const x = idx.get(k);
-					const a = el("a", { cls: "chronicle-causes-link" + (x ? "" : " is-unresolved"), text: x?.name ?? k.replace(/^\?/, "") }, li);
+					const a = el("a", { cls: "universeview-causes-link" + (x ? "" : " is-unresolved"), text: x?.name ?? k.replace(/^\?/, "") }, li);
 					a.addEventListener("click", (evt) => {
 						if (x) openEntity(this.plugin, x.key, evt);
 					});
 					const when = x ? formatSpan(x.start, x.end, this.plugin.calendars.get(x.calendar)) : "";
-					if (when) el("span", { cls: "chronicle-causes-when", text: when }, li);
+					if (when) el("span", { cls: "universeview-causes-when", text: when }, li);
 					if (depth < 6) walk(k, li, depth + 1);
 				}
 				return true;
 			};
-			if (!walk(e.key, col, 1)) el("div", { cls: "chronicle-dash-muted", text: empty }, col);
+			if (!walk(e.key, col, 1)) el("div", { cls: "universeview-dash-muted", text: empty }, col);
 		};
 		side("What led to it", idx.causesOf, "Nothing recorded. Add `caused-by: [[…]]` to this note.");
 		side("What it led to", idx.effectsOf, "Nothing recorded. Add `led-to: [[…]]` to this note.");

@@ -1,5 +1,5 @@
 import { MarkdownPostProcessorContext, Modal, Setting, TFile, debounce } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { ChronDate, Entity, EntityType } from "../types";
 import { buildFieldAliases, type FieldName } from "../settings";
 import { formatDate, formatSpan } from "../dates/parser";
@@ -39,7 +39,7 @@ export interface NoteEditor {
 }
 
 /** The layered edit form, for the quick edit window and the inspector panel. `onChange` runs on every edit. */
-export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onChange?: () => void, opts: { realmFields?: boolean } = {}): NoteEditor {
+export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, onChange?: () => void, opts: { realmFields?: boolean } = {}): NoteEditor {
 	// In the inspector, the realm, land and map sections own where it lies, who holds it, its kind, tags and pin.
 	const owned = !!opts.realmFields && (e.type === "place" || p.realms().nodes.has(e.key));
 	{
@@ -54,7 +54,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 		let kind: string | null | undefined;
 		const cal = p.calendars.get(e.calendar);
 		const section = (title: string, parent: HTMLElement = box) => {
-			el("div", { cls: "chronicle-qe-section", text: title }, parent);
+			el("div", { cls: "universeview-qe-section", text: title }, parent);
 		};
 
 		// ---- Essentials
@@ -106,7 +106,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 			const s = new Setting(parent).setName(label);
 			if (desc) s.setDesc(desc);
 			if (rich.length) s.setDesc(`${desc ? desc + " · " : ""}${rich.length} with dates or roles kept as written`);
-			s.settingEl.addClass("chronicle-list-setting");
+			s.settingEl.addClass("universeview-list-setting");
 			const list = new LinkList(s.controlEl, p, types, before, "Add…", single);
 			saves.push(() => {
 				const now = list.collect();
@@ -190,7 +190,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 		}));
 
 		// ---- More: finer settings and every other property
-		const more = el("details", { cls: "chronicle-qe-more" }, box);
+		const more = el("details", { cls: "universeview-qe-more" }, box);
 		el("summary", { text: "More: appearance, map pin, calendar and all other properties" }, more);
 		const impKey = keyFor("importance");
 		const colKey = keyFor("color");
@@ -240,7 +240,7 @@ export function buildEditor(p: ChroniclePlugin, box: HTMLElement, e: Entity, onC
 		box.addEventListener("input", mark);
 		box.addEventListener("change", mark);
 		box.addEventListener("click", (evt: MouseEvent) => {
-			if ((evt.target as Element).closest(".chronicle-linkchip-x")) mark();
+			if ((evt.target as Element).closest(".universeview-linkchip-x")) mark();
 		});
 		return {
 			dirty: () => touched,
@@ -272,7 +272,7 @@ export interface Suggestion {
 }
 
 /** Family links written in a person's text ("son of [[X]]") that aren't in their properties yet. */
-export async function suggestionsFor(plugin: ChroniclePlugin, file: TFile): Promise<Suggestion[]> {
+export async function suggestionsFor(plugin: UniverseViewPlugin, file: TFile): Promise<Suggestion[]> {
 	const idx = plugin.index;
 	const person = idx.get(file.path);
 	if (!person || person.type !== "person") return [];
@@ -291,7 +291,7 @@ export async function suggestionsFor(plugin: ChroniclePlugin, file: TFile): Prom
 }
 
 /** Writes a suggested link in the note's own style (father:/mother: notes keep those properties). */
-export async function applySuggestion(plugin: ChroniclePlugin, file: TFile, s: Suggestion) {
+export async function applySuggestion(plugin: UniverseViewPlugin, file: TFile, s: Suggestion) {
 	const aliases = buildFieldAliases(plugin.settings.fieldAliases);
 	const link = `[[${s.target}]]`;
 	await plugin.editFrontmatter(file, (f) => {
@@ -311,15 +311,15 @@ export async function applySuggestion(plugin: ChroniclePlugin, file: TFile, s: S
 }
 
 export class SuggestionsModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private file: TFile, private found: Suggestion[], private onDone?: () => void) {
+	constructor(private plugin: UniverseViewPlugin, private file: TFile, private found: Suggestion[], private onDone?: () => void) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText(`Found in ${this.file.basename}'s text`);
-		if (!this.found.length) el("div", { cls: "chronicle-dash-muted", text: "No new family links found in the text." }, this.contentEl);
+		if (!this.found.length) el("div", { cls: "universeview-dash-muted", text: "No new family links found in the text." }, this.contentEl);
 		for (const s of this.found) {
 			const row = new Setting(this.contentEl).setName(`${s.target} as ${s.label}`).setDesc(`“${s.finding.sentence.trim().slice(0, 140)}”`);
 			row.addButton((b) => b.setButtonText("Add").setCta().onClick(async () => {
@@ -346,9 +346,9 @@ export class LiveSuggestions {
 	private file?: TFile;
 	private dismissed = new Set<string>();
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		this.item = plugin.addStatusBarItem();
-		this.item.addClass("chronicle-suggest-status", "mod-clickable");
+		this.item.addClass("universeview-suggest-status", "mod-clickable");
 		this.item.hide();
 		this.item.addEventListener("click", () => {
 			if (!this.file) return;
@@ -374,7 +374,7 @@ export class LiveSuggestions {
 			return;
 		}
 		this.item.empty();
-		const ic = el("span", { cls: "chronicle-suggest-icon" }, this.item);
+		const ic = el("span", { cls: "universeview-suggest-icon" }, this.item);
 		icon(ic, "sparkles");
 		el("span", { text: `${this.found.length} family link${this.found.length === 1 ? "" : "s"} to add` }, this.item);
 		this.item.setAttribute("aria-label", this.found.map((s) => `${s.target} as ${s.label}`).join("\n"));
@@ -389,7 +389,7 @@ export class LiveSuggestions {
  * `age: Aldric Vane @ SE 20` → 36 · `born: Aldric Vane` → FE 790 · `died: …` · `span: Order of the Ash` → SE 12 – SE 80
  * `when: Battle of Greyford` → 14 Highsun SE 3 · `since: Battle of Greyford @ SE 40` → 37 years
  */
-export function inlineHelpers(plugin: ChroniclePlugin) {
+export function inlineHelpers(plugin: UniverseViewPlugin) {
 	return (root: HTMLElement, _ctx: MarkdownPostProcessorContext) => {
 		root.querySelectorAll("code").forEach((code) => {
 			if (code.parentElement?.tagName === "PRE") return;
@@ -397,7 +397,7 @@ export function inlineHelpers(plugin: ChroniclePlugin) {
 			if (!m) return;
 			const result = evaluate(plugin, m[1].toLowerCase(), m[2], m[3]);
 			if (!result) return;
-			const span = el("span", { cls: "chronicle-inline" + (result.error ? " is-error" : ""), text: result.text, attr: { title: `${code.textContent}${result.error ? `\n${result.error}` : ""}` } });
+			const span = el("span", { cls: "universeview-inline" + (result.error ? " is-error" : ""), text: result.text, attr: { title: `${code.textContent}${result.error ? `\n${result.error}` : ""}` } });
 			if (result.key) {
 				const key = result.key;
 				span.addClass("is-link");
@@ -409,7 +409,7 @@ export function inlineHelpers(plugin: ChroniclePlugin) {
 	};
 }
 
-function evaluate(plugin: ChroniclePlugin, op: string, name: string, atText?: string): { text: string; key?: string; error?: string } | null {
+function evaluate(plugin: UniverseViewPlugin, op: string, name: string, atText?: string): { text: string; key?: string; error?: string } | null {
 	const e = plugin.index.findByName(name.replace(/^\[\[|\]\]$/g, ""));
 	if (!e) return { text: `? ${name}`, error: `No note called “${name}”` };
 	const cal = plugin.calendars.get(e.calendar);
@@ -450,18 +450,18 @@ function evaluate(plugin: ChroniclePlugin, op: string, name: string, atText?: st
 
 /** The continuity checks for the open story note (or all of them). */
 export class ContinuityModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private path?: string) {
+	constructor(private plugin: UniverseViewPlugin, private path?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		const idx = this.plugin.index;
 		const scene = idx.scenes.find((s) => s.path === this.path);
 		this.titleEl.setText(scene ? `Continuity: ${scene.name}` : "Story continuity");
 		if (this.path && !scene) {
-			el("div", { cls: "chronicle-dash-muted", text: "This note isn't a story note yet. Give it `story-date: SE 20` (the date it happens in the world), `characters: [[A]], [[B]]` and `setting: [[Place]]`." }, this.contentEl);
+			el("div", { cls: "universeview-dash-muted", text: "This note isn't a story note yet. Give it `story-date: SE 20` (the date it happens in the world), `characters: [[A]], [[B]]` and `setting: [[Place]]`." }, this.contentEl);
 			return;
 		}
 		const issues: { path: string; name: string; message: string }[] = [];
@@ -469,17 +469,17 @@ export class ContinuityModal extends Modal {
 		const mine = scene ? issues.filter((i) => i.path === scene.path) : issues;
 		if (scene) {
 			const cal = this.plugin.calendars.get(scene.date.calendar);
-			const info = el("div", { cls: "chronicle-dash-muted" }, this.contentEl);
+			const info = el("div", { cls: "universeview-dash-muted" }, this.contentEl);
 			info.setText(`Set ${formatDate(scene.date, cal)}${scene.places.length ? ` in ${scene.places.map((p) => p.name).join(", ")}` : ""}. Ages then: ${scene.cast.map((c) => {
 				const p = idx.get(c.key);
 				return p?.start ? `${p.name} ${Math.floor((scene.date.start - p.start.start) / YEAR)}` : c.name;
 			}).join(", ") || "no characters listed"}.`);
 		}
-		el("div", { cls: "chronicle-kin-answer", text: mine.length ? `${mine.length} thing${mine.length === 1 ? "" : "s"} to check` : `No problems found in ${scene ? "this chapter" : `${idx.scenes.length} story notes`}.` }, this.contentEl);
+		el("div", { cls: "universeview-kin-answer", text: mine.length ? `${mine.length} thing${mine.length === 1 ? "" : "s"} to check` : `No problems found in ${scene ? "this chapter" : `${idx.scenes.length} story notes`}.` }, this.contentEl);
 		for (const i of mine) {
-			const row = el("button", { cls: "chronicle-dash-rel is-warning" }, this.contentEl);
-			el("span", { cls: "chronicle-dash-rel-name", text: i.name }, row);
-			el("span", { cls: "chronicle-dash-rel-note", text: i.message }, row);
+			const row = el("button", { cls: "universeview-dash-rel is-warning" }, this.contentEl);
+			el("span", { cls: "universeview-dash-rel-name", text: i.name }, row);
+			el("span", { cls: "universeview-dash-rel-note", text: i.message }, row);
 			row.addEventListener("click", () => {
 				this.close();
 				const f = this.app.vault.getAbstractFileByPath(i.path);
@@ -496,13 +496,13 @@ export class ContinuityModal extends Modal {
 // ---- Story prompts ---------------------------------------------------------------------------------------
 
 export class PromptsModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private world?: string) {
+	constructor(private plugin: UniverseViewPlugin, private world?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Story ideas from your world");
 		const list = el("div", {}, this.contentEl);
 		const show = () => {
@@ -512,11 +512,11 @@ export class PromptsModal extends Modal {
 				return formatDate({ start: d, end: d, precision: "year", approx: false, calendar: cal.id, raw: "" }, cal);
 			};
 			const ps = storyPrompts(this.plugin.index, this.world, fmt);
-			if (!ps.length) el("div", { cls: "chronicle-dash-muted", text: "Not enough to go on yet: rivalries (`related-cultures` with `kind: rival`), rulers with dates and children, and dated events all give ideas." }, list);
+			if (!ps.length) el("div", { cls: "universeview-dash-muted", text: "Not enough to go on yet: rivalries (`related-cultures` with `kind: rival`), rulers with dates and children, and dated events all give ideas." }, list);
 			for (const p of ps) {
-				const card = el("div", { cls: "chronicle-prompt-card" }, list);
-				el("div", { cls: "chronicle-prompt-title", text: p.title }, card);
-				el("div", { cls: "chronicle-prompt-text", text: p.text }, card);
+				const card = el("div", { cls: "universeview-prompt-card" }, list);
+				el("div", { cls: "universeview-prompt-title", text: p.title }, card);
+				el("div", { cls: "universeview-prompt-text", text: p.text }, card);
 				const b = el("button", { text: "Make it an event" }, card);
 				b.addEventListener("click", () => {
 					this.close();

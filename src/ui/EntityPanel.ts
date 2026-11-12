@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, Side, TimedRef } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { chainOf, holdingsOf , tierLabel } from "../index/realms";
@@ -44,23 +44,23 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * the people, places, groups and titles linked to it as clickable chips, its relationships by kind,
  * its events, and ways into every view.
  */
-export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opts: PanelOptions) {
+export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, opts: PanelOptions) {
 	const idx = p.index;
 	const cal = p.calendars.get(e.calendar);
 	const tree = p.realms();
 	const node = tree.nodes.get(e.key);
-	const root = el("div", { cls: "chronicle-ep" }, box);
+	const root = el("div", { cls: "universeview-ep" }, box);
 	root.style.setProperty("--ep-accent", entityColor(p, e));
 
 	// ---- Header: picture, name, chips ----
-	const hero = el("div", { cls: "chronicle-ep-hero" }, root);
-	const pic = el("div", { cls: "chronicle-ep-pic" }, hero);
+	const hero = el("div", { cls: "universeview-ep-hero" }, root);
+	const pic = el("div", { cls: "universeview-ep-pic" }, hero);
 	const img = resourceUrl(p, e.image ?? e.logo);
 	const icons = noteIcons(p, e.key);
 	if (img) el("img", { attr: { src: img, alt: "" } }, pic);
 	else if (!(icons.kind && glyph(pic, icons.kind))) icon(pic, TYPE_ICONS[e.type]);
 	// Its type's icon as a badge when the picture shows something more exact (a castle on a fort's pin).
-	if (!img && icons.kind && icons.type) icon(el("span", { cls: "chronicle-ep-pic-badge" }, pic), icons.type);
+	if (!img && icons.kind && icons.type) icon(el("span", { cls: "universeview-ep-pic-badge" }, pic), icons.type);
 	// Click the picture to give it an icon of its own.
 	pic.setAttribute("aria-label", "Change its icon");
 	pic.addClass("is-clickable");
@@ -68,13 +68,13 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 		const f = p.app.vault.getAbstractFileByPath(e.key);
 		if (f instanceof TFile) changeNoteIcon(p, f);
 	});
-	const titles = el("div", { cls: "chronicle-ep-titles" }, hero);
-	const name = el("a", { cls: "chronicle-ep-name", text: e.name }, titles);
+	const titles = el("div", { cls: "universeview-ep-titles" }, hero);
+	const name = el("a", { cls: "universeview-ep-name", text: e.name }, titles);
 	name.addEventListener("click", (evt) => openEntity(p, e.key, evt));
-	const chips = el("div", { cls: "chronicle-ep-chips" }, titles);
+	const chips = el("div", { cls: "universeview-ep-chips" }, titles);
 	const chip = (text: string, ic?: string, cls = "") => {
-		const c = el("span", { cls: "chronicle-ep-tag " + cls }, chips);
-		if (ic) icon(el("span", { cls: "chronicle-ep-tag-icon" }, c), ic);
+		const c = el("span", { cls: "universeview-ep-tag " + cls }, chips);
+		if (ic) icon(el("span", { cls: "universeview-ep-tag-icon" }, c), ic);
 		el("span", { text }, c);
 		return c;
 	};
@@ -91,11 +91,11 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	if (node) {
 		const chain = chainOf(tree, e.key);
 		if (chain.length > 1) {
-			const crumbs = el("div", { cls: "chronicle-ep-crumbs" }, root);
+			const crumbs = el("div", { cls: "universeview-ep-crumbs" }, root);
 			chain.forEach((k, i) => {
-				if (i) el("span", { cls: "chronicle-ep-crumb-sep", text: "›" }, crumbs);
+				if (i) el("span", { cls: "universeview-ep-crumb-sep", text: "›" }, crumbs);
 				const target = idx.get(k);
-				const b = el("span", { cls: "chronicle-ep-crumb" + (k === e.key ? " is-here" : ""), text: target?.name ?? k, attr: k === e.key ? {} : { role: "button", tabindex: "0" } }, crumbs);
+				const b = el("span", { cls: "universeview-ep-crumb" + (k === e.key ? " is-here" : ""), text: target?.name ?? k, attr: k === e.key ? {} : { role: "button", tabindex: "0" } }, crumbs);
 				if (k !== e.key) {
 					b.addEventListener("click", (evt) => (evt.ctrlKey || evt.metaKey ? openEntity(p, k, evt) : opts.pick(k)));
 					bindHover(p, b, k, opts.host);
@@ -137,37 +137,37 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	if (node?.children.length) tiles.push(["git-fork", String(node.children.length), node.children.length === 1 ? relOne("vassals") : relLabel("vassals").toLowerCase()]);
 	if (events.length && e.type !== "event") tiles.push(["calendar-days", String(events.length), events.length === 1 ? "event" : "events"]);
 	if (tiles.length) {
-		const grid = el("div", { cls: "chronicle-ep-tiles" }, root);
+		const grid = el("div", { cls: "universeview-ep-tiles" }, root);
 		for (const [ic, value, label] of tiles.slice(0, 6)) {
-			const t = el("div", { cls: "chronicle-ep-tile" }, grid);
-			icon(el("span", { cls: "chronicle-ep-tile-icon" }, t), ic);
-			el("div", { cls: "chronicle-ep-tile-value", text: value }, t);
-			el("div", { cls: "chronicle-ep-tile-label", text: label }, t);
+			const t = el("div", { cls: "universeview-ep-tile" }, grid);
+			icon(el("span", { cls: "universeview-ep-tile-icon" }, t), ic);
+			el("div", { cls: "universeview-ep-tile-value", text: value }, t);
+			el("div", { cls: "universeview-ep-tile-label", text: label }, t);
 		}
 	}
 
 	// ---- Summary ----
-	if (e.summary) el("div", { cls: "chronicle-ep-summary", text: e.summary }, root);
+	if (e.summary) el("div", { cls: "universeview-ep-summary", text: e.summary }, root);
 
 	// ---- Linked notes, as chips ----
 	const section = (title: string, ic: string, action?: [string, () => void], help?: string) => {
-		const s = el("section", { cls: "chronicle-ep-section" }, root);
-		const h = el("div", { cls: "chronicle-ep-section-head" }, s);
+		const s = el("section", { cls: "universeview-ep-section" }, root);
+		const h = el("div", { cls: "universeview-ep-section-head" }, s);
 		icon(el("span", {}, h), ic);
 		el("span", { text: title }, h);
 		if (help ?? HELP[title.replace(/ \(\d+\)$/, "")]) helpTip(h, help ?? HELP[title.replace(/ \(\d+\)$/, "")]);
 		if (action) {
-			const a = el("span", { cls: "chronicle-ep-section-action", text: action[0], attr: { role: "button", tabindex: "0" } }, h);
+			const a = el("span", { cls: "universeview-ep-section-action", text: action[0], attr: { role: "button", tabindex: "0" } }, h);
 			a.addEventListener("click", action[1]);
 		}
-		return el("div", { cls: "chronicle-ep-people" }, s);
+		return el("div", { cls: "universeview-ep-people" }, s);
 	};
 	const person = (into: HTMLElement, r: { key: string; name: string; resolved?: boolean }, sub?: string, tone?: string) => noteChip(p, into, r, opts, sub, tone);
 	const list = (title: string, ic: string, refs: { key: string; name: string; resolved?: boolean; sub?: string; tone?: string }[], max = 12) => {
 		if (!refs.length) return;
 		const s = section(`${title} (${refs.length})`, ic);
 		for (const r of refs.slice(0, max)) person(s, r, r.sub, r.tone);
-		if (refs.length > max) el("span", { cls: "chronicle-ep-more", text: `+${refs.length - max} more` }, s);
+		if (refs.length > max) el("span", { cls: "universeview-ep-more", text: `+${refs.length - max} more` }, s);
 	};
 	const span = (x?: Entity) => (x ? formatSpan(x.start, x.end, p.calendars.get(x.calendar)) : "");
 	const refOf = (k: string, sub?: string) => ({ key: k, name: idx.get(k)?.name ?? k, sub });
@@ -238,11 +238,11 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	if (e.repeat) facts.push(["Repeats", cap(e.repeat)]);
 	facts.push(...otherProperties(p, e));
 	if (facts.length) {
-		const s = el("section", { cls: "chronicle-ep-section" }, root);
-		const h = el("div", { cls: "chronicle-ep-section-head" }, s);
+		const s = el("section", { cls: "universeview-ep-section" }, root);
+		const h = el("div", { cls: "universeview-ep-section-head" }, s);
 		icon(el("span", {}, h), "list");
 		el("span", { text: "Details" }, h);
-		const table = el("dl", { cls: "chronicle-ep-facts" }, s);
+		const table = el("dl", { cls: "universeview-ep-facts" }, s);
 		for (const [k, v] of facts) {
 			el("dt", { text: k }, table);
 			el("dd", { text: v }, table);
@@ -252,33 +252,33 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 	// ---- Events, on a little timeline ----
 	const dated = events.filter((x) => x.start).sort((a, b) => a.start!.start - b.start!.start);
 	if (dated.length && e.type !== "event") {
-		const s = el("section", { cls: "chronicle-ep-section" }, root);
-		const h = el("div", { cls: "chronicle-ep-section-head" }, s);
+		const s = el("section", { cls: "universeview-ep-section" }, root);
+		const h = el("div", { cls: "universeview-ep-section-head" }, s);
 		icon(el("span", {}, h), "calendar-days");
 		el("span", { text: `Events (${dated.length})` }, h);
-		const ol = el("ol", { cls: "chronicle-ep-events" }, s);
+		const ol = el("ol", { cls: "universeview-ep-events" }, s);
 		for (const x of dated.slice(0, 10)) {
-			const li = el("li", { cls: "chronicle-ep-event" }, ol);
+			const li = el("li", { cls: "universeview-ep-event" }, ol);
 			li.style.setProperty("--dot", entityColor(p, x));
-			el("span", { cls: "chronicle-ep-event-date", text: formatDate(x.start, p.calendars.get(x.calendar)) }, li);
-			const a = el("a", { cls: "chronicle-ep-event-name", text: x.name }, li);
+			el("span", { cls: "universeview-ep-event-date", text: formatDate(x.start, p.calendars.get(x.calendar)) }, li);
+			const a = el("a", { cls: "universeview-ep-event-name", text: x.name }, li);
 			a.addEventListener("click", (evt) => (evt.ctrlKey || evt.metaKey ? openEntity(p, x.key, evt) : opts.pick(x.key)));
 			bindHover(p, a, x.key, opts.host);
 		}
-		if (dated.length > 10) el("div", { cls: "chronicle-ep-more", text: `+${dated.length - 10} more on the timeline` }, s);
+		if (dated.length > 10) el("div", { cls: "universeview-ep-more", text: `+${dated.length - 10} more on the timeline` }, s);
 	}
 
 	// ---- Tags ----
 	const tags = e.tags.filter((t) => !/^(person|character|event|place|culture|map)$/i.test(t));
 	if (tags.length) {
-		const row = el("div", { cls: "chronicle-ep-tagrow" }, root);
-		for (const t of tags.slice(0, 12)) el("span", { cls: "chronicle-ep-hashtag", text: "#" + t }, row);
+		const row = el("div", { cls: "universeview-ep-tagrow" }, root);
+		for (const t of tags.slice(0, 12)) el("span", { cls: "universeview-ep-hashtag", text: "#" + t }, row);
 	}
 
 	// ---- Ways in ----
-	const actions = el("div", { cls: "chronicle-ep-actions" }, root);
+	const actions = el("div", { cls: "universeview-ep-actions" }, root);
 	const act = (ic: string, label: string, run: () => void) => {
-		const b = el("button", { cls: "chronicle-ep-action" }, actions);
+		const b = el("button", { cls: "universeview-ep-action" }, actions);
 		icon(el("span", {}, b), ic);
 		el("span", { text: label }, b);
 		b.addEventListener("click", run);
@@ -305,7 +305,7 @@ export function entityPanel(p: ChroniclePlugin, box: HTMLElement, e: Entity, opt
 const NOT_FACTS = /^(tags?|aliases|cssclass(es)?|position|map-position|pos|xy|coordinates?|coords|latlng|lat-lng|custom_coordinates.*|coordinates_.*|territor(y|ies)|borders|routes?|roads|occupied-areas|occupied|sides|transfers|holders|names|image|logo|icon|color|colour|cr_type|type|map|maps|war|victor|defeated|outcome|importance|calendar|summary|description|kind|category|parent|parents|father|mother|children|spouse|partner|caused[-_]by|because-of|triggered-by|led[-_]to|leads-to|causes|consequences|resulted-in)$/i;
 
 /** What else the note's properties say, in plain words: nothing written is left out of sight. */
-function otherProperties(p: ChroniclePlugin, e: Entity): [string, string][] {
+function otherProperties(p: UniverseViewPlugin, e: Entity): [string, string][] {
 	const f = p.app.vault.getAbstractFileByPath(e.key);
 	const front: Record<string, unknown> | undefined = f instanceof TFile ? p.app.metadataCache.getFileCache(f)?.frontmatter : undefined;
 	const known = new Set(Object.values(buildFieldAliases(p.settings.fieldAliases)).flat().map((k) => k.toLowerCase()));
@@ -321,21 +321,21 @@ function otherProperties(p: ChroniclePlugin, e: Entity): [string, string][] {
 
 /**
  * A linked note as a chip: its picture or icon, its name and a line under it. Click shows it in the
- * panel, Ctrl/Cmd-click opens it; a name with no note yet shows dashed. Put it inside a ".chronicle-ep".
+ * panel, Ctrl/Cmd-click opens it; a name with no note yet shows dashed. Put it inside a ".universeview-ep".
  */
-export function noteChip(p: ChroniclePlugin, into: HTMLElement, r: { key: string; name: string; resolved?: boolean }, opts: Pick<PanelOptions, "pick" | "host">, sub?: string, tone?: string) {
+export function noteChip(p: UniverseViewPlugin, into: HTMLElement, r: { key: string; name: string; resolved?: boolean }, opts: Pick<PanelOptions, "pick" | "host">, sub?: string, tone?: string) {
 	const target = r.resolved === false ? undefined : p.index.get(r.key);
 	// Not a <button>: themes restyle every button, and these are chips.
-	const c = el("span", { cls: "chronicle-ep-person" + (target ? "" : " is-missing") + (tone ? ` tone-${tone}` : ""), attr: target ? { role: "button", tabindex: "0" } : {} }, into);
-	const av = el("span", { cls: "chronicle-ep-avatar" }, c);
+	const c = el("span", { cls: "universeview-ep-person" + (target ? "" : " is-missing") + (tone ? ` tone-${tone}` : ""), attr: target ? { role: "button", tabindex: "0" } : {} }, into);
+	const av = el("span", { cls: "universeview-ep-avatar" }, c);
 	av.style.setProperty("--avatar", target ? entityColor(p, target) : "var(--text-faint)");
 	const url = target ? resourceUrl(p, target.image ?? target.logo) : undefined;
 	if (url) el("img", { attr: { src: url, alt: "" } }, av);
 	else if (target) icon(av, TYPE_ICONS[target.type]);
 	else av.setText(r.name.charAt(0).toUpperCase());
-	const txt = el("span", { cls: "chronicle-ep-person-text" }, c);
-	el("span", { cls: "chronicle-ep-person-name", text: target?.name ?? r.name }, txt);
-	if (sub) el("span", { cls: "chronicle-ep-person-sub", text: sub }, txt);
+	const txt = el("span", { cls: "universeview-ep-person-text" }, c);
+	el("span", { cls: "universeview-ep-person-name", text: target?.name ?? r.name }, txt);
+	if (sub) el("span", { cls: "universeview-ep-person-sub", text: sub }, txt);
 	if (!target) {
 		c.title = `${r.name} has no note yet`;
 		return c;
@@ -352,27 +352,27 @@ export function noteChip(p: ChroniclePlugin, into: HTMLElement, r: { key: string
 }
 
 /** A bar for a note's span (a life, a reign, a realm), set against today, with its events as ticks. */
-function spanBar(p: ChroniclePlugin, root: HTMLElement, e: Entity) {
+function spanBar(p: UniverseViewPlugin, root: HTMLElement, e: Entity) {
 	if (!e.start && !e.end) return;
 	const cal = p.calendars.get(e.calendar);
 	const start = e.start?.start ?? e.end!.start;
 	const today = p.openEndOf(e);
 	const end = e.end?.end ?? today ?? start;
-	const box = el("div", { cls: "chronicle-ep-span" }, root);
-	const row = el("div", { cls: "chronicle-ep-span-labels" }, box);
+	const box = el("div", { cls: "universeview-ep-span" }, root);
+	const row = el("div", { cls: "universeview-ep-span-labels" }, box);
 	el("span", { text: e.start ? formatDate(e.start, cal) : "?" }, row);
 	const years = Math.max(0, (end - start) / YEAR);
 	const len = e.type === "person" ? (e.end ? `died aged ${Math.floor(years)}` : today !== undefined ? `aged ${Math.floor(years)}` : "") : years >= 1 ? `${Math.round(years).toLocaleString()} year${Math.round(years) === 1 ? "" : "s"}${!e.end && today !== undefined ? " and counting" : ""}` : "";
-	el("span", { cls: "chronicle-ep-span-len", text: len }, row);
+	el("span", { cls: "universeview-ep-span-len", text: len }, row);
 	el("span", { text: e.end ? formatDate(e.end, cal) : today !== undefined ? "today" : "" }, row);
-	const bar = el("div", { cls: "chronicle-ep-span-bar" + (!e.end && today !== undefined ? " is-open" : "") }, box);
-	const fill = el("div", { cls: "chronicle-ep-span-fill" }, bar);
+	const bar = el("div", { cls: "universeview-ep-span-bar" + (!e.end && today !== undefined ? " is-open" : "") }, box);
+	const fill = el("div", { cls: "universeview-ep-span-fill" }, bar);
 	fill.setCssStyles({ width: "100%" });
 	const width = Math.max(1, end - start);
 	for (const x of p.index.events(e.key)) {
 		const d = x.start?.start;
 		if (d === undefined || d < start || d > end) continue;
-		const tick = el("span", { cls: "chronicle-ep-span-tick", attr: { title: `${x.name} · ${formatDate(x.start, p.calendars.get(x.calendar))}` } }, bar);
+		const tick = el("span", { cls: "universeview-ep-span-tick", attr: { title: `${x.name} · ${formatDate(x.start, p.calendars.get(x.calendar))}` } }, bar);
 		tick.style.left = `${((d - start) / width) * 100}%`;
 	}
 }

@@ -1,5 +1,5 @@
 import { debounce } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { chainOf, holdingsOf } from "../index/realms";
 import { TYPE_LABELS, el, glyph, icon } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
@@ -9,7 +9,7 @@ import { noteIcons } from "./icons";
  * The open note at a glance in the status bar: its icons, what it is ("Fort", "House", "Kingdom")
  * and where it sits (its realm, or what a person holds). Click it for the inspector.
  */
-export function statusBar(plugin: ChroniclePlugin) {
+export function statusBar(plugin: UniverseViewPlugin) {
 	const item = plugin.addStatusBarItem();
 	item.addClass("uv-status", "mod-clickable");
 	const render = () => {

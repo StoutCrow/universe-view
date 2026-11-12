@@ -1,15 +1,15 @@
 /* ==== Map: living map, movements, notes, clusters, travel ======================================= */
 
-.chronicle-pin.is-happening .chronicle-pin-dot::after {
+.universeview-pin.is-happening .universeview-pin-dot::after {
 	content: "";
 	position: absolute;
 	inset: -6px;
 	border-radius: 50%;
 	border: 2px solid var(--pin-color);
-	animation: chronicle-pulse calc(1.6s * var(--chronicle-speed, 1) + 0.4s) ease-out infinite;
+	animation: universeview-pulse calc(1.6s * var(--universeview-speed, 1) + 0.4s) ease-out infinite;
 	pointer-events: none;
 }
-@keyframes chronicle-pulse {
+@keyframes universeview-pulse {
 	from {
 		transform: scale(0.7);
 		opacity: 0.9;
@@ -20,16 +20,16 @@
 	}
 }
 @media (prefers-reduced-motion: reduce) {
-	.chronicle-pin.is-happening .chronicle-pin-dot::after {
+	.universeview-pin.is-happening .universeview-pin-dot::after {
 		animation: none;
 		opacity: 0.7;
 	}
 }
-.chronicle-pin.is-photo .chronicle-pin-dot {
+.universeview-pin.is-photo .universeview-pin-dot {
 	border-width: 3px;
 	box-shadow: 0 0 0 1px var(--pin-color), 0 3px 8px rgba(0, 0, 0, 0.35);
 }
-.chronicle-popup-image {
+.universeview-popup-image {
 	display: block;
 	width: calc(100% + 24px);
 	max-height: 140px;
@@ -37,7 +37,7 @@
 	margin: -12px -12px 8px;
 	border-radius: 8px 8px 0 0;
 }
-.chronicle-movement {
+.universeview-movement {
 	stroke: var(--move-color, #b03a2e);
 	stroke-opacity: 0.75;
 	fill: none;
@@ -46,17 +46,17 @@
 	stroke-dasharray: 12 6;
 	cursor: pointer;
 }
-.chronicle-movement.is-now {
+.universeview-movement.is-now {
 	stroke-opacity: 1;
 	stroke-width: 5;
-	animation: chronicle-march 1.2s linear infinite;
+	animation: universeview-march 1.2s linear infinite;
 }
-@keyframes chronicle-march {
+@keyframes universeview-march {
 	to {
 		stroke-dashoffset: -36;
 	}
 }
-.chronicle-move-head {
+.universeview-move-head {
 	position: absolute;
 	width: 0;
 	height: 0;
@@ -67,13 +67,13 @@
 	pointer-events: none;
 	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
 }
-.chronicle-move-head.is-note {
+.universeview-move-head.is-note {
 	border-left-color: var(--move-color);
 }
-.chronicle-move-head.is-journey {
+.universeview-move-head.is-journey {
 	border-left-color: var(--interactive-accent);
 }
-.chronicle-journey {
+.universeview-journey {
 	stroke: var(--interactive-accent);
 	stroke-opacity: 0.9;
 	fill: none;
@@ -81,16 +81,16 @@
 	stroke-linejoin: round;
 	filter: drop-shadow(0 0 3px var(--background-primary));
 }
-.chronicle-ring {
+.universeview-ring {
 	stroke: var(--interactive-accent);
 	fill: var(--interactive-accent);
 	fill-opacity: 0.05;
 	stroke-dasharray: 6 5;
 }
-.chronicle-ring.ring-0 {
+.universeview-ring.ring-0 {
 	fill-opacity: 0.12;
 }
-.chronicle-ring-label {
+.universeview-ring-label {
 	position: absolute;
 	transform: translate(-50%, -110%);
 	padding: 1px 8px;
@@ -101,11 +101,11 @@
 	color: var(--text-on-accent);
 	background: var(--interactive-accent);
 }
-.chronicle-map-note-wrap {
+.universeview-map-note-wrap {
 	background: none;
 	border: none;
 }
-.chronicle-map-note {
+.universeview-map-note {
 	position: absolute;
 	transform: translate(-50%, -100%) rotate(-1.5deg);
 	max-width: 200px;
@@ -120,44 +120,44 @@
 	white-space: pre-wrap;
 	cursor: context-menu;
 }
-.chronicle-map-line {
+.universeview-map-line {
 	stroke: var(--note-color, #e8b33a);
 	fill: none;
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
-.chronicle-map-line.kind-line {
+.universeview-map-line.kind-line {
 	stroke-dasharray: 8 6;
 }
-.chronicle-map-line.is-draft {
+.universeview-map-line.is-draft {
 	stroke: var(--interactive-accent);
 }
-.leaflet-tooltip.chronicle-map-line-label {
+.leaflet-tooltip.universeview-map-line-label {
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--uv-r-md);
 	font-size: 11px;
 	box-shadow: none;
 }
-.chronicle-note-colors {
+.universeview-note-colors {
 	display: flex;
 	gap: 4px;
 }
-.chronicle-map-banner.has-actions button.chronicle-note-swatch {
+.universeview-map-banner.has-actions button.universeview-note-swatch {
 	width: 20px;
 	height: 20px;
 	padding: 0;
 	border-radius: 50%;
 	border: 2px solid transparent;
 }
-.chronicle-map-banner.has-actions button.chronicle-note-swatch.is-active {
+.universeview-map-banner.has-actions button.universeview-note-swatch.is-active {
 	border-color: var(--text-normal);
 	box-shadow: 0 0 0 2px var(--background-primary);
 }
-.chronicle-pin-wrap.is-clustered {
+.universeview-pin-wrap.is-clustered {
 	display: none;
 }
-.chronicle-cluster {
+.universeview-cluster {
 	position: absolute;
 	transform: translate(-50%, -50%);
 	display: flex;
@@ -166,7 +166,7 @@
 	gap: 2px;
 	cursor: zoom-in;
 }
-.chronicle-cluster-count {
+.universeview-cluster-count {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -179,22 +179,22 @@
 	color: var(--text-on-accent);
 	background: var(--interactive-accent);
 	box-shadow: 0 0 0 4px color-mix(in srgb, var(--interactive-accent) 30%, transparent), 0 3px 8px rgba(0, 0, 0, 0.3);
-	transition: transform var(--chronicle-fast) var(--chronicle-ease);
+	transition: transform var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-cluster:hover .chronicle-cluster-count {
+.universeview-cluster:hover .universeview-cluster-count {
 	transform: scale(1.1);
 }
-.chronicle-cluster-label {
+.universeview-cluster-label {
 	font-size: 11px;
 	font-weight: 600;
 	white-space: nowrap;
 	color: var(--text-normal);
 	text-shadow: 0 0 3px var(--background-primary), 0 0 6px var(--background-primary);
 }
-.chronicle-view-body.is-compare > .chronicle-map:not(#uv-strong) {
+.universeview-view-body.is-compare > .universeview-map:not(#uv-strong) {
 	right: 50%;
 }
-.chronicle-compare {
+.universeview-compare {
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -204,7 +204,7 @@
 	flex-direction: column;
 	border-left: 2px solid var(--background-modifier-border);
 }
-.chronicle-compare-bar {
+.universeview-compare-bar {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -213,16 +213,16 @@
 	border-bottom: 1px solid var(--background-modifier-border);
 	background: var(--background-primary);
 }
-.chronicle-compare-date {
+.universeview-compare-date {
 	width: 150px;
 	height: 28px;
 	font-size: var(--font-ui-small);
 }
-.chronicle-compare-status {
+.universeview-compare-status {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-error);
 }
-.chronicle-compare-map {
+.universeview-compare-map {
 	position: relative;
 	flex: 1;
 	min-height: 0;
@@ -230,79 +230,79 @@
 
 /* ==== Connections: other times faded ============================================================ */
 
-.chronicle-net-node.is-inactive {
+.universeview-net-node.is-inactive {
 	opacity: 0.28;
 }
-.chronicle-net-link.is-inactive {
+.universeview-net-link.is-inactive {
 	stroke-dasharray: 3 4;
 	opacity: 0.35;
 }
 
 /* ==== Fan chart and time tree =================================================================== */
 
-.chronicle-fan-cell {
+.universeview-fan-cell {
 	cursor: pointer;
-	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation: universeview-svg-in var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-fan-cell path {
+.universeview-fan-cell path {
 	fill: color-mix(in srgb, var(--cell-color, var(--text-faint)) 22%, var(--background-primary));
 	stroke: color-mix(in srgb, var(--cell-color, var(--text-faint)) 55%, var(--background-primary));
 	stroke-width: 1.2;
-	transition: fill var(--chronicle-fast) var(--chronicle-ease);
+	transition: fill var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-fan-cell:hover path {
+.universeview-fan-cell:hover path {
 	fill: color-mix(in srgb, var(--cell-color) 40%, var(--background-primary));
 }
-.chronicle-fan-cell.is-empty path {
+.universeview-fan-cell.is-empty path {
 	fill: transparent;
 	stroke: var(--background-modifier-border);
 	stroke-dasharray: 3 3;
 	cursor: default;
 }
-.chronicle-fan-cell.is-root path {
+.universeview-fan-cell.is-root path {
 	fill: color-mix(in srgb, var(--cell-color) 35%, var(--background-primary));
 	stroke-width: 2;
 }
-.chronicle-fan-name {
+.universeview-fan-name {
 	font-size: 11px;
 	font-weight: 600;
 	fill: var(--text-normal);
 	pointer-events: none;
 }
-.chronicle-fan-name.is-root {
+.universeview-fan-name.is-root {
 	font-size: 14px;
-	font-family: var(--chronicle-font-display);
+	font-family: var(--universeview-font-display);
 }
-.chronicle-fan-years {
+.universeview-fan-years {
 	font-size: 10px;
 	fill: var(--text-muted);
 	pointer-events: none;
 }
-.chronicle-timetree-person {
+.universeview-timetree-person {
 	cursor: pointer;
 }
-.chronicle-timetree-bar {
+.universeview-timetree-bar {
 	fill: color-mix(in srgb, var(--item-color) 30%, var(--background-primary));
 	stroke: var(--item-color);
 	stroke-width: 1.2;
 }
-.chronicle-timetree-person.is-open .chronicle-timetree-bar {
+.universeview-timetree-person.is-open .universeview-timetree-bar {
 	fill-opacity: 0.6;
 	stroke-dasharray: 0;
 }
-.chronicle-timetree-person.is-guessed .chronicle-timetree-bar {
+.universeview-timetree-person.is-guessed .universeview-timetree-bar {
 	stroke-dasharray: 4 3;
 	fill-opacity: 0.4;
 }
-.chronicle-timetree-person:hover .chronicle-timetree-bar {
+.universeview-timetree-person:hover .universeview-timetree-bar {
 	stroke-width: 2.5;
 }
-.chronicle-timetree-name {
+.universeview-timetree-name {
 	font-size: 11.5px;
 	fill: var(--text-normal);
 	pointer-events: none;
 }
-.chronicle-timetree-link {
+.universeview-timetree-link {
 	fill: none;
 	stroke: var(--text-faint);
 	stroke-width: 1.2;
@@ -310,74 +310,74 @@
 
 /* ==== Life at a glance, fact cards ================================================================ */
 
-.chronicle-arc {
+.universeview-arc {
 	width: 100%;
 	overflow-x: auto;
 }
-.chronicle-arc-svg {
+.universeview-arc-svg {
 	display: block;
 }
-.chronicle-arc-lane {
+.universeview-arc-lane {
 	font-size: 11px;
 	fill: var(--text-muted);
 	font-weight: 600;
 }
-.chronicle-arc-bar rect,
-.chronicle-arc-dot circle {
+.universeview-arc-bar rect,
+.universeview-arc-dot circle {
 	fill: color-mix(in srgb, var(--item-color) 45%, var(--background-primary));
 	stroke: var(--item-color);
 	stroke-width: 1;
 }
-.chronicle-arc-bar.is-open rect {
+.universeview-arc-bar.is-open rect {
 	stroke-dasharray: 4 3;
 }
-.chronicle-arc-bar,
-.chronicle-arc-dot {
+.universeview-arc-bar,
+.universeview-arc-dot {
 	cursor: pointer;
 }
-.chronicle-arc-bar:hover rect,
-.chronicle-arc-dot:hover circle {
+.universeview-arc-bar:hover rect,
+.universeview-arc-dot:hover circle {
 	fill: var(--item-color);
 }
-.chronicle-arc-text {
+.universeview-arc-text {
 	font-size: 10.5px;
 	fill: var(--text-normal);
 	pointer-events: none;
 }
-.chronicle-block-host.is-auto-height {
+.universeview-block-host.is-auto-height {
 	min-height: 0;
 }
-.chronicle-block-host.is-auto-height:not(#uv-strong) {
+.universeview-block-host.is-auto-height:not(#uv-strong) {
 	height: auto;
 }
-.chronicle-block-host.is-auto-height > * {
+.universeview-block-host.is-auto-height > * {
 	position: static;
 }
-.chronicle-facts {
+.universeview-facts {
 	max-width: 340px;
 	margin: 0 0 0.6em;
 	padding: 10px 12px;
 	border: 1px solid var(--background-modifier-border);
 	border-top: 4px solid var(--item-color, var(--interactive-accent));
-	border-radius: var(--chronicle-radius, 8px);
+	border-radius: var(--universeview-radius, 8px);
 	background: var(--background-secondary);
 	font-size: var(--font-ui-small);
 	line-height: 1.45;
 }
-.chronicle-block .chronicle-facts {
+.universeview-block .universeview-facts {
 	float: right;
 	margin: 0 0 0.8em 1.2em;
 }
-.chronicle-facts-title a {
+.universeview-facts-title a {
 	font-weight: 700;
 	font-size: 1.1em;
-	font-family: var(--chronicle-font-display);
+	font-family: var(--universeview-font-display);
 	color: var(--text-normal);
 }
-.chronicle-facts-kind {
+.universeview-facts-kind {
 	color: var(--text-muted);
 }
-.chronicle-facts-image {
+.universeview-facts-image {
 	display: block;
 	width: 100%;
 	max-height: 220px;
@@ -385,19 +385,19 @@
 	margin: 8px 0;
 	border-radius: var(--uv-r-md);
 }
-.chronicle-facts-rows {
+.universeview-facts-rows {
 	display: grid;
 	grid-template-columns: max-content minmax(0, 1fr);
 	gap: 3px 10px;
 	margin-top: 6px;
 }
-.chronicle-facts-label {
+.universeview-facts-label {
 	color: var(--text-muted);
 }
-.chronicle-facts-value a.is-unresolved {
+.universeview-facts-value a.is-unresolved {
 	opacity: 0.6;
 }
-.chronicle-facts-summary {
+.universeview-facts-summary {
 	margin-top: 8px;
 	color: var(--text-muted);
 	font-style: italic;
@@ -405,60 +405,60 @@
 
 /* ==== Statistics ================================================================================== */
 
-.chronicle-stats-grid {
+.universeview-stats-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 	gap: 14px;
 }
-.chronicle-stat-panel {
+.universeview-stat-panel {
 	min-width: 0;
 }
-.chronicle-stat-title {
+.universeview-stat-title {
 	margin: 0 0 2px;
 	font-size: var(--font-ui-small);
 	font-weight: 700;
 	color: var(--text-normal);
 }
-.chronicle-stat-sub {
+.universeview-stat-sub {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	margin-bottom: 6px;
 }
-.chronicle-stat-chart {
+.universeview-stat-chart {
 	position: relative;
 }
-.chronicle-stat-svg {
+.universeview-stat-svg {
 	display: block;
 	width: 100%;
 	height: auto;
 }
-.chronicle-stat-grid {
+.universeview-stat-grid {
 	stroke: var(--background-modifier-border);
 	stroke-width: 1;
 }
-.chronicle-stat-tick {
+.universeview-stat-tick {
 	font-size: 10px;
 	fill: var(--text-muted);
 }
-.chronicle-stat-line {
+.universeview-stat-line {
 	fill: none;
 	stroke: var(--series);
 	stroke-width: 2;
 	stroke-linejoin: round;
 	stroke-linecap: round;
 }
-.chronicle-stat-cross {
+.universeview-stat-cross {
 	stroke: var(--text-faint);
 	stroke-width: 1;
 	opacity: 0;
 }
-.chronicle-stat-hit {
+.universeview-stat-hit {
 	fill: transparent;
 }
-.chronicle-stat-chart.is-hover .chronicle-stat-cross {
+.universeview-stat-chart.is-hover .universeview-stat-cross {
 	opacity: 1;
 }
-.chronicle-stat-tip {
+.universeview-stat-tip {
 	position: absolute;
 	top: 6px;
 	z-index: 2;
@@ -471,34 +471,34 @@
 	box-shadow: var(--shadow-s);
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-stat-chart.is-hover .chronicle-stat-tip {
+.universeview-stat-chart.is-hover .universeview-stat-tip {
 	opacity: 1;
 }
-.chronicle-stat-tip-title {
+.universeview-stat-tip-title {
 	font-weight: 700;
 	margin-bottom: 3px;
 }
-.chronicle-stat-tip-row {
+.universeview-stat-tip-row {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	color: var(--text-muted);
 }
-.chronicle-stat-tip-row strong {
+.universeview-stat-tip-row strong {
 	margin-left: auto;
 	color: var(--text-normal);
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-stat-swatch {
+.universeview-stat-swatch {
 	display: inline-block;
 	width: 10px;
 	height: 3px;
 	border-radius: var(--uv-r-sm);
 	flex-shrink: 0;
 }
-.chronicle-stat-legend {
+.universeview-stat-legend {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px 12px;
@@ -506,202 +506,202 @@
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
-.chronicle-stat-legend-item {
+.universeview-stat-legend-item {
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;
 }
-.chronicle-stat-bars {
+.universeview-stat-bars {
 	display: grid;
 	gap: 5px;
 }
-.chronicle-stat-bar-row {
+.universeview-stat-bar-row {
 	display: grid;
 	grid-template-columns: minmax(70px, 34%) minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 8px;
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-stat-bar-name {
+.universeview-stat-bar-name {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	color: var(--text-normal);
 }
-.chronicle-stat-bar-track {
+.universeview-stat-bar-track {
 	height: 10px;
 }
-.chronicle-stat-bar {
+.universeview-stat-bar {
 	height: 100%;
 	min-width: 2px;
 	border-radius: 0 4px 4px 0;
 	background: var(--interactive-accent);
-	transition: width var(--chronicle-med) var(--chronicle-ease);
+	transition: width var(--universeview-med) var(--universeview-ease);
 }
-.chronicle-stat-bar-value {
+.universeview-stat-bar-value {
 	font-variant-numeric: tabular-nums;
 	color: var(--text-muted);
 }
 
 /* ==== Tool dialogs ================================================================================= */
 
-.chronicle-tool-modal {
+.universeview-tool-modal {
 	width: min(680px, 94vw);
 }
-.chronicle-kin-result {
+.universeview-kin-result {
 	margin-top: 8px;
 }
-.chronicle-kin-answer {
+.universeview-kin-answer {
 	font-size: 1.15em;
 	margin: 8px 0;
 }
-.chronicle-kin-path {
+.universeview-kin-path {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 4px;
 }
-.chronicle-kin-path button.chronicle-dash-rel {
+.universeview-kin-path button.universeview-dash-rel {
 	width: auto;
 }
-.chronicle-kin-arrow {
+.universeview-kin-arrow {
 	color: var(--text-faint);
 }
-.chronicle-succession {
+.universeview-succession {
 	margin: 4px 0;
 	padding-left: 1.6em;
 }
-.chronicle-succession li {
+.universeview-succession li {
 	margin-left: calc(var(--depth, 0) * 14px);
 }
-.chronicle-names-grid {
+.universeview-names-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 	gap: 6px;
 	margin-top: 8px;
 }
-.chronicle-name-chip {
+.universeview-name-chip {
 	display: flex;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--uv-r-md);
 	overflow: hidden;
 }
-.chronicle-name-chip button {
+.universeview-name-chip button {
 	box-shadow: none;
 	border-radius: 0;
 	height: 30px;
 	background: transparent;
 }
-.chronicle-name-text {
+.universeview-name-text {
 	flex: 1;
 	font-weight: 600;
 	text-align: left;
 }
-.chronicle-name-add {
+.universeview-name-add {
 	padding: 0 8px;
 }
-.chronicle-name-add:not(#uv-strong) {
+.universeview-name-add:not(#uv-strong) {
 	border-left: 1px solid var(--background-modifier-border);
 }
-.chronicle-name-chip button:hover {
+.universeview-name-chip button:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-quickadd-input {
+.universeview-quickadd-input {
 	width: 100%;
 	font-size: 1.05em;
 	margin: 10px 0;
 	resize: vertical;
 }
-.chronicle-quickadd-preview {
+.universeview-quickadd-preview {
 	padding: 8px 10px;
 	border-radius: var(--uv-r-md);
 	background: var(--background-secondary);
 }
-.chronicle-quickadd-preview:empty {
+.universeview-quickadd-preview:empty {
 	display: none;
 }
-.chronicle-quickadd-head {
+.universeview-quickadd-head {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-bottom: 6px;
 }
-.chronicle-quickadd-head select {
+.universeview-quickadd-head select {
 	margin-left: auto;
 }
-.chronicle-prompt-card {
+.universeview-prompt-card {
 	padding: 10px 12px;
 	margin: 8px 0;
 	border-radius: var(--uv-r-md);
 	border: 1px solid var(--background-modifier-border);
 	border-left: 3px solid var(--interactive-accent);
 }
-.chronicle-prompt-title {
+.universeview-prompt-title {
 	font-weight: 700;
 	margin-bottom: 4px;
 }
-.chronicle-prompt-text {
+.universeview-prompt-text {
 	color: var(--text-muted);
 	margin-bottom: 8px;
 }
-.chronicle-dupe {
+.universeview-dupe {
 	padding: 8px 10px;
 	margin: 8px 0;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--uv-r-md);
 }
-.chronicle-dupe-reason {
+.universeview-dupe-reason {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	margin-bottom: 6px;
 }
-.chronicle-dupe-sides {
+.universeview-dupe-sides {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 8px;
 	margin-bottom: 6px;
 }
-.chronicle-dupe-side {
+.universeview-dupe-side {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	align-items: flex-start;
 }
-.chronicle-orphans {
+.universeview-orphans {
 	margin: 8px 0;
 }
-.chronicle-orphans summary {
+.universeview-orphans summary {
 	font-weight: 600;
 	cursor: pointer;
 	padding: 4px 0;
 }
-.chronicle-tabs {
+.universeview-tabs {
 	display: flex;
 	gap: 6px;
 	margin-bottom: 8px;
 }
-.chronicle-complete-overall {
+.universeview-complete-overall {
 	margin-bottom: 8px;
 	font-size: var(--font-ui-small);
 	color: var(--text-muted);
 }
-.chronicle-complete-overall strong {
+.universeview-complete-overall strong {
 	font-size: 1.6em;
 	color: var(--text-normal);
 }
-.chronicle-complete-row {
+.universeview-complete-row {
 	margin: 6px 0;
 }
-.chronicle-complete-head {
+.universeview-complete-head {
 	display: flex;
 	justify-content: space-between;
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-complete-num {
+.universeview-complete-num {
 	color: var(--text-muted);
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-complete-track {
+.universeview-complete-track {
 	height: 3px;
 	margin-top: 4px;
 	border-radius: 2px;
@@ -709,21 +709,21 @@
 	overflow: hidden;
 }
 /* Unfinished is neutral; green only says "done". */
-.chronicle-complete-bar {
+.universeview-complete-bar {
 	height: 100%;
 	background: var(--text-muted);
 	border-radius: var(--uv-r-sm);
-	transition: width var(--chronicle-slow) var(--chronicle-ease);
+	transition: width var(--universeview-slow) var(--universeview-ease);
 }
-.chronicle-complete-bar.is-done {
+.universeview-complete-bar.is-done {
 	background: var(--color-green, #3bb273);
 }
-.chronicle-complete-missing summary {
+.universeview-complete-missing summary {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	cursor: pointer;
 }
-button.chronicle-dash-tool {
+button.universeview-dash-tool {
 	display: flex;
 	align-items: flex-start;
 	gap: 10px;
@@ -736,18 +736,18 @@ button.chronicle-dash-tool {
 	box-shadow: none;
 	border-radius: var(--uv-r-md);
 }
-button.chronicle-dash-tool:hover {
+button.universeview-dash-tool:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-dash-tool .chronicle-dash-rel-icon {
+.universeview-dash-tool .universeview-dash-rel-icon {
 	color: var(--interactive-accent);
 	margin-top: 2px;
 }
-.chronicle-dash-tool strong {
+.universeview-dash-tool strong {
 	display: block;
 	font-size: var(--font-ui-small);
 }
-.chronicle-dash-tool-desc {
+.universeview-dash-tool-desc {
 	display: block;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
@@ -756,45 +756,45 @@ button.chronicle-dash-tool:hover {
 
 /* ==== Writing helpers ================================================================================ */
 
-.chronicle-suggest-status {
+.universeview-suggest-status {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
 	color: var(--text-accent);
 }
-.chronicle-suggest-icon {
+.universeview-suggest-icon {
 	display: flex;
 }
-.chronicle-suggest-icon svg {
+.universeview-suggest-icon svg {
 	width: 13px;
 	height: 13px;
 }
-.chronicle-inline {
+.universeview-inline {
 	padding: 0 4px;
 	border-radius: var(--uv-r-sm);
 	background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
 	color: var(--text-normal);
 	font-variant-numeric: tabular-nums;
 }
-.chronicle-inline.is-link {
+.universeview-inline.is-link {
 	cursor: pointer;
 }
-.chronicle-inline.is-link:hover {
+.universeview-inline.is-link:hover {
 	background: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
 }
-.chronicle-inline.is-error {
+.universeview-inline.is-error {
 	background: color-mix(in srgb, var(--text-error) 14%, transparent);
 	color: var(--text-error);
 }
 
 /* ==== Coasts, roads and rivers read from the image ============================================== */
-.chronicle-trace-coast {
+.universeview-trace-coast {
 	stroke: #1f6fb2;
 	stroke-dasharray: 6 4;
 	fill: #1f6fb2;
-	animation: chronicle-trace-march 1.2s linear infinite;
+	animation: universeview-trace-march 1.2s linear infinite;
 }
-.chronicle-trace-line {
+.universeview-trace-line {
 	stroke: #e0662b;
 	stroke-linecap: round;
 	stroke-linejoin: round;
@@ -802,85 +802,85 @@ button.chronicle-dash-tool:hover {
 	cursor: pointer;
 	filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
 }
-.chronicle-trace-line.kind-river,
-.chronicle-trace-line.kind-sea {
+.universeview-trace-line.kind-river,
+.universeview-trace-line.kind-sea {
 	stroke: #1f8fd6;
 }
-.chronicle-trace-line.kind-path {
+.universeview-trace-line.kind-path {
 	stroke-dasharray: 6 5;
 }
-.chronicle-trace-line:hover {
+.universeview-trace-line:hover {
 	stroke: var(--text-error);
 	stroke-dasharray: 3 4;
 }
-@keyframes chronicle-trace-march {
+@keyframes universeview-trace-march {
 	to { stroke-dashoffset: -20; }
 }
 @media (prefers-reduced-motion: reduce) {
-	.chronicle-trace-coast { animation: none; }
+	.universeview-trace-coast { animation: none; }
 }
 
 /* ==== Relationships in the new-note form and settings ============================================ */
-.chronicle-create-relations {
+.universeview-create-relations {
 	margin: 6px 0 4px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m, 8px);
 	padding: 2px 10px;
 }
-.chronicle-create-relations > summary {
+.universeview-create-relations > summary {
 	cursor: pointer;
 	padding: 8px 0;
 	font-weight: 600;
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
-.chronicle-create-relations[open] > summary {
+.universeview-create-relations[open] > summary {
 	color: var(--text-normal);
 }
-.chronicle-create-relations .setting-item {
+.universeview-create-relations .setting-item {
 	padding: 6px 0;
 }
-.chronicle-relkinds {
+.universeview-relkinds {
 	margin: 4px 0 12px;
 }
-.chronicle-relkinds > summary {
+.universeview-relkinds > summary {
 	cursor: pointer;
 	color: var(--text-accent);
 	font-size: var(--font-ui-small);
 	padding: 4px 0;
 }
-.chronicle-relkinds-table {
+.universeview-relkinds-table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: var(--font-ui-smaller);
 }
-.chronicle-relkinds-table th,
-.chronicle-relkinds-table td {
+.universeview-relkinds-table th,
+.universeview-relkinds-table td {
 	text-align: left;
 	padding: 4px 8px 4px 0;
 	border-bottom: 1px solid var(--background-modifier-border);
 	vertical-align: top;
 }
-.chronicle-relkinds-table th {
+.universeview-relkinds-table th {
 	color: var(--text-muted);
 	font-weight: 600;
-}.chronicle-trace-line.is-current {
+}.universeview-trace-line.is-current {
 	stroke-dasharray: none;
 	opacity: 0.9;
 }
-.chronicle-trace-end {
+.universeview-trace-end {
 	fill: #fff;
 	stroke: #e0662b;
 	stroke-width: 2.5;
 }
 /* ==== Maps through time ========================================================================== */
-.chronicle-map-image {
-	transition: opacity var(--chronicle-med, 350ms) var(--chronicle-ease, ease);
+.universeview-map-image {
+	transition: opacity var(--universeview-med, 350ms) var(--universeview-ease, ease);
 }
-.chronicle-map-image.is-swapping {
+.universeview-map-image.is-swapping {
 	opacity: 0;
 }
-.chronicle-map-era {
+.universeview-map-era {
 	position: absolute;
 	left: 50%;
 	bottom: 14px;
@@ -896,10 +896,10 @@ button.chronicle-dash-tool:hover {
 	pointer-events: none;
 }
 /* ==== Cause and effect ========================================================================== */
-.chronicle-tl-lanes {
+.universeview-tl-lanes {
 	position: relative;
 }
-.chronicle-tl-causes {
+.universeview-tl-causes {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -907,58 +907,58 @@ button.chronicle-dash-tool:hover {
 	overflow: visible;
 	z-index: 1;
 }
-.chronicle-tl-cause {
+.universeview-tl-cause {
 	fill: none;
 	stroke: color-mix(in srgb, var(--text-accent) 70%, transparent);
 	stroke-width: 1.6;
 	stroke-dasharray: 5 3;
 }
-.chronicle-tl-cause-headpath {
+.universeview-tl-cause-headpath {
 	fill: color-mix(in srgb, var(--text-accent) 80%, transparent);
 }
-.chronicle-causes-cols {
+.universeview-causes-cols {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 18px;
 	margin-bottom: 8px;
 }
-.chronicle-causes-title {
+.universeview-causes-title {
 	font-weight: 700;
 	margin-bottom: 6px;
 }
-.chronicle-causes-list {
+.universeview-causes-list {
 	margin: 2px 0 2px 2px;
 	padding-left: 16px;
 	border-left: 2px solid color-mix(in srgb, var(--text-accent) 40%, transparent);
 	list-style: none;
 }
-.chronicle-causes-list li {
+.universeview-causes-list li {
 	margin: 4px 0;
 }
-.chronicle-causes-link {
+.universeview-causes-link {
 	cursor: pointer;
 	font-weight: 600;
 }
-.chronicle-causes-link.is-unresolved {
+.universeview-causes-link.is-unresolved {
 	color: var(--text-faint);
 	font-style: italic;
 }
-.chronicle-causes-when {
+.universeview-causes-when {
 	margin-left: 8px;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
 /* ==== Editing on the timeline ==================================================================== */
-.chronicle-tl-item.is-editable {
+.universeview-tl-item.is-editable {
 	cursor: grab;
 }
-.chronicle-tl-item.is-dragging {
+.universeview-tl-item.is-dragging {
 	cursor: grabbing;
 	z-index: 5;
 	opacity: 0.9;
 	filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.25));
 }
-.chronicle-tl-resize {
+.universeview-tl-resize {
 	position: absolute;
 	right: -3px;
 	top: 0;
@@ -967,14 +967,14 @@ button.chronicle-dash-tool:hover {
 	cursor: ew-resize;
 	border-radius: 0 4px 4px 0;
 }
-.chronicle-tl-item:hover .chronicle-tl-resize {
+.universeview-tl-item:hover .universeview-tl-resize {
 	background: color-mix(in srgb, var(--item-color) 55%, var(--text-normal));
 	opacity: 0.45;
 }
-.chronicle-tl-bar {
+.universeview-tl-bar {
 	position: relative;
 }
-.chronicle-tl-drag-date {
+.universeview-tl-drag-date {
 	position: absolute;
 	z-index: 20;
 	padding: 3px 9px;
@@ -988,56 +988,56 @@ button.chronicle-dash-tool:hover {
 	box-shadow: var(--shadow-s);
 }
 /* Eras inside eras: each level's labels on their own row. */
-.chronicle-timeline.has-eras .chronicle-tl-lanes {
+.universeview-timeline.has-eras .universeview-tl-lanes {
 	padding-top: calc(4px + var(--era-rows, 1) * 22px);
 }
-.chronicle-tl-era .chronicle-tl-era-label {
+.universeview-tl-era .universeview-tl-era-label {
 	margin-top: calc(3px + var(--era-depth, 0) * 22px);
 }
-.chronicle-tl-era.is-nested {
+.universeview-tl-era.is-nested {
 	border-left-style: dashed;
 }
 /* ==== Drawing links in the connections graph ===================================================== */
-.chronicle-net-draft {
+.universeview-net-draft {
 	stroke: var(--interactive-accent);
 	stroke-width: 2.5;
 	stroke-dasharray: 6 4;
 	pointer-events: none;
 }
-.chronicle-network.is-linking,
-.chronicle-network.is-linking .chronicle-net-node {
+.universeview-network.is-linking,
+.universeview-network.is-linking .universeview-net-node {
 	cursor: crosshair;
 }
-.chronicle-net-node.is-link-target .chronicle-net-shape {
+.universeview-net-node.is-link-target .universeview-net-shape {
 	stroke: var(--interactive-accent);
 	stroke-width: 4;
 }
 /* ==== Table view ================================================================================= */
-.chronicle-table-wrap {
+.universeview-table-wrap {
 	position: absolute;
 	inset: 0;
 	display: flex;
 	flex-direction: column;
 	padding: 8px 14px 14px;
 }
-.chronicle-table-count {
+.universeview-table-count {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	padding: 2px 2px 8px;
 }
-.chronicle-table-scroll {
+.universeview-table-scroll {
 	flex: 1 1 auto;
 	overflow: auto;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--chronicle-radius, 10px);
+	border-radius: var(--universeview-radius, 10px);
 }
-.chronicle-table {
+.universeview-table {
 	border-collapse: separate;
 	border-spacing: 0;
 	font-size: var(--font-ui-small);
 	min-width: 100%;
 }
-.chronicle-table th {
+.universeview-table th {
 	position: sticky;
 	top: 0;
 	z-index: 2;
@@ -1047,19 +1047,19 @@ button.chronicle-dash-tool:hover {
 	padding: 0;
 	white-space: nowrap;
 }
-.chronicle-table th:first-child,
-.chronicle-table td:first-child {
+.universeview-table th:first-child,
+.universeview-table td:first-child {
 	position: sticky;
 	left: 0;
 	z-index: 1;
 	background: var(--background-primary);
 	border-right: 1px solid var(--background-modifier-border);
 }
-.chronicle-table th:first-child {
+.universeview-table th:first-child {
 	z-index: 3;
 	background: var(--background-secondary);
 }
-.chronicle-table-sort {
+.universeview-table-sort {
 	background: none;
 	box-shadow: none;
 	border: none;
@@ -1072,34 +1072,34 @@ button.chronicle-dash-tool:hover {
 	gap: 4px;
 	cursor: pointer;
 }
-.chronicle-table-sort.is-sorted {
+.universeview-table-sort.is-sorted {
 	color: var(--text-normal);
 }
-.chronicle-table-sort-icon svg {
+.universeview-table-sort-icon svg {
 	width: 12px;
 	height: 12px;
 }
-.chronicle-table-remove-col {
+.universeview-table-remove-col {
 	padding: 2px;
 	opacity: 0.5;
 }
-.chronicle-table td {
+.universeview-table td {
 	padding: 6px 10px;
 	border-bottom: 1px solid var(--background-modifier-border);
 	vertical-align: top;
 	max-width: 340px;
 }
-.chronicle-table tbody tr:hover td {
+.universeview-table tbody tr:hover td {
 	background: var(--background-modifier-hover);
 }
-.chronicle-table-name {
+.universeview-table-name {
 	white-space: nowrap;
 	font-weight: 600;
 }
-.chronicle-table-name a {
+.universeview-table-name a {
 	cursor: pointer;
 }
-.chronicle-table-dot {
+.universeview-table-dot {
 	display: inline-block;
 	width: 8px;
 	height: 8px;
@@ -1107,133 +1107,133 @@ button.chronicle-dash-tool:hover {
 	margin-right: 8px;
 	vertical-align: middle;
 }
-.chronicle-table-cell {
+.universeview-table-cell {
 	cursor: text;
 }
-.chronicle-cell-text {
+.universeview-cell-text {
 	display: block;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.chronicle-cell-text.is-empty {
+.universeview-cell-text.is-empty {
 	color: var(--text-faint);
 }
-.chronicle-table-cell.is-invalid .chronicle-cell-text {
+.universeview-table-cell.is-invalid .universeview-cell-text {
 	color: var(--text-error);
 	text-decoration: underline;
 }
-.chronicle-cell-input {
+.universeview-cell-input {
 	width: 100%;
 	min-width: 120px;
 	height: 26px;
 	font-size: var(--font-ui-small);
 }
-.chronicle-cell-hint {
+.universeview-cell-hint {
 	font-size: 10.5px;
 	color: var(--text-success);
 	min-height: 0;
 }
-.chronicle-cell-hint.is-error {
+.universeview-cell-hint.is-error {
 	color: var(--text-error);
 }
-.chronicle-table-empty {
+.universeview-table-empty {
 	padding: 20px;
 }
 /* ==== Houses ===================================================================================== */
-.chronicle-houses {
+.universeview-houses {
 	position: absolute;
 	inset: 0;
 }
-.chronicle-houses.is-embedded {
+.universeview-houses.is-embedded {
 	position: relative;
 	height: 100%;
 }
-.chronicle-houses > svg {
+.universeview-houses > svg {
 	width: 100%;
 	height: 100%;
 	display: block;
 }
-.chronicle-house-bg {
+.universeview-house-bg {
 	fill: color-mix(in srgb, var(--house-color) 5%, var(--background-primary));
 	stroke: color-mix(in srgb, var(--house-color) 30%, var(--background-modifier-border));
 }
-.chronicle-house-span {
+.universeview-house-span {
 	fill: color-mix(in srgb, var(--house-color) 9%, transparent);
 }
-.chronicle-house-logo {
+.universeview-house-logo {
 	cursor: pointer;
 }
-.chronicle-house-logo-bg {
+.universeview-house-logo-bg {
 	fill: color-mix(in srgb, var(--house-color) 18%, var(--background-primary));
 	stroke: color-mix(in srgb, var(--house-color) 50%, transparent);
 }
-.chronicle-house-mono {
-	font-family: var(--chronicle-font-display);
+.universeview-house-mono {
+	font-family: var(--universeview-font-display);
 	font-weight: 700;
 	font-size: 15px;
 	fill: color-mix(in srgb, var(--house-color) 75%, var(--text-normal));
 	pointer-events: none;
 }
-.chronicle-house-name {
-	font-family: var(--chronicle-font-display);
+.universeview-house-name {
+	font-family: var(--universeview-font-display);
 	font-weight: 700;
 	font-size: 15px;
 	fill: var(--text-normal);
 	cursor: pointer;
 }
-.chronicle-house-name:hover {
+.universeview-house-name:hover {
 	fill: var(--text-accent);
 }
-.chronicle-house-sub {
+.universeview-house-sub {
 	font-size: 11px;
 	fill: var(--text-muted);
 }
-.chronicle-house-person {
+.universeview-house-person {
 	cursor: pointer;
 }
-.chronicle-house-life {
+.universeview-house-life {
 	fill: color-mix(in srgb, var(--house-color) 45%, var(--background-primary));
 }
-.chronicle-house-life.is-open {
+.universeview-house-life.is-open {
 	fill-opacity: 0.6;
 }
-.chronicle-house-person.is-head .chronicle-house-life {
+.universeview-house-person.is-head .universeview-house-life {
 	fill: var(--house-color);
 	stroke: #d4a017;
 	stroke-width: 1.5;
 }
-.chronicle-house-person:hover .chronicle-house-life {
+.universeview-house-person:hover .universeview-house-life {
 	fill: var(--interactive-accent);
 }
-.chronicle-house-person-name {
+.universeview-house-person-name {
 	font-size: 11px;
 	fill: var(--text-normal);
 }
-.chronicle-house-person.is-head .chronicle-house-person-name {
+.universeview-house-person.is-head .universeview-house-person-name {
 	font-weight: 700;
 }
-.chronicle-house-succession {
+.universeview-house-succession {
 	fill: none;
 	stroke: #d4a017;
 	stroke-width: 1.5;
 	stroke-dasharray: 2 3;
 	pointer-events: none;
 }
-.chronicle-house-branch {
+.universeview-house-branch {
 	stroke: var(--text-faint);
 	stroke-width: 2;
 	stroke-dasharray: 5 4;
 }
-.chronicle-house-marriage-line {
+.universeview-house-marriage-line {
 	stroke: #d2649a;
 	stroke-width: 1.5;
 }
-.chronicle-house-marriage.is-within .chronicle-house-marriage-line {
+.universeview-house-marriage.is-within .universeview-house-marriage-line {
 	stroke-dasharray: 2 2;
 	opacity: 0.6;
 }
-.chronicle-house-heart {
+.universeview-house-heart {
 	fill: #d2649a;
 	font-size: 12px;
 	stroke: var(--background-primary);
@@ -1241,101 +1241,101 @@ button.chronicle-dash-tool:hover {
 	paint-order: stroke;
 }
 /* ==== Culture lineage (restyled) ================================================================= */
-.chronicle-lineage-bar {
+.universeview-lineage-bar {
 	fill: color-mix(in srgb, var(--item-color) 30%, var(--background-primary));
 	stroke: color-mix(in srgb, var(--item-color) 70%, transparent);
 	stroke-width: 1.25;
-	transition: fill var(--chronicle-fast) var(--chronicle-ease), opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: fill var(--universeview-fast) var(--universeview-ease), opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-lineage-bar.is-ongoing {
+.universeview-lineage-bar.is-ongoing {
 	stroke-dasharray: 0;
 	stroke: none;
 }
-.chronicle-lineage-item {
+.universeview-lineage-item {
 	cursor: pointer;
-	animation: chronicle-svg-in var(--chronicle-med) var(--chronicle-ease) backwards;
+	animation: universeview-svg-in var(--universeview-med) var(--universeview-ease) backwards;
 }
-.chronicle-lineage-item:hover .chronicle-lineage-bar:not(.is-ongoing) {
+.universeview-lineage-item:hover .universeview-lineage-bar:not(.is-ongoing) {
 	fill: color-mix(in srgb, var(--item-color) 45%, var(--background-primary));
 }
-.chronicle-lineage-item.is-focus .chronicle-lineage-bar {
+.universeview-lineage-item.is-focus .universeview-lineage-bar {
 	stroke: var(--interactive-accent);
 	stroke-width: 2.5;
 }
-.chronicle-lineage-badge-bg {
+.universeview-lineage-badge-bg {
 	fill: var(--background-primary);
 	stroke: var(--item-color);
 	stroke-width: 1.5;
 }
-.chronicle-lineage-badge-text {
-	font-family: var(--chronicle-font-display);
+.universeview-lineage-badge-text {
+	font-family: var(--universeview-font-display);
 	font-weight: 700;
 	font-size: 11px;
 	fill: color-mix(in srgb, var(--item-color) 80%, var(--text-normal));
 }
-.chronicle-lineage-label {
+.universeview-lineage-label {
 	font-size: 12.5px;
 	fill: var(--text-normal);
 	pointer-events: none;
 }
-.chronicle-lineage-name {
+.universeview-lineage-name {
 	font-weight: 700;
-	font-family: var(--chronicle-font-display);
+	font-family: var(--universeview-font-display);
 }
-.chronicle-lineage-meta {
+.universeview-lineage-meta {
 	font-size: 10.5px;
 	fill: var(--text-muted);
 }
-.chronicle-lineage-link {
+.universeview-lineage-link {
 	fill: none;
 	stroke: color-mix(in srgb, var(--item-color) 60%, var(--text-faint));
 	stroke-width: 1.75;
-	transition: opacity var(--chronicle-fast) var(--chronicle-ease);
+	transition: opacity var(--universeview-fast) var(--universeview-ease);
 }
-.chronicle-lineage-fork {
+.universeview-lineage-fork {
 	fill: var(--background-primary);
 	stroke: var(--item-color);
 	stroke-width: 1.5;
 }
-.chronicle-lineage-today {
+.universeview-lineage-today {
 	stroke: var(--interactive-accent);
 	stroke-width: 1.5;
 	stroke-dasharray: 4 4;
 }
-.chronicle-lineage-today-label {
+.universeview-lineage-today-label {
 	font-size: 10.5px;
 	font-weight: 700;
 	fill: var(--text-accent);
 }
-.chronicle-lineage.is-focusing .chronicle-lineage-item:not(.is-lit),
-.chronicle-lineage.is-focusing .chronicle-lineage-link:not(.is-lit) {
+.universeview-lineage.is-focusing .universeview-lineage-item:not(.is-lit),
+.universeview-lineage.is-focusing .universeview-lineage-link:not(.is-lit) {
 	opacity: 0.18;
 }
-.chronicle-lineage.is-focusing .chronicle-lineage-link.is-lit {
+.universeview-lineage.is-focusing .universeview-lineage-link.is-lit {
 	stroke-width: 2.5;
 }
 
 /* Spans with no end yet: up to the current date, fading out with a dashed edge. */
-.chronicle-tl-item.is-open-ended .chronicle-tl-bar {
+.universeview-tl-item.is-open-ended .universeview-tl-bar {
 	-webkit-mask-image: linear-gradient(to right, #000 calc(100% - 70px), transparent);
 	mask-image: linear-gradient(to right, #000 calc(100% - 70px), transparent);
 	border-right: 2px dashed var(--item-color);
 }
-.chronicle-org-bar.is-ongoing,
-.chronicle-house-life.is-open {
+.universeview-org-bar.is-ongoing,
+.universeview-house-life.is-open {
 	fill-opacity: 0.45;
 	stroke: var(--item-color, var(--house-color));
 	stroke-width: 1.25;
 	stroke-dasharray: 4 3;
 }
 /* A place drawn as an area: its icon sits in the area's name, fading with it. */
-.chronicle-territory-label {
+.universeview-territory-label {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.3em;
-	transition: opacity var(--chronicle-med, 300ms) var(--chronicle-ease, ease);
+	transition: opacity var(--universeview-med, 300ms) var(--universeview-ease, ease);
 }
-.chronicle-territory-icon {
+.universeview-territory-icon {
 	display: inline-flex;
 	width: 1.15em;
 	height: 1.15em;
@@ -1343,15 +1343,15 @@ button.chronicle-dash-tool:hover {
 	color: var(--terr-color);
 	filter: drop-shadow(0 0 2px var(--background-primary));
 }
-img.chronicle-territory-icon {
+img.universeview-territory-icon {
 	border-radius: 50%;
 	object-fit: cover;
 }
-.chronicle-territory-icon svg {
+.universeview-territory-icon svg {
 	width: 100%;
 	height: 100%;
 }
-.chronicle-territory-count {
+.universeview-territory-count {
 	font-size: 0.6em;
 	font-weight: 700;
 	padding: 0 0.45em;
@@ -1361,11 +1361,11 @@ img.chronicle-territory-icon {
 	letter-spacing: 0;
 }
 /* Quick edit: plain sections, the finer settings folded away. */
-.chronicle-quickedit .modal-content {
+.universeview-quickedit .modal-content {
 	max-height: 70vh;
 	overflow-y: auto;
 }
-.chronicle-qe-section {
+.universeview-qe-section {
 	margin: 14px 0 2px;
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
@@ -1373,27 +1373,27 @@ img.chronicle-territory-icon {
 	border-bottom: 1px solid var(--background-modifier-border);
 	padding-bottom: 4px;
 }
-.chronicle-qe-more {
+.universeview-qe-more {
 	margin-top: 12px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m, 8px);
 	padding: 2px 12px;
 }
-.chronicle-qe-more > summary {
+.universeview-qe-more > summary {
 	cursor: pointer;
 	padding: 8px 0;
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
 /* ==== Inspector ================================================================================== */
-.chronicle-inspector {
+.universeview-inspector {
 	display: flex;
 	flex-direction: column;
 }
-.chronicle-inspector:not(#uv-strong) {
+.universeview-inspector:not(#uv-strong) {
 	padding: 0;
 }
-.chronicle-insp-head {
+.universeview-insp-head {
 	position: sticky;
 	top: 0;
 	z-index: 2;
@@ -1401,34 +1401,34 @@ img.chronicle-territory-icon {
 	padding: 10px 12px 0;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
-.chronicle-insp-find {
+.universeview-insp-find {
 	display: flex;
 	gap: 4px;
 	align-items: center;
 }
-.chronicle-insp-find input {
+.universeview-insp-find input {
 	flex: 1 1 auto;
 	min-width: 0;
 }
-.chronicle-insp-lock.is-active {
+.universeview-insp-lock.is-active {
 	color: var(--text-accent);
 }
-.chronicle-insp-pending {
+.universeview-insp-pending {
 	margin-top: 8px;
 	padding: 6px 8px;
 	border-radius: var(--uv-r-md);
 	font-size: var(--font-ui-smaller);
 	background: color-mix(in srgb, var(--color-yellow, #d9a33a) 18%, transparent);
 }
-.chronicle-insp-pending.is-hidden {
+.universeview-insp-pending.is-hidden {
 	display: none;
 }
-.chronicle-insp-tabs {
+.universeview-insp-tabs {
 	display: flex;
 	gap: 2px;
 	margin-top: 10px;
 }
-.chronicle-insp-tab {
+.universeview-insp-tab {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -1441,33 +1441,33 @@ img.chronicle-territory-icon {
 	color: var(--text-muted);
 	cursor: pointer;
 }
-.chronicle-insp-tab svg {
+.universeview-insp-tab svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-insp-tab.is-active {
+.universeview-insp-tab.is-active {
 	color: var(--text-normal);
 	border-bottom-color: var(--interactive-accent);
 	font-weight: 600;
 }
 /* In a narrow sidebar every tab still shows: the others drop to their icons, the open one keeps its name. */
-.chronicle-inspector {
+.universeview-inspector {
 	container-type: inline-size;
 }
 /* The word is enough, and every tab keeps it: when they don't fit on one row they wrap to the next. */
-.chronicle-insp-tab > span:first-child:not(:last-child) {
+.universeview-insp-tab > span:first-child:not(:last-child) {
 	display: none;
 }
-.chronicle-insp-tab {
+.universeview-insp-tab {
 	white-space: nowrap;
 }
-.chronicle-insp-body {
+.universeview-insp-body {
 	flex: 1 1 auto;
 	overflow-y: auto;
 	padding: 12px;
 }
 /* The hover card, laid flat in the panel. */
-.chronicle-hovercard.chronicle-insp-card {
+.universeview-hovercard.universeview-insp-card {
 	position: static;
 	width: auto;
 	max-width: none;
@@ -1480,18 +1480,18 @@ img.chronicle-territory-icon {
 	border: none;
 	padding: 0;
 }
-.chronicle-insp-card .chronicle-hc-tools {
+.universeview-insp-card .universeview-hc-tools {
 	display: none;
 }
-.chronicle-insp-form .setting-item {
+.universeview-insp-form .setting-item {
 	flex-wrap: wrap;
 	gap: 6px;
 }
-.chronicle-insp-form .setting-item-control {
+.universeview-insp-form .setting-item-control {
 	flex: 1 1 180px;
 	justify-content: flex-start;
 }
-.chronicle-insp-savebar {
+.universeview-insp-savebar {
 	position: sticky;
 	bottom: -12px;
 	margin: 12px -12px -12px;
@@ -1502,82 +1502,82 @@ img.chronicle-territory-icon {
 	background: var(--background-secondary);
 	border-top: 1px solid var(--background-modifier-border);
 }
-.chronicle-insp-status {
+.universeview-insp-status {
 	margin-right: auto;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
-.chronicle-insp-savebar.is-dirty .chronicle-insp-status {
+.universeview-insp-savebar.is-dirty .universeview-insp-status {
 	color: var(--text-accent);
 	font-weight: 600;
 }
-.chronicle-insp-empty {
+.universeview-insp-empty {
 	text-align: center;
 	color: var(--text-muted);
 	padding: 40px 16px;
 	font-size: var(--font-ui-small);
 }
-.chronicle-insp-empty-icon svg {
+.universeview-insp-empty-icon svg {
 	width: 36px;
 	height: 36px;
 	opacity: 0.4;
 	margin-bottom: 8px;
 }
 /* ==== Row editors (settings in place of text blocks) ============================================= */
-.chronicle-rows {
+.universeview-rows {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin: 4px 0 10px;
 }
-.chronicle-rows-head,
-.chronicle-rows-row {
+.universeview-rows-head,
+.universeview-rows-row {
 	display: grid;
 	gap: 6px;
 	align-items: center;
 }
-.chronicle-rows-head {
+.universeview-rows-head {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	font-weight: 600;
 	padding: 0 2px;
 }
-.chronicle-rows-row {
+.universeview-rows-row {
 	padding: 3px;
 	border-radius: var(--uv-r-md);
 }
-.chronicle-rows-row:hover {
+.universeview-rows-row:hover {
 	background: var(--background-modifier-hover);
 }
-.chronicle-rows-cell {
+.universeview-rows-cell {
 	display: flex;
 	align-items: center;
 	gap: 4px;
 	min-width: 0;
 }
-.chronicle-rows-cell input[type="text"],
-.chronicle-rows-cell input[type="number"],
-.chronicle-rows-cell select {
+.universeview-rows-cell input[type="text"],
+.universeview-rows-cell input[type="number"],
+.universeview-rows-cell select {
 	width: 100%;
 	min-width: 0;
 }
-.chronicle-rows-cell.kind-toggle {
+.universeview-rows-cell.kind-toggle {
 	justify-content: center;
 }
-.chronicle-rows-cell.kind-color input[type="color"] {
+.universeview-rows-cell.kind-color input[type="color"] {
 	width: 34px;
 	height: 26px;
 	padding: 0;
 	border: none;
 	background: none;
 }
-.chronicle-rows-cell.kind-color.is-unset input[type="color"] {
+.universeview-rows-cell.kind-color.is-unset input[type="color"] {
 	opacity: 0.3;
 }
-.chronicle-rows-cell.kind-color .clickable-icon {
+.universeview-rows-cell.kind-color .clickable-icon {
 	padding: 2px;
 }
-.chronicle-rows-icon {
+.universeview-rows-icon {
 	display: inline-flex;
 	width: 18px;
 	height: 18px;
@@ -1585,21 +1585,21 @@ img.chronicle-territory-icon {
 	align-items: center;
 	justify-content: center;
 }
-.chronicle-rows-icon svg {
+.universeview-rows-icon svg {
 	width: 16px;
 	height: 16px;
 }
-.chronicle-rows-tools {
+.universeview-rows-tools {
 	display: flex;
 	gap: 0;
 }
-.chronicle-rows-tools .clickable-icon {
+.universeview-rows-tools .clickable-icon {
 	padding: 3px;
 }
-.chronicle-rows-tools .clickable-icon:disabled {
+.universeview-rows-tools .clickable-icon:disabled {
 	opacity: 0.25;
 }
-.chronicle-rows-add {
+.universeview-rows-add {
 	align-self: flex-start;
 	display: inline-flex;
 	align-items: center;
@@ -1607,70 +1607,70 @@ img.chronicle-territory-icon {
 	margin-top: 2px;
 	font-size: var(--font-ui-small);
 }
-.chronicle-rows-add svg {
+.universeview-rows-add svg {
 	width: 14px;
 	height: 14px;
 }
-.chronicle-rows-empty {
+.universeview-rows-empty {
 	font-size: var(--font-ui-small);
 	color: var(--text-faint);
 	font-style: italic;
 	padding: 2px;
 }
-.chronicle-settings-rows {
+.universeview-settings-rows {
 	border-top: 1px solid var(--background-modifier-border);
 	padding-top: 2px;
 }
-.chronicle-settings-rows-head {
+.universeview-settings-rows-head {
 	padding-bottom: 4px;
 }
-.chronicle-settings-rows-head:not(#uv-strong) {
+.universeview-settings-rows-head:not(#uv-strong) {
 	border-top: none;
 }
 
 /* ==== Calendar editor window ===================================================================== */
-.chronicle-calendar-editor {
+.universeview-calendar-editor {
 	width: min(780px, 94vw);
 }
-.chronicle-calendar-editor .modal-content {
+.universeview-calendar-editor .modal-content {
 	max-height: 76vh;
 	overflow-y: auto;
 }
-.chronicle-cal-ed-section {
+.universeview-cal-ed-section {
 	margin-top: 18px;
 }
-.chronicle-cal-ed-section h3 {
+.universeview-cal-ed-section h3 {
 	margin: 0 0 2px;
 	font-size: 1.05em;
 }
-.chronicle-cal-ed-preview {
+.universeview-cal-ed-preview {
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--uv-r-lg);
 	padding: 10px 12px;
 }
-.chronicle-cal-ed-preview-head {
+.universeview-cal-ed-preview-head {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	margin-bottom: 6px;
 }
-.chronicle-cal-ed-preview-sum {
+.universeview-cal-ed-preview-sum {
 	margin-left: auto;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 }
-.chronicle-cal-ed-grid {
+.universeview-cal-ed-grid {
 	display: grid;
 	gap: 2px;
 }
-.chronicle-cal-ed-wd {
+.universeview-cal-ed-wd {
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
 	color: var(--text-muted);
 	text-align: center;
 }
-.chronicle-cal-ed-day {
+.universeview-cal-ed-day {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1680,37 +1680,37 @@ img.chronicle-territory-icon {
 	border-radius: var(--uv-r-sm);
 	background: var(--background-primary);
 }
-.chronicle-cal-ed-day.is-festival {
+.universeview-cal-ed-day.is-festival {
 	background: color-mix(in srgb, #d9a33a 18%, var(--background-primary));
 }
-.chronicle-cal-ed-day.is-holiday {
+.universeview-cal-ed-day.is-holiday {
 	box-shadow: inset 0 -2px 0 #d9a33a;
 	font-weight: 700;
 }
-.chronicle-cal-ed-day.is-season {
+.universeview-cal-ed-day.is-season {
 	box-shadow: inset 2px 0 0 var(--interactive-accent);
 }
 /* World settings window */
-.chronicle-world-speeds {
+.universeview-world-speeds {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
 	gap: 8px;
 	margin: 6px 0 12px;
 }
-.chronicle-world-speed {
+.universeview-world-speed {
 	display: flex;
 	flex-direction: column;
 	gap: 3px;
 	font-size: var(--font-ui-small);
 	color: var(--text-muted);
 }
-.chronicle-world-kinds {
+.universeview-world-kinds {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 	gap: 4px 12px;
 	margin-bottom: 10px;
 }
-.chronicle-world-kind {
+.universeview-world-kind {
 	display: flex;
 	align-items: center;
 	gap: 6px;

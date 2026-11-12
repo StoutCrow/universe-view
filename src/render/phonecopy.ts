@@ -1,5 +1,5 @@
 import { TFile, normalizePath } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Pyramid } from "./bigimage";
 
 /**
@@ -28,7 +28,7 @@ export function phoneCopyPath(imagePath: string): string {
 }
 
 /** The phone copy, when there is one. */
-export function phoneCopy(plugin: ChroniclePlugin, imagePath: string): TFile | undefined {
+export function phoneCopy(plugin: UniverseViewPlugin, imagePath: string): TFile | undefined {
 	const f = plugin.app.vault.getAbstractFileByPath(phoneCopyPath(imagePath));
 	return f instanceof TFile ? f : undefined;
 }
@@ -37,7 +37,7 @@ export function phoneCopy(plugin: ChroniclePlugin, imagePath: string): TFile | u
  * A phone copy found by the picture's name alone: for a device the original never reached (too big
  * for the sync plan, say), where the link to it can't be followed to a path.
  */
-export function phoneCopyByName(plugin: ChroniclePlugin, link: string): TFile | undefined {
+export function phoneCopyByName(plugin: UniverseViewPlugin, link: string): TFile | undefined {
 	const name = link.replace(/^!?\[\[|\]\]$/g, "").split("|")[0].split("/").pop()?.replace(/\.[^.]+$/, "").trim();
 	if (!name) return undefined;
 	const dir = plugin.app.vault.getAbstractFileByPath(FOLDER);
@@ -51,7 +51,7 @@ const making = new Set<string>();
  * Saves (or refreshes) a picture's phone copy from the downscaled copies the computer already made
  * to show it. Does nothing when the copy is newer than the picture.
  */
-export async function savePhoneCopy(plugin: ChroniclePlugin, imagePath: string, pyramid: Pyramid): Promise<void> {
+export async function savePhoneCopy(plugin: UniverseViewPlugin, imagePath: string, pyramid: Pyramid): Promise<void> {
 	const { vault } = plugin.app;
 	const image = vault.getAbstractFileByPath(imagePath);
 	if (!(image instanceof TFile) || making.has(imagePath)) return;

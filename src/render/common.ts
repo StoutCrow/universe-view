@@ -1,9 +1,9 @@
 import { Keymap, Menu, MenuItem, Notice, TFile, WorkspaceLeaf, setIcon } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { kindLabel } from "../index/reader";
 
-export const HOVER_SOURCE = "chronicle";
+export const HOVER_SOURCE = "universeview";
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /**
@@ -132,7 +132,7 @@ export const TYPE_LABELS: Record<EntityType, string> = {
 
 /** Default color per type: a CSS variable Style Settings can override. */
 export function typeColorVar(type: EntityType): string {
-	return `var(--chronicle-${type}-color)`;
+	return `var(--universeview-${type}-color)`;
 }
 
 const PALETTE = ["--color-blue", "--color-purple", "--color-green", "--color-orange", "--color-pink", "--color-cyan", "--color-yellow", "--color-red"];
@@ -144,12 +144,12 @@ export function hashColor(key: string): string {
 }
 
 /** A culture's own color, falling back to a stable palette color. */
-export function cultureColor(plugin: ChroniclePlugin, key: string): string {
+export function cultureColor(plugin: UniverseViewPlugin, key: string): string {
 	return plugin.index.get(key)?.color ?? hashColor(key);
 }
 
 /** Color for an entity: explicit color → first culture's color → type color. */
-export function entityColor(plugin: ChroniclePlugin, e: Entity): string {
+export function entityColor(plugin: UniverseViewPlugin, e: Entity): string {
 	if (e.color) return e.color;
 	if (e.type === "culture") return hashColor(e.key);
 	const c = e.cultures[0];
@@ -168,7 +168,7 @@ export function setHelpDelay(ms: number) {
  * help that's always in the way. Paragraphs are split by blank lines; `backticks` show as code.
  */
 export function helpTip(parent: HTMLElement, text: string, delay?: number): HTMLElement {
-	const q = el("span", { cls: "chronicle-help", text: "?", attr: { tabindex: "0", role: "button" } }, parent);
+	const q = el("span", { cls: "universeview-help", text: "?", attr: { tabindex: "0", role: "button" } }, parent);
 	// Kept on the mark too, for where the mark itself can't go (a settings section's heading).
 	q.dataset.help = text;
 	let pop: HTMLElement | undefined;
@@ -177,7 +177,7 @@ export function helpTip(parent: HTMLElement, text: string, delay?: number): HTML
 		window.clearTimeout(timer);
 		timer = window.setTimeout(() => {
 			pop?.remove();
-			const box = el("div", { cls: "chronicle-help-pop chronicle-scope" }, document.body);
+			const box = el("div", { cls: "universeview-help-pop universeview-scope" }, document.body);
 			pop = box;
 			for (const para of text.split(/\n\s*\n/)) {
 				const p = el("p", {}, box);
@@ -214,12 +214,12 @@ export function helpTip(parent: HTMLElement, text: string, delay?: number): HTML
  * Who a title answers to and who holds it, as linked lines: "Under California › United States" and
  * "Held by James II · House Whitmore". Nothing for notes that aren't titles. Returns whether it added any.
  */
-export function ownershipLines(plugin: ChroniclePlugin, parent: HTMLElement, key: string, at?: number, cls = "chronicle-owner"): boolean {
+export function ownershipLines(plugin: UniverseViewPlugin, parent: HTMLElement, key: string, at?: number, cls = "universeview-owner"): boolean {
 	const tree = plugin.realms(at);
 	const node = tree.nodes.get(key);
 	if (!node) return false;
 	const link = (into: HTMLElement, r: { key: string; name: string; resolved?: boolean }) => {
-		const a = el("a", { cls: "chronicle-owner-link" + (r.resolved === false ? " is-unresolved" : ""), text: r.name }, into);
+		const a = el("a", { cls: "universeview-owner-link" + (r.resolved === false ? " is-unresolved" : ""), text: r.name }, into);
 		if (r.resolved === false) return;
 		bindHover(plugin, a, r.key, into);
 		a.addEventListener("click", (evt) => openEntity(plugin, r.key, evt));
@@ -229,21 +229,21 @@ export function ownershipLines(plugin: ChroniclePlugin, parent: HTMLElement, key
 	for (let k = node.under, i = 0; k && i < 20; k = tree.nodes.get(k)?.under, i++) above.push(k);
 	if (above.length) {
 		const row = el("div", { cls }, parent);
-		el("span", { cls: "chronicle-owner-key", text: "Under " }, row);
+		el("span", { cls: "universeview-owner-key", text: "Under " }, row);
 		above.forEach((k, i) => {
-			if (i) el("span", { cls: "chronicle-owner-sep", text: " › " }, row);
+			if (i) el("span", { cls: "universeview-owner-sep", text: " › " }, row);
 			link(row, { key: k, name: plugin.index.get(k)?.name ?? k });
 		});
 		added = true;
 	}
 	if (node.holder || node.house) {
 		const row = el("div", { cls }, parent);
-		el("span", { cls: "chronicle-owner-key", text: "Held by " }, row);
+		el("span", { cls: "universeview-owner-key", text: "Held by " }, row);
 		if (node.holder) link(row, node.holder);
-		if (node.holder && node.house) el("span", { cls: "chronicle-owner-sep", text: " · " }, row);
+		if (node.holder && node.house) el("span", { cls: "universeview-owner-sep", text: " · " }, row);
 		if (node.house) link(row, node.house);
 		if (node.ruler && node.ruler.key !== node.holder?.key) {
-			el("span", { cls: "chronicle-owner-sep", text: " · ruled by " }, row);
+			el("span", { cls: "universeview-owner-sep", text: " · ruled by " }, row);
 			link(row, node.ruler);
 		}
 		added = true;
@@ -251,7 +251,7 @@ export function ownershipLines(plugin: ChroniclePlugin, parent: HTMLElement, key
 	return added;
 }
 
-export function openEntity(plugin: ChroniclePlugin, key: string, evt?: MouseEvent | KeyboardEvent) {
+export function openEntity(plugin: UniverseViewPlugin, key: string, evt?: MouseEvent | KeyboardEvent) {
 	const file = plugin.app.vault.getAbstractFileByPath(key);
 	if (!(file instanceof TFile)) return;
 	const { workspace } = plugin.app;
@@ -289,7 +289,7 @@ export function clickOrDouble(target: Element, single: (evt: MouseEvent) => void
  * Obsidian's Page Preview (and Hover Editor, if installed) instead.
  */
 /** `key` may be a function, for targets whose note changes (a map area shown as its realm when zoomed out). */
-export function bindHover(plugin: ChroniclePlugin, target: Element, key: string | (() => string), hoverParent: { hoverPopover: unknown } | HTMLElement) {
+export function bindHover(plugin: UniverseViewPlugin, target: Element, key: string | (() => string), hoverParent: { hoverPopover: unknown } | HTMLElement) {
 	plugin.hoverCards?.attach(target, key);
 	target.addEventListener("mouseover", (evt) => {
 		plugin.app.workspace.trigger("hover-link", {
@@ -341,7 +341,7 @@ export function tuckDescriptions(root: HTMLElement, max = 64) {
 }
 
 /** Copies a link to a note, written the way Obsidian writes one (short when the name is unique, with the folder when not). */
-export function copyLink(plugin: ChroniclePlugin, key: string) {
+export function copyLink(plugin: UniverseViewPlugin, key: string) {
 	const file = plugin.app.vault.getAbstractFileByPath(key);
 	if (!(file instanceof TFile)) return;
 	const link = plugin.app.fileManager.generateMarkdownLink(file, "");
@@ -392,7 +392,7 @@ type Shortcut = [title: string, icon: string, run: () => void];
  * ("Show in"), and the questions it can answer ("Find out"). Every menu that offers them uses this, so the words
  * and icons are the same everywhere.
  */
-export function entityShortcuts(plugin: ChroniclePlugin, e: Entity): { views: Shortcut[]; asks: Shortcut[] } {
+export function entityShortcuts(plugin: UniverseViewPlugin, e: Entity): { views: Shortcut[]; asks: Shortcut[] } {
 	const key = e.key;
 	const views: Shortcut[] = [];
 	if (e.start || e.end || e.type === "person" || e.type === "culture") views.push(["Timeline", "calendar-range", () => void plugin.openTimeline({ focus: key })]);
@@ -410,7 +410,7 @@ export function entityShortcuts(plugin: ChroniclePlugin, e: Entity): { views: Sh
 }
 
 /** The two submenus of {@link entityShortcuts}, added to a menu. */
-export function addShortcutMenus(menu: Menu, plugin: ChroniclePlugin, e: Entity, section?: string) {
+export function addShortcutMenus(menu: Menu, plugin: UniverseViewPlugin, e: Entity, section?: string) {
 	const { views, asks } = entityShortcuts(plugin, e);
 	if (views.length) addSubmenu(menu, "Show in", "eye", (m) => views.forEach(([t, ic, run]) => m.addItem((i) => i.setTitle(t).setIcon(ic).onClick(run))), "Show in", section);
 	if (asks.length) addSubmenu(menu, "Find out", "telescope", (m) => asks.forEach(([t, ic, run]) => m.addItem((i) => i.setTitle(t).setIcon(ic).onClick(run))), "Find out", section);
@@ -421,7 +421,7 @@ export function addShortcutMenus(menu: Menu, plugin: ChroniclePlugin, e: Entity,
  * to open it (Inspect, Open note, Open beside); what this view does with it; two submenus, Show in (the other views)
  * and Find out (questions it answers); this view's tools; and, set apart at the bottom, anything that removes.
  */
-export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseEvent, opts: EntityMenuOptions = {}) {
+export function showEntityMenu(plugin: UniverseViewPlugin, key: string, evt: MouseEvent, opts: EntityMenuOptions = {}) {
 	const e = plugin.index.get(key);
 	const menu = new Menu();
 	if (e) {
@@ -462,7 +462,7 @@ export function showEntityMenu(plugin: ChroniclePlugin, key: string, evt: MouseE
 	menu.showAtMouseEvent(evt);
 }
 export function iconButton(parent: HTMLElement, iconName: string, label: string, onClick: (evt: MouseEvent) => void, cls = ""): HTMLElement {
-	const b = el("div", { cls: `clickable-icon chronicle-icon-btn ${cls}`.trim(), title: label }, parent);
+	const b = el("div", { cls: `clickable-icon universeview-icon-btn ${cls}`.trim(), title: label }, parent);
 	b.setAttribute("aria-label", label);
 	icon(b, iconName);
 	b.addEventListener("click", (evt) => {
@@ -473,7 +473,7 @@ export function iconButton(parent: HTMLElement, iconName: string, label: string,
 }
 
 export function dropdown(parent: HTMLElement, options: [string, string][], value: string, onChange: (v: string) => void, label?: string): HTMLSelectElement {
-	const s = el("select", { cls: "dropdown chronicle-select" }, parent);
+	const s = el("select", { cls: "dropdown universeview-select" }, parent);
 	if (label) s.setAttribute("aria-label", label);
 	for (const [v, text] of options) {
 		const o = el("option", { text }, s);
@@ -491,12 +491,12 @@ export function setPressed(b: HTMLElement, on: boolean) {
 }
 
 export function toggleChip(parent: HTMLElement, label: string, iconName: string, value: boolean, onChange: (v: boolean) => void): HTMLElement {
-	const chip = el("button", { cls: "chronicle-chip is-toggle", title: label }, parent);
-	const ic = el("span", { cls: "chronicle-chip-icon" }, chip);
+	const chip = el("button", { cls: "universeview-chip is-toggle", title: label }, parent);
+	const ic = el("span", { cls: "universeview-chip-icon" }, chip);
 	icon(ic, iconName);
 	el("span", { text: label }, chip);
 	// A check mark that slides in when the chip is on.
-	const check = el("span", { cls: "chronicle-chip-check" }, chip);
+	const check = el("span", { cls: "universeview-chip-check" }, chip);
 	icon(check, "check");
 	const sync = (v: boolean) => {
 		setPressed(chip, v);
@@ -518,11 +518,11 @@ export function cssNumber(elm: Element, name: string, fallback: number): number 
 }
 
 export function emptyState(parent: HTMLElement, iconName: string, title: string, body: string, action?: { label: string; onClick: () => void }) {
-	const box = el("div", { cls: "chronicle-empty" }, parent);
-	const ic = el("div", { cls: "chronicle-empty-icon" }, box);
+	const box = el("div", { cls: "universeview-empty" }, parent);
+	const ic = el("div", { cls: "universeview-empty-icon" }, box);
 	icon(ic, iconName);
-	el("div", { cls: "chronicle-empty-title", text: title }, box);
-	el("div", { cls: "chronicle-empty-body", text: body }, box);
+	el("div", { cls: "universeview-empty-title", text: title }, box);
+	el("div", { cls: "universeview-empty-body", text: body }, box);
 	if (action) {
 		const b = el("button", { cls: "mod-cta", text: action.label }, box);
 		b.addEventListener("click", action.onClick);
@@ -530,7 +530,7 @@ export function emptyState(parent: HTMLElement, iconName: string, title: string,
 	return box;
 }
 
-export function resourceUrl(plugin: ChroniclePlugin, pathOrUrl: string | undefined): string | undefined {
+export function resourceUrl(plugin: UniverseViewPlugin, pathOrUrl: string | undefined): string | undefined {
 	if (!pathOrUrl) return undefined;
 	if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
 	const f = plugin.app.vault.getAbstractFileByPath(pathOrUrl);

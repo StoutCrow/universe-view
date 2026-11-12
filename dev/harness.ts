@@ -9,7 +9,7 @@ import { viewToSvg } from "../src/ui/export";
  */
 import YAML from "yaml";
 import { Events, TFile, TFolder, WorkspaceLeaf, setIcon } from "obsidian";
-import ChroniclePlugin from "../src/main";
+import UniverseViewPlugin from "../src/main";
 import { validate } from "../src/index/validate";
 import * as trace from "../src/render/trace";
 import * as relations from "../src/ui/relations";
@@ -195,16 +195,16 @@ workspace.onLayoutReady = (cb: () => void) => cb();
 workspace.getActiveFile = () => workspace._active ?? null;
 workspace.requestSaveLayout = () => {};
 
-const plugin = new ChroniclePlugin(app, { id: "UniverseView", version: "dev" });
-(window as any).chronicle = plugin;
+const plugin = new UniverseViewPlugin(app, { id: "UniverseView", version: "dev" });
+(window as any).universeview = plugin;
 (window as any).tagPlan = () => tagFixes(plugin.index.all().map((e: any) => ({ path: e.key, type: e.type, tags: e.tags, facts: tagFacts(plugin, e) })), plugin.settings.typeStyle === "tag" ? plugin.settings.typeTags : {});
 (window as any).TidyModal = TidyModal;
 (window as any).tidyPlan = tidyPlan;
-(window as any).chronicleTrace = trace;
-(window as any).chronicleRelations = relations;
-(window as any).chronicleWebsite = website;
+(window as any).universeViewTrace = trace;
+(window as any).universeViewRelations = relations;
+(window as any).universeViewWebsite = website;
 (window as any).app = app;
-(window as any).chronicleExport = { viewToSvg };
+(window as any).universeViewExport = { viewToSvg };
 
 // ---- Shell ----------------------------------------------------------------------------------------
 
@@ -233,7 +233,7 @@ function showEmbeds(notePath: string) {
 	main.empty();
 	const page = main.createDiv("markdown-preview-view");
 	const text = contents.get(notePath) ?? "";
-	const blocks = [...text.matchAll(/```(chronicle-[a-z]+)\n([\s\S]*?)```/g)];
+	const blocks = [...text.matchAll(/```(universeview-[a-z]+)\n([\s\S]*?)```/g)];
 	page.createEl("h1", { text: notePath.split("/").pop()!.replace(/\.md$/, "") });
 	for (const [, name, source] of blocks) {
 		page.createEl("h4", { text: name, cls: "embed-label" });

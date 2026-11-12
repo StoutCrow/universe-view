@@ -1,5 +1,5 @@
 import { Menu, Notice, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, MoonDef } from "../types";
 import { type Calendar, holidaysOn, moonPhase, phaseName, seasonOf } from "../dates/calendars";
 import { formatDay, formatSpan } from "../dates/parser";
@@ -46,8 +46,8 @@ interface DayItem {
 /** A moon drawn at its phase: the lit part is a limb arc plus the terminator, an ellipse. */
 export function moonIcon(p: number, size: number, color = "#e9e3c9"): SVGSVGElement {
 	const r = size / 2;
-	const s = svg("svg", { width: size, height: size, viewBox: `${-r} ${-r} ${size} ${size}`, class: "chronicle-moon" });
-	svg("circle", { r: r - 0.5, class: "chronicle-moon-dark" }, s);
+	const s = svg("svg", { width: size, height: size, viewBox: `${-r} ${-r} ${size} ${size}`, class: "universeview-moon" });
+	svg("circle", { r: r - 0.5, class: "universeview-moon-dark" }, s);
 	const k = Math.cos(2 * Math.PI * p);
 	const rx = Math.abs(k) * (r - 0.5);
 	const R = r - 0.5;
@@ -57,7 +57,7 @@ export function moonIcon(p: number, size: number, color = "#e9e3c9"): SVGSVGElem
 	else if (p < 0.02 || p > 0.98) d = "";
 	else if (waxing) d = `M0,${-R} A${R},${R} 0 0 1 0,${R} A${rx},${R} 0 0 ${k > 0 ? 0 : 1} 0,${-R}`;
 	else d = `M0,${-R} A${R},${R} 0 0 0 0,${R} A${rx},${R} 0 0 ${k > 0 ? 1 : 0} 0,${-R}`;
-	if (d) svg("path", { d, class: "chronicle-moon-lit", style: `fill: ${color}` }, s);
+	if (d) svg("path", { d, class: "universeview-moon-lit", style: `fill: ${color}` }, s);
 	return s;
 }
 
@@ -74,12 +74,12 @@ export class CalendarRenderer {
 	/** Set by the view: the options changed (month turned, day picked). */
 	onOptionsChange?: () => void;
 
-	constructor(private container: HTMLElement, private plugin: ChroniclePlugin, public options: CalendarOptions, private embedded = false, private hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
-		this.root = el("div", { cls: "chronicle-cal" + (embedded ? " is-embedded" : "") }, container);
-		this.head = el("div", { cls: "chronicle-cal-head" }, this.root);
-		const main = el("div", { cls: "chronicle-cal-main" }, this.root);
-		this.body = el("div", { cls: "chronicle-cal-body" }, main);
-		this.side = el("div", { cls: "chronicle-cal-side" }, main);
+	constructor(private container: HTMLElement, private plugin: UniverseViewPlugin, public options: CalendarOptions, private embedded = false, private hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
+		this.root = el("div", { cls: "universeview-cal" + (embedded ? " is-embedded" : "") }, container);
+		this.head = el("div", { cls: "universeview-cal-head" }, this.root);
+		const main = el("div", { cls: "universeview-cal-main" }, this.root);
+		this.body = el("div", { cls: "universeview-cal-body" }, main);
+		this.side = el("div", { cls: "universeview-cal-side" }, main);
 		this.keys();
 		this.refresh();
 	}
@@ -161,29 +161,29 @@ export class CalendarRenderer {
 		this.head.empty();
 		this.body.empty();
 		const { y, m } = this.current();
-		const title = el("div", { cls: "chronicle-cal-title" }, this.head);
-		const prev = el("button", { cls: "chronicle-cal-nav clickable-icon", attr: { "aria-label": this.options.mode === "year" ? "Previous year" : "Previous month" } }, title);
+		const title = el("div", { cls: "universeview-cal-title" }, this.head);
+		const prev = el("button", { cls: "universeview-cal-nav clickable-icon", attr: { "aria-label": this.options.mode === "year" ? "Previous year" : "Previous month" } }, title);
 		icon(prev, "chevron-left");
 		prev.addEventListener("click", () => this.step(-1));
-		const label = el("button", { cls: "chronicle-cal-label", attr: { title: this.options.mode === "month" ? "Show the whole year" : "Show this month" } }, title);
-		if (this.options.mode === "week") el("span", { cls: "chronicle-cal-week-of", text: "Week of" }, label);
-		el("span", { cls: "chronicle-cal-month", text: this.options.mode === "year" ? "" : cal.monthNames[m - 1] ?? `Month ${m}` }, label);
-		el("span", { cls: "chronicle-cal-year", text: cal.formatYear(y) }, label);
+		const label = el("button", { cls: "universeview-cal-label", attr: { title: this.options.mode === "month" ? "Show the whole year" : "Show this month" } }, title);
+		if (this.options.mode === "week") el("span", { cls: "universeview-cal-week-of", text: "Week of" }, label);
+		el("span", { cls: "universeview-cal-month", text: this.options.mode === "year" ? "" : cal.monthNames[m - 1] ?? `Month ${m}` }, label);
+		el("span", { cls: "universeview-cal-year", text: cal.formatYear(y) }, label);
 		label.addEventListener("click", () => {
 			this.options.mode = this.options.mode === "month" ? "year" : "month";
 			this.changed();
 		});
-		const next = el("button", { cls: "chronicle-cal-nav clickable-icon", attr: { "aria-label": this.options.mode === "year" ? "Next year" : "Next month" } }, title);
+		const next = el("button", { cls: "universeview-cal-nav clickable-icon", attr: { "aria-label": this.options.mode === "year" ? "Next year" : "Next month" } }, title);
 		icon(next, "chevron-right");
 		next.addEventListener("click", () => this.step(1));
 		const today = this.today();
 		if (today !== undefined) {
-			const t = el("button", { cls: "chronicle-chip", text: "Today", attr: { title: formatDay(today, cal) } }, this.head);
+			const t = el("button", { cls: "universeview-chip", text: "Today", attr: { title: formatDay(today, cal) } }, this.head);
 			t.addEventListener("click", () => this.goTo(today));
 		}
 		const season = seasonOf(cal, this.options.selected ?? today ?? cal.toDays(y, m, 1));
 		if (season && this.options.mode !== "year") {
-			const s = el("span", { cls: "chronicle-cal-season", text: season.name }, this.head);
+			const s = el("span", { cls: "universeview-cal-season", text: season.name }, this.head);
 			if (season.color) s.style.setProperty("--season", season.color);
 		}
 		this.goToBox();
@@ -299,37 +299,37 @@ export class CalendarRenderer {
 		// Events dated only to this month (no day) sit above the grid.
 		const loose = this.events().filter((e) => e.start!.precision === "month" && cal.fromDays(e.start!.start).y === y && cal.fromDays(e.start!.start).m === m);
 		if (loose.length) {
-			const strip = el("div", { cls: "chronicle-cal-loose" }, this.body);
-			el("span", { cls: "chronicle-cal-loose-label", text: "This month:" }, strip);
+			const strip = el("div", { cls: "universeview-cal-loose" }, this.body);
+			el("span", { cls: "universeview-cal-loose-label", text: "This month:" }, strip);
 			for (const e of loose) this.chip(strip, { kind: "event", label: e.name, key: e.key, color: entityColor(this.plugin, e), sort: 0 }, first);
 		}
 		if (cal.isIntercalary(y, m)) {
 			// Festival days stand outside the weeks: drawn as a row of their own.
-			el("div", { cls: "chronicle-cal-festival-note", text: "Festival days, outside the weeks" }, this.body);
-			const row = el("div", { cls: "chronicle-cal-festival" }, this.body);
+			el("div", { cls: "universeview-cal-festival-note", text: "Festival days, outside the weeks" }, this.body);
+			const row = el("div", { cls: "universeview-cal-festival" }, this.body);
 			for (let d = 1; d <= len; d++) this.dayCell(row, first + d - 1, d, items);
 			return;
 		}
 		const cols = cal.weekdays.length || 7;
-		const grid = el("div", { cls: "chronicle-cal-grid" }, this.body);
+		const grid = el("div", { cls: "universeview-cal-grid" }, this.body);
 		grid.style.setProperty("--cols", String(cols));
-		if (cal.weekdays.length) for (const w of cal.weekdays) el("div", { cls: "chronicle-cal-weekday", text: w.length > 9 ? w.slice(0, 3) : w, attr: { title: w } }, grid);
+		if (cal.weekdays.length) for (const w of cal.weekdays) el("div", { cls: "universeview-cal-weekday", text: w.length > 9 ? w.slice(0, 3) : w, attr: { title: w } }, grid);
 		const lead = Math.max(0, cal.weekdayOf(first));
-		for (let i = 0; i < lead; i++) el("div", { cls: "chronicle-cal-day is-blank" }, grid);
+		for (let i = 0; i < lead; i++) el("div", { cls: "universeview-cal-day is-blank" }, grid);
 		for (let d = 1; d <= len; d++) this.dayCell(grid, first + d - 1, d, items);
 	}
 
 	private dayCell(parent: HTMLElement, day: number, n: number, items: Map<number, DayItem[]>) {
 		const cal = this.cal();
 		const list = items.get(day) ?? [];
-		const cell = el("div", { cls: "chronicle-cal-day", attr: { "data-day": String(day), tabindex: "0", role: "button" } }, parent);
+		const cell = el("div", { cls: "universeview-cal-day", attr: { "data-day": String(day), tabindex: "0", role: "button" } }, parent);
 		const today = this.today();
 		if (day === today) cell.addClass("is-today");
 		if (day === this.options.selected) cell.addClass("is-selected");
-		const top = el("div", { cls: "chronicle-cal-day-top" }, cell);
-		el("span", { cls: "chronicle-cal-num", text: String(n) }, top);
+		const top = el("div", { cls: "universeview-cal-day-top" }, cell);
+		el("span", { cls: "universeview-cal-num", text: String(n) }, top);
 		if (this.options.moons && cal.moons.length) {
-			const moons = el("span", { cls: "chronicle-cal-moons" }, top);
+			const moons = el("span", { cls: "universeview-cal-moons" }, top);
 			for (const mo of cal.moons) {
 				const p = moonPhase(day, mo);
 				const ic = moonIcon(p, 13, mo.color);
@@ -340,7 +340,7 @@ export class CalendarRenderer {
 		const shown = list.filter((i) => i.kind !== "season");
 		const season = list.find((i) => i.kind === "season");
 		if (season) {
-			const s = el("div", { cls: "chronicle-cal-season-start", text: season.label }, cell);
+			const s = el("div", { cls: "universeview-cal-season-start", text: season.label }, cell);
 			if (season.color) s.style.setProperty("--season", season.color);
 		}
 		const max = this.options.mode === "week" ? 99 : this.embedded ? 2 : 3;
@@ -353,16 +353,16 @@ export class CalendarRenderer {
 		for (let s = 0; s < rows && used < max; s++, used++) {
 			const it = bars.find((i) => i.slot === s);
 			if (it) this.chip(cell, it, day, true);
-			else el("div", { cls: "chronicle-cal-bar-gap" }, cell);
+			else el("div", { cls: "universeview-cal-bar-gap" }, cell);
 		}
 		const room = Math.max(0, max - used);
 		for (const it of rest.slice(0, room)) this.chip(cell, it, day);
 		const hidden = bars.filter((i) => i.slot! >= used).length + Math.max(0, rest.length - room);
-		if (hidden > 0) el("div", { cls: "chronicle-cal-more", text: `+${hidden} more` }, cell);
+		if (hidden > 0) el("div", { cls: "universeview-cal-more", text: `+${hidden} more` }, cell);
 		cell.addEventListener("click", () => {
 			this.options.selected = day;
 			this.onOptionsChange?.();
-			this.root.querySelectorAll(".chronicle-cal-day.is-selected").forEach((c) => c.removeClass("is-selected"));
+			this.root.querySelectorAll(".universeview-cal-day.is-selected").forEach((c) => c.removeClass("is-selected"));
 			cell.addClass("is-selected");
 			this.drawSide();
 		});
@@ -395,11 +395,11 @@ export class CalendarRenderer {
 	}
 
 	private chip(parent: HTMLElement, it: DayItem, day: number, bar = false) {
-		const c = el("div", { cls: `chronicle-cal-chip kind-${it.kind}` + (it.first === false ? " is-cont" : "") + (it.last === false ? " is-open" : "") + (bar ? " is-bar" : "") }, parent);
+		const c = el("div", { cls: `universeview-cal-chip kind-${it.kind}` + (it.first === false ? " is-cont" : "") + (it.last === false ? " is-open" : "") + (bar ? " is-bar" : "") }, parent);
 		if (it.color) c.style.setProperty("--chip", it.color);
 		if (it.key) c.dataset.key = it.key;
 		const glyph = it.kind === "anniversary" ? "history" : it.kind === "birthday" ? "cake" : it.kind === "holiday" ? "party-popper" : it.kind === "story" ? "book-open" : it.kind === "repeat" ? "repeat" : "";
-		if (glyph) icon(el("span", { cls: "chronicle-cal-chip-icon" }, c), glyph);
+		if (glyph) icon(el("span", { cls: "universeview-cal-chip-icon" }, c), glyph);
 		// A bar is named where it starts, and again at the start of each week (or month) it runs into.
 		const cal = this.cal();
 		const named = !bar || it.first !== false || cal.weekdayOf(day) === 0 || cal.fromDays(day).d === 1 || this.options.mode === "week";
@@ -448,12 +448,12 @@ export class CalendarRenderer {
 		const w = cal.weekdayOf(base);
 		const start = base - Math.max(0, w);
 		const items = this.itemsBetween(start, start + cols - 1);
-		const grid = el("div", { cls: "chronicle-cal-grid chronicle-cal-week" }, this.body);
+		const grid = el("div", { cls: "universeview-cal-grid universeview-cal-week" }, this.body);
 		grid.style.setProperty("--cols", String(cols));
 		for (let i = 0; i < cols; i++) {
 			const day = start + i;
 			const d = cal.fromDays(day);
-			el("div", { cls: "chronicle-cal-weekday", text: `${cal.weekdays[i] ?? ""} ${d.d} ${(cal.monthNames[d.m - 1] ?? "").slice(0, 3)}`.trim() }, grid);
+			el("div", { cls: "universeview-cal-weekday", text: `${cal.weekdays[i] ?? ""} ${d.d} ${(cal.monthNames[d.m - 1] ?? "").slice(0, 3)}`.trim() }, grid);
 		}
 		for (let i = 0; i < cols; i++) this.dayCell(grid, start + i, cal.fromDays(start + i).d, items);
 	}
@@ -463,7 +463,7 @@ export class CalendarRenderer {
 	/** A box to jump to any date, written in this calendar. */
 	private goToBox() {
 		const cal = this.cal();
-		const box = el("input", { cls: "chronicle-cal-goto", attr: { type: "text", placeholder: "Go to a date…", "aria-label": "Go to a date (Enter)" } }, this.head);
+		const box = el("input", { cls: "universeview-cal-goto", attr: { type: "text", placeholder: "Go to a date…", "aria-label": "Go to a date (Enter)" } }, this.head);
 		box.addEventListener("keydown", (evt) => {
 			if (evt.key !== "Enter") return;
 			evt.stopPropagation();
@@ -508,15 +508,15 @@ export class CalendarRenderer {
 		const items = this.itemsBetween(start, end);
 		const yearly = this.events().filter((e) => e.start!.precision === "year" && cal.fromDays(e.start!.start).y === y);
 		if (yearly.length) {
-			const strip = el("div", { cls: "chronicle-cal-loose" }, this.body);
-			el("span", { cls: "chronicle-cal-loose-label", text: "This year:" }, strip);
+			const strip = el("div", { cls: "universeview-cal-loose" }, this.body);
+			el("span", { cls: "universeview-cal-loose-label", text: "This year:" }, strip);
 			for (const e of yearly) this.chip(strip, { kind: "event", label: e.name, key: e.key, color: entityColor(this.plugin, e), sort: 0 }, start);
 		}
-		const grid = el("div", { cls: "chronicle-cal-year-grid" }, this.body);
+		const grid = el("div", { cls: "universeview-cal-year-grid" }, this.body);
 		const today = this.today();
 		for (let m = 1; m <= cal.monthCount(y); m++) {
-			const box = el("div", { cls: "chronicle-cal-mini" + (cal.isIntercalary(y, m) ? " is-festival" : "") }, grid);
-			const head = el("button", { cls: "chronicle-cal-mini-head", text: cal.monthNames[m - 1] ?? `Month ${m}` }, box);
+			const box = el("div", { cls: "universeview-cal-mini" + (cal.isIntercalary(y, m) ? " is-festival" : "") }, grid);
+			const head = el("button", { cls: "universeview-cal-mini-head", text: cal.monthNames[m - 1] ?? `Month ${m}` }, box);
 			head.addEventListener("click", () => {
 				this.options.mode = "month";
 				this.options.year = y;
@@ -525,14 +525,14 @@ export class CalendarRenderer {
 			});
 			const first = cal.toDays(y, m, 1);
 			const cols = cal.isIntercalary(y, m) ? Math.min(7, cal.monthDays(y, m)) : cal.weekdays.length || 7;
-			const g = el("div", { cls: "chronicle-cal-mini-grid" }, box);
+			const g = el("div", { cls: "universeview-cal-mini-grid" }, box);
 			g.style.setProperty("--cols", String(cols));
 			const lead = cal.isIntercalary(y, m) ? 0 : Math.max(0, cal.weekdayOf(first));
 			for (let i = 0; i < lead; i++) el("span", {}, g);
 			for (let d = 1; d <= cal.monthDays(y, m); d++) {
 				const day = first + d - 1;
 				const list = (items.get(day) ?? []).filter((i) => i.kind !== "season");
-				const c = el("span", { cls: "chronicle-cal-mini-day" + (list.length ? " has-items" : "") + (day === today ? " is-today" : "") + (day === this.options.selected ? " is-selected" : ""), text: String(d) }, g);
+				const c = el("span", { cls: "universeview-cal-mini-day" + (list.length ? " has-items" : "") + (day === today ? " is-today" : "") + (day === this.options.selected ? " is-selected" : ""), text: String(d) }, g);
 				// Busier days darker, so a year's crowded stretches stand out.
 				const busy = list.filter((i) => i.kind === "event" || i.kind === "story").length;
 				if (busy) c.style.setProperty("--heat", String(Math.min(1, 0.25 + busy * 0.25)));
@@ -550,29 +550,29 @@ export class CalendarRenderer {
 		const cal = this.cal();
 		const from = this.options.selected ?? this.today() ?? this.latestEvent() ?? 0;
 		const items = this.itemsBetween(from, from + 120);
-		const list = el("div", { cls: "chronicle-cal-agenda" }, this.body);
+		const list = el("div", { cls: "universeview-cal-agenda" }, this.body);
 		let shown = 0;
 		for (let day = from; day <= from + 120 && shown < 60; day++) {
 			const its = items.get(day) ?? [];
 			const moonNotes = this.options.moons ? cal.moons.map((mo) => ({ mo, p: moonPhase(day, mo) })).filter(({ mo, p }) => this.isQuarter(day, mo, p)) : [];
 			if (!its.length && !moonNotes.length) continue;
 			shown++;
-			const row = el("div", { cls: "chronicle-cal-agenda-day" + (day === this.today() ? " is-today" : "") }, list);
+			const row = el("div", { cls: "universeview-cal-agenda-day" + (day === this.today() ? " is-today" : "") }, list);
 			const w = cal.weekdayOf(day);
-			const date = el("button", { cls: "chronicle-cal-agenda-date", text: `${w >= 0 ? cal.weekdays[w] + ", " : ""}${formatDay(day, cal)}` }, row);
+			const date = el("button", { cls: "universeview-cal-agenda-date", text: `${w >= 0 ? cal.weekdays[w] + ", " : ""}${formatDay(day, cal)}` }, row);
 			date.addEventListener("click", () => {
 				this.options.mode = "month";
 				this.goTo(day);
 			});
-			const what = el("div", { cls: "chronicle-cal-agenda-items" }, row);
+			const what = el("div", { cls: "universeview-cal-agenda-items" }, row);
 			for (const it of its) this.chip(what, it, day);
 			for (const { mo, p } of moonNotes) {
-				const c = el("div", { cls: "chronicle-cal-chip kind-moon" }, what);
+				const c = el("div", { cls: "universeview-cal-chip kind-moon" }, what);
 				c.appendChild(moonIcon(p, 12, mo.color));
 				el("span", { text: `${phaseName(p)}${cal.moons.length > 1 ? ` (${mo.name})` : ""}` }, c);
 			}
 		}
-		if (!shown) el("div", { cls: "chronicle-dash-muted", text: "Nothing in the next 120 days." }, list);
+		if (!shown) el("div", { cls: "universeview-dash-muted", text: "Nothing in the next 120 days." }, list);
 	}
 
 	/** Whether a moon reaches new, quarter or full on this day (the day nearest the exact phase). */
@@ -591,31 +591,31 @@ export class CalendarRenderer {
 		this.root.toggleClass("has-side", day !== undefined && !this.embedded);
 		if (day === undefined || this.embedded) return;
 		const w = cal.weekdayOf(day);
-		el("div", { cls: "chronicle-cal-side-weekday", text: w >= 0 ? cal.weekdays[w] : cal.isIntercalary(cal.fromDays(day).y, cal.fromDays(day).m) ? "Festival day" : "" }, side);
-		el("div", { cls: "chronicle-cal-side-date", text: formatDay(day, cal) }, side);
+		el("div", { cls: "universeview-cal-side-weekday", text: w >= 0 ? cal.weekdays[w] : cal.isIntercalary(cal.fromDays(day).y, cal.fromDays(day).m) ? "Festival day" : "" }, side);
+		el("div", { cls: "universeview-cal-side-date", text: formatDay(day, cal) }, side);
 		const today = this.today();
 		if (today !== undefined && today !== day) {
 			const diff = day - today;
-			el("div", { cls: "chronicle-dash-muted", text: diff > 0 ? `In ${diff} day${diff === 1 ? "" : "s"}` : `${-diff} day${diff === -1 ? "" : "s"} ago` }, side);
-		} else if (today === day) el("div", { cls: "chronicle-cal-side-today", text: "Today in the world" }, side);
+			el("div", { cls: "universeview-dash-muted", text: diff > 0 ? `In ${diff} day${diff === 1 ? "" : "s"}` : `${-diff} day${diff === -1 ? "" : "s"} ago` }, side);
+		} else if (today === day) el("div", { cls: "universeview-cal-side-today", text: "Today in the world" }, side);
 		const season = seasonOf(cal, day);
-		if (season) el("div", { cls: "chronicle-cal-side-row", text: `Season: ${season.name}` }, side);
+		if (season) el("div", { cls: "universeview-cal-side-row", text: `Season: ${season.name}` }, side);
 		for (const mo of cal.moons) {
 			const p = moonPhase(day, mo);
-			const r = el("div", { cls: "chronicle-cal-side-row chronicle-cal-side-moon" }, side);
+			const r = el("div", { cls: "universeview-cal-side-row universeview-cal-side-moon" }, side);
 			r.appendChild(moonIcon(p, 16, mo.color));
 			el("span", { text: `${mo.name}: ${phaseName(p).toLowerCase()}` }, r);
 		}
 		const items = (this.itemsBetween(day, day).get(day) ?? []).filter((i) => i.kind !== "season");
-		const list = el("div", { cls: "chronicle-cal-side-list" }, side);
-		if (!items.length) el("div", { cls: "chronicle-dash-muted", text: "Nothing on this day yet." }, list);
+		const list = el("div", { cls: "universeview-cal-side-list" }, side);
+		if (!items.length) el("div", { cls: "universeview-dash-muted", text: "Nothing on this day yet." }, list);
 		for (const it of items) {
 			this.chip(list, it, day);
 			const e = it.key ? this.plugin.index.get(it.key) : undefined;
-			if (e?.summary) el("div", { cls: "chronicle-cal-side-summary", text: e.summary }, list);
-			else if (e && it.kind === "event" && e.end) el("div", { cls: "chronicle-cal-side-summary", text: formatSpan(e.start, e.end, cal) }, list);
+			if (e?.summary) el("div", { cls: "universeview-cal-side-summary", text: e.summary }, list);
+			else if (e && it.kind === "event" && e.end) el("div", { cls: "universeview-cal-side-summary", text: formatSpan(e.start, e.end, cal) }, list);
 		}
-		const actions = el("div", { cls: "chronicle-cal-side-actions" }, side);
+		const actions = el("div", { cls: "universeview-cal-side-actions" }, side);
 		const add = el("button", { cls: "mod-cta", text: "New event on this day" }, actions);
 		add.addEventListener("click", () => this.newEvent(day));
 		if (today !== day) {

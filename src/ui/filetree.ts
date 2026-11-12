@@ -1,7 +1,7 @@
 import { FuzzySuggestModal, Keymap, Menu, Notice, TFile, TFolder, type App } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { ENTITY_TYPES, type EntityType } from "../types";
-import type { ChronicleSettings } from "../settings";
+import type { UniverseViewSettings } from "../settings";
 import { followPath, moveTarget } from "../index/moves";
 import { kindLabel } from "../index/reader";
 import { TYPE_ICONS, TYPE_LABELS, clickNotice, el, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
@@ -13,7 +13,7 @@ export interface TreeState {
 	selected?: string;
 	isFolder?: boolean;
 	expanded: string[];
-	onlyChronicle: boolean;
+	onlyNotes: boolean;
 	search: string;
 	typeFilter?: EntityType;
 }
@@ -37,17 +37,17 @@ interface FolderNode {
 	issues: number;
 }
 
-type TreeOptions = Required<NonNullable<ChronicleSettings["fileTree"]>>;
+type TreeOptions = Required<NonNullable<UniverseViewSettings["fileTree"]>>;
 
-function treeOptions(plugin: ChroniclePlugin): TreeOptions {
+function treeOptions(plugin: UniverseViewPlugin): TreeOptions {
 	return { colors: "both", folderNotes: true, kinds: true, counts: true, compact: false, ...plugin.settings.fileTree };
 }
 
 /** The event open trees redraw on when their options change. */
-export const TREE_OPTIONS_CHANGED = "chronicle:tree-options";
+export const TREE_OPTIONS_CHANGED = "universeview:tree-options";
 
 /** How the file trees look, one click from either tree. */
-export function treeOptionsMenu(plugin: ChroniclePlugin, evt: MouseEvent) {
+export function treeOptionsMenu(plugin: UniverseViewPlugin, evt: MouseEvent) {
 	const o = treeOptions(plugin);
 	const set = (change: Partial<TreeOptions>) => {
 		plugin.settings.fileTree = { ...o, ...change };
@@ -109,19 +109,19 @@ class MoveToModal extends FuzzySuggestModal<TFolder> {
 export class FileTree {
 	private options!: TreeOptions;
 
-	constructor(private plugin: ChroniclePlugin, private list: HTMLElement, private state: () => TreeState, private hooks: TreeHooks) {
+	constructor(private plugin: UniverseViewPlugin, private list: HTMLElement, private state: () => TreeState, private hooks: TreeHooks) {
 		list.setAttribute("role", "tree");
 		list.addEventListener("keydown", (evt) => this.onKey(evt));
 		list.addEventListener("pointerdown", (evt) => this.onDragStart(evt));
 		// Hover cards listen here, not on each row: the tree redraws its rows whenever the vault changes, and a
 		// row replaced under the pointer would never have heard it.
 		list.addEventListener("mouseover", (evt) => {
-			const row = (evt.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row[data-hover]");
+			const row = (evt.target as HTMLElement).closest<HTMLElement>(".universeview-dash-row[data-hover]");
 			if (!row || row.contains(evt.relatedTarget as Node | null)) return;
 			this.plugin.hoverCards?.hoverOnce(row, row.dataset.hover ?? "", evt);
 		});
 		list.addEventListener("mousemove", (evt) => {
-			const row = (evt.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row[data-hover]");
+			const row = (evt.target as HTMLElement).closest<HTMLElement>(".universeview-dash-row[data-hover]");
 			if (row) this.plugin.hoverCards?.nudge(row, row.dataset.hover ?? "", evt);
 		});
 	}
@@ -166,7 +166,7 @@ export class FileTree {
 	private dropAt(x: number, y: number, doc: Document): string | undefined {
 		const under = doc.elementFromPoint(x, y);
 		if (!under || !this.list.contains(under)) return undefined;
-		const row = under.closest<HTMLElement>(".chronicle-dash-row");
+		const row = under.closest<HTMLElement>(".universeview-dash-row");
 		if (!row) return "";
 		const path = row.dataset.path ?? "";
 		return row.hasClass("is-folder") ? path : path.split("/").slice(0, -1).join("/");
@@ -175,11 +175,11 @@ export class FileTree {
 	/** Dragging a row onto a folder moves it; resting on a closed folder opens it; Esc calls it off. Touch scrolls instead. */
 	private onDragStart(down: PointerEvent) {
 		if (down.button !== 0 || down.pointerType === "touch") return;
-		const row = (down.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row");
+		const row = (down.target as HTMLElement).closest<HTMLElement>(".universeview-dash-row");
 		if (!row?.dataset.path) return;
 		const path = row.dataset.path;
 		const isFolder = row.hasClass("is-folder");
-		const name = row.querySelector(".chronicle-dash-row-name")?.textContent ?? "";
+		const name = row.querySelector(".universeview-dash-row-name")?.textContent ?? "";
 		const doc = this.list.ownerDocument;
 		let ghost: HTMLElement | undefined;
 		let dest: string | undefined;
@@ -211,7 +211,7 @@ export class FileTree {
 			dest = at !== undefined && moveTarget(path, isFolder, at) ? at : undefined;
 			clearMarks();
 			if (dest === "") this.list.addClass("is-drop-root");
-			const target = dest ? Array.from(this.list.querySelectorAll<HTMLElement>(".chronicle-dash-row.is-folder")).find((r) => r.dataset.path === dest) : undefined;
+			const target = dest ? Array.from(this.list.querySelectorAll<HTMLElement>(".universeview-dash-row.is-folder")).find((r) => r.dataset.path === dest) : undefined;
 			target?.addClass("is-drop-target");
 			if (springAt !== dest) {
 				springAt = dest;
@@ -251,7 +251,7 @@ export class FileTree {
 		const root: FolderNode = { path: "", name: "", folders: new Map(), files: [], counts: {}, total: 0, issues: 0 };
 		for (const f of this.plugin.app.vault.getMarkdownFiles()) {
 			const e = idx.get(f.path);
-			if (s.onlyChronicle && !e) continue;
+			if (s.onlyNotes && !e) continue;
 			if (s.typeFilter && e?.type !== s.typeFilter) continue;
 			if (q && !f.path.toLowerCase().includes(q) && !(e?.category ?? "").includes(q)) continue;
 			const bump = (n: FolderNode) => {
@@ -276,12 +276,12 @@ export class FileTree {
 	render() {
 		const list = this.list;
 		const s = this.state();
-		const focused = list.querySelector<HTMLElement>(".chronicle-dash-row:focus")?.dataset.path;
+		const focused = list.querySelector<HTMLElement>(".universeview-dash-row:focus")?.dataset.path;
 		const scroll = list.scrollTop;
 		list.empty();
 		const tree = this.build();
 		if (!tree.total) {
-			el("div", { cls: "chronicle-dash-empty", text: s.search ? "Nothing matches." : "No notes here yet." }, list);
+			el("div", { cls: "universeview-dash-empty", text: s.search ? "Nothing matches." : "No notes here yet." }, list);
 			return;
 		}
 		const o = (this.options = treeOptions(this.plugin));
@@ -299,15 +299,15 @@ export class FileTree {
 		};
 		children(tree, 0);
 		list.scrollTop = scroll;
-		const first = list.querySelector<HTMLElement>(".chronicle-dash-row");
+		const first = list.querySelector<HTMLElement>(".universeview-dash-row");
 		if (first) first.tabIndex = 0;
-		if (focused) Array.from(list.querySelectorAll<HTMLElement>(".chronicle-dash-row")).find((r) => r.dataset.path === focused)?.focus();
+		if (focused) Array.from(list.querySelectorAll<HTMLElement>(".universeview-dash-row")).find((r) => r.dataset.path === focused)?.focus();
 	}
 
 	private row(path: string, cls: string, depth: number, selected: boolean, open?: boolean) {
 		const attr: Record<string, string> = { role: "treeitem", tabindex: "-1", "aria-selected": String(selected) };
 		if (open !== undefined) attr["aria-expanded"] = String(open);
-		const row = el("div", { cls: `chronicle-dash-row ${cls}` + (selected ? " is-selected is-active" : ""), attr }, this.list);
+		const row = el("div", { cls: `universeview-dash-row ${cls}` + (selected ? " is-selected is-active" : ""), attr }, this.list);
 		row.dataset.path = path;
 		row.style.setProperty("--depth", String(depth));
 		return row;
@@ -317,7 +317,7 @@ export class FileTree {
 	private dress(row: HTMLElement, path: string, plain: string) {
 		const box = this.plugin.settings.fileIcons !== false ? fileIconBox(this.plugin, path) : undefined;
 		if (box) row.appendChild(box);
-		else icon(el("span", { cls: "chronicle-dash-row-icon" }, row), plain);
+		else icon(el("span", { cls: "universeview-dash-row-icon" }, row), plain);
 		tintRow(this.plugin, row, path, this.options.colors);
 	}
 
@@ -326,20 +326,20 @@ export class FileTree {
 		const picked = note ? !s.isFolder && s.selected === note.path : !!s.isFolder && s.selected === n.path;
 		const row = this.row(n.path, "is-folder", depth, picked, open);
 		if (note) row.dataset.note = note.path;
-		const chev = el("span", { cls: "chronicle-dash-chev" + (open ? " is-open" : "") }, row);
+		const chev = el("span", { cls: "universeview-dash-chev" + (open ? " is-open" : "") }, row);
 		icon(chev, "chevron-right");
 		this.dress(row, note?.path ?? n.path, open ? "folder-open" : "folder");
-		el("span", { cls: "chronicle-dash-row-name", text: n.name }, row);
+		el("span", { cls: "universeview-dash-row-name", text: n.name }, row);
 		const entity = note ? this.plugin.index.get(note.path) : undefined;
-		if (this.options.kinds && entity?.category) el("span", { cls: "chronicle-dash-row-meta", text: kindLabel(entity.category) }, row);
-		const counts = el("span", { cls: "chronicle-dash-counts" }, row);
+		if (this.options.kinds && entity?.category) el("span", { cls: "universeview-dash-row-meta", text: kindLabel(entity.category) }, row);
+		const counts = el("span", { cls: "universeview-dash-counts" }, row);
 		if (this.options.counts) for (const t of ENTITY_TYPES) {
 			const c = n.counts[t];
 			if (!c) continue;
-			const dot = el("span", { cls: "chronicle-dash-count", text: String(c), attr: { title: plural(TYPE_LABELS[t].toLowerCase(), c) } }, counts);
+			const dot = el("span", { cls: "universeview-dash-count", text: String(c), attr: { title: plural(TYPE_LABELS[t].toLowerCase(), c) } }, counts);
 			dot.style.setProperty("--dot-color", typeColorVar(t));
 		}
-		if (n.issues) el("span", { cls: "chronicle-dash-issue", text: "!", attr: { title: plural("note with problems", n.issues) } }, counts);
+		if (n.issues) el("span", { cls: "universeview-dash-issue", text: "!", attr: { title: plural("note with problems", n.issues) } }, counts);
 		chev.addEventListener("click", (evt) => {
 			evt.stopPropagation();
 			this.toggle(n.path);
@@ -368,9 +368,9 @@ export class FileTree {
 		const e = this.plugin.index.get(f.path);
 		const row = this.row(f.path, "is-file" + (e ? "" : " is-plain"), depth, !s.isFolder && s.selected === f.path);
 		this.dress(row, f.path, e ? TYPE_ICONS[e.type] : "file-text");
-		el("span", { cls: "chronicle-dash-row-name", text: f.basename }, row);
-		if (this.options.kinds && e?.category) el("span", { cls: "chronicle-dash-row-meta", text: kindLabel(e.category) }, row);
-		if (e?.issues.length) el("span", { cls: "chronicle-dash-issue", text: "!", attr: { title: e.issues.join("\n") } }, row);
+		el("span", { cls: "universeview-dash-row-name", text: f.basename }, row);
+		if (this.options.kinds && e?.category) el("span", { cls: "universeview-dash-row-meta", text: kindLabel(e.category) }, row);
+		if (e?.issues.length) el("span", { cls: "universeview-dash-issue", text: "!", attr: { title: e.issues.join("\n") } }, row);
 		row.addEventListener("click", (evt) => {
 			if (Keymap.isModEvent(evt)) openEntity(this.plugin, f.path, evt);
 			else this.hooks.select(f.path, false, evt);
@@ -446,7 +446,7 @@ export class FileTree {
 		this.pick(path, false);
 		this.render();
 		this.hooks.changed();
-		const row = Array.from(this.list.querySelectorAll<HTMLElement>(".chronicle-dash-row")).find((r) => r.dataset.path === path);
+		const row = Array.from(this.list.querySelectorAll<HTMLElement>(".universeview-dash-row")).find((r) => r.dataset.path === path);
 		if (!row) return false;
 		row.scrollIntoView({ block: "center" });
 		row.addClass("is-revealed");
@@ -460,9 +460,9 @@ export class FileTree {
 
 	/** Arrow keys walk the tree, right and left open and close folders, Enter picks. */
 	private onKey(evt: KeyboardEvent) {
-		const row = (evt.target as HTMLElement).closest<HTMLElement>(".chronicle-dash-row");
+		const row = (evt.target as HTMLElement).closest<HTMLElement>(".universeview-dash-row");
 		if (!row) return;
-		const rows = Array.from(this.list.querySelectorAll<HTMLElement>(".chronicle-dash-row"));
+		const rows = Array.from(this.list.querySelectorAll<HTMLElement>(".universeview-dash-row"));
 		const at = rows.indexOf(row);
 		const path = row.dataset.path ?? "";
 		const folder = row.hasClass("is-folder");

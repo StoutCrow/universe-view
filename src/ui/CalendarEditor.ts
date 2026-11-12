@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { CalendarDef } from "../types";
 import { CustomCalendar, holidaysOn, moonPhase, seasonOf } from "../dates/calendars";
 import { formatDay } from "../dates/parser";
@@ -19,7 +19,7 @@ export class CalendarEditorModal extends Modal {
 	/** Sections that list months by name, redrawn when the months change. */
 	private monthUsers: (() => void)[] = [];
 
-	constructor(private plugin: ChroniclePlugin, def: CalendarDef, private onSave: (def: CalendarDef) => void) {
+	constructor(private plugin: UniverseViewPlugin, def: CalendarDef, private onSave: (def: CalendarDef) => void) {
 		super(plugin.app);
 		this.def = structuredClone(def);
 	}
@@ -28,11 +28,11 @@ export class CalendarEditorModal extends Modal {
 	 * The same editor drawn into a box on the page (the settings tab) instead of a window of its own,
 	 * so no theme can put it behind Settings. Save and Cancel call `done`.
 	 */
-	static inline(plugin: ChroniclePlugin, box: HTMLElement, def: CalendarDef, onSave: (def: CalendarDef) => void, done: () => void) {
+	static inline(plugin: UniverseViewPlugin, box: HTMLElement, def: CalendarDef, onSave: (def: CalendarDef) => void, done: () => void) {
 		const ed = new CalendarEditorModal(plugin, def, onSave);
-		const frame = box.createDiv({ cls: "chronicle-scope chronicle-calendar-editor chronicle-calendar-inline" });
-		const title = frame.createEl("h3", { cls: "chronicle-calendar-inline-title" });
-		const content = frame.createDiv({ cls: "chronicle-calendar-inline-body" });
+		const frame = box.createDiv({ cls: "universeview-scope universeview-calendar-editor universeview-calendar-inline" });
+		const title = frame.createEl("h3", { cls: "universeview-calendar-inline-title" });
+		const content = frame.createDiv({ cls: "universeview-calendar-inline-body" });
 		// Point the editor's window parts at the inline ones.
 		Object.defineProperty(ed, "modalEl", { value: frame });
 		Object.defineProperty(ed, "titleEl", { value: title });
@@ -59,13 +59,13 @@ export class CalendarEditorModal extends Modal {
 	}
 
 	private build() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-calendar-editor");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-calendar-editor");
 		this.titleEl.setText(`Calendar: ${this.def.name}`);
 		const c = this.def;
 		const box = this.contentEl;
 		const section = (title: string, desc: string) => {
-			const s = el("div", { cls: "chronicle-cal-ed-section" }, box);
+			const s = el("div", { cls: "universeview-cal-ed-section" }, box);
 			el("h3", { text: title }, s);
 			if (desc) el("div", { cls: "setting-item-description", text: desc }, s);
 			return s;
@@ -73,7 +73,7 @@ export class CalendarEditorModal extends Modal {
 		const changed = () => this.preview();
 		const monthOptions = (): [string, string][] => c.months.map((m, i) => [String(i + 1), m.name || `Month ${i + 1}`]);
 
-		this.previewEl = el("div", { cls: "chronicle-cal-ed-preview" }, box);
+		this.previewEl = el("div", { cls: "universeview-cal-ed-preview" }, box);
 
 		const basics = section("Basics", "");
 		new Setting(basics).setName("Name").addText((t) => t.setValue(c.name).onChange((v) => {
@@ -118,7 +118,7 @@ export class CalendarEditorModal extends Modal {
 		});
 
 		const leaps = section("Leap days", "Extra days some years: every N years, except every M, unless every K (like the real calendar's 4, 100, 400).");
-		this.monthSection(leaps, () => rowEditor(this.app, leaps.querySelector(".chronicle-cal-ed-rows") as HTMLElement, [
+		this.monthSection(leaps, () => rowEditor(this.app, leaps.querySelector(".universeview-cal-ed-rows") as HTMLElement, [
 			{ key: "month", label: "Added to", kind: "select", options: monthOptions, width: "1.5fr" },
 			{ key: "every", label: "Every", kind: "number", min: 1, width: "70px" },
 			{ key: "except", label: "Except", kind: "number", min: 0, width: "70px", placeholder: "—" },
@@ -155,7 +155,7 @@ export class CalendarEditorModal extends Modal {
 		}, { blank: () => ({ name: "", cycle: 29.5, offset: 0 }) as never, addLabel: "Add a moon", empty: "No moons." });
 
 		const seasons = section("Seasons", "Each starts on a day and lasts until the next one starts.");
-		this.monthSection(seasons, () => rowEditor(this.app, seasons.querySelector(".chronicle-cal-ed-rows") as HTMLElement, [
+		this.monthSection(seasons, () => rowEditor(this.app, seasons.querySelector(".universeview-cal-ed-rows") as HTMLElement, [
 			{ key: "name", label: "Name", kind: "text", width: "1.5fr", placeholder: "Spring" },
 			{ key: "month", label: "Starts in", kind: "select", options: monthOptions, width: "1.5fr" },
 			{ key: "day", label: "Day", kind: "number", min: 1, width: "70px" },
@@ -166,7 +166,7 @@ export class CalendarEditorModal extends Modal {
 		}, { blank: () => ({ name: "", month: "1", day: 1 }) as never, addLabel: "Add a season", reorder: true, empty: "No seasons." }));
 
 		const holidays = section("Holidays", "Days that come round every year (or every few). Holidays with a note of their own: give an event `repeat: yearly`.");
-		this.monthSection(holidays, () => rowEditor(this.app, holidays.querySelector(".chronicle-cal-ed-rows") as HTMLElement, [
+		this.monthSection(holidays, () => rowEditor(this.app, holidays.querySelector(".universeview-cal-ed-rows") as HTMLElement, [
 			{ key: "name", label: "Name", kind: "text", width: "1.5fr", placeholder: "Lantern Night" },
 			{ key: "month", label: "Month", kind: "select", options: monthOptions, width: "1.5fr" },
 			{ key: "day", label: "Day", kind: "number", min: 1, width: "70px" },
@@ -192,7 +192,7 @@ export class CalendarEditorModal extends Modal {
 
 	/** A section whose rows list months by name: drawn now, and again whenever the months change. */
 	private monthSection(section: HTMLElement, draw: () => void) {
-		const rows = el("div", { cls: "chronicle-cal-ed-rows" }, section);
+		const rows = el("div", { cls: "universeview-cal-ed-rows" }, section);
 		const redraw = () => {
 			rows.empty();
 			draw();
@@ -214,7 +214,7 @@ export class CalendarEditorModal extends Modal {
 		}
 		const y = this.def.eras[0]?.startYear ?? 1;
 		const m = Math.min(this.previewMonth, cal.monthCount());
-		const head = el("div", { cls: "chronicle-cal-ed-preview-head" }, box);
+		const head = el("div", { cls: "universeview-cal-ed-preview-head" }, box);
 		const prev = el("button", { cls: "clickable-icon", text: "‹", attr: { "aria-label": "Previous month" } }, head);
 		el("strong", { text: `${cal.monthNames[m - 1]} ${cal.formatYear(y)}` }, head);
 		const next = el("button", { cls: "clickable-icon", text: "›", attr: { "aria-label": "Next month" } }, head);
@@ -230,19 +230,19 @@ export class CalendarEditorModal extends Modal {
 		if (this.def.leaps?.length) bits.push("leap years");
 		if (cal.weekdays.length) bits.push(`${cal.weekdays.length}-day weeks`);
 		if (cal.moons.length) bits.push(`${cal.moons.length} moon${cal.moons.length === 1 ? "" : "s"}`);
-		el("span", { cls: "chronicle-cal-ed-preview-sum", text: bits.join(" · ") }, head);
+		el("span", { cls: "universeview-cal-ed-preview-sum", text: bits.join(" · ") }, head);
 		const first = cal.toDays(y, m, 1);
 		const len = cal.monthDays(y, m);
 		const festival = cal.isIntercalary(y, m);
 		const cols = festival ? Math.min(len, 7) : cal.weekdays.length || 7;
-		const grid = el("div", { cls: "chronicle-cal-ed-grid" }, box);
+		const grid = el("div", { cls: "universeview-cal-ed-grid" }, box);
 		grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-		if (!festival && cal.weekdays.length) for (const w of cal.weekdays) el("div", { cls: "chronicle-cal-ed-wd", text: w.slice(0, 3) }, grid);
+		if (!festival && cal.weekdays.length) for (const w of cal.weekdays) el("div", { cls: "universeview-cal-ed-wd", text: w.slice(0, 3) }, grid);
 		const lead = festival ? 0 : Math.max(0, cal.weekdayOf(first));
 		for (let i = 0; i < lead; i++) el("div", {}, grid);
 		for (let d = 1; d <= len; d++) {
 			const day = first + d - 1;
-			const cell = el("div", { cls: "chronicle-cal-ed-day" + (festival ? " is-festival" : "") }, grid);
+			const cell = el("div", { cls: "universeview-cal-ed-day" + (festival ? " is-festival" : "") }, grid);
 			el("span", { text: String(d) }, cell);
 			const s = seasonOf(cal, day);
 			if (s && seasonOf(cal, day - 1) !== s) {

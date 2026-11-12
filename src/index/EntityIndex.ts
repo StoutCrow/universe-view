@@ -1,7 +1,7 @@
 import { dataviewApi, templateFolders } from "../internals";
 import { App, Events, TFile, debounce, getAllTags } from "obsidian";
 import type { ChronDate, Entity, EntityFilter, EntityType, Ref, Scene, Territory, TimedRef } from "../types";
-import { ChronicleSettings, FieldName, buildFieldAliases, parseMappingLines } from "../settings";
+import { UniverseViewSettings, FieldName, buildFieldAliases, parseMappingLines } from "../settings";
 import { CalendarRegistry, type Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import { relInverse } from "./relkinds";
@@ -75,7 +75,7 @@ export class EntityIndex extends Events {
 	private signatures = new Map<string, string>();
 	private readonly flushUpdates: () => void;
 
-	constructor(private app: App, private getSettings: () => ChronicleSettings, public calendars: CalendarRegistry) {
+	constructor(private app: App, private getSettings: () => UniverseViewSettings, public calendars: CalendarRegistry) {
 		super();
 		this.requestRebuild = debounce(() => this.rebuild(), 250, true);
 		this.flushUpdates = debounce(() => this.applyUpdates(), 150, true);

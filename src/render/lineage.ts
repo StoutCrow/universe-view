@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import type { Calendar } from "../dates/calendars";
 import { formatSpan } from "../dates/parser";
@@ -87,22 +87,22 @@ export class LineageRenderer {
 
 	constructor(
 		private container: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		public options: LineageOptions,
 		private embedded = false,
 		private hoverParent: { hoverPopover: unknown } | HTMLElement = container,
 	) {
-		this.root = el("div", { cls: "chronicle-lineage uv-lin" + (embedded ? " is-embedded" : "") }, container);
+		this.root = el("div", { cls: "universeview-lineage uv-lin" + (embedded ? " is-embedded" : "") }, container);
 		this.chart = el("div", { cls: "uv-lin-chart" }, this.root);
 		this.side = el("div", { cls: "uv-lin-side" }, this.root);
 		this.legend = el("div", { cls: "uv-lin-legend" }, this.chart);
 		this.keyEl = el("div", { cls: "uv-lin-key" }, this.chart);
 		this.scroller = el("div", { cls: "uv-lin-scroll" }, this.chart);
-		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.scroller);
+		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.scroller);
 		this.layer = svg("g", {}, this.svgEl);
 		this.undated = el("div", { cls: "uv-lin-undated" }, this.chart);
 		if (embedded) {
-			const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
+			const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.zoomBy(1.3));
 			iconButton(box, "zoom-out", "Zoom out", () => this.zoomBy(1 / 1.3));
 			iconButton(box, "maximize", "Fit", () => this.fit());
@@ -168,7 +168,7 @@ export class LineageRenderer {
 	select(key: string | undefined) {
 		this.options.selected = key;
 		this.onOptionsChange?.();
-		this.layer.querySelectorAll<SVGElement>(".chronicle-lineage-item").forEach((n) => n.classList.toggle("is-selected", n.getAttribute("data-key") === key));
+		this.layer.querySelectorAll<SVGElement>(".universeview-lineage-item").forEach((n) => n.classList.toggle("is-selected", n.getAttribute("data-key") === key));
 		this.drawSide();
 	}
 
@@ -332,7 +332,7 @@ export class LineageRenderer {
 
 	refresh() {
 		this.layer.replaceChildren();
-		this.chart.querySelector(".chronicle-empty")?.remove();
+		this.chart.querySelector(".universeview-empty")?.remove();
 		this.prep = undefined;
 		const p = this.plugin;
 		const idx = p.index;
@@ -452,18 +452,18 @@ export class LineageRenderer {
 		const from = cal.fromDays(this.viewStart).y - step;
 		const to = cal.fromDays(this.viewStart + width / this.pxPerDay).y + step;
 		const ticks = yearTicks(cal, from, to, step, step * 5).map((t) => ({ ...t, x: x(cal.toDays(t.year, 1, 1)), label: cal.formatYear(t.year) })).filter((t) => t.x >= -2 && t.x <= width + 2);
-		const grid = svg("g", { class: "chronicle-lineage-gridlines" }, this.layer);
-		for (const tk of ticks) svg("line", { x1: tk.x, x2: tk.x, y1: AXIS - 6, y2: height, class: "chronicle-lineage-grid" + (tk.era ? " is-era" : "") }, grid);
-		if (today !== undefined) svg("line", { x1: x(today), x2: x(today), y1: AXIS - 6, y2: height, class: "chronicle-lineage-today" }, grid);
+		const grid = svg("g", { class: "universeview-lineage-gridlines" }, this.layer);
+		for (const tk of ticks) svg("line", { x1: tk.x, x2: tk.x, y1: AXIS - 6, y2: height, class: "universeview-lineage-grid" + (tk.era ? " is-era" : "") }, grid);
+		if (today !== undefined) svg("line", { x1: x(today), x2: x(today), y1: AXIS - 6, y2: height, class: "universeview-lineage-today" }, grid);
 
 		const defs = svg("defs", {}, this.layer);
-		const links = svg("g", { class: "chronicle-lineage-links" }, this.layer);
-		const bars = svg("g", { class: "chronicle-lineage-bars" }, this.layer);
+		const links = svg("g", { class: "universeview-lineage-links" }, this.layer);
+		const bars = svg("g", { class: "universeview-lineage-bars" }, this.layer);
 		const focus = (key: string | null) => {
 			this.root.toggleClass("is-focusing", !!key);
 			const set = key ? this.kin(key) : new Set<string>();
 			this.layer.querySelectorAll<SVGElement>("[data-key]").forEach((n) => n.classList.toggle("is-lit", set.has(n.getAttribute("data-key")!)));
-			this.layer.querySelectorAll<SVGElement>(".chronicle-lineage-link").forEach((n) => n.classList.toggle("is-lit", set.has(n.getAttribute("data-from")!) && set.has(n.getAttribute("data-to")!)));
+			this.layer.querySelectorAll<SVGElement>(".universeview-lineage-link").forEach((n) => n.classList.toggle("is-lit", set.has(n.getAttribute("data-from")!) && set.has(n.getAttribute("data-to")!)));
 		};
 
 		let i = 0;
@@ -475,7 +475,7 @@ export class LineageRenderer {
 			const yy = yOfKey.get(c.key)!;
 			const color = c.color ?? cultureColor(p, c.key);
 			const kind = kindOf.get(c.key) ?? "group";
-			const g = svg("g", { class: "chronicle-lineage-item" + (c.key === this.options.focus ? " is-focus" : "") + (c.key === this.options.selected ? " is-selected" : ""), "data-key": c.key }, bars);
+			const g = svg("g", { class: "universeview-lineage-item" + (c.key === this.options.focus ? " is-focus" : "") + (c.key === this.options.selected ? " is-selected" : ""), "data-key": c.key }, bars);
 			g.setAttribute("style", `--item-color: ${color}; --i: ${n % 20}`);
 			const w = Math.max(8, x(b) - x(a));
 			const members = idx.members(c.key).length;
@@ -522,18 +522,18 @@ export class LineageRenderer {
 				const cy = yy + BAR / 2;
 				const cx = x(a);
 				const d = `M${px},${py} C${px},${(py + cy) / 2} ${px},${cy} ${cx},${cy}`;
-				const path = svg("path", { d, class: "chronicle-lineage-link", "data-from": pp.key, "data-to": c.key }, links);
+				const path = svg("path", { d, class: "universeview-lineage-link", "data-from": pp.key, "data-to": c.key }, links);
 				path.setAttribute("style", `--item-color: ${color}`);
-				svg("circle", { cx: px, cy: py, r: 3, class: "chronicle-lineage-fork" }, links).setAttribute("style", `--item-color: ${color}`);
+				svg("circle", { cx: px, cy: py, r: 3, class: "universeview-lineage-fork" }, links).setAttribute("style", `--item-color: ${color}`);
 			}
 		}
 
 		// The date axis, last so it's on top, held at the top of the view as the lanes scroll.
-		const axis = svg("g", { class: "chronicle-lineage-axis", transform: `translate(0,${this.scroller.scrollTop})` }, this.layer);
+		const axis = svg("g", { class: "universeview-lineage-axis", transform: `translate(0,${this.scroller.scrollTop})` }, this.layer);
 		this.axisG = axis;
 		svg("rect", { x: 0, y: 0, width, height: AXIS - 4, class: "uv-lin-axis-bg" }, axis);
-		for (const tk of spacedLabels(ticks)) svg("text", { x: tk.x, y: AXIS - 14, "text-anchor": "middle", class: "chronicle-lineage-tick" }, axis).textContent = tk.label;
-		if (today !== undefined && x(today) >= 0 && x(today) <= width) svg("text", { x: x(today) + 4, y: AXIS - 14, class: "chronicle-lineage-today-label" }, axis).textContent = "Today";
+		for (const tk of spacedLabels(ticks)) svg("text", { x: tk.x, y: AXIS - 14, "text-anchor": "middle", class: "universeview-lineage-tick" }, axis).textContent = tk.label;
+		if (today !== undefined && x(today) >= 0 && x(today) <= width) svg("text", { x: x(today) + 4, y: AXIS - 14, class: "universeview-lineage-today-label" }, axis).textContent = "Today";
 		void min;
 		// The key, redrawn only when what's on the bars changes.
 		const keyNow = [...new Set(shown.map((m) => m.shape))].sort().join();

@@ -1,5 +1,5 @@
 import { Notice, TFile, normalizePath } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { chainOf, descendantsOf } from "../index/realms";
 import { inRing, ringArea, type P2 } from "../index/geometry";
@@ -12,7 +12,7 @@ import { isFolderNote } from "./foldernotes";
  */
 
 /** The smallest land on this map whose area holds the point, other than the note and what's under it. */
-function landAt(plugin: ChroniclePlugin, map: string, at: P2, except: Set<string>): Entity | undefined {
+function landAt(plugin: UniverseViewPlugin, map: string, at: P2, except: Set<string>): Entity | undefined {
 	let best: { e: Entity; area: number } | undefined;
 	for (const e of plugin.index.all()) {
 		if (except.has(e.key)) continue;
@@ -39,7 +39,7 @@ function pointOf(e: Entity, map: string): P2 | undefined {
 }
 
 /** Links the note to the land and moves its file (or folder) inside that land's folder note. */
-export async function moveInto(plugin: ChroniclePlugin, e: Entity, land: Entity) {
+export async function moveInto(plugin: UniverseViewPlugin, e: Entity, land: Entity) {
 	const tree = plugin.realms();
 	const node = tree.nodes.get(e.key);
 	const landNode = tree.nodes.get(land.key);
@@ -71,7 +71,7 @@ export async function moveInto(plugin: ChroniclePlugin, e: Entity, land: Entity)
  * After a pin moves or an area is drawn: if it now sits in a different land than its note says,
  * move it there, or ask first (Settings → Folder notes → When the map moves something).
  */
-export function syncAfterMapEdit(plugin: ChroniclePlugin, key: string, map: string) {
+export function syncAfterMapEdit(plugin: UniverseViewPlugin, key: string, map: string) {
 	const mode = plugin.settings.mapMovesFiles ?? "ask";
 	if (mode === "off") return;
 	// Let the index read the change first.

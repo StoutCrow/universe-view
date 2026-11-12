@@ -1,5 +1,5 @@
 import { Notice, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, Territory } from "../types";
 import { formatDay } from "../dates/parser";
 import { toolSheet } from "./toolsheet";
@@ -10,10 +10,10 @@ import { toolSheet } from "./toolsheet";
  * neighbours, splitting) are handed a callback that does them there.
  */
 
-const dateOf = (p: ChroniclePlugin, v: string, cal: string) => (v.trim() ? p.parseDate(v.trim(), cal) : null);
+const dateOf = (p: UniverseViewPlugin, v: string, cal: string) => (v.trim() ? p.parseDate(v.trim(), cal) : null);
 
 /** From a date on, new borders: the area as it is ends then, and a copy from then is reshaped. */
-export function bordersFromSheet(p: ChroniclePlugin, e: Entity, mapKey: string, n: number, at: number | undefined, reshape: (newN: number, day: number) => void) {
+export function bordersFromSheet(p: UniverseViewPlugin, e: Entity, mapKey: string, n: number, at: number | undefined, reshape: (newN: number, day: number) => void) {
 	const cal = p.calendars.get(e.calendar);
 	toolSheet(p, {
 		title: `New borders for ${e.name}`,
@@ -35,7 +35,7 @@ export function bordersFromSheet(p: ChroniclePlugin, e: Entity, mapKey: string, 
 }
 
 /** When one area applies: from, to, or always. */
-export function areaDatesSheet(p: ChroniclePlugin, e: Entity, mapKey: string, n: number, t: Territory | undefined) {
+export function areaDatesSheet(p: UniverseViewPlugin, e: Entity, mapKey: string, n: number, t: Territory | undefined) {
 	const cal = p.calendars.get(e.calendar);
 	toolSheet(p, {
 		title: `When this area of ${e.name} applies`,
@@ -59,7 +59,7 @@ export function areaDatesSheet(p: ChroniclePlugin, e: Entity, mapKey: string, n:
 }
 
 /** A new land under this one, named, with its tier one below; then drawn. */
-export function newLandSheet(p: ChroniclePlugin, e: Entity, draw: (file: TFile) => void) {
+export function newLandSheet(p: UniverseViewPlugin, e: Entity, draw: (file: TFile) => void) {
 	toolSheet(p, {
 		title: `A new land inside ${e.name}`,
 		icon: "plus-square",
@@ -76,7 +76,7 @@ export function newLandSheet(p: ChroniclePlugin, e: Entity, draw: (file: TFile) 
 }
 
 /** Names the land a split takes off. */
-export function splitNameSheet(p: ChroniclePlugin, owner: Entity, done: (name: string) => void) {
+export function splitNameSheet(p: UniverseViewPlugin, owner: Entity, done: (name: string) => void) {
 	toolSheet(p, {
 		title: `The land split off ${owner.name}`,
 		icon: "scissors",
@@ -93,7 +93,7 @@ export function splitNameSheet(p: ChroniclePlugin, owner: Entity, done: (name: s
 export const NOTE_COLOURS: [string, string][] = [["#e8b33a", "Amber"], ["#e05252", "Red"], ["#3d8fd1", "Blue"], ["#3bb273", "Green"], ["#9b59b6", "Purple"], ["#333333", "Ink"]];
 
 /** A map note's text (or a line's label) and colour. */
-export function mapNoteSheet(p: ChroniclePlugin, o: { kind: "note" | "arrow" | "line"; text?: string; color?: string; isNew?: boolean }, done: (text: string, color: string) => void) {
+export function mapNoteSheet(p: UniverseViewPlugin, o: { kind: "note" | "arrow" | "line"; text?: string; color?: string; isNew?: boolean }, done: (text: string, color: string) => void) {
 	const what = o.kind === "note" ? "sticky note" : o.kind;
 	toolSheet(p, {
 		title: o.isNew ? `A new ${what}` : o.kind === "note" ? "Edit the note" : `Label the ${what}`,
@@ -111,7 +111,7 @@ export function mapNoteSheet(p: ChroniclePlugin, o: { kind: "note" | "arrow" | "
 }
 
 /** Moves everything on a map: for a picture swapped for one of another size, or cropped. */
-export function moveMapSheet(p: ChroniclePlugin, mapKey: string, start: { sx: number; sy: number }, size: [number, number] | undefined, title = "Move everything on this map") {
+export function moveMapSheet(p: UniverseViewPlugin, mapKey: string, start: { sx: number; sy: number }, size: [number, number] | undefined, title = "Move everything on this map") {
 	const name = p.index.get(mapKey)?.name ?? "this map";
 	toolSheet(p, {
 		title,

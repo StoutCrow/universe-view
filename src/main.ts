@@ -9,7 +9,7 @@ if (typeof window.structuredClone !== "function") {
 	(window as { structuredClone?: <T>(v: T) => T }).structuredClone = <T>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
 }
 import { type ChronDate, type Entity, type EntityType } from "./types";
-import { ChronicleSettings, DEFAULT_SETTINGS, OLD_DEFAULT_MAP_CATEGORIES, FieldName, buildFieldAliases } from "./settings";
+import { UniverseViewSettings, DEFAULT_SETTINGS, OLD_DEFAULT_MAP_CATEGORIES, FieldName, buildFieldAliases } from "./settings";
 import { CalendarRegistry, daysFromCivil } from "./dates/calendars";
 import { formatDate, formatDay, parseDate } from "./dates/parser";
 import { EntityIndex } from "./index/EntityIndex";
@@ -79,7 +79,7 @@ import { DetectModal } from "./ui/DetectModal";
 import { SmartReaderModal } from "./ui/SmartReader";
 import { NormaliseTagsModal } from "./ui/NormaliseTags";
 import { GedcomModal } from "./ui/GedcomModal";
-import { ChronicleSettingTab } from "./ui/SettingsTab";
+import { UniverseViewSettingTab } from "./ui/SettingsTab";
 import { registerCodeBlocks } from "./codeblocks";
 import type { EntityFilter } from "./types";
 import { asText } from "./index/text";
@@ -119,8 +119,8 @@ const SNIPPETS: { name: string; text: string }[] = [
 	{ name: "Calendar", text: "```universeview-calendar\n# folder: World\n# mode: month (or year, agenda)\n```" },
 ];
 
-export default class ChroniclePlugin extends Plugin {
-	settings!: ChronicleSettings;
+export default class UniverseViewPlugin extends Plugin {
+	settings!: UniverseViewSettings;
 	calendars!: CalendarRegistry;
 	index!: EntityIndex;
 	hoverCards?: HoverCards;
@@ -183,7 +183,7 @@ export default class ChroniclePlugin extends Plugin {
 		};
 		// The open note at a glance (what it is, where it sits) in the status bar, which phones don't have.
 		this.refreshStatus = Platform.isMobile ? noop : this.safely("Status bar", () => statusBar(this), noop);
-		this.settingTab = new ChronicleSettingTab(this.app, this);
+		this.settingTab = new UniverseViewSettingTab(this.app, this);
 		this.addSettingTab(this.settingTab);
 
 		// Left sidebar: the overview is the main menu; each view also gets its own button
@@ -366,7 +366,7 @@ export default class ChroniclePlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = ((await this.loadData()) ?? {}) as Partial<ChronicleSettings> & Record<string, unknown>;
+		const data = ((await this.loadData()) ?? {}) as Partial<UniverseViewSettings> & Record<string, unknown>;
 		this.settings = {
 			...structuredClone(DEFAULT_SETTINGS),
 			...data,
@@ -763,7 +763,7 @@ export default class ChroniclePlugin extends Plugin {
 	exportGedcomPrompt() {
 		const scopes = ["", ...this.index.topFolders()];
 		class ScopeModal extends SuggestModal<string> {
-			constructor(readonly plugin: ChroniclePlugin) {
+			constructor(readonly plugin: UniverseViewPlugin) {
 				super(plugin.app);
 			}
 			getSuggestions(q: string) {
@@ -812,7 +812,7 @@ export default class ChroniclePlugin extends Plugin {
 			return;
 		}
 		class WorldModal extends SuggestModal<string> {
-			constructor(readonly plugin: ChroniclePlugin) {
+			constructor(readonly plugin: UniverseViewPlugin) {
 				super(plugin.app);
 			}
 			getSuggestions(q: string) {
@@ -831,7 +831,7 @@ export default class ChroniclePlugin extends Plugin {
 		m.open();
 	}
 
-	settingTab?: ChronicleSettingTab;
+	settingTab?: UniverseViewSettingTab;
 	private ribbonButtons = new Map<string, HTMLElement>();
 	private syncExplorerButton?: () => void;
 
@@ -945,7 +945,7 @@ export default class ChroniclePlugin extends Plugin {
 
 	pickSavedView() {
 		class ViewsModal extends SuggestModal<SavedView> {
-			constructor(readonly plugin: ChroniclePlugin) {
+			constructor(readonly plugin: UniverseViewPlugin) {
 				super(plugin.app);
 			}
 			getSuggestions(q: string) {
@@ -953,7 +953,7 @@ export default class ChroniclePlugin extends Plugin {
 			}
 			renderSuggestion(s: SavedView, elx: HTMLElement) {
 				elx.createDiv({ text: s.name });
-				elx.createDiv({ text: VIEWS.find((x) => x.type === s.type)?.name ?? s.type, cls: "chronicle-suggest-sub" });
+				elx.createDiv({ text: VIEWS.find((x) => x.type === s.type)?.name ?? s.type, cls: "universeview-suggest-sub" });
 			}
 			onChooseSuggestion(s: SavedView, evt: MouseEvent | KeyboardEvent) {
 				const plugin = this.plugin;
@@ -1285,7 +1285,7 @@ export default class ChroniclePlugin extends Plugin {
 
 	private historyChanged(fromHistory = false) {
 		if (!fromHistory) this.redoSteps.length = 0;
-		this.app.workspace.trigger("chronicle:history-changed");
+		this.app.workspace.trigger("universeview:history-changed");
 		this.saveHistorySoon();
 	}
 
@@ -1919,7 +1919,7 @@ export default class ChroniclePlugin extends Plugin {
 				const s = this.settings;
 				const all = [...BUILT_IN_PRESETS, ...(s.mapPresets ?? [])];
 				const picker = new (class extends FuzzySuggestModal<MapPreset> {
-					constructor(readonly plugin: ChroniclePlugin) {
+					constructor(readonly plugin: UniverseViewPlugin) {
 						super(plugin.app);
 					}
 					getItems() {
@@ -2177,7 +2177,7 @@ export default class ChroniclePlugin extends Plugin {
 	 * UniverseView's part of a note's right-click menu, in one block: Inspect first, then the views it
 	 * shows in, then adding to it, then its icon. `section` keeps a folder's own block apart from these.
 	 */
-	private addNoteItems(menu: Menu, file: TFile, section = "chronicle", label?: string) {
+	private addNoteItems(menu: Menu, file: TFile, section = "universeview", label?: string) {
 		const e = this.index.get(file.path);
 		const item = (title: string, icon: string, run: () => void) =>
 			menu.addItem((i) => i.setTitle(title).setIcon(icon).setSection(section).onClick(run));
@@ -2194,7 +2194,7 @@ export default class ChroniclePlugin extends Plugin {
 	}
 
 	/** Right-click items for a folder: open each view limited to it (one folder per world). */
-	private addFolderItems(menu: Menu, folder: TFolder, section = "chronicle") {
+	private addFolderItems(menu: Menu, folder: TFolder, section = "universeview") {
 		const top = folder.path.split("/")[0];
 		const scope = folder.isRoot() ? "" : top;
 		const name = folder.isRoot() ? "the whole vault" : `“${top}”`;
@@ -2215,8 +2215,8 @@ export default class ChroniclePlugin extends Plugin {
 					// A folder with a folder note stands for that note (House Whitmore's folder is House Whitmore),
 					// whichever plugin handles folder notes.
 					const note = folderNoteOf(this, file);
-					if (note) this.addNoteItems(menu, note, "chronicle", this.index.get(note.path)?.name ?? note.basename);
-					this.addFolderItems(menu, file, note ? "chronicle-folder" : "chronicle");
+					if (note) this.addNoteItems(menu, note, "universeview", this.index.get(note.path)?.name ?? note.basename);
+					this.addFolderItems(menu, file, note ? "universeview-folder" : "universeview");
 				}
 			}),
 		);
@@ -2233,7 +2233,7 @@ function round2(n: number): number {
 }
 
 class SnippetModal extends SuggestModal<{ name: string; text: string }> {
-	constructor(plugin: ChroniclePlugin, private editor: Editor) {
+	constructor(plugin: UniverseViewPlugin, private editor: Editor) {
 		super(plugin.app);
 		this.setPlaceholder("Which view should be embedded?");
 	}

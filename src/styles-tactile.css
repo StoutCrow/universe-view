@@ -26,10 +26,10 @@ body.theme-dark {
 }
 
 /* ---- Keys: chips, icon buttons and the page buttons are raised; on is pressed in ---- */
-body.uv-t-keys .chronicle-chip:not(.mod-cta-chip),
-body.uv-t-keys .chronicle-icon-btn:not(.mod-cta-icon),
-body.uv-t-keys .chronicle-ov-action,
-body.uv-t-keys .chronicle-dash-actions button:not(.mod-cta),
+body.uv-t-keys .universeview-chip:not(.mod-cta-chip),
+body.uv-t-keys .universeview-icon-btn:not(.mod-cta-icon),
+body.uv-t-keys .universeview-ov-action,
+body.uv-t-keys .universeview-dash-actions button:not(.mod-cta),
 body.uv-t-keys .uv-tour-foot button:not(.mod-cta),
 body.uv-t-keys .uv-lin-chip {
 	background: var(--uv-t-face);
@@ -38,25 +38,25 @@ body.uv-t-keys .uv-lin-chip {
 	box-shadow: var(--uv-t-raised);
 	color: var(--text-normal);
 }
-body.uv-t-keys .chronicle-chip:not(.mod-cta-chip):hover,
-body.uv-t-keys .chronicle-icon-btn:not(.mod-cta-icon):hover,
-body.uv-t-keys .chronicle-ov-action:hover,
-body.uv-t-keys .chronicle-dash-actions button:not(.mod-cta):hover {
+body.uv-t-keys .universeview-chip:not(.mod-cta-chip):hover,
+body.uv-t-keys .universeview-icon-btn:not(.mod-cta-icon):hover,
+body.uv-t-keys .universeview-ov-action:hover,
+body.uv-t-keys .universeview-dash-actions button:not(.mod-cta):hover {
 	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-top) 85%, white), var(--uv-t-top));
 }
-body.uv-t-keys .chronicle-chip.is-active,
-body.uv-t-keys .chronicle-icon-btn.is-active,
-body.uv-t-keys .chronicle-chip:not(.mod-cta-chip):active,
-body.uv-t-keys .chronicle-icon-btn:not(.mod-cta-icon):active,
+body.uv-t-keys .universeview-chip.is-active,
+body.uv-t-keys .universeview-icon-btn.is-active,
+body.uv-t-keys .universeview-chip:not(.mod-cta-chip):active,
+body.uv-t-keys .universeview-icon-btn:not(.mod-cta-icon):active,
 body.uv-t-keys .uv-lin-chip.is-active {
 	background: var(--uv-t-sunk);
 	box-shadow: var(--uv-t-pressed);
 	transform: none;
 }
 /* The one main button keeps the accent, with a gloss on top. */
-body.uv-t-keys .chronicle-icon-btn.mod-cta-icon,
-body.uv-t-keys .chronicle-chip.mod-cta-chip,
-body.uv-t-keys .chronicle-dash-actions button.mod-cta,
+body.uv-t-keys .universeview-icon-btn.mod-cta-icon,
+body.uv-t-keys .universeview-chip.mod-cta-chip,
+body.uv-t-keys .universeview-dash-actions button.mod-cta,
 body.uv-t-keys .uv-tour-foot button.mod-cta {
 	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 60%);
 	border: 1px solid color-mix(in srgb, var(--interactive-accent) 70%, black);
@@ -64,17 +64,17 @@ body.uv-t-keys .uv-tour-foot button.mod-cta {
 }
 
 /* ---- The toolbar: a raised strip ---- */
-body.uv-t-toolbar .chronicle-toolbar {
+body.uv-t-toolbar .universeview-toolbar {
 	background: var(--uv-t-face);
 	border-bottom: 1px solid var(--uv-t-edge);
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 3px -1px var(--uv-t-lo);
 }
 
 /* ---- Fields: recessed ---- */
-body.uv-t-fields .chronicle-toolbar .dropdown,
-body.uv-t-fields .chronicle-picker input,
-body.uv-t-fields .chronicle-toolbar .chronicle-search input,
-body.uv-t-fields .chronicle-dash-tree-head .chronicle-search input {
+body.uv-t-fields .universeview-toolbar .dropdown,
+body.uv-t-fields .universeview-picker input,
+body.uv-t-fields .universeview-toolbar .universeview-search input,
+body.uv-t-fields .universeview-dash-tree-head .universeview-search input {
 	background: var(--uv-t-sunk);
 	border: 1px solid var(--uv-t-edge);
 	box-shadow: var(--uv-t-inset);
@@ -90,7 +90,7 @@ body.uv-t-tabs .uv-hub-tabs {
 	gap: 4px;
 }
 body.uv-t-tabs button.uv-hub-tab,
-body.uv-t-tabs .chronicle-insp-tab {
+body.uv-t-tabs .universeview-insp-tab {
 	height: 34px;
 	margin-bottom: -1px;
 	padding: 0 14px;
@@ -102,12 +102,12 @@ body.uv-t-tabs .chronicle-insp-tab {
 	color: var(--text-muted);
 }
 body.uv-t-tabs button.uv-hub-tab:hover,
-body.uv-t-tabs .chronicle-insp-tab:hover {
+body.uv-t-tabs .universeview-insp-tab:hover {
 	background: var(--uv-t-face);
 	color: var(--text-normal);
 }
 body.uv-t-tabs button.uv-hub-tab.is-active,
-body.uv-t-tabs .chronicle-insp-tab.is-active {
+body.uv-t-tabs .universeview-insp-tab.is-active {
 	position: relative;
 	z-index: 1;
 	background: var(--background-primary);
@@ -115,7 +115,7 @@ body.uv-t-tabs .chronicle-insp-tab.is-active {
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 -1px 3px -1px var(--uv-t-lo);
 	color: var(--text-normal);
 }
-body.uv-t-tabs .chronicle-insp-tabs {
+body.uv-t-tabs .universeview-insp-tabs {
 	gap: 4px;
 	padding: 0 6px;
 	border-bottom: 1px solid var(--uv-t-edge);
@@ -142,20 +142,20 @@ body.uv-t-tabs button.uv-hub-section.is-active {
 }
 
 /* ---- Panels: raised sheets; the inspector's sections are wells set into the page ---- */
-body.uv-t-panels .chronicle-module,
-body.uv-t-panels .chronicle-dash-card,
-body.uv-t-panels .chronicle-ov-panel {
+body.uv-t-panels .universeview-module,
+body.uv-t-panels .universeview-dash-card,
+body.uv-t-panels .universeview-ov-panel {
 	padding: 12px 14px;
 	background: var(--background-primary);
 	border: 1px solid var(--uv-t-edge);
 	border-radius: var(--uv-r-lg);
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 0 var(--uv-t-lo), 0 6px 14px -9px var(--uv-t-lo);
 }
-body.uv-t-panels .chronicle-module {
+body.uv-t-panels .universeview-module {
 	padding: 0;
 }
-body.uv-t-panels .chronicle-inspector .chronicle-insp-section,
-body.uv-t-panels .chronicle-ep .chronicle-ep-section {
+body.uv-t-panels .universeview-inspector .universeview-insp-section,
+body.uv-t-panels .universeview-ep .universeview-ep-section {
 	margin: 6px 0;
 	padding: 10px 12px;
 	background: var(--uv-t-sunk);
@@ -163,7 +163,7 @@ body.uv-t-panels .chronicle-ep .chronicle-ep-section {
 	border-radius: var(--uv-r-lg);
 	box-shadow: var(--uv-t-inset);
 }
-body.uv-t-panels .chronicle-inspector .chronicle-insp-section:first-child {
+body.uv-t-panels .universeview-inspector .universeview-insp-section:first-child {
 	border-top: 1px solid var(--uv-t-edge);
 }
 body.uv-t-panels .uv-id {
@@ -175,28 +175,28 @@ body.uv-t-panels .uv-id {
 }
 
 /* ---- Headings are pressed into the surface ---- */
-body.uv-t-headings .chronicle-dash-card-title,
-body.uv-t-headings .chronicle-ov-panel-head h3,
-body.uv-t-headings .chronicle-module-title,
+body.uv-t-headings .universeview-dash-card-title,
+body.uv-t-headings .universeview-ov-panel-head h3,
+body.uv-t-headings .universeview-module-title,
 body.uv-t-headings .uv-id-name,
-body.uv-t-headings .chronicle-ov-title {
+body.uv-t-headings .universeview-ov-title {
 	text-shadow: 0 1px 0 var(--uv-t-hi);
 }
 
 /* ---- Icons: each one sits on a small raised plate (the quiet styles drop most icons; tactile keeps them) ---- */
 body.uv-t-icons :is(
-	.chronicle-ov-tile-icon,
-	.chronicle-ov-action > span:first-child,
-	.chronicle-ov-panel-head > span:first-child,
-	.chronicle-dash-card-icon,
-	.chronicle-dash-btn-icon,
-	.chronicle-module-icon,
-	.chronicle-stat-icon,
-	.chronicle-ep-tile-icon,
+	.universeview-ov-tile-icon,
+	.universeview-ov-action > span:first-child,
+	.universeview-ov-panel-head > span:first-child,
+	.universeview-dash-card-icon,
+	.universeview-dash-btn-icon,
+	.universeview-module-icon,
+	.universeview-stat-icon,
+	.universeview-ep-tile-icon,
 	.uv-lin-chip-icon,
-	.chronicle-inspector .chronicle-insp-section-head > span:first-child,
-	.chronicle-ep .chronicle-ep-section-head > span:first-child,
-	.chronicle-insp-tab > span:first-child:not(:last-child),
+	.universeview-inspector .universeview-insp-section-head > span:first-child,
+	.universeview-ep .universeview-ep-section-head > span:first-child,
+	.universeview-insp-tab > span:first-child:not(:last-child),
 	.uv-hub-section-icon
 ) {
 	display: inline-flex;
@@ -212,25 +212,25 @@ body.uv-t-icons :is(
 	color: var(--text-muted);
 }
 body.uv-t-icons :is(
-	.chronicle-ov-tile-icon,
-	.chronicle-ov-action > span:first-child,
-	.chronicle-ov-panel-head > span:first-child,
-	.chronicle-dash-card-icon,
-	.chronicle-dash-btn-icon,
-	.chronicle-module-icon,
-	.chronicle-stat-icon,
-	.chronicle-ep-tile-icon,
+	.universeview-ov-tile-icon,
+	.universeview-ov-action > span:first-child,
+	.universeview-ov-panel-head > span:first-child,
+	.universeview-dash-card-icon,
+	.universeview-dash-btn-icon,
+	.universeview-module-icon,
+	.universeview-stat-icon,
+	.universeview-ep-tile-icon,
 	.uv-lin-chip-icon,
-	.chronicle-inspector .chronicle-insp-section-head > span:first-child,
-	.chronicle-ep .chronicle-ep-section-head > span:first-child,
-	.chronicle-insp-tab > span:first-child:not(:last-child),
+	.universeview-inspector .universeview-insp-section-head > span:first-child,
+	.universeview-ep .universeview-ep-section-head > span:first-child,
+	.universeview-insp-tab > span:first-child:not(:last-child),
 	.uv-hub-section-icon
 ) svg {
 	width: 14px;
 	height: 14px;
 }
-body.uv-t-icons .chronicle-dash-btn-icon,
-body.uv-t-icons .chronicle-ov-action > span:first-child {
+body.uv-t-icons .universeview-dash-btn-icon,
+body.uv-t-icons .universeview-ov-action > span:first-child {
 	width: 20px;
 	height: 20px;
 }
@@ -238,12 +238,12 @@ body.uv-t-icons .uv-hub-section-icon {
 	width: 28px;
 	height: 28px;
 }
-body.uv-t-icons .chronicle-stat-icon {
+body.uv-t-icons .universeview-stat-icon {
 	margin-bottom: 4px;
 }
 
 /* ---- Folders in the Library and the Files panel: manila folders with a tab; notes are sheets of paper ---- */
-body.uv-t-folders .chronicle-dash-row.is-folder:not(.is-selected):not(.is-drop-target) {
+body.uv-t-folders .universeview-dash-row.is-folder:not(.is-selected):not(.is-drop-target) {
 	position: relative;
 	margin-top: 4px;
 	background: linear-gradient(to bottom, color-mix(in srgb, var(--uv-t-folder, #e6c57e) 34%, var(--background-primary)), color-mix(in srgb, var(--uv-t-folder, #d2a851) 20%, var(--background-primary)));
@@ -251,7 +251,7 @@ body.uv-t-folders .chronicle-dash-row.is-folder:not(.is-selected):not(.is-drop-t
 	border-radius: 0 var(--uv-r-md) var(--uv-r-md) var(--uv-r-md);
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 1px var(--uv-t-lo);
 }
-body.uv-t-folders .chronicle-dash-row.is-folder:not(.is-selected):not(.is-drop-target)::before {
+body.uv-t-folders .universeview-dash-row.is-folder:not(.is-selected):not(.is-drop-target)::before {
 	content: "";
 	position: absolute;
 	left: -1px;
@@ -264,25 +264,25 @@ body.uv-t-folders .chronicle-dash-row.is-folder:not(.is-selected):not(.is-drop-t
 	background: color-mix(in srgb, var(--uv-t-folder, #e6c57e) 34%, var(--background-primary));
 	pointer-events: none;
 }
-body.uv-t-folders .chronicle-dash-row.is-folder .chronicle-dash-row-icon {
+body.uv-t-folders .universeview-dash-row.is-folder .universeview-dash-row-icon {
 	color: color-mix(in srgb, #b8872a 80%, var(--text-normal));
 }
-body.uv-t-folders .chronicle-dash-row.is-file:not(.uv-file-tinted):not(.is-selected) {
+body.uv-t-folders .universeview-dash-row.is-file:not(.uv-file-tinted):not(.is-selected) {
 	border-bottom: 1px solid var(--uv-t-edge);
 	border-radius: 0;
 	box-shadow: inset 0 1px 0 var(--uv-t-hi);
 }
 
 /* ---- The file explorer (Library tree and Files panel): every part reaches it ---- */
-body.uv-t-fields .uv-files .chronicle-search input,
-body.uv-t-fields .chronicle-dash-tree .chronicle-search input,
-body.uv-t-fields .chronicle-dash-tree-head input {
+body.uv-t-fields .uv-files .universeview-search input,
+body.uv-t-fields .universeview-dash-tree .universeview-search input,
+body.uv-t-fields .universeview-dash-tree-head input {
 	background: var(--uv-t-sunk);
 	border: 1px solid var(--uv-t-edge);
 	box-shadow: var(--uv-t-inset);
 }
-body.uv-t-panels .uv-files .chronicle-dash-list,
-body.uv-t-panels .chronicle-dash-tree .chronicle-dash-list {
+body.uv-t-panels .uv-files .universeview-dash-list,
+body.uv-t-panels .universeview-dash-tree .universeview-dash-list {
 	margin-top: 6px;
 	padding: 6px;
 	background: var(--uv-t-sunk);
@@ -290,17 +290,17 @@ body.uv-t-panels .chronicle-dash-tree .chronicle-dash-list {
 	border-radius: var(--uv-r-md);
 	box-shadow: var(--uv-t-inset);
 }
-body.uv-t-keys .chronicle-dash-row.is-selected {
+body.uv-t-keys .universeview-dash-row.is-selected {
 	box-shadow: var(--uv-t-pressed);
 }
-body.uv-t-icons .chronicle-dash-row.is-file .chronicle-dash-row-icon {
+body.uv-t-icons .universeview-dash-row.is-file .universeview-dash-row-icon {
 	padding: 2px;
 	background: linear-gradient(to bottom, var(--uv-t-top), var(--uv-t-bottom));
 	border: 1px solid var(--uv-t-edge);
 	border-radius: var(--uv-r-sm);
 	box-shadow: var(--uv-t-raised);
 }
-body.uv-t-folders .chronicle-dash-row.is-file.uv-file-tinted:not(.is-selected) {
+body.uv-t-folders .universeview-dash-row.is-file.uv-file-tinted:not(.is-selected) {
 	border-radius: var(--uv-r-sm);
 	box-shadow: inset 0 1px 0 var(--uv-t-hi), 0 1px 1px var(--uv-t-lo);
 }
@@ -370,7 +370,7 @@ body.uv-t-tabs .uv-subtab.is-on {
 	margin: 16px 0 8px;
 	font-size: var(--font-ui-small);
 }
-.uv-tour-body .chronicle-theme-grid {
+.uv-tour-body .universeview-theme-grid {
 	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 	gap: 10px;
 	margin: 8px 0 0;

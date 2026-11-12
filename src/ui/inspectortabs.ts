@@ -1,5 +1,5 @@
 import { Notice, TFile, TFolder } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, Territory } from "../types";
 import { chainOf, descendantsOf, tierLabel } from "../index/realms";
 import { validate } from "../index/validate";
@@ -25,22 +25,22 @@ interface Ctx {
 }
 
 function section(body: HTMLElement, title: string, ic: string, help?: string): HTMLElement {
-	const s = el("section", { cls: "chronicle-insp-section" }, body);
-	const h = el("div", { cls: "chronicle-insp-section-head" }, s);
+	const s = el("section", { cls: "universeview-insp-section" }, body);
+	const h = el("div", { cls: "universeview-insp-section-head" }, s);
 	icon(el("span", {}, h), ic);
 	el("span", { text: title }, h);
 	if (help) helpTip(h, help);
 	return s;
 }
 
-function chips(p: ChroniclePlugin, parent: HTMLElement, keys: string[], ctx: Ctx, sub?: (k: string) => string | undefined) {
-	const box = el("div", { cls: "chronicle-ep chronicle-ep-people" }, parent);
+function chips(p: UniverseViewPlugin, parent: HTMLElement, keys: string[], ctx: Ctx, sub?: (k: string) => string | undefined) {
+	const box = el("div", { cls: "universeview-ep universeview-ep-people" }, parent);
 	for (const k of keys) noteChip(p, box, { key: k, name: p.index.get(k)?.name ?? k }, { pick: ctx.pick, host: ctx.host }, sub?.(k));
 	return box;
 }
 
 function actions(parent: HTMLElement) {
-	const row = el("div", { cls: "chronicle-insp-actions" }, parent);
+	const row = el("div", { cls: "universeview-insp-actions" }, parent);
 	return (ic: string, label: string, run: () => void) => {
 		const b = el("button", {}, row);
 		icon(el("span", {}, b), ic);
@@ -51,7 +51,7 @@ function actions(parent: HTMLElement) {
 }
 
 /** Which tabs a note has: only the ones with something to show. */
-export function tabsFor(p: ChroniclePlugin, e: Entity): InspectorTab[] {
+export function tabsFor(p: UniverseViewPlugin, e: Entity): InspectorTab[] {
 	const out: InspectorTab[] = ["about", "edit"];
 	if (e.type !== "map" && (e.start || p.index.events(e.key).length)) out.push("timeline");
 	const node = p.realms().nodes.get(e.key);
@@ -71,7 +71,7 @@ export const TAB_INFO: Record<Exclude<InspectorTab, "edit">, [string, string]> =
 // ---- Timeline -----------------------------------------------------------------------------------
 
 /** Its own dates, then every event it's part of, in order, with how old a person was at each. */
-export function timelineTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
+export function timelineTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
 	const cal = p.calendars.get(e.calendar);
 	if (e.start) {
 		const s = section(body, "Span", "hourglass");
@@ -79,7 +79,7 @@ export function timelineTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ct
 	}
 	const evs = p.index.events(e.key).filter((x) => x.start).sort((a, b) => a.start!.start - b.start!.start);
 	const s = section(body, `Events (${evs.length})`, "calendar-range", "Every event that names this note: as a participant, a place, a group, or what caused or followed it.");
-	if (!evs.length) el("div", { cls: "chronicle-dash-muted", text: "No dated events name this note yet." }, s);
+	if (!evs.length) el("div", { cls: "universeview-dash-muted", text: "No dated events name this note yet." }, s);
 	const list = el("div", { cls: "uv-insp-timeline" }, s);
 	for (const ev of evs) {
 		const row = el("div", { cls: "uv-insp-tl-row", attr: { role: "button", tabindex: "0" } }, list);
@@ -99,11 +99,11 @@ export function timelineTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ct
 // ---- Map ------------------------------------------------------------------------------------------
 
 /** Where it is: an outline, its pin and areas, the lands inside it, and ways to draw or split them. */
-export function mapTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
+export function mapTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
 	const tree = p.realms();
 	const node = tree.nodes.get(e.key);
 	const s = section(body, "Where", "map", "Its own borders filled in, the realm or region it lies in drawn dashed around them.");
-	if (!miniMap(p, s, e)) el("div", { cls: "chronicle-dash-muted", text: e.territories.length ? "Its areas are on a map that isn't open here." : "No borders drawn yet." }, s);
+	if (!miniMap(p, s, e)) el("div", { cls: "universeview-dash-muted", text: e.territories.length ? "Its areas are on a map that isn't open here." : "No borders drawn yet." }, s);
 	const facts = el("div", { cls: "uv-insp-facts" }, s);
 	const fact = (k: string, v: string) => {
 		el("span", { cls: "uv-insp-fact-key", text: k }, facts);
@@ -144,7 +144,7 @@ export function mapTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: Ct
  * applies, new borders from a date, grow to the neighbours, remove), and the tools for new land.
  * The same forms as right-clicking an area on the map.
  */
-function bordersCard(p: ChroniclePlugin, body: HTMLElement, e: Entity) {
+function bordersCard(p: UniverseViewPlugin, body: HTMLElement, e: Entity) {
 	const s = section(body, `Borders${e.territories.length ? ` (${e.territories.length})` : ""}`, "hexagon", "Each area this note has on a map, with when it applies. Borders can change over time: give an area dates, or new borders from a date. Reshaping, growing and splitting open the map on that area.");
 	s.addClass("uv-borders");
 	const cal = p.calendars.get(e.calendar);
@@ -155,7 +155,7 @@ function bordersCard(p: ChroniclePlugin, body: HTMLElement, e: Entity) {
 		const n = e.territories.slice(0, i).filter((x) => x.map === m || x.map === "*").length;
 		byMap.set(m, [...(byMap.get(m) ?? []), { t, n }]);
 	});
-	if (!e.territories.length) el("div", { cls: "chronicle-dash-muted", text: "No borders drawn yet. Draw them on a map, or fill them from its coasts and borders." }, s);
+	if (!e.territories.length) el("div", { cls: "universeview-dash-muted", text: "No borders drawn yet. Draw them on a map, or fill them from its coasts and borders." }, s);
 	for (const [m, list] of byMap) {
 		const mapName = m === "world" ? "World map" : m === "*" ? "Any map" : p.index.get(m)?.name ?? m;
 		const group = el("div", { cls: "uv-borders-map" }, s);
@@ -212,7 +212,7 @@ function bordersCard(p: ChroniclePlugin, body: HTMLElement, e: Entity) {
 // ---- Links ----------------------------------------------------------------------------------------
 
 /** What it links to and what links to it, by kind; members of a group; notes that only mention it. */
-export function linksTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
+export function linksTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
 	const idx = p.index;
 	const keys = (refs: { key: string; resolved: boolean }[]) => [...new Set(refs.filter((r) => r.resolved).map((r) => r.key))];
 	const group = (title: string, ic: string, list: string[], sub?: (k: string) => string | undefined) => {
@@ -233,7 +233,7 @@ export function linksTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: 
 	const rels = e.relations.filter((r) => r.ref.resolved);
 	if (rels.length) {
 		const s = section(body, `Relationships (${rels.length})`, "git-merge");
-		const box = el("div", { cls: "chronicle-ep chronicle-ep-people" }, s);
+		const box = el("div", { cls: "universeview-ep universeview-ep-people" }, s);
 		for (const r of rels) noteChip(p, box, r.ref, { pick: ctx.pick, host: ctx.host }, r.kind ?? r.role);
 	}
 	// Every other note that links here.
@@ -257,7 +257,7 @@ export function linksTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: 
 // ---- Note -----------------------------------------------------------------------------------------
 
 /** How UniverseView reads the note, where it's filed and where it belongs, and anything wrong with it. */
-export function noteTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
+export function noteTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ctx: Ctx) {
 	const tree = p.realms();
 	const node = tree.nodes.get(e.key);
 	// Every way this note is known and found: names, ids, its file and how it's linked.
@@ -326,11 +326,11 @@ export function noteTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: C
 		const note = folderNoteOf(p, path);
 		const c = el(note ? "a" : "span", { text: part }, crumbs);
 		if (note) c.addEventListener("click", () => ctx.pick(note.path));
-		if (i < parts.length - 1) el("span", { cls: "chronicle-dash-muted", text: " › " }, crumbs);
+		if (i < parts.length - 1) el("span", { cls: "universeview-dash-muted", text: " › " }, crumbs);
 	});
 	const act = actions(where);
 	if (file instanceof TFile) {
-		if (isFolderNote(file)) el("div", { cls: "chronicle-dash-muted", text: "This is its folder's note: the folder stands for it." }, where);
+		if (isFolderNote(file)) el("div", { cls: "universeview-dash-muted", text: "This is its folder's note: the folder stands for it." }, where);
 		else if (e.type === "place" || node) act("folder-input", "Turn into folder note", () => void makeFolderNote(p, file).catch((err: Error) => new Notice(err.message)));
 		const pl = placementFor(p, e.type, entityLinks(p, e));
 		const here = file.parent?.path ?? "";
@@ -348,6 +348,6 @@ export function noteTab(p: ChroniclePlugin, body: HTMLElement, e: Entity, ctx: C
 
 	const issues = validate(p.index).filter((i) => i.key === e.key);
 	const probs = section(body, issues.length ? `Problems (${issues.length})` : "Problems", "shield-check");
-	if (!issues.length) el("div", { cls: "chronicle-dash-muted", text: "Nothing wrong found." }, probs);
+	if (!issues.length) el("div", { cls: "universeview-dash-muted", text: "Nothing wrong found." }, probs);
 	for (const i of issues) el("div", { cls: `uv-insp-issue is-${i.severity}`, text: i.message }, probs);
 }

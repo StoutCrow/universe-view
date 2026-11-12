@@ -9,7 +9,7 @@ import { ribbon, smoothLine } from "../index/ribbon";
 import { landFill, thinWater } from "./landfill";
 import { formatDay, parseDate } from "../dates/parser";
 import { TextPrompt } from "../ui/TextPrompt";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, PinSize, Territory } from "../types";
 import { CATEGORY_SCALE, PinColorBy, parseMapCategories, placeCategories } from "../settings";
 import { styleKeyOf } from "../index/placekinds";
@@ -302,12 +302,12 @@ export class MapRenderer {
 
 	constructor(
 		private container: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		public options: MapOptions,
 		private embedded = false,
 	) {
-		this.root = el("div", { cls: "chronicle-map" + (embedded ? " is-embedded" : "") }, container);
-		this.mapEl = el("div", { cls: "chronicle-map-canvas" }, this.root);
+		this.root = el("div", { cls: "universeview-map" + (embedded ? " is-embedded" : "") }, container);
+		this.mapEl = el("div", { cls: "universeview-map-canvas" }, this.root);
 		// Leaflet makes its box position: relative unless it is already positioned (it may not be in the page yet).
 		this.mapEl.setCssStyles({ position: "absolute" });
 		this.resizeObs = new ResizeObserver(() => {
@@ -336,7 +336,7 @@ export class MapRenderer {
 	private showError(err: unknown) {
 		console.error("UniverseView map:", err);
 		this.lastError = String((err as Error)?.stack ?? (err as Error)?.message ?? err).slice(0, 600);
-		this.root.querySelector(".chronicle-empty")?.remove();
+		this.root.querySelector(".universeview-empty")?.remove();
 		emptyState(this.root, "alert-triangle", "The map couldn't load", String((err as Error)?.message ?? err));
 		this.showReport("The map couldn't load");
 	}
@@ -351,7 +351,7 @@ export class MapRenderer {
 		}
 		const box = this.mapEl.getBoundingClientRect();
 		const ok = !!this.map && box.width > 20 && box.height > 20;
-		if (!ok && !this.root.querySelector(".chronicle-empty")) this.showReport("The map hasn't appeared");
+		if (!ok && !this.root.querySelector(".universeview-empty")) this.showReport("The map hasn't appeared");
 	}
 
 	/** What to tell whoever's helping: version, device, sizes, how far the map got, and any error. */
@@ -453,7 +453,7 @@ export class MapRenderer {
 	private async render() {
 		const token = ++this.token;
 		const base = this.options.map;
-		this.root.querySelector(".chronicle-empty")?.remove();
+		this.root.querySelector(".universeview-empty")?.remove();
 		if (base !== this.currentBase || !this.map) {
 			this.endMode();
 			const ok = await this.createBase(base, token);
@@ -591,8 +591,8 @@ export class MapRenderer {
 		const size = copy ? undefined : await loadImageSize(url, Platform.isMobile ? 8000 : 30000);
 		if (token !== this.token || (!size && !copy)) return;
 		const picture = copy
-			? { layer: L.imageOverlay(this.plugin.app.vault.getResourcePath(copy), [[0, 0], [this.imageHeight, this.imageWidth]], { className: "chronicle-map-image is-swapping" }), tiled: false, shown: copy.path, note: undefined }
-			: await this.pictureLayer(path, url, size!, this.imageWidth, this.imageHeight, "chronicle-map-image is-swapping");
+			? { layer: L.imageOverlay(this.plugin.app.vault.getResourcePath(copy), [[0, 0], [this.imageHeight, this.imageWidth]], { className: "universeview-map-image is-swapping" }), tiled: false, shown: copy.path, note: undefined }
+			: await this.pictureLayer(path, url, size!, this.imageWidth, this.imageHeight, "universeview-map-image is-swapping");
 		if (token !== this.token) return;
 		this.showPictureNote(picture.note);
 		const next = picture.layer ?? L.layerGroup();
@@ -608,8 +608,8 @@ export class MapRenderer {
 			if (old && map.hasLayer(old)) map.removeLayer(old);
 		}, motionMs(this.plugin.settings, 400) + 50);
 		const era = this.plugin.index.get(this.options.map)?.mapImages?.find((x) => x.image === path);
-		this.root.querySelector(".chronicle-map-era")?.remove();
-		if (era?.name) el("div", { cls: "chronicle-map-era", text: era.name }, this.root);
+		this.root.querySelector(".universeview-map-era")?.remove();
+		if (era?.name) el("div", { cls: "universeview-map-era", text: era.name }, this.root);
 	}
 
 	private async createBase(base: string, token: number): Promise<boolean> {
@@ -639,7 +639,7 @@ export class MapRenderer {
 			[this.imageWidth, this.imageHeight] = noted;
 			const bounds: L.LatLngBoundsExpression = [[0, 0], [noted[1], noted[0]]];
 			const map = L.map(this.mapEl, { crs: L.CRS.Simple, minZoom: -5, maxZoom: 4, zoomSnap: 0.25, zoomDelta: 0.5, wheelDebounceTime: 90, wheelPxPerZoomLevel: 90, attributionControl: false, scrollWheelZoom: !this.embedded, maxBounds: L.latLngBounds(bounds).pad(0.5), zoomAnimation, fadeAnimation: zoomAnimation });
-			this.imageLayer = L.imageOverlay(this.plugin.app.vault.getResourcePath(copyOnly), bounds, { className: "chronicle-map-image" }).addTo(map);
+			this.imageLayer = L.imageOverlay(this.plugin.app.vault.getResourcePath(copyOnly), bounds, { className: "universeview-map-image" }).addTo(map);
 			this.currentImage = undefined;
 			this.shownImage = copyOnly.path;
 			map.fitBounds(bounds);
@@ -715,7 +715,7 @@ export class MapRenderer {
 	 * also saves its phone copy), its phone copy on a phone or tablet, or the picture as it is.
 	 * `note` says why a phone shows no picture.
 	 */
-	private async pictureLayer(path: string, url: string, size: [number, number], w: number, h: number, cls = "chronicle-map-image"): Promise<{ layer?: L.Layer; tiled: boolean; note?: string; shown?: string }> {
+	private async pictureLayer(path: string, url: string, size: [number, number], w: number, h: number, cls = "universeview-map-image"): Promise<{ layer?: L.Layer; tiled: boolean; note?: string; shown?: string }> {
 		const bounds: L.LatLngBoundsExpression = [[0, 0], [h, w]];
 		if (Platform.isMobile && tooBigForPhone(size)) {
 			const copy = phoneCopy(this.plugin, path);
@@ -748,7 +748,7 @@ export class MapRenderer {
 		if (!this.embedded) this.mapEl.addEventListener("touchstart", (evt) => evt.stopPropagation(), { passive: true });
 		// Panes of their own, stacked in styles-map.css: the heat map above the areas (Leaflet's overlay pane
 		// is 400), then realm borders, realm names and territory names, all under the pins.
-		for (const pane of ["chronicle-territory-labels", "chronicle-heat", "uv-realm-edges", "uv-realm-names"]) map.createPane(pane);
+		for (const pane of ["universeview-territory-labels", "universeview-heat", "uv-realm-edges", "uv-realm-names"]) map.createPane(pane);
 		this.heatLayer = L.layerGroup().addTo(map);
 		this.territoryLayer = L.layerGroup().addTo(map);
 		this.strategyLayer = L.layerGroup().addTo(map);
@@ -932,9 +932,9 @@ export class MapRenderer {
 		this.applyLayers();
 		this.root.toggleClass("has-few-pins", this.pins.length <= 20);
 		this.root.toggleClass("hide-labels", !this.options.showLabels);
-		this.root.querySelector(".chronicle-map-hint")?.remove();
+		this.root.querySelector(".universeview-map-hint")?.remove();
 		if (!this.pins.length && !this.embedded && !hidden.size) {
-			const hint = el("div", { cls: "chronicle-map-hint" }, this.root);
+			const hint = el("div", { cls: "universeview-map-hint" }, this.root);
 			hint.setText(
 				this.isImageMap
 					? "No places on this map yet. Right-click the map to add one, or use “Place a note” in the toolbar."
@@ -992,7 +992,7 @@ export class MapRenderer {
 	private makeMarker(place: Entity, ll: L.LatLngExpression, events: Entity[], group: Group, i: number, pinSize?: PinSize): L.Marker {
 		const size = events.length >= 8 ? "lg" : events.length >= 3 ? "md" : "sm";
 		const color = this.colorBy === "culture" || this.colorBy === "type" ? place.color ?? group.color : group.color;
-		const html = el("div", { cls: `chronicle-pin size-${size}` + (pinSize ? ` pin-size-${pinSize}` : "") + (place.importance >= 4 ? " is-important" : "") });
+		const html = el("div", { cls: `universeview-pin size-${size}` + (pinSize ? ` pin-size-${pinSize}` : "") + (place.importance >= 4 ? " is-important" : "") });
 		html.dataset.key = place.key;
 		html.style.setProperty("--pin-color", color);
 		if (pinSize) {
@@ -1003,7 +1003,7 @@ export class MapRenderer {
 		// Something is going on here at the time slider's date: the pin pulses.
 		const at = this.options.at;
 		if (at !== undefined && events.some((ev) => ev.start && ev.start.start <= at && (ev.end?.end ?? ev.start.end) + 45 >= at)) html.addClass("is-happening");
-		const dot = el("span", { cls: "chronicle-pin-dot" }, html);
+		const dot = el("span", { cls: "universeview-pin-dot" }, html);
 		// A sigil or crest wins; then a photo (when asked for); then the note's own icon; then its category's icon.
 		const firstCulture = place.cultures[0] ? this.plugin.index.get(place.cultures[0].ref.key) : undefined;
 		const photo = this.options.photoPins ? resourceUrl(this.plugin, place.image) : undefined;
@@ -1018,18 +1018,18 @@ export class MapRenderer {
 			html.addClass("has-glyph");
 			el("img", { attr: { src: logo, alt: "", draggable: "false" } }, dot);
 		} else if (iconName) {
-			const g = el("span", { cls: "chronicle-pin-glyph" }, dot);
+			const g = el("span", { cls: "universeview-pin-glyph" }, dot);
 			if (glyph(g, iconName)) {
 				dot.addClass("has-icon");
 				html.addClass("has-glyph");
 			}
 			else g.remove();
 		}
-		if (events.length) el("span", { cls: "chronicle-pin-count", text: String(events.length) }, html);
-		el("span", { cls: "chronicle-pin-label", text: nameAt(place, this.options.at) }, html);
-		const divIcon = L.divIcon({ html, className: "chronicle-pin-wrap", iconSize: [0, 0] });
+		if (events.length) el("span", { cls: "universeview-pin-count", text: String(events.length) }, html);
+		el("span", { cls: "universeview-pin-label", text: nameAt(place, this.options.at) }, html);
+		const divIcon = L.divIcon({ html, className: "universeview-pin-wrap", iconSize: [0, 0] });
 		const marker = L.marker(ll, { icon: divIcon, draggable: this.options.editable, title: "", riseOnHover: true, keyboard: true }).addTo(this.layers!);
-		marker.bindPopup(() => this.popup(place, events), { className: "chronicle-popup", maxWidth: 320, minWidth: 220, autoPanPadding: [40, 40] });
+		marker.bindPopup(() => this.popup(place, events), { className: "universeview-popup", maxWidth: 320, minWidth: 220, autoPanPadding: [40, 40] });
 		marker.on("contextmenu", (evt: L.LeafletMouseEvent) => {
 			L.DomEvent.stop(evt);
 			showEntityMenu(this.plugin, place.key, evt.originalEvent, {
@@ -1055,36 +1055,36 @@ export class MapRenderer {
 	private popup(place: Entity, events: Entity[]): HTMLElement {
 		this.plugin.hoverCards?.hide(true);
 		const cal = this.plugin.calendars.get(place.calendar);
-		const box = el("div", { cls: "chronicle-popup-body chronicle-scope" });
+		const box = el("div", { cls: "universeview-popup-body universeview-scope" });
 		const img = resourceUrl(this.plugin, place.image);
-		if (img) el("img", { cls: "chronicle-popup-image", attr: { src: img, alt: "" } }, box);
-		const title = el("a", { cls: "chronicle-popup-title internal-link", text: place.name }, box);
+		if (img) el("img", { cls: "universeview-popup-image", attr: { src: img, alt: "" } }, box);
+		const title = el("a", { cls: "universeview-popup-title internal-link", text: place.name }, box);
 		title.addEventListener("click", (evt) => openEntity(this.plugin, place.key, evt));
 		const meta: string[] = [];
 		if (place.category) meta.push(cap(place.category));
 		const span = formatSpan(place.start, place.end, cal);
 		if (span) meta.push(span);
-		if (meta.length) el("div", { cls: "chronicle-popup-meta", text: meta.join(" · ") }, box);
+		if (meta.length) el("div", { cls: "universeview-popup-meta", text: meta.join(" · ") }, box);
 		// Who it's under and who holds it; otherwise its groups, as before.
-		if (!ownershipLines(this.plugin, box, place.key, this.options.at, "chronicle-popup-meta chronicle-owner")) {
+		if (!ownershipLines(this.plugin, box, place.key, this.options.at, "universeview-popup-meta universeview-owner")) {
 			const cultures = place.cultures.filter((c) => this.options.at === undefined || activeAt(c, this.options.at)).map((c) => c.ref.name);
-			if (cultures.length) el("div", { cls: "chronicle-popup-meta", text: cultures.join(", ") }, box);
+			if (cultures.length) el("div", { cls: "universeview-popup-meta", text: cultures.join(", ") }, box);
 		}
 		const pop = totalPopulation(this.plugin.index, place.key);
-		if (pop) el("div", { cls: "chronicle-popup-meta", text: `Population ${pop.total.toLocaleString()}${pop.counted > 1 ? ` (${pop.counted} places)` : ""}` }, box);
-		if (place.summary) el("div", { cls: "chronicle-popup-summary", text: place.summary }, box);
+		if (pop) el("div", { cls: "universeview-popup-meta", text: `Population ${pop.total.toLocaleString()}${pop.counted > 1 ? ` (${pop.counted} places)` : ""}` }, box);
+		if (place.summary) el("div", { cls: "universeview-popup-summary", text: place.summary }, box);
 		if (events.length) {
-			el("div", { cls: "chronicle-popup-heading", text: `Events (${events.length})` }, box);
-			const list = el("ul", { cls: "chronicle-popup-events" }, box);
+			el("div", { cls: "universeview-popup-heading", text: `Events (${events.length})` }, box);
+			const list = el("ul", { cls: "universeview-popup-events" }, box);
 			for (const e of events.slice(0, 12)) {
 				const li = el("li", {}, list);
-				el("span", { cls: "chronicle-popup-date", text: formatDate(e.start, this.plugin.calendars.get(e.calendar)) }, li);
+				el("span", { cls: "universeview-popup-date", text: formatDate(e.start, this.plugin.calendars.get(e.calendar)) }, li);
 				const a = el("a", { cls: "internal-link", text: e.name }, li);
 				a.addEventListener("click", (evt) => openEntity(this.plugin, e.key, evt));
 			}
-			if (events.length > 12) el("li", { cls: "chronicle-popup-more", text: `+ ${events.length - 12} more` }, list);
+			if (events.length > 12) el("li", { cls: "universeview-popup-more", text: `+ ${events.length - 12} more` }, list);
 		}
-		const actions = el("div", { cls: "chronicle-popup-actions" }, box);
+		const actions = el("div", { cls: "universeview-popup-actions" }, box);
 		const tl = el("button", { text: "Timeline" }, actions);
 		tl.addEventListener("click", () => void this.plugin.openTimeline({ filter: { places: [place.name] } }));
 		const add = el("button", { text: "Add event here" }, actions);
@@ -1116,15 +1116,15 @@ export class MapRenderer {
 		const tree = this.plugin.realms(this.options.at);
 		const items: { label: HTMLElement; weight: number; name: string }[] = [];
 		for (const p of this.pins) {
-			const label = p.marker.getElement()?.querySelector(".chronicle-pin-label") as HTMLElement | null;
+			const label = p.marker.getElement()?.querySelector(".universeview-pin-label") as HTMLElement | null;
 			if (!label) continue;
 			const rank = tree.nodes.get(p.place.key)?.rank ?? 7;
-			const pinSize = /pin-size-(\w+)/.exec(p.marker.getElement()?.querySelector(".chronicle-pin")?.className ?? "")?.[1] ?? "";
+			const pinSize = /pin-size-(\w+)/.exec(p.marker.getElement()?.querySelector(".universeview-pin")?.className ?? "")?.[1] ?? "";
 			const size = ({ tiny: 0, small: 2, medium: 4, large: 7, huge: 10 } as Record<string, number>)[pinSize] ?? 3;
 			items.push({ label, weight: (10 - rank) * 15 + p.place.importance * 8 + size + Math.min(10, p.events.length), name: p.place.name });
 		}
 		// Territory names count by how big their land is on screen: a realm's name beats a town's.
-		for (const label of Array.from(this.root.querySelectorAll<HTMLElement>(".chronicle-territory-label"))) {
+		for (const label of Array.from(this.root.querySelectorAll<HTMLElement>(".universeview-territory-label"))) {
 			if (label.hasClass("is-tier-hidden") || label.hasClass("is-tiny")) continue;
 			const across = Number(label.dataset.across ?? 0);
 			items.push({ label, weight: 60 + Math.log2(Math.max(2, across)) * 12, name: label.textContent ?? "" });
@@ -1175,10 +1175,10 @@ export class MapRenderer {
 		const hidden = new Set(this.options.hidden ?? []);
 		const legend = new L.Control({ position: "bottomleft" });
 		legend.onAdd = () => {
-			const box = el("div", { cls: "chronicle-legend chronicle-scope" + (this.legendCollapsed ? " is-collapsed" : "") });
+			const box = el("div", { cls: "universeview-legend universeview-scope" + (this.legendCollapsed ? " is-collapsed" : "") });
 			L.DomEvent.disableClickPropagation(box);
 			L.DomEvent.disableScrollPropagation(box);
-			const head = el("div", { cls: "chronicle-legend-head" }, box);
+			const head = el("div", { cls: "universeview-legend-head" }, box);
 			const titles: Record<PinColorBy, string> = { realm: "Realms", region: "Realms", liege: "Held under", house: `Held by ${GROUP_KINDS.house.label.toLowerCase()}`, culture: "Groups", category: "Kinds of place", type: "" };
 			el("span", { text: titles[this.colorBy] }, head);
 			const legendHelp: Record<PinColorBy, string> = {
@@ -1191,26 +1191,26 @@ export class MapRenderer {
 				type: "",
 			};
 			if (legendHelp[this.colorBy]) helpTip(head, legendHelp[this.colorBy]);
-			const chev = el("span", { cls: "chronicle-legend-chev" }, head);
+			const chev = el("span", { cls: "universeview-legend-chev" }, head);
 			icon(chev, "chevron-down");
 			head.addEventListener("click", () => {
 				this.legendCollapsed = !this.legendCollapsed;
 				box.toggleClass("is-collapsed", this.legendCollapsed);
 			});
-			const list = el("div", { cls: "chronicle-legend-list" }, box);
+			const list = el("div", { cls: "universeview-legend-list" }, box);
 			for (const g of [...groups.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))) {
-				const row = el("button", { cls: "chronicle-legend-row" + (hidden.has(g.id) ? " is-off" : "") }, list);
-				const sw = el("span", { cls: "chronicle-legend-swatch" }, row);
+				const row = el("button", { cls: "universeview-legend-row" + (hidden.has(g.id) ? " is-off" : "") }, list);
+				const sw = el("span", { cls: "universeview-legend-swatch" }, row);
 				sw.style.setProperty("--pin-color", g.color);
 				if (g.icon) glyph(sw, g.icon);
-				const text = el("span", { cls: "chronicle-legend-label" }, row);
+				const text = el("span", { cls: "universeview-legend-label" }, row);
 				el("span", { text: g.label }, text);
-				if (g.detail) el("span", { cls: "chronicle-legend-detail", text: g.detail }, text);
-				el("span", { cls: "chronicle-legend-count", text: String(g.count) }, row);
+				if (g.detail) el("span", { cls: "universeview-legend-detail", text: g.detail }, text);
+				el("span", { cls: "universeview-legend-count", text: String(g.count) }, row);
 				if (g.target) {
 					const key = g.target;
 					bindHover(this.plugin, text, key, this.root);
-					const go = el("span", { cls: "chronicle-legend-go clickable-icon", attr: { "aria-label": `Show ${g.label}` } }, row);
+					const go = el("span", { cls: "universeview-legend-go clickable-icon", attr: { "aria-label": `Show ${g.label}` } }, row);
 					icon(go, "locate-fixed");
 					go.addEventListener("click", (evt) => {
 						evt.stopPropagation();
@@ -1377,7 +1377,7 @@ export class MapRenderer {
 				this.drawnAreas.push({ key: e.key, n, points: t.points });
 				const shownPts = roughenRing(t.points, rough, roughLen, near);
 				const latlngs = (plain ? t.points : shownPts).map((p) => this.pointToLatLng(p));
-				const poly = L.polygon(latlngs, { className: "chronicle-territory", weight: 2, fillOpacity: 0.18, smoothFactor: 1.5 }).addTo(layer);
+				const poly = L.polygon(latlngs, { className: "universeview-territory", weight: 2, fillOpacity: 0.18, smoothFactor: 1.5 }).addTo(layer);
 				const path = poly.getElement() as HTMLElement | undefined;
 				path?.style.setProperty("--terr-color", color);
 				// Its tier's look (Maps & realms → Territory styles).
@@ -1474,23 +1474,23 @@ export class MapRenderer {
 						danger: (menu) => warningItem(menu, "Delete this area", "trash-2", () => void this.plugin.deleteArea(e.key, this.options.map, n)),
 					});
 				});
-				const label = el("div", { cls: "chronicle-territory-label" + (nodeHere?.nature === "region" ? " is-region" : "") });
+				const label = el("div", { cls: "universeview-territory-label" + (nodeHere?.nature === "region" ? " is-region" : "") });
 				label.style.setProperty("--terr-color", color);
 				// A place's own area carries its icon (or sigil) and event count, in place of a pin.
 				if (e.type === "place") {
 					const logo = resourceUrl(this.plugin, e.logo);
 					const iconName = e.icon ?? this.categories.get(styleKeyOf(e.category, e.tags) ?? "")?.icon;
-					if (logo) el("img", { cls: "chronicle-territory-icon", attr: { src: logo, alt: "" } }, label);
+					if (logo) el("img", { cls: "universeview-territory-icon", attr: { src: logo, alt: "" } }, label);
 					else if (iconName) {
-						const g = el("span", { cls: "chronicle-territory-icon" }, label);
+						const g = el("span", { cls: "universeview-territory-icon" }, label);
 						if (!glyph(g, iconName)) g.remove();
 					}
 				}
-				el("span", { cls: "chronicle-territory-name", text: nameAt(e, this.options.at) }, label);
+				el("span", { cls: "universeview-territory-name", text: nameAt(e, this.options.at) }, label);
 				const count = e.type === "place" ? (this.plugin.index.events(e.key) ?? []).length : 0;
-				if (count) el("span", { cls: "chronicle-territory-count", text: String(count) }, label);
+				if (count) el("span", { cls: "universeview-territory-count", text: String(count) }, label);
 				const center = polygonCentroid(latlngs);
-				const m = L.marker(center, { icon: L.divIcon({ html: label, className: "chronicle-territory-label-wrap", iconSize: [0, 0] }), pane: "chronicle-territory-labels", interactive: false, keyboard: false });
+				const m = L.marker(center, { icon: L.divIcon({ html: label, className: "universeview-territory-label-wrap", iconSize: [0, 0] }), pane: "universeview-territory-labels", interactive: false, keyboard: false });
 				m.addTo(layer);
 				(poly as L.Polygon & { _label?: HTMLElement })._label = label;
 				const entry = this.areaPolys[this.areaPolys.length - 1];
@@ -1504,9 +1504,9 @@ export class MapRenderer {
 				if (this.ownLand.has(k)) continue;
 				const e = idx.get(k);
 				if (!e) continue;
-				const label = el("div", { cls: "chronicle-territory-label is-realm" });
+				const label = el("div", { cls: "universeview-territory-label is-realm" });
 				label.style.setProperty("--terr-color", entityColor(this.plugin, e));
-				el("span", { cls: "chronicle-territory-name", text: nameAt(e, this.options.at) }, label);
+				el("span", { cls: "universeview-territory-name", text: nameAt(e, this.options.at) }, label);
 				// The middle of all its lands, unless that falls in the sea between them: then the roomiest spot in one.
 				const parts = this.areaPolys.filter((x) => x.chain.includes(k));
 				const mid = this.fromLatLng(b.getCenter());
@@ -1515,7 +1515,7 @@ export class MapRenderer {
 					const best = parts.map((x) => x.spot ?? labelSpot(x.points as P2[])).sort((x, y) => y.room - x.room)[0];
 					if (best) at = this.pointToLatLng(best.p);
 				}
-				const marker = L.marker(at, { icon: L.divIcon({ html: label, className: "chronicle-territory-label-wrap", iconSize: [0, 0] }), pane: "chronicle-territory-labels", interactive: false, keyboard: false }).addTo(layer);
+				const marker = L.marker(at, { icon: L.divIcon({ html: label, className: "universeview-territory-label-wrap", iconSize: [0, 0] }), pane: "universeview-territory-labels", interactive: false, keyboard: false }).addTo(layer);
 				this.tierLabels.set(k, { marker, el: label });
 			}
 		}
@@ -1725,7 +1725,7 @@ export class MapRenderer {
 		const mapSize = this.isImageMap && this.imageWidth ? Math.max(this.imageWidth, this.imageHeight) : Math.hypot(box.x1 - box.x0, box.y1 - box.y0);
 		const issues = checkBorders(areas, { mapSize, isWater });
 		this.checkPanel?.remove();
-		const panel = el("div", { cls: "uv-check-panel chronicle-scope" }, this.root);
+		const panel = el("div", { cls: "uv-check-panel universeview-scope" }, this.root);
 		this.checkPanel = panel;
 		L.DomEvent.disableClickPropagation(panel);
 		L.DomEvent.disableScrollPropagation(panel);
@@ -1776,7 +1776,7 @@ export class MapRenderer {
 			const bounds = mine.length ? mine.map((a) => a.poly.getBounds()).reduce((b, x) => b.extend(x)) : L.latLngBounds(ll, ll);
 			map.flyToBounds(bounds.pad(0.15), { duration: motionMs(this.plugin.settings, 500) / 1000, maxZoom: map.getMaxZoom() });
 			this.checkMark?.remove();
-			this.checkMark = L.marker(ll, { icon: L.divIcon({ html: el("div", { cls: "uv-check-mark" }), className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(map);
+			this.checkMark = L.marker(ll, { icon: L.divIcon({ html: el("div", { cls: "uv-check-mark" }), className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(map);
 			for (const a of mine) {
 				const p = a.poly.getElement() as HTMLElement;
 				p.removeClass("uv-check-flash");
@@ -1988,7 +1988,7 @@ export class MapRenderer {
 			preview.clearLayers();
 			L.polygon(area.t.points.map((p) => this.pointToLatLng(p)), { className: "uv-simplify-orig", fill: false, interactive: false }).addTo(preview);
 			if (plan) {
-				const shape = L.polygon(plan.points.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.25, interactive: false }).addTo(preview);
+				const shape = L.polygon(plan.points.map((p) => this.pointToLatLng(p)), { className: "universeview-territory is-draft", weight: 2, fillOpacity: 0.25, interactive: false }).addTo(preview);
 				(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			}
 			status.setText(plan ? `${plan.moved} points move${plan.names.length ? ` to meet ${plan.names.slice(0, 3).join(", ")}${plan.names.length > 3 ? ` +${plan.names.length - 3}` : ""}` : ""}` : `No neighbour within ${px} px at this zoom`);
@@ -2014,7 +2014,7 @@ export class MapRenderer {
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Grow", cta: true, run: apply },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
 			this.slider(controls, "Close gaps up to", "How wide a gap, in screen pixels as the map shows now, to close: zoom out to close wider ones", 2, 120, px, (v) => {
 				px = v;
@@ -2711,7 +2711,7 @@ export class MapRenderer {
 
 	/** Where you are: the titles split open around the middle of the map, each a way back out. */
 	private drawCrumbs() {
-		this.root.querySelector(".chronicle-map-crumbs")?.remove();
+		this.root.querySelector(".universeview-map-crumbs")?.remove();
 		const tiers = this.tiers;
 		const tree = this.realmTree;
 		if (!tiers || !tree || !tiers.divided.size || !this.map || this.embedded) return;
@@ -2722,15 +2722,15 @@ export class MapRenderer {
 			if (!deepest || tree.nodes.get(k)!.depth > tree.nodes.get(deepest)!.depth) deepest = k;
 		}
 		if (!deepest) return;
-		const bar = el("div", { cls: "chronicle-map-crumbs chronicle-scope" }, this.root);
+		const bar = el("div", { cls: "universeview-map-crumbs universeview-scope" }, this.root);
 		const crumb = (text: string, run: () => void, key?: string) => {
-			const b = el("button", { cls: "chronicle-map-crumb", text }, bar);
+			const b = el("button", { cls: "universeview-map-crumb", text }, bar);
 			b.addEventListener("click", run);
 			if (key) bindHover(this.plugin, b, key, this.root);
 		};
 		crumb("All", () => this.fit());
 		for (const k of chainOf(tree, deepest)) {
-			el("span", { cls: "chronicle-map-crumb-sep", text: "›" }, bar);
+			el("span", { cls: "universeview-map-crumb-sep", text: "›" }, bar);
 			crumb(this.plugin.index.get(k)?.name ?? k, () => this.drillTo(k), k);
 		}
 	}
@@ -2809,17 +2809,17 @@ export class MapRenderer {
 					water.bringToBack();
 					latlngs = course.map((p) => this.pointToLatLng(p));
 				}
-				const line = L.polyline(latlngs, { className: `chronicle-route kind-${kind}`, weight: kind === "river" ? 1.5 : kind === "sea" ? 3 : kind === "path" ? 2 : 3, smoothFactor: 1 }).addTo(layer);
+				const line = L.polyline(latlngs, { className: `universeview-route kind-${kind}`, weight: kind === "river" ? 1.5 : kind === "sea" ? 3 : kind === "path" ? 2 : 3, smoothFactor: 1 }).addTo(layer);
 				(line.getElement() as HTMLElement | undefined)?.style.setProperty("--route-color", color);
 				const length = this.lineLength(latlngs);
 				line.bindTooltip(() => {
-					const box = el("div", { cls: "chronicle-route-tip" });
+					const box = el("div", { cls: "universeview-route-tip" });
 					el("strong", { text: t.name ?? e.name }, box);
 					el("div", { text: `${ROUTE_KINDS.find(([k]) => k === kind)?.[1] ?? kind} · ${this.formatDistance(length)}` }, box);
 					const travel = this.travelText(length, kind);
-					if (travel) el("div", { cls: "chronicle-route-travel", text: travel }, box);
+					if (travel) el("div", { cls: "universeview-route-travel", text: travel }, box);
 					return box;
-				}, { sticky: true, className: "chronicle-measure-tip", direction: "top", offset: [0, -8] });
+				}, { sticky: true, className: "universeview-measure-tip", direction: "top", offset: [0, -8] });
 				line.on("click", (evt: L.LeafletMouseEvent) => {
 					if (this.mode !== "none") return;
 					L.DomEvent.stop(evt);
@@ -2866,10 +2866,10 @@ export class MapRenderer {
 		for (const s of spots) {
 			const strength = Math.sqrt(s.n / max);
 			const size = Math.round(70 + 170 * strength);
-			const d = el("div", { cls: "chronicle-heat-spot" });
+			const d = el("div", { cls: "universeview-heat-spot" });
 			d.style.setProperty("--heat", String(0.35 + 0.65 * strength));
 			d.style.width = d.style.height = `${size}px`;
-			L.marker(s.ll, { icon: L.divIcon({ html: d, className: "chronicle-heat-wrap", iconSize: [0, 0] }), pane: "chronicle-heat", interactive: false, keyboard: false }).addTo(layer);
+			L.marker(s.ll, { icon: L.divIcon({ html: d, className: "universeview-heat-wrap", iconSize: [0, 0] }), pane: "universeview-heat", interactive: false, keyboard: false }).addTo(layer);
 		}
 	}
 
@@ -2919,8 +2919,8 @@ export class MapRenderer {
 
 	private showBanner(text: string, buttons: { label: string; cta?: boolean; run: () => void }[] = [], extra?: (b: HTMLElement) => void) {
 		this.banner?.remove();
-		const b = el("div", { cls: "chronicle-map-banner chronicle-map-toolbar-banner" + (buttons.length ? " has-actions" : "") }, this.root);
-		el("span", { cls: "chronicle-banner-text", text: Platform.isMobile ? touchHelp(text) : text }, b);
+		const b = el("div", { cls: "universeview-map-banner universeview-map-toolbar-banner" + (buttons.length ? " has-actions" : "") }, this.root);
+		el("span", { cls: "universeview-banner-text", text: Platform.isMobile ? touchHelp(text) : text }, b);
 		L.DomEvent.disableClickPropagation(b);
 		extra?.(b);
 		for (const btn of buttons) {
@@ -3208,14 +3208,14 @@ export class MapRenderer {
 
 	/** A ring marker showing where a click would snap to. */
 	private snapGhost(layer: L.LayerGroup): (at: { ll: L.LatLng; kind: string } | null) => void {
-		const d = el("div", { cls: "chronicle-snap-ghost" });
-		const m = L.marker([0, 0], { icon: L.divIcon({ html: d, className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false, keyboard: false });
+		const d = el("div", { cls: "universeview-snap-ghost" });
+		const m = L.marker([0, 0], { icon: L.divIcon({ html: d, className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false, keyboard: false });
 		return (at) => {
 			if (!at) {
 				m.remove();
 				return;
 			}
-			d.className = `chronicle-snap-ghost is-${at.kind}`;
+			d.className = `universeview-snap-ghost is-${at.kind}`;
 			m.setLatLng(at.ll);
 			if (!layer.hasLayer(m)) m.addTo(layer);
 		};
@@ -3241,7 +3241,7 @@ export class MapRenderer {
 			return { pt, ll: map.containerPointToLatLng(pt) };
 		};
 		const onDown = (evt: PointerEvent) => {
-			if (evt.button !== 0 || (evt.target as HTMLElement).closest(".leaflet-control, .chronicle-map-banner, .uv-terr-editor")) return;
+			if (evt.button !== 0 || (evt.target as HTMLElement).closest(".leaflet-control, .universeview-map-banner, .uv-terr-editor")) return;
 			fingers.add(evt.pointerId);
 			if (fingers.size > 1) {
 				// Two fingers: a pinch, not a stroke.
@@ -3290,8 +3290,8 @@ export class MapRenderer {
 	private drawLasso(o: { color: string; layer: L.LayerGroup; targets: L.LatLng[][]; dashed?: boolean; done: (pts: L.LatLng[]) => boolean }): { finish: () => void; undo: () => void } {
 		const map = this.map!;
 		const { layer, targets, color } = o;
-		const shape = L.polygon([], { className: "chronicle-territory is-draft" + (o.dashed ? " uv-grow-lasso" : ""), weight: 2, fillOpacity: o.dashed ? 0.12 : 0.15, interactive: false }).addTo(layer);
-		const rubber = L.polyline([], { className: "chronicle-draft-line", weight: 2, dashArray: "4 6", interactive: false }).addTo(layer);
+		const shape = L.polygon([], { className: "universeview-territory is-draft" + (o.dashed ? " uv-grow-lasso" : ""), weight: 2, fillOpacity: o.dashed ? 0.12 : 0.15, interactive: false }).addTo(layer);
+		const rubber = L.polyline([], { className: "universeview-draft-line", weight: 2, dashArray: "4 6", interactive: false }).addTo(layer);
 		const dots = L.layerGroup().addTo(layer);
 		// Each point, with how it came: tapped (and where it snapped), followed along a border, or freehand.
 		const pts: { ll: L.LatLng; how: "tap" | "follow" | "free"; snap?: SnapAt }[] = [];
@@ -3303,9 +3303,9 @@ export class MapRenderer {
 			dots.clearLayers();
 			pts.forEach((p, i) => {
 				if (p.how !== "tap") return;
-				const d = el("div", { cls: "chronicle-vertex" + (i === 0 ? " is-first" : "") });
+				const d = el("div", { cls: "universeview-vertex" + (i === 0 ? " is-first" : "") });
 				d.style.setProperty("--terr-color", color);
-				L.marker(p.ll, { icon: L.divIcon({ html: d, className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(dots);
+				L.marker(p.ll, { icon: L.divIcon({ html: d, className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(dots);
 			});
 		};
 		const ghost = this.snapGhost(layer);
@@ -3461,7 +3461,7 @@ export class MapRenderer {
 				el("span", { text: e.name }, row);
 				row.addEventListener("click", () => void this.paintLand(e, row));
 			}
-			if (!lands.length) el("div", { cls: "chronicle-dash-muted", text: q ? "No land by that name." : "Search for a land to start." }, list);
+			if (!lands.length) el("div", { cls: "universeview-dash-muted", text: q ? "No land by that name." : "Search for a land to start." }, list);
 		};
 		find.addEventListener("input", draw);
 		draw();
@@ -3657,7 +3657,7 @@ export class MapRenderer {
 			preview.clearLayers();
 			if (!all) L.polygon(before.map((p) => this.pointToLatLng(p)), { className: "uv-simplify-orig", fill: false, interactive: false }).addTo(preview);
 			for (const p of plan) {
-				const shape = L.polygon(p.ring.map((q) => this.pointToLatLng(q)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.2, interactive: false }).addTo(preview);
+				const shape = L.polygon(p.ring.map((q) => this.pointToLatLng(q)), { className: "universeview-territory is-draft", weight: 2, fillOpacity: 0.2, interactive: false }).addTo(preview);
 				const ent = this.plugin.index.get(p.key);
 				if (ent) (shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", entityColor(this.plugin, ent));
 				// Its corners, so it's clear how few are left to edit (one area; on a whole map they would be a crowd).
@@ -3693,7 +3693,7 @@ export class MapRenderer {
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Apply", cta: true, run: () => void done() },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
 			this.slider(controls, "Strength", "How far off the line, in screen pixels, a corner may sit and still go", 1, 15, px, (v) => {
 				px = v;
@@ -3745,7 +3745,7 @@ export class MapRenderer {
 		const color = entityColor(this.plugin, owner);
 		const layer = this.toolLayer;
 		const before = area.t.points as Pt[];
-		const base = L.polygon(before.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.25, interactive: false }).addTo(layer);
+		const base = L.polygon(before.map((p) => this.pointToLatLng(p)), { className: "universeview-territory is-draft", weight: 2, fillOpacity: 0.25, interactive: false }).addTo(layer);
 		(base.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 		const lasso = this.drawLasso({
 			color,
@@ -3818,11 +3818,11 @@ export class MapRenderer {
 		const pushed: Pt[][] = [];
 		let erase = false;
 		let size = s.brushSize ?? 22;
-		const shape = L.polygon([], { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(layer);
+		const shape = L.polygon([], { className: "universeview-territory is-draft", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(layer);
 		const pieces = L.layerGroup().addTo(layer);
 		const stroke = L.polyline([], { className: "uv-brush-stroke", weight: size * 2, lineCap: "round", lineJoin: "round", interactive: false }).addTo(layer);
 		const tip = el("div", { cls: "uv-brush-cursor" });
-		const cursor = L.marker([0, 0], { icon: L.divIcon({ html: tip, className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false, keyboard: false });
+		const cursor = L.marker([0, 0], { icon: L.divIcon({ html: tip, className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false, keyboard: false });
 		const style = () => {
 			for (const l of [shape, stroke]) (l.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			(stroke.getElement() as HTMLElement | undefined)?.classList.toggle("is-erasing", erase);
@@ -3834,7 +3834,7 @@ export class MapRenderer {
 			shape.setLatLngs(working.map((p) => this.pointToLatLng(p)));
 			pieces.clearLayers();
 			for (const piece of extra) {
-				const pl = L.polygon(piece.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, dashArray: "4 4", fillOpacity: 0.3, interactive: false }).addTo(pieces);
+				const pl = L.polygon(piece.map((p) => this.pointToLatLng(p)), { className: "universeview-territory is-draft", weight: 2, dashArray: "4 4", fillOpacity: 0.3, interactive: false }).addTo(pieces);
 				(pl.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			}
 			style();
@@ -3940,9 +3940,9 @@ export class MapRenderer {
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Done", cta: true, run: () => void done() },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
-			const mode = el("button", { cls: "chronicle-banner-toggle", text: "Rub out", attr: { title: "Take land out of the area instead of adding it" } }, controls);
+			const mode = el("button", { cls: "universeview-banner-toggle", text: "Rub out", attr: { title: "Take land out of the area instead of adding it" } }, controls);
 			mode.addEventListener("click", (evt) => {
 				evt.stopPropagation();
 				erase = !erase;
@@ -4016,15 +4016,15 @@ export class MapRenderer {
 		const color = entityColor(this.plugin, owner);
 		const layer = this.toolLayer;
 		const pts: L.LatLng[] = [];
-		const line = L.polyline([], { className: "chronicle-draft-line uv-split-line", weight: 3 }).addTo(layer);
-		const rubber = L.polyline([], { className: "chronicle-draft-line", weight: 2, dashArray: "4 6" }).addTo(layer);
+		const line = L.polyline([], { className: "universeview-draft-line uv-split-line", weight: 3 }).addTo(layer);
+		const rubber = L.polyline([], { className: "universeview-draft-line", weight: 2, dashArray: "4 6" }).addTo(layer);
 		const paint = () => {
 			line.setLatLngs(pts);
 			(line.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 		};
 		// Its outline, so it's clear what's being cut.
 		for (const a of areas) {
-			const outline = L.polygon(a.t.points.map((q) => this.pointToLatLng(q)), { className: "chronicle-territory is-draft uv-split-target", weight: 2, fillOpacity: 0.08, interactive: false }).addTo(layer);
+			const outline = L.polygon(a.t.points.map((q) => this.pointToLatLng(q)), { className: "universeview-territory is-draft uv-split-target", weight: 2, fillOpacity: 0.08, interactive: false }).addTo(layer);
 			(outline.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 		}
 		const choose = (n: number, pieces: [P2[], P2[]]) => {
@@ -4035,7 +4035,7 @@ export class MapRenderer {
 			// The smaller part is the likelier new land; both can be picked.
 			const order = pieces[0].length && ringArea(pieces[0]) <= ringArea(pieces[1]) ? [0, 1] : [1, 0];
 			order.forEach((k, rank) => {
-				const poly = L.polygon(pieces[k].map((q) => this.pointToLatLng(q)), { className: "chronicle-territory uv-split-piece" + (rank === 0 ? " is-suggested" : ""), weight: 2, fillOpacity: 0.3 }).addTo(layer);
+				const poly = L.polygon(pieces[k].map((q) => this.pointToLatLng(q)), { className: "universeview-territory uv-split-piece" + (rank === 0 ? " is-suggested" : ""), weight: 2, fillOpacity: 0.3 }).addTo(layer);
 				(poly.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", rank === 0 ? "var(--interactive-accent)" : color);
 				poly.on("click", (evt: L.LeafletMouseEvent) => {
 					L.DomEvent.stop(evt);
@@ -4108,21 +4108,21 @@ export class MapRenderer {
 		const color = entityColor(this.plugin, owner);
 		const pts: L.LatLng[] = [];
 		const layer = this.toolLayer;
-		const line = L.polyline([], { className: `chronicle-route kind-${this.routeKind} is-draft`, weight: 4 }).addTo(layer);
-		const rubber = L.polyline([], { className: "chronicle-draft-line", weight: 2, dashArray: "4 6" }).addTo(layer);
+		const line = L.polyline([], { className: `universeview-route kind-${this.routeKind} is-draft`, weight: 4 }).addTo(layer);
+		const rubber = L.polyline([], { className: "universeview-draft-line", weight: 2, dashArray: "4 6" }).addTo(layer);
 		const dots = L.layerGroup().addTo(layer);
 		let info: HTMLElement | undefined;
 		const paint = (cursor?: L.LatLng) => {
 			line.setLatLngs(pts);
 			const elx = line.getElement() as HTMLElement | undefined;
 			elx?.style.setProperty("--route-color", color);
-			elx?.setAttribute("class", `leaflet-interactive chronicle-route kind-${this.routeKind} is-draft`);
+			elx?.setAttribute("class", `leaflet-interactive universeview-route kind-${this.routeKind} is-draft`);
 			(rubber.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			dots.clearLayers();
 			for (const p of pts) {
-				const d = el("div", { cls: "chronicle-vertex" });
+				const d = el("div", { cls: "universeview-vertex" });
 				d.style.setProperty("--terr-color", color);
-				L.marker(p, { icon: L.divIcon({ html: d, className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(dots);
+				L.marker(p, { icon: L.divIcon({ html: d, className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(dots);
 			}
 			const all = cursor && pts.length ? [...pts, cursor] : pts;
 			const len = this.lineLength(all);
@@ -4159,16 +4159,16 @@ export class MapRenderer {
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Finish", cta: true, run: finish },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
-			const kind = el("select", { cls: "chronicle-fill-select", attr: { "aria-label": "Kind of route" } }, controls);
+			const kind = el("select", { cls: "universeview-fill-select", attr: { "aria-label": "Kind of route" } }, controls);
 			for (const [v, t] of ROUTE_KINDS) kind.add(new Option(t, v));
 			kind.value = this.routeKind;
 			kind.addEventListener("change", () => {
 				this.routeKind = kind.value;
 				paint();
 			});
-			info = el("span", { cls: "chronicle-fill-status" }, controls);
+			info = el("span", { cls: "universeview-fill-status" }, controls);
 		});
 		let down: { ll: L.LatLng; pt: L.Point; free: boolean } | null = null;
 		const onDown = (evt: L.LeafletMouseEvent) => {
@@ -4227,8 +4227,8 @@ export class MapRenderer {
 		const pts = (line?.points ?? area!.t.points).map((p) => this.pointToLatLng(p));
 		const layer = this.toolLayer;
 		const shape = (isRoute
-			? L.polyline(pts, { className: line ? "chronicle-map-line is-draft" : `chronicle-route kind-${area!.t.kind ?? "road"} is-draft`, weight: 4 })
-			: L.polygon(pts, { className: "chronicle-territory is-draft", weight: 2, fillOpacity: 0.2 })) as unknown as L.Polyline;
+			? L.polyline(pts, { className: line ? "universeview-map-line is-draft" : `universeview-route kind-${area!.t.kind ?? "road"} is-draft`, weight: 4 })
+			: L.polygon(pts, { className: "universeview-territory is-draft", weight: 2, fillOpacity: 0.2 })) as unknown as L.Polyline;
 		shape.addTo(layer);
 		(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--route-color", color);
 		(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--note-color", color);
@@ -4481,9 +4481,9 @@ export class MapRenderer {
 			(shape.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			handles.clearLayers();
 			pts.forEach((p, i) => {
-				const d = el("div", { cls: "chronicle-vertex is-handle" + (selected.has(i) ? " is-selected" : "") + (together && linked.has(i) ? " is-shared" : "") });
+				const d = el("div", { cls: "universeview-vertex is-handle" + (selected.has(i) ? " is-selected" : "") + (together && linked.has(i) ? " is-shared" : "") });
 				d.style.setProperty("--terr-color", color);
-				const h = L.marker(p, { icon: L.divIcon({ html: d, className: "chronicle-vertex-wrap", iconSize: [0, 0] }), draggable: true }).addTo(handles);
+				const h = L.marker(p, { icon: L.divIcon({ html: d, className: "universeview-vertex-wrap", iconSize: [0, 0] }), draggable: true }).addTo(handles);
 				h.on("click", (evt: L.LeafletMouseEvent) => {
 					if (!evt.originalEvent.shiftKey) return;
 					L.DomEvent.stop(evt);
@@ -4537,9 +4537,9 @@ export class MapRenderer {
 				// Midpoint: click to insert a corner.
 				const next = pts[(i + 1) % pts.length];
 				const mid = L.latLng((p.lat + next.lat) / 2, (p.lng + next.lng) / 2);
-				const md = el("div", { cls: "chronicle-vertex is-mid" });
+				const md = el("div", { cls: "universeview-vertex is-mid" });
 				md.style.setProperty("--terr-color", color);
-				L.marker(mid, { icon: L.divIcon({ html: md, className: "chronicle-vertex-wrap", iconSize: [0, 0] }) })
+				L.marker(mid, { icon: L.divIcon({ html: md, className: "universeview-vertex-wrap", iconSize: [0, 0] }) })
 					.on("click", (evt: L.LeafletMouseEvent) => {
 						L.DomEvent.stop(evt);
 						record();
@@ -4698,7 +4698,7 @@ export class MapRenderer {
 			preview.clearLayers();
 			const rings = clicks.flatMap((c) => c.rings);
 			for (const ring of rings) {
-				const poly = L.polygon(ring.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft is-fill", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(preview);
+				const poly = L.polygon(ring.map((p) => this.pointToLatLng(p)), { className: "universeview-territory is-draft is-fill", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(preview);
 				(poly.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 			}
 			if (!status) return;
@@ -4790,17 +4790,17 @@ export class MapRenderer {
 				{ label: "Save", cta: true, run: save },
 			],
 			(b) => {
-				const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+				const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
 				this.makeSimplifySlider(controls, refill);
 				// Like a paint bucket: everything of the clicked kind of ground, or (as before) everything of the clicked colour.
-				const by = el("select", { cls: "chronicle-fill-select", attr: { title: "Fill all the land (or water) joined to the click, whatever is drawn on it; or only the clicked colour" } }, controls);
+				const by = el("select", { cls: "universeview-fill-select", attr: { title: "Fill all the land (or water) joined to the click, whatever is drawn on it; or only the clicked colour" } }, controls);
 				for (const [v, t] of [["ground", "Fill land / sea"], ["colour", "Fill same colour"]]) {
 					const o = el("option", { text: t }, by);
 					o.value = v;
 				}
 				by.value = this.fillBy;
-				const rivers = el("button", { cls: "chronicle-banner-toggle", text: "Cross rivers", attr: { "aria-pressed": String(this.fillCrossRivers), title: "Carry on over rivers to the land beyond, stopping only at the sea, lakes and other territories" } }, controls);
+				const rivers = el("button", { cls: "universeview-banner-toggle", text: "Cross rivers", attr: { "aria-pressed": String(this.fillCrossRivers), title: "Carry on over rivers to the land beyond, stopping only at the sea, lakes and other territories" } }, controls);
 				rivers.toggleClass("is-active", this.fillCrossRivers);
 				rivers.addEventListener("click", (evt) => {
 					evt.stopPropagation();
@@ -4809,7 +4809,7 @@ export class MapRenderer {
 					rivers.setAttribute("aria-pressed", String(this.fillCrossRivers));
 					refill();
 				});
-				const tol = el("label", { cls: "chronicle-fill-control", title: "How different a colour can be and still count as the same area" }, controls);
+				const tol = el("label", { cls: "universeview-fill-control", title: "How different a colour can be and still count as the same area" }, controls);
 				const showMode = () => {
 					tol.toggle(this.fillBy === "colour");
 					rivers.toggle(this.fillBy === "ground");
@@ -4823,13 +4823,13 @@ export class MapRenderer {
 				el("span", { text: "Tolerance" }, tol);
 				const range = el("input", { attr: { type: "range", min: "2", max: "60", step: "1" } }, tol);
 				range.value = String(this.fillTolerance);
-				const tolValue = el("span", { cls: "chronicle-fill-value", text: String(this.fillTolerance) }, tol);
+				const tolValue = el("span", { cls: "universeview-fill-value", text: String(this.fillTolerance) }, tol);
 				range.addEventListener("input", () => {
 					this.fillTolerance = +range.value;
 					tolValue.setText(range.value);
 					refill();
 				});
-				const gaps = el("select", { cls: "chronicle-fill-select", attr: { title: "Close small gaps in dotted or broken border lines" } }, controls);
+				const gaps = el("select", { cls: "universeview-fill-select", attr: { title: "Close small gaps in dotted or broken border lines" } }, controls);
 				for (const [v, t] of [["0", "No gap closing"], ["1", "Close tiny gaps"], ["2", "Close small gaps"], ["4", "Close wide gaps"]]) {
 					const o = el("option", { text: t }, gaps);
 					o.value = v;
@@ -4839,7 +4839,7 @@ export class MapRenderer {
 					this.fillGaps = +gaps.value;
 					refill();
 				});
-				const stop = el("button", { cls: "chronicle-banner-toggle is-active", text: "Stop at other territories", attr: { "aria-pressed": "true" } }, controls);
+				const stop = el("button", { cls: "universeview-banner-toggle is-active", text: "Stop at other territories", attr: { "aria-pressed": "true" } }, controls);
 				stop.addEventListener("click", (evt) => {
 					evt.stopPropagation();
 					stopAtAreas = !stopAtAreas;
@@ -4848,7 +4848,7 @@ export class MapRenderer {
 					refill();
 				});
 				if (area) {
-					const joinBtn = el("button", { cls: "chronicle-banner-toggle is-active", text: "Join this area", attr: { "aria-pressed": "true", title: "Add the filled land to the area you're working on, rather than as areas of its own" } }, controls);
+					const joinBtn = el("button", { cls: "universeview-banner-toggle is-active", text: "Join this area", attr: { "aria-pressed": "true", title: "Add the filled land to the area you're working on, rather than as areas of its own" } }, controls);
 					joinBtn.addEventListener("click", (evt) => {
 						evt.stopPropagation();
 						join = !join;
@@ -4856,12 +4856,12 @@ export class MapRenderer {
 						joinBtn.setAttribute("aria-pressed", String(join));
 					});
 				}
-				status = el("span", { cls: "chronicle-fill-status" }, controls);
+				status = el("span", { cls: "universeview-fill-status" }, controls);
 			},
 		);
 		// The joined area, so it's clear what the fill adds to.
 		if (area) {
-			const base = L.polygon(area.t.points.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft", weight: 2, dashArray: "4 4", fillOpacity: 0.12, interactive: false }).addTo(layer);
+			const base = L.polygon(area.t.points.map((p) => this.pointToLatLng(p)), { className: "universeview-territory is-draft", weight: 2, dashArray: "4 4", fillOpacity: 0.12, interactive: false }).addTo(layer);
 			(base.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", color);
 		}
 		const onClick = (evt: L.LeafletMouseEvent) => {
@@ -4929,9 +4929,9 @@ export class MapRenderer {
 		this.endMode();
 		const layer = this.toolLayer;
 		const pts: L.LatLng[] = from ? [from] : [];
-		const line = L.polyline(pts, { className: "chronicle-measure-line", weight: 3 }).addTo(layer);
-		const rubber = L.polyline([], { className: "chronicle-measure-line is-rubber", weight: 2, dashArray: "4 6" }).addTo(layer);
-		const tip = L.tooltip({ permanent: true, direction: "right", className: "chronicle-measure-tip", offset: [10, 0] });
+		const line = L.polyline(pts, { className: "universeview-measure-line", weight: 3 }).addTo(layer);
+		const rubber = L.polyline([], { className: "universeview-measure-line is-rubber", weight: 2, dashArray: "4 6" }).addTo(layer);
+		const tip = L.tooltip({ permanent: true, direction: "right", className: "universeview-measure-tip", offset: [10, 0] });
 		const scale = this.mapScale();
 		const total = (extra?: L.LatLng) => {
 			const all = extra ? [...pts, extra] : pts;
@@ -4945,7 +4945,7 @@ export class MapRenderer {
 				? d >= 1000 ? `${(d / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })} km · ${(d / 1609.34).toLocaleString(undefined, { maximumFractionDigits: 1 })} mi` : `${Math.round(d)} m`
 				: !scale ? `${Math.round(d).toLocaleString()} px` : `${(d * scale.perPx).toLocaleString(undefined, { maximumFractionDigits: 1 })} ${scale.unit}`;
 			const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-			return travel ? `${esc(base)}<br><span class="chronicle-route-travel">${esc(travel)}</span>` : esc(base);
+			return travel ? `${esc(base)}<br><span class="universeview-route-travel">${esc(travel)}</span>` : esc(base);
 		};
 		const update = (cursor?: L.LatLng) => {
 			line.setLatLngs(pts);
@@ -5066,14 +5066,14 @@ export class MapRenderer {
 			if (pts.length < 2) continue;
 			const now = at !== undefined && e.start && (e.end?.end ?? e.start.end) >= at;
 			const color = entityColor(this.plugin, e.cultures[0] ? idx.get(e.cultures[0].ref.key) ?? e : e);
-			const line = L.polyline(pts, { className: "chronicle-movement" + (now ? " is-now" : ""), weight: 4, smoothFactor: 1 }).addTo(layer);
+			const line = L.polyline(pts, { className: "universeview-movement" + (now ? " is-now" : ""), weight: 4, smoothFactor: 1 }).addTo(layer);
 			(line.getElement() as HTMLElement | undefined)?.style.setProperty("--move-color", color);
-			line.bindTooltip(`${e.name}${e.start ? ` · ${formatSpan(e.start, e.end, this.plugin.calendars.get(e.calendar))}` : ""}`, { sticky: true, className: "chronicle-measure-tip" });
+			line.bindTooltip(`${e.name}${e.start ? ` · ${formatSpan(e.start, e.end, this.plugin.calendars.get(e.calendar))}` : ""}`, { sticky: true, className: "universeview-measure-tip" });
 			line.on("click", (evt: L.LeafletMouseEvent) => {
 				L.DomEvent.stop(evt);
 				openEntity(this.plugin, e.key, evt.originalEvent);
 			});
-			this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "chronicle-move-head");
+			this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "universeview-move-head");
 		}
 	}
 
@@ -5112,12 +5112,12 @@ export class MapRenderer {
 			const color = colourOf(victorOf(idx, war) ?? (war.cultures[0] ? idx.get(war.cultures[0].ref.key) : undefined));
 			const line = L.polyline(pts, { className: "uv-campaign", weight: 3, dashArray: "2 7", lineCap: "round" }).addTo(layer);
 			(line.getElement() as HTMLElement | undefined)?.style.setProperty("--move-color", color);
-			line.bindTooltip(`${war.name}: ${pts.length} battles`, { sticky: true, className: "chronicle-measure-tip" });
+			line.bindTooltip(`${war.name}: ${pts.length} battles`, { sticky: true, className: "universeview-measure-tip" });
 			line.on("click", (evt: L.LeafletMouseEvent) => {
 				L.DomEvent.stop(evt);
 				openEntity(this.plugin, war.key, evt.originalEvent);
 			});
-			this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "chronicle-move-head");
+			this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "universeview-move-head");
 		}
 		const shown = idx.all("event").filter((b) => isBattle(b) && inScope(b));
 		const latest = at === undefined ? undefined : shown.reduce<Entity | undefined>((best, b) => (!best || (b.start?.start ?? 0) > (best.start?.start ?? 0) ? b : best), undefined);
@@ -5135,7 +5135,7 @@ export class MapRenderer {
 			const tip = [b.name, b.start ? formatSpan(b.start, b.end, cal(b)) : "", sides, war && war.type === "event" ? `Part of ${war.name}` : ""].filter(Boolean);
 			const tipEl = el("div", { cls: "uv-battle-tip" });
 			tip.forEach((t, i) => el("div", { cls: i === 0 ? "is-title" : "", text: t }, tipEl));
-			marker.bindTooltip(tipEl, { direction: "top", className: "chronicle-measure-tip", offset: [11, -26] });
+			marker.bindTooltip(tipEl, { direction: "top", className: "universeview-measure-tip", offset: [11, -26] });
 			marker.on("click", (evt: L.LeafletMouseEvent) => {
 				L.DomEvent.stop(evt);
 				openEntity(this.plugin, b.key, evt.originalEvent);
@@ -5156,7 +5156,7 @@ export class MapRenderer {
 		const d = el("div", { cls });
 		d.style.setProperty("--move-color", color);
 		d.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-		L.marker(b, { icon: L.divIcon({ html: d, className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false, keyboard: false }).addTo(layer);
+		L.marker(b, { icon: L.divIcon({ html: d, className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false, keyboard: false }).addTo(layer);
 	}
 
 	// ---- Map notes: sticky notes, arrows, lines ----------------------------------------------------
@@ -5245,18 +5245,18 @@ export class MapRenderer {
 				m.showAtMouseEvent(evt.originalEvent);
 			};
 			if (n.kind === "note") {
-				const card = el("div", { cls: "chronicle-map-note", text: n.text ?? "" });
+				const card = el("div", { cls: "universeview-map-note", text: n.text ?? "" });
 				card.style.setProperty("--note-color", color);
-				const mk = L.marker(pts[0], { icon: L.divIcon({ html: card, className: "chronicle-map-note-wrap", iconSize: [0, 0] }), keyboard: false }).addTo(layer);
+				const mk = L.marker(pts[0], { icon: L.divIcon({ html: card, className: "universeview-map-note-wrap", iconSize: [0, 0] }), keyboard: false }).addTo(layer);
 				mk.on("contextmenu", menu);
 				return;
 			}
 			if (pts.length < 2) return;
-			const line = L.polyline(pts, { className: `chronicle-map-line kind-${n.kind}`, weight: n.kind === "arrow" ? 4 : 3 }).addTo(layer);
+			const line = L.polyline(pts, { className: `universeview-map-line kind-${n.kind}`, weight: n.kind === "arrow" ? 4 : 3 }).addTo(layer);
 			(line.getElement() as HTMLElement | undefined)?.style.setProperty("--note-color", color);
 			line.on("contextmenu", menu);
-			if (n.text) line.bindTooltip(n.text, { permanent: true, direction: "center", className: "chronicle-map-line-label" });
-			if (n.kind === "arrow") this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "chronicle-move-head is-note");
+			if (n.text) line.bindTooltip(n.text, { permanent: true, direction: "center", className: "universeview-map-line-label" });
+			if (n.kind === "arrow") this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "universeview-move-head is-note");
 		});
 	}
 
@@ -5281,7 +5281,7 @@ export class MapRenderer {
 			if (evt.originalEvent.button !== 0) return;
 			start = evt.latlng;
 			box?.remove();
-			box = L.rectangle(L.latLngBounds(start, start), { className: "chronicle-erase-box", weight: 2, dashArray: "6 4", fillOpacity: 0.08, interactive: false }).addTo(layer);
+			box = L.rectangle(L.latLngBounds(start, start), { className: "universeview-erase-box", weight: 2, dashArray: "6 4", fillOpacity: 0.08, interactive: false }).addTo(layer);
 		};
 		const move = (evt: L.LeafletMouseEvent) => {
 			if (start && box) box.setBounds(L.latLngBounds(start, evt.latlng));
@@ -5339,7 +5339,7 @@ export class MapRenderer {
 		let kind: MapNote["kind"] = "note";
 		let color = "#e8b33a";
 		const pts: L.LatLng[] = [];
-		const draft = L.polyline([], { className: "chronicle-map-line is-draft", weight: 3, dashArray: "4 6" }).addTo(layer);
+		const draft = L.polyline([], { className: "universeview-map-line is-draft", weight: 3, dashArray: "4 6" }).addTo(layer);
 		// The points placed so far, and (for an arrow) where its head will go, so it's clear something is happening.
 		const marks = L.layerGroup().addTo(layer);
 		let status: HTMLElement | undefined;
@@ -5347,7 +5347,7 @@ export class MapRenderer {
 			draft.setLatLngs(pts);
 			marks.clearLayers();
 			for (const p of pts) L.circleMarker(p, { radius: 4, className: "uv-note-point", interactive: false }).addTo(marks);
-			if (kind === "arrow" && pts.length >= 2) this.arrowHead(marks, pts[pts.length - 2], pts[pts.length - 1], color, "chronicle-move-head is-note");
+			if (kind === "arrow" && pts.length >= 2) this.arrowHead(marks, pts[pts.length - 2], pts[pts.length - 1], color, "universeview-move-head is-note");
 			status?.setText(kind === "note" ? "" : !pts.length ? `Click where the ${kind} starts` : pts.length === 1 ? "Click where it goes next" : `${pts.length} points · Finish to place the ${kind}`);
 		};
 		const finishLine = (quiet = false) => {
@@ -5388,7 +5388,7 @@ export class MapRenderer {
 				},
 			},
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
 			// What to draw, as buttons rather than a dropdown.
 			const seg = el("div", { cls: "uv-banner-segments" }, controls);
@@ -5405,10 +5405,10 @@ export class MapRenderer {
 					s.addClass("is-active");
 				});
 			}
-			status = el("span", { cls: "chronicle-fill-status" }, controls);
-			const colors = el("div", { cls: "chronicle-note-colors" }, controls);
+			status = el("span", { cls: "universeview-fill-status" }, controls);
+			const colors = el("div", { cls: "universeview-note-colors" }, controls);
 			for (const c of ["#e8b33a", "#e05252", "#3d8fd1", "#3bb273", "#9b59b6", "#333333"]) {
-				const sw = el("button", { cls: "chronicle-note-swatch" + (c === color ? " is-active" : ""), attr: { "aria-label": `Colour ${c}` } }, colors);
+				const sw = el("button", { cls: "universeview-note-swatch" + (c === color ? " is-active" : ""), attr: { "aria-label": `Colour ${c}` } }, colors);
 				sw.style.background = c;
 				sw.addEventListener("click", (evt) => {
 					evt.stopPropagation();
@@ -5482,10 +5482,10 @@ export class MapRenderer {
 			const name = region && region[1] >= group.length / 2 ? region[0] : `${p.place.name} and more`;
 			const lat = group.reduce((s, g) => s + L.latLng(g.p.latlng).lat, 0) / group.length;
 			const lng = group.reduce((s, g) => s + L.latLng(g.p.latlng).lng, 0) / group.length;
-			const html = el("div", { cls: "chronicle-cluster" });
-			el("span", { cls: "chronicle-cluster-count", text: String(group.length) }, html);
-			el("span", { cls: "chronicle-cluster-label", text: name }, html);
-			const mk = L.marker([lat, lng], { icon: L.divIcon({ html, className: "chronicle-pin-wrap", iconSize: [0, 0] }), keyboard: true, title: `${group.length} places: zoom in` }).addTo(layer);
+			const html = el("div", { cls: "universeview-cluster" });
+			el("span", { cls: "universeview-cluster-count", text: String(group.length) }, html);
+			el("span", { cls: "universeview-cluster-label", text: name }, html);
+			const mk = L.marker([lat, lng], { icon: L.divIcon({ html, className: "universeview-pin-wrap", iconSize: [0, 0] }), keyboard: true, title: `${group.length} places: zoom in` }).addTo(layer);
 			mk.on("click", () => map.flyToBounds(L.latLngBounds(group.map((g) => L.latLng(g.p.latlng))).pad(0.4), { duration: motionMs(this.plugin.settings, 500) / 1000 || 0.01 }));
 		}
 	}
@@ -5540,10 +5540,10 @@ export class MapRenderer {
 				const km = this.speed(mode) * d;
 				const radius = this.isImageMap ? km / perUnit : km * 1000;
 				if (i > 0 && radius > biggest) return;
-				const ring = L.circle(center, { radius, className: `chronicle-ring ring-${i}`, weight: 1.5, interactive: false }).addTo(layer);
+				const ring = L.circle(center, { radius, className: `universeview-ring ring-${i}`, weight: 1.5, interactive: false }).addTo(layer);
 				if (d <= 3) fitTo = ring;
 				const edge = this.isImageMap ? L.latLng(center.lat + radius, center.lng) : L.latLng(center.lat + km / 111, center.lng);
-				L.marker(edge, { icon: L.divIcon({ html: el("div", { cls: "chronicle-ring-label", text: `${d} day${d > 1 ? "s" : ""}` }), className: "chronicle-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(layer);
+				L.marker(edge, { icon: L.divIcon({ html: el("div", { cls: "universeview-ring-label", text: `${d} day${d > 1 ? "s" : ""}` }), className: "universeview-vertex-wrap", iconSize: [0, 0] }), interactive: false }).addTo(layer);
 			});
 		};
 		this.beginMode("rings", (evt) => {
@@ -5552,9 +5552,9 @@ export class MapRenderer {
 			this.endMode();
 		});
 		this.showBanner(`How far from ${name}: rings at 1, 3, 7 and 14 days of travel in a straight line`, [{ label: "Done", cta: true, run: () => this.endMode() }], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
-			const sel = el("select", { cls: "chronicle-fill-select", attr: { "aria-label": "Way of travelling" } }, controls);
+			const sel = el("select", { cls: "universeview-fill-select", attr: { "aria-label": "Way of travelling" } }, controls);
 			for (const [v, t] of [["foot", "On foot"], ["horse", "By horse"], ["wagon", "By wagon"], ["boat", "By river boat"], ["ship", "By ship"]]) sel.add(new Option(t, v));
 			sel.value = mode;
 			sel.addEventListener("change", () => {
@@ -5600,8 +5600,8 @@ export class MapRenderer {
 		});
 		this.endMode();
 		const layer = this.toolLayer;
-		const line = L.polyline(j.path.map(([x, y]) => L.latLng(y, x)), { className: "chronicle-journey", weight: 5 }).addTo(layer);
-		this.arrowHead(layer, L.latLng(j.path[j.path.length - 2][1], j.path[j.path.length - 2][0]), L.latLng(lb), "var(--interactive-accent)", "chronicle-move-head is-journey");
+		const line = L.polyline(j.path.map(([x, y]) => L.latLng(y, x)), { className: "universeview-journey", weight: 5 }).addTo(layer);
+		this.arrowHead(layer, L.latLng(j.path[j.path.length - 2][1], j.path[j.path.length - 2][0]), L.latLng(lb), "var(--interactive-accent)", "universeview-move-head is-journey");
 		map.flyToBounds(line.getBounds().pad(0.25), { duration: motionMs(this.plugin.settings, 500) / 1000 || 0.01 });
 		const fmtDist = (d: number) => (perUnit ? `${Math.round(d).toLocaleString()} km` : `${Math.round(d).toLocaleString()} ${this.mapScale()?.unit ?? "px"}`);
 		// Stepping on and off a road isn't worth mentioning.
@@ -5671,7 +5671,7 @@ export class MapRenderer {
 			for (const r of result) {
 				const owner = idx.get(r.key)!;
 				for (const ring of r.rings) {
-					const poly = L.polygon(ring.map((p) => this.pointToLatLng(p)), { className: "chronicle-territory is-draft is-fill", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(layer);
+					const poly = L.polygon(ring.map((p) => this.pointToLatLng(p)), { className: "universeview-territory is-draft is-fill", weight: 2, fillOpacity: 0.3, interactive: false }).addTo(layer);
 					(poly.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", entityColor(this.plugin, owner));
 				}
 			}
@@ -5693,9 +5693,9 @@ export class MapRenderer {
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Save", cta: true, run: save },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
-			const tol = el("label", { cls: "chronicle-fill-control", title: "How different a colour can be and still count as land" }, controls);
+			const tol = el("label", { cls: "universeview-fill-control", title: "How different a colour can be and still count as land" }, controls);
 			el("span", { text: "Tolerance" }, tol);
 			const range = el("input", { attr: { type: "range", min: "2", max: "60", step: "1" } }, tol);
 			range.value = String(this.fillTolerance);
@@ -5703,7 +5703,7 @@ export class MapRenderer {
 				this.fillTolerance = +range.value;
 				compute();
 			});
-			const rep = el("button", { cls: "chronicle-banner-toggle is-active", text: "Replace their areas on this map", attr: { "aria-pressed": "true" } }, controls);
+			const rep = el("button", { cls: "universeview-banner-toggle is-active", text: "Replace their areas on this map", attr: { "aria-pressed": "true" } }, controls);
 			rep.addEventListener("click", (evt) => {
 				evt.stopPropagation();
 				replace = !replace;
@@ -5718,11 +5718,11 @@ export class MapRenderer {
 
 	/** A labelled range input for the tool banners. */
 	private slider(parent: HTMLElement, label: string, title: string, min: number, max: number, value: number, onChange: (v: number) => void) {
-		const wrap = el("label", { cls: "chronicle-fill-control", title }, parent);
+		const wrap = el("label", { cls: "universeview-fill-control", title }, parent);
 		el("span", { text: label }, wrap);
 		const range = el("input", { attr: { type: "range", min: String(min), max: String(max), step: "1" } }, wrap);
 		range.value = String(value);
-		const out = el("span", { cls: "chronicle-fill-value", text: String(value) }, wrap);
+		const out = el("span", { cls: "universeview-fill-value", text: String(value) }, wrap);
 		range.addEventListener("input", () => out.setText(range.value));
 		range.addEventListener("change", () => onChange(+range.value));
 	}
@@ -5766,7 +5766,7 @@ export class MapRenderer {
 				const res = detectCoast(img, opts, seeds);
 				rings = res.rings.map((r) => r.map(([x, y]) => [round(x * scale, 1), round(y * scale, 1)] as Pt));
 				layer.clearLayers();
-				for (const r of rings) L.polygon(r.map((p) => this.pointToLatLng(p)), { className: "chronicle-trace-coast", weight: 2.5, fillOpacity: 0.08, interactive: false }).addTo(layer);
+				for (const r of rings) L.polygon(r.map((p) => this.pointToLatLng(p)), { className: "universeview-trace-coast", weight: 2.5, fillOpacity: 0.08, interactive: false }).addTo(layer);
 				const sea = Math.round(res.share * 100);
 				status?.setText(rings.length ? `${rings.length} landmass${rings.length === 1 ? "" : "es"} · ${sea}% sea` : "No land found: click on the sea, or raise the tolerance");
 				status?.toggleClass("is-warning", !rings.length || res.share < 0.05 || res.share > 0.97);
@@ -5797,7 +5797,7 @@ export class MapRenderer {
 			{ label: "Save as map lines", run: asLines },
 			{ label: "Save as areas…", cta: true, run: asAreas },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
 			this.slider(controls, "Tolerance", "How different a colour can be and still count as sea", 4, 60, opts.tolerance, (v) => {
 				opts.tolerance = v;
@@ -5811,7 +5811,7 @@ export class MapRenderer {
 				opts.minIsland = v;
 				compute();
 			});
-			status = el("span", { cls: "chronicle-fill-status" }, controls);
+			status = el("span", { cls: "universeview-fill-status" }, controls);
 		});
 		const onClick = (evt: L.LeafletMouseEvent) => {
 			const [x, y] = this.fromLatLng(evt.latlng);
@@ -5854,8 +5854,8 @@ export class MapRenderer {
 		const draw = (note?: string) => {
 			layer.clearLayers();
 			done.forEach((l, k) => {
-				const pl = L.polyline(toMap(l), { className: `chronicle-trace-line kind-${kind}`, weight: 4 }).addTo(layer);
-				pl.bindTooltip("Click to leave this one out", { sticky: true, className: "chronicle-measure-tip" });
+				const pl = L.polyline(toMap(l), { className: `universeview-trace-line kind-${kind}`, weight: 4 }).addTo(layer);
+				pl.bindTooltip("Click to leave this one out", { sticky: true, className: "universeview-measure-tip" });
 				pl.on("click", (evt: L.LeafletMouseEvent) => {
 					L.DomEvent.stop(evt);
 					done.splice(k, 1);
@@ -5863,8 +5863,8 @@ export class MapRenderer {
 				});
 			});
 			if (cur.length) {
-				L.polyline(toMap(cur), { className: `chronicle-trace-line is-current kind-${kind}`, weight: 4, interactive: false }).addTo(layer);
-				L.circleMarker(toMap([cur[cur.length - 1]])[0], { radius: 5, className: "chronicle-trace-end", interactive: false }).addTo(layer);
+				L.polyline(toMap(cur), { className: `universeview-trace-line is-current kind-${kind}`, weight: 4, interactive: false }).addTo(layer);
+				L.circleMarker(toMap([cur[cur.length - 1]])[0], { radius: 5, className: "universeview-trace-end", interactive: false }).addTo(layer);
 			}
 			const all = cur.length > 1 ? [...done, cur] : done;
 			const total = all.reduce((s, l) => s + lengthOf(l), 0);
@@ -5920,9 +5920,9 @@ export class MapRenderer {
 			{ label: "Cancel", run: () => this.endMode() },
 			{ label: "Save as routes…", cta: true, run: save },
 		], (b) => {
-			const controls = el("div", { cls: "chronicle-fill-controls" }, b);
+			const controls = el("div", { cls: "universeview-fill-controls" }, b);
 			b.addClass("has-fill-controls");
-			const sel = el("select", { cls: "chronicle-fill-select", attr: { "aria-label": "What kind of route" } }, controls);
+			const sel = el("select", { cls: "universeview-fill-select", attr: { "aria-label": "What kind of route" } }, controls);
 			for (const [v, t] of ROUTE_KINDS) if (v !== "border") sel.add(new Option(t, v));
 			sel.value = kind;
 			sel.addEventListener("change", () => {
@@ -5935,16 +5935,16 @@ export class MapRenderer {
 			this.slider(controls, "Bridge gaps", "Whole-network mode: join dashes and breaks up to this many pixels wide", 0, 20, opts.gap, (v) => {
 				opts.gap = v;
 			});
-			const net = el("button", { cls: "chronicle-banner-toggle", text: "Find the whole network", attr: { "aria-pressed": "false", title: "One click finds every line of that colour joined to it. Best when roads have a colour nothing else uses." } }, controls);
+			const net = el("button", { cls: "universeview-banner-toggle", text: "Find the whole network", attr: { "aria-pressed": "false", title: "One click finds every line of that colour joined to it. Best when roads have a colour nothing else uses." } }, controls);
 			net.addEventListener("click", (evt) => {
 				evt.stopPropagation();
 				finishLine();
 				network = !network;
 				net.toggleClass("is-active", network);
 				net.setAttribute("aria-pressed", String(network));
-				b.querySelector(".chronicle-banner-text")?.setText(help());
+				b.querySelector(".universeview-banner-text")?.setText(help());
 			});
-			status = el("span", { cls: "chronicle-fill-status" }, controls);
+			status = el("span", { cls: "universeview-fill-status" }, controls);
 		});
 		const imagePoint = (ll: L.LatLng): Pt | null => {
 			const [x, y] = this.fromLatLng(ll);
@@ -6031,12 +6031,12 @@ export class MapRenderer {
 		stops.sort((a, b) => a.day - b.day);
 		if (!stops.length) return;
 		const color = entityColor(this.plugin, person);
-		L.polyline(stops.map((s) => s.ll), { className: "chronicle-trace", color: "currentColor", weight: 3, dashArray: "6 6" }).addTo(this.layers);
+		L.polyline(stops.map((s) => s.ll), { className: "universeview-trace", color: "currentColor", weight: 3, dashArray: "6 6" }).addTo(this.layers);
 		stops.forEach((s, i) => {
-			const html = el("div", { cls: "chronicle-trace-stop", text: String(i + 1) });
+			const html = el("div", { cls: "universeview-trace-stop", text: String(i + 1) });
 			html.style.setProperty("--pin-color", color);
 			html.style.setProperty("--i", String(i));
-			L.marker(s.ll, { icon: L.divIcon({ html, className: "chronicle-pin-wrap", iconSize: [0, 0] }), zIndexOffset: 1000 })
+			L.marker(s.ll, { icon: L.divIcon({ html, className: "universeview-pin-wrap", iconSize: [0, 0] }), zIndexOffset: 1000 })
 				.bindTooltip(`${i + 1}. ${s.label}`, { direction: "top", offset: [0, -10] })
 				.on("click", (evt: L.LeafletMouseEvent) => openEntity(this.plugin, s.key, evt.originalEvent))
 				.addTo(this.layers!);
@@ -6090,10 +6090,10 @@ const TILE_ABOVE = 4096;
  */
 class TiledImageLayer extends L.GridLayer {
 	private constructor(readonly pyramid: Pyramid, private w: number, private h: number) {
-		super({ tileSize: 256, bounds: L.latLngBounds([0, 0], [h, w]), noWrap: true, keepBuffer: 4, updateWhenZooming: false, className: "chronicle-map-image", minZoom: -5, maxZoom: 4 });
+		super({ tileSize: 256, bounds: L.latLngBounds([0, 0], [h, w]), noWrap: true, keepBuffer: 4, updateWhenZooming: false, className: "universeview-map-image", minZoom: -5, maxZoom: 4 });
 	}
 
-	static async load(plugin: ChroniclePlugin, path: string, url: string, size: [number, number], w: number, h: number): Promise<TiledImageLayer | null> {
+	static async load(plugin: UniverseViewPlugin, path: string, url: string, size: [number, number], w: number, h: number): Promise<TiledImageLayer | null> {
 		const pyramid = await getPyramid(path, size[0], size[1], () => readBytes(plugin, path), url);
 		// The computer has the picture decoded now: save the copy phones and tablets will show.
 		if (pyramid && !Platform.isMobile && tooBigForPhone(size)) window.setTimeout(() => void savePhoneCopy(plugin, path, pyramid), 1500);
@@ -6213,7 +6213,7 @@ function loadImage(url: string, cors = true): Promise<HTMLImageElement | null> {
 }
 
 /** A vault file's bytes, or null when it can't be read that way. */
-async function readBytes(plugin: ChroniclePlugin, path: string): Promise<ArrayBuffer | null> {
+async function readBytes(plugin: UniverseViewPlugin, path: string): Promise<ArrayBuffer | null> {
 	const file = plugin.app.vault.getAbstractFileByPath(path);
 	const vault = plugin.app.vault as { readBinary?: (f: TFile) => Promise<ArrayBuffer> };
 	if (!(file instanceof TFile) || typeof vault.readBinary !== "function") return null;

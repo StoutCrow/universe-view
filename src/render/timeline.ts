@@ -1,5 +1,5 @@
 import { Menu, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { buildFieldAliases } from "../settings";
 import type { Entity, EntityFilter } from "../types";
 import { Calendar, yearTicks } from "../dates/calendars";
@@ -151,18 +151,18 @@ export class TimelineRenderer {
 
 	constructor(
 		private container: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		public options: TimelineOptions,
 		private embedded = false,
 		private hoverParent: { hoverPopover: unknown } | HTMLElement = container,
 	) {
-		this.root = el("div", { cls: "chronicle-timeline" + (embedded ? " is-embedded" : "") }, container);
-		this.axisEl = el("div", { cls: "chronicle-tl-axis" }, this.root);
-		this.bodyEl = el("div", { cls: "chronicle-tl-body" }, this.root);
-		this.gridEl = el("div", { cls: "chronicle-tl-grid" }, this.bodyEl);
-		this.lanesEl = el("div", { cls: "chronicle-tl-lanes" }, this.bodyEl);
-		this.cursorEl = el("div", { cls: "chronicle-tl-cursor" }, this.root);
-		this.cursorLabel = el("div", { cls: "chronicle-tl-cursor-label" }, this.root);
+		this.root = el("div", { cls: "universeview-timeline" + (embedded ? " is-embedded" : "") }, container);
+		this.axisEl = el("div", { cls: "universeview-tl-axis" }, this.root);
+		this.bodyEl = el("div", { cls: "universeview-tl-body" }, this.root);
+		this.gridEl = el("div", { cls: "universeview-tl-grid" }, this.bodyEl);
+		this.lanesEl = el("div", { cls: "universeview-tl-lanes" }, this.bodyEl);
+		this.cursorEl = el("div", { cls: "universeview-tl-cursor" }, this.root);
+		this.cursorLabel = el("div", { cls: "universeview-tl-cursor-label" }, this.root);
 		if (embedded) this.addEmbedControls();
 		this.bindEvents();
 		this.resizeObs = new ResizeObserver(() => {
@@ -622,7 +622,7 @@ export class TimelineRenderer {
 		const middle = box.top + box.height / 2;
 		let key: string | undefined;
 		let nearest = Infinity;
-		this.lanesEl.querySelectorAll<HTMLElement>(".chronicle-tl-item.is-nation").forEach((n) => {
+		this.lanesEl.querySelectorAll<HTMLElement>(".universeview-tl-item.is-nation").forEach((n) => {
 			const r = n.getBoundingClientRect();
 			const off = Math.abs(r.top + r.height / 2 - middle);
 			if (off < nearest) [nearest, key] = [off, n.dataset.key];
@@ -673,7 +673,7 @@ export class TimelineRenderer {
 		if (!this.measureCtx) {
 			this.measureCtx = createEl("canvas").getContext("2d");
 			const cs = getComputedStyle(this.root);
-			if (this.measureCtx) this.measureCtx.font = `${cssNumber(this.root, "--chronicle-tl-font-size", 12)}px ${cs.fontFamily}`;
+			if (this.measureCtx) this.measureCtx.font = `${cssNumber(this.root, "--universeview-tl-font-size", 12)}px ${cs.fontFamily}`;
 		}
 		const w = this.measureCtx ? this.measureCtx.measureText(text).width : text.length * 7;
 		this.measureCache.set(text, w);
@@ -688,7 +688,7 @@ export class TimelineRenderer {
 			this.viewStart = this.pendingCenter - this.width / 2 / this.pxPerDay;
 			this.pendingCenter = undefined;
 		}
-		const rowH = cssNumber(this.root, "--chronicle-tl-row-height", 28) * (this.options.rowZoom ?? 1);
+		const rowH = cssNumber(this.root, "--universeview-tl-row-height", 28) * (this.options.rowZoom ?? 1);
 		this.renderAxis();
 
 		const scrollTop = this.bodyEl.scrollTop;
@@ -710,10 +710,10 @@ export class TimelineRenderer {
 		const margin = 400;
 		const grouped = this.options.group !== "none";
 		for (const lane of lanes) {
-			const laneEl = el("div", { cls: "chronicle-tl-lane" }, this.lanesEl);
+			const laneEl = el("div", { cls: "universeview-tl-lane" }, this.lanesEl);
 			laneEl.dataset.lane = lane.id;
 			if (grouped) {
-				const head = el("div", { cls: "chronicle-tl-lane-label" }, laneEl);
+				const head = el("div", { cls: "universeview-tl-lane-label" }, laneEl);
 				if (!this.embedded) this.makeMovable(head, laneEl, lanes);
 				// By category, each lane's name carries its category's colour.
 				if (this.options.group === "category") {
@@ -721,13 +721,13 @@ export class TimelineRenderer {
 					head.style.setProperty("--uv-cat-color", this.colorOf(lane.id));
 				}
 				const ent = this.plugin.index.get(lane.id);
-				const name = el("span", { cls: "chronicle-tl-lane-name", text: lane.label }, head);
+				const name = el("span", { cls: "universeview-tl-lane-name", text: lane.label }, head);
 				if (ent) {
 					name.addClass("is-link");
 					name.addEventListener("click", (evt) => openEntity(this.plugin, ent.key, evt));
 					bindHover(this.plugin, name, ent.key, this.hoverParent);
 				}
-				el("span", { cls: "chronicle-tl-lane-count", text: String(lane.items.length) }, head);
+				el("span", { cls: "universeview-tl-lane-count", text: String(lane.items.length) }, head);
 				markKey(head, lane.items.flatMap((it) => it.marks ?? []));
 			}
 			// With no lane to label, the key has a line of its own.
@@ -736,7 +736,7 @@ export class TimelineRenderer {
 				markKey(row, lane.items.flatMap((it) => it.marks ?? []));
 				if (!row.hasChildNodes()) row.remove();
 			}
-			const track = el("div", { cls: "chronicle-tl-track" }, laneEl);
+			const track = el("div", { cls: "universeview-tl-track" }, laneEl);
 			// Rows holding a nation are as tall as the lineage's, with room above the bar for its marks.
 			const zoom = this.options.rowZoom ?? 1;
 			const rows = rowLayout(lane.rows, new Set(lane.placed.filter((p) => p.item.kind === "culture" && !p.item.point).map((p) => p.row)), rowH, 40 * zoom);
@@ -750,7 +750,7 @@ export class TimelineRenderer {
 		}
 		this.bodyEl.scrollTop = this.pendingScroll ?? scrollTop;
 		this.pendingScroll = undefined;
-		const spot = this.pendingKey ? this.lanesEl.querySelector<HTMLElement>(`.chronicle-tl-item.is-nation[data-key="${CSS.escape(this.pendingKey)}"]`) : null;
+		const spot = this.pendingKey ? this.lanesEl.querySelector<HTMLElement>(`.universeview-tl-item.is-nation[data-key="${CSS.escape(this.pendingKey)}"]`) : null;
 		if (spot && this.bodyEl.clientHeight) {
 			const box = this.bodyEl.getBoundingClientRect();
 			const r = spot.getBoundingClientRect();
@@ -792,7 +792,7 @@ export class TimelineRenderer {
 
 	/** A lane moves by dragging its name, or from the menu on it, and stays where it's put. */
 	private makeMovable(head: HTMLElement, laneEl: HTMLElement, lanes: Lane[]) {
-		const shown = () => Array.from(this.lanesEl.querySelectorAll<HTMLElement>(":scope > .chronicle-tl-lane"));
+		const shown = () => Array.from(this.lanesEl.querySelectorAll<HTMLElement>(":scope > .universeview-tl-lane"));
 		const save = (ids: string[]) => {
 			this.options.laneOrder = { ...this.options.laneOrder, [this.options.group]: ids };
 			this.schedule();
@@ -832,28 +832,28 @@ export class TimelineRenderer {
 
 	/** Curved arrows from each event to the events it led to, where both are on screen. */
 	private renderCauses() {
-		this.lanesEl.querySelector(".chronicle-tl-causes")?.remove();
+		this.lanesEl.querySelector(".universeview-tl-causes")?.remove();
 		if (this.options.causes === false) return;
 		const idx = this.plugin.index;
 		if (!idx.effectsOf.size) return;
 		const nodes = new Map<string, HTMLElement>();
-		this.lanesEl.querySelectorAll<HTMLElement>(".chronicle-tl-item").forEach((n) => {
+		this.lanesEl.querySelectorAll<HTMLElement>(".universeview-tl-item").forEach((n) => {
 			if (n.dataset.key && !nodes.has(n.dataset.key)) nodes.set(n.dataset.key, n);
 		});
 		const base = this.lanesEl.getBoundingClientRect();
 		const svgEl = createSvg("svg");
-		svgEl.classList.add("chronicle-tl-causes");
+		svgEl.classList.add("universeview-tl-causes");
 		svgEl.setAttribute("width", String(this.lanesEl.scrollWidth));
 		svgEl.setAttribute("height", String(this.lanesEl.scrollHeight));
 		const defs = createSvg("defs");
-		defs.append(...svgMarkup(`<marker id="chronicle-tl-cause-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="chronicle-tl-cause-headpath"/></marker>`));
+		defs.append(...svgMarkup(`<marker id="universeview-tl-cause-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="universeview-tl-cause-headpath"/></marker>`));
 		svgEl.appendChild(defs);
 		let drawn = 0;
 		for (const [cause, effects] of idx.effectsOf) {
 			const a = nodes.get(cause);
 			if (!a) continue;
 			const box = (n: HTMLElement): Box => {
-				const r = (n.querySelector(".chronicle-tl-bar, .chronicle-tl-dot") ?? n).getBoundingClientRect();
+				const r = (n.querySelector(".universeview-tl-bar, .universeview-tl-dot") ?? n).getBoundingClientRect();
 				return { left: r.left - base.left, right: r.right - base.left, top: r.top - base.top, bottom: r.bottom - base.top };
 			};
 			const from = box(a);
@@ -862,8 +862,8 @@ export class TimelineRenderer {
 				if (!b) continue;
 				const path = createSvg("path");
 				path.setAttribute("d", causePath(from, box(b)));
-				path.setAttribute("class", "chronicle-tl-cause");
-				path.setAttribute("marker-end", "url(#chronicle-tl-cause-head)");
+				path.setAttribute("class", "universeview-tl-cause");
+				path.setAttribute("marker-end", "url(#universeview-tl-cause-head)");
 				path.dataset.from = cause;
 				path.dataset.to = effect;
 				const title = createSvg("title");
@@ -953,15 +953,15 @@ export class TimelineRenderer {
 	/** A cluster marker: its count, the names on hover, and a click that zooms in until they part (or lists them, if they share a day). */
 	private renderCluster(track: HTMLElement, p: Placed, at: { top: number; height: number }, members: Item[]) {
 		const it = p.item;
-		const node = el("div", { cls: `chronicle-tl-item is-point is-cluster kind-${it.kind}` }, track);
+		const node = el("div", { cls: `universeview-tl-item is-point is-cluster kind-${it.kind}` }, track);
 		node.dataset.key = it.key;
 		node.style.setProperty("--item-color", it.color);
 		node.style.top = `${at.top}px`;
 		node.style.height = `${at.height}px`;
 		node.style.left = `${p.x1 - 9}px`;
 		if (members.some((m) => m.id === this.selected)) node.addClass("is-selected");
-		el("span", { cls: "chronicle-tl-dot uv-tl-cluster-dot", text: String(members.length) }, node);
-		el("span", { cls: "chronicle-tl-label", text: it.label }, node);
+		el("span", { cls: "universeview-tl-dot uv-tl-cluster-dot", text: String(members.length) }, node);
+		el("span", { cls: "universeview-tl-label", text: it.label }, node);
 		const names = members.slice(0, 12).map((m) => `${m.label} · ${m.dateText}`);
 		if (members.length > 12) names.push(`…and ${members.length - 12} more`);
 		node.setAttribute("aria-label", names.join("\n"));
@@ -988,7 +988,7 @@ export class TimelineRenderer {
 
 	private renderItem(track: HTMLElement, p: Placed, at: { top: number; height: number }) {
 		const it = p.item;
-		const node = el("div", { cls: `chronicle-tl-item kind-${it.kind} uv-shape-${this.shapeIn(it)}` }, track);
+		const node = el("div", { cls: `universeview-tl-item kind-${it.kind} uv-shape-${this.shapeIn(it)}` }, track);
 		node.dataset.key = it.key;
 		node.style.setProperty("--item-color", it.color);
 		node.style.top = `${at.top}px`;
@@ -1005,14 +1005,14 @@ export class TimelineRenderer {
 		if (it.point) {
 			node.addClass("is-point");
 			node.style.left = `${p.x1 - 7}px`;
-			const dot = el("span", { cls: "chronicle-tl-dot" }, node);
+			const dot = el("span", { cls: "universeview-tl-dot" }, node);
 				shapeDot(dot, this.shapeIn(it));
 			if (battle) icon(dot, "swords");
-			if (!p.noLabel) el("span", { cls: "chronicle-tl-label", text: it.label }, node);
+			if (!p.noLabel) el("span", { cls: "universeview-tl-label", text: it.label }, node);
 		} else {
 			node.addClass("is-span");
 			node.style.left = `${p.x1}px`;
-			const bar = el("span", { cls: "chronicle-tl-bar" }, node);
+			const bar = el("span", { cls: "universeview-tl-bar" }, node);
 			bar.style.width = `${p.x2 - p.x1}px`;
 				shapeBar(bar, this.shapeIn(it));
 			const marks = it.marks ?? [];
@@ -1021,7 +1021,7 @@ export class TimelineRenderer {
 			const nation = it.kind === "culture";
 			if (nation) node.addClass("is-nation");
 			if (nation) this.nationBar(bar, p, at.height);
-			const label = p.noLabel || nation ? undefined : el("span", { cls: "chronicle-tl-label", text: it.label }, p.labelInside ? bar : node);
+			const label = p.noLabel || nation ? undefined : el("span", { cls: "universeview-tl-label", text: it.label }, p.labelInside ? bar : node);
 			if (p.labelInside && label) {
 				label.addClass("is-inside");
 				// Keep the label readable when the bar starts off-screen to the left.
@@ -1057,9 +1057,9 @@ export class TimelineRenderer {
 		node.addClass("is-editable");
 		let handle: HTMLElement | undefined;
 		if (!p.item.point) {
-			handle = el("span", { cls: "chronicle-tl-resize", attr: { title: "Drag to change when it ends" } }, node.querySelector<HTMLElement>(".chronicle-tl-bar") ?? node);
+			handle = el("span", { cls: "universeview-tl-resize", attr: { title: "Drag to change when it ends" } }, node.querySelector<HTMLElement>(".universeview-tl-bar") ?? node);
 		}
-		const badge = () => this.root.querySelector<HTMLElement>(".chronicle-tl-drag-date") ?? el("div", { cls: "chronicle-tl-drag-date" }, this.root);
+		const badge = () => this.root.querySelector<HTMLElement>(".universeview-tl-drag-date") ?? el("div", { cls: "universeview-tl-drag-date" }, this.root);
 		node.addEventListener("pointerdown", (evt) => {
 			if (evt.button !== 0) return;
 			const resizing = !!handle && (evt.target as HTMLElement) === handle;
@@ -1090,7 +1090,7 @@ export class TimelineRenderer {
 				node.addClass("is-dragging");
 				delta = Math.round(dx / this.pxPerDay);
 				if (resizing) {
-					const bar = node.querySelector<HTMLElement>(".chronicle-tl-bar");
+					const bar = node.querySelector<HTMLElement>(".universeview-tl-bar");
 					if (bar) bar.style.width = `${Math.max(4, p.x2 - p.x1 + dx)}px`;
 				} else node.style.transform = `translateX(${dx}px)`;
 				const t = target();
@@ -1099,7 +1099,7 @@ export class TimelineRenderer {
 			const up = () => {
 				window.removeEventListener("pointermove", move);
 				window.removeEventListener("pointerup", up);
-				this.root.querySelector(".chronicle-tl-drag-date")?.remove();
+				this.root.querySelector(".universeview-tl-drag-date")?.remove();
 				node.removeClass("is-dragging");
 				if (!moved || !delta) {
 					node.setCssStyles({ transform: "" });
@@ -1218,14 +1218,14 @@ export class TimelineRenderer {
 			}
 			const x1 = Math.max(-2, this.x(band.a));
 			const x2 = Math.min(this.width + 2, this.x(band.b));
-			const div = el("div", { cls: "chronicle-tl-era" + (band.calendarEra ? ` is-calendar ${alt++ % 2 ? "is-alt" : ""}` : " is-note") }, this.gridEl);
+			const div = el("div", { cls: "universeview-tl-era" + (band.calendarEra ? ` is-calendar ${alt++ % 2 ? "is-alt" : ""}` : " is-note") }, this.gridEl);
 			div.style.left = `${x1}px`;
 			div.style.width = `${Math.max(2, x2 - x1)}px`;
 			if (band.color) div.style.setProperty("--era-color", band.color);
 			const depth = depthOf(band);
 			div.style.setProperty("--era-depth", String(depth));
 			if (depth) div.addClass("is-nested");
-			const label = el("span", { cls: "chronicle-tl-era-label", text: band.label }, div);
+			const label = el("span", { cls: "universeview-tl-era-label", text: band.label }, div);
 			if (band.key) {
 				const key = band.key;
 				label.addEventListener("click", (evt) => openEntity(this.plugin, key, evt));
@@ -1254,10 +1254,10 @@ export class TimelineRenderer {
 		for (const t of kept) {
 			const x = t.x;
 			if (x < -100 || x > this.width + 100) continue;
-			const tick = el("div", { cls: "chronicle-tl-tick" + (t.major ? " is-major" : "") }, this.axisEl);
+			const tick = el("div", { cls: "universeview-tl-tick" + (t.major ? " is-major" : "") }, this.axisEl);
 			tick.style.left = `${x}px`;
 			el("span", { text: t.label }, tick);
-			const line = el("div", { cls: "chronicle-tl-gridline" + (t.major ? " is-major" : "") }, this.gridEl);
+			const line = el("div", { cls: "universeview-tl-gridline" + (t.major ? " is-major" : "") }, this.gridEl);
 			line.style.left = `${x}px`;
 		}
 	}
@@ -1276,7 +1276,7 @@ export class TimelineRenderer {
 				}
 				const horizontal = Math.abs(evt.deltaX) > Math.abs(evt.deltaY) || evt.shiftKey;
 				// Plain wheel zooms unless the lanes need vertical scrolling; over the axis it always zooms.
-				const overAxis = (evt.target as HTMLElement).closest(".chronicle-tl-axis") !== null;
+				const overAxis = (evt.target as HTMLElement).closest(".universeview-tl-axis") !== null;
 				const canScroll = this.bodyEl.scrollHeight > this.bodyEl.clientHeight + 2;
 				const zoomGesture = evt.ctrlKey || evt.metaKey || (!this.embedded && !horizontal && (overAxis || !canScroll));
 				if (horizontal && !evt.ctrlKey) {
@@ -1299,7 +1299,7 @@ export class TimelineRenderer {
 		if (!this.embedded) this.root.addEventListener("touchstart", (evt) => evt.stopPropagation(), { passive: true });
 		this.root.addEventListener("pointerdown", (evt) => {
 			if (evt.button !== 0) return;
-			if ((evt.target as HTMLElement).closest(".chronicle-tl-lane-label, .chronicle-embed-controls, button")) return;
+			if ((evt.target as HTMLElement).closest(".universeview-tl-lane-label, .universeview-embed-controls, button")) return;
 			this.drag = { x: evt.clientX, start: this.viewStart, moved: false, id: evt.pointerId };
 		});
 		this.root.addEventListener("pointermove", (evt) => {
@@ -1336,7 +1336,7 @@ export class TimelineRenderer {
 		this.root.addEventListener("mouseenter", () => this.root.addClass("is-hovering"));
 		this.root.addEventListener("mouseleave", () => this.root.removeClass("is-hovering"));
 		this.bodyEl.addEventListener("dblclick", (evt) => {
-			if ((evt.target as HTMLElement).closest(".chronicle-tl-item, .chronicle-tl-lane-label")) return;
+			if ((evt.target as HTMLElement).closest(".universeview-tl-item, .universeview-tl-lane-label")) return;
 			const r = this.root.getBoundingClientRect();
 			const day = this.viewStart + (evt.clientX - r.left) / this.pxPerDay;
 			const precision = this.pxPerDay >= 2 ? "day" : this.pxPerDay * 30 >= 2 ? "month" : "year";
@@ -1358,10 +1358,10 @@ export class TimelineRenderer {
 	}
 
 	private addEmbedControls() {
-		const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
+		const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 		iconButton(box, "zoom-in", "Zoom in", () => this.zoom(1.5));
 		iconButton(box, "zoom-out", "Zoom out", () => this.zoom(1 / 1.5));
 		iconButton(box, "maximize", "Fit all", () => this.fit(true));
-		el("span", { cls: "chronicle-embed-hint", text: "Ctrl + scroll to zoom" }, box);
+		el("span", { cls: "universeview-embed-hint", text: "Ctrl + scroll to zoom" }, box);
 	}
 }

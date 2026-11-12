@@ -3,12 +3,12 @@ import { DEFAULT_FAMILY_OPTIONS, FamilyOptions, FamilyTreeRenderer } from "../re
 import { FanChartRenderer, TimeTreeRenderer } from "../render/treecharts";
 import { dropdown, iconButton } from "../render/common";
 import { optionsButton, type OptionEntry } from "../render/optionsmenu";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 import { AddRelativesModal } from "../ui/AddRelatives";
 
 export const VIEW_FAMILY = "chronicle-family";
 
-export class FamilyTreeView extends ChronicleView {
+export class FamilyTreeView extends UniverseViewBase {
 	protected exportable = true;
 	private options: FamilyOptions = { ...DEFAULT_FAMILY_OPTIONS };
 	private follow = false;

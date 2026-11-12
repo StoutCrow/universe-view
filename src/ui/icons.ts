@@ -1,5 +1,5 @@
 import { SuggestModal, TFile, debounce, getIconIds } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { EntityType } from "../types";
 import { TYPE_ICONS, el, entityColor, glyph, icon } from "../render/common";
 import { chainOf, tierName } from "../index/realms";
@@ -14,7 +14,7 @@ const DEFAULT_TYPE_ICONS = { ...TYPE_ICONS };
 const DEFAULT_GROUP_ICONS = Object.fromEntries(Object.entries(GROUP_KINDS).map(([k, v]) => [k, v.icon])) as Record<GroupKind, string>;
 
 /** Puts the icons chosen in the settings (per type, per kind of group) in place of the built-in ones. */
-export function applyIconSettings(plugin: ChroniclePlugin) {
+export function applyIconSettings(plugin: UniverseViewPlugin) {
 	const s = plugin.settings;
 	// The world's setting first: what a family is called, its icon, and the liege's and vassals' labels.
 	const w = settingWords(s.worldSetting);
@@ -32,7 +32,7 @@ export { DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS };
  * The icons a note shows: its type's (a pin for a place) and, beside it, what it is more exactly,
  * when that's different: its own `icon:`, its kind's (a castle for a fort), or its kind of group.
  */
-export function noteIcons(plugin: ChroniclePlugin, path: string): { type?: string; kind?: string } {
+export function noteIcons(plugin: UniverseViewPlugin, path: string): { type?: string; kind?: string } {
 	const e = plugin.index.get(path);
 	if (!e) {
 		// Not a UniverseView note: only an `icon:` it was given.
@@ -58,7 +58,7 @@ export function fileStrengthNames(): [string, string][] {
  * its own, else its realm's, at a strength set by its tier, so a county reads as a softer shade of
  * its duchy. Houses take their own colour, people their house's.
  */
-export function fileColor(plugin: ChroniclePlugin, path: string): { color: string; strength: number } | undefined {
+export function fileColor(plugin: UniverseViewPlugin, path: string): { color: string; strength: number } | undefined {
 	const e = plugin.index.get(path);
 	if (!e) return undefined;
 	const strengths = { ...DEFAULT_FILE_STRENGTH, ...(plugin.settings.fileStrength ?? {}) };
@@ -82,7 +82,7 @@ export function fileColor(plugin: ChroniclePlugin, path: string): { color: strin
 }
 
 /** Colours a file row by its note's realm and tier. */
-export function tintRow(plugin: ChroniclePlugin, row: HTMLElement, path: string, style: "text" | "bar" | "both" | "none") {
+export function tintRow(plugin: UniverseViewPlugin, row: HTMLElement, path: string, style: "text" | "bar" | "both" | "none") {
 	const c = style === "none" ? undefined : fileColor(plugin, path);
 	row.toggleClass("uv-file-tinted", !!c);
 	row.toggleClass("uv-tint-text", !!c && style !== "bar");
@@ -97,7 +97,7 @@ export function tintRow(plugin: ChroniclePlugin, row: HTMLElement, path: string,
 }
 
 /** A note's icons (its type's and its kind's) for a file row; undefined when it has none. */
-export function fileIconBox(plugin: ChroniclePlugin, path: string): HTMLElement | undefined {
+export function fileIconBox(plugin: UniverseViewPlugin, path: string): HTMLElement | undefined {
 	const { type, kind } = noteIcons(plugin, path);
 	if (!type && !kind) return undefined;
 	const box = el("span", { cls: "uv-file-icons", attr: { "data-sig": `${type ?? ""}|${kind ?? ""}` } });
@@ -110,7 +110,7 @@ export function fileIconBox(plugin: ChroniclePlugin, path: string): HTMLElement 
  * Icons in the file explorer and search: beside each UniverseView note, its type's icon and its
  * kind's. Redrawn as folders open and results come in, and when notes change.
  */
-export function decorateFileLists(plugin: ChroniclePlugin) {
+export function decorateFileLists(plugin: UniverseViewPlugin) {
 	const paint = (root: ParentNode) => {
 		const icons = plugin.settings.fileIcons !== false;
 		if (!icons) root.querySelectorAll(".uv-file-icons").forEach((x) => x.remove());
@@ -180,7 +180,7 @@ export function decorateFileLists(plugin: ChroniclePlugin) {
 export class IconPickerModal extends SuggestModal<string> {
 	private ids: string[];
 
-	constructor(plugin: ChroniclePlugin, private onPick: (id: string | null) => void, current?: string) {
+	constructor(plugin: UniverseViewPlugin, private onPick: (id: string | null) => void, current?: string) {
 		super(plugin.app);
 		let ids: string[] = [];
 		try {
@@ -214,7 +214,7 @@ export class IconPickerModal extends SuggestModal<string> {
 }
 
 /** Asks for an icon and writes it to the note as `icon:` (or removes it). */
-export function changeNoteIcon(plugin: ChroniclePlugin, file: TFile) {
+export function changeNoteIcon(plugin: UniverseViewPlugin, file: TFile) {
 	const current = plugin.index.get(file.path)?.icon;
 	new IconPickerModal(plugin, (id) => {
 		void plugin.editFrontmatter(file, (fm) => {

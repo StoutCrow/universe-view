@@ -1,6 +1,6 @@
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 import { Menu, Notice } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { addLink, linkChoices } from "../ui/relations";
 import { TextPrompt } from "../ui/TextPrompt";
 import type { Entity, EntityFilter, EntityType, TimedRef } from "../types";
@@ -90,17 +90,17 @@ export class NetworkRenderer {
 
 	constructor(
 		private container: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		public options: NetworkOptions,
 		private embedded = false,
 		private hoverParent: { hoverPopover: unknown } | HTMLElement = container,
 	) {
-		this.root = el("div", { cls: "chronicle-network" + (embedded ? " is-embedded" : "") }, container);
-		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.root);
+		this.root = el("div", { cls: "universeview-network" + (embedded ? " is-embedded" : "") }, container);
+		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.root);
 		this.layer = svg("g", {}, this.svgEl);
 		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.1, maxScale: 4 });
 		if (embedded) {
-			const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
+			const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.3));
 			iconButton(box, "zoom-out", "Zoom out", () => this.pz.zoomBy(1 / 1.3));
 			iconButton(box, "maximize", "Fit", () => this.fit());
@@ -139,7 +139,7 @@ export class NetworkRenderer {
 		const prev = new Map(this.nodes.map((n) => [n.key, n]));
 		this.sim?.stop();
 		this.layer.replaceChildren();
-		this.root.querySelector(".chronicle-empty")?.remove();
+		this.root.querySelector(".universeview-empty")?.remove();
 		this.build();
 		if (!this.nodes.length) {
 			emptyState(this.root, "waypoints", "Nothing to connect yet", "Notes with a `type` (person, culture, place, event) and links between them appear here.");
@@ -238,10 +238,10 @@ export class NetworkRenderer {
 	}
 
 	private draw() {
-		const linkLayer = svg("g", { class: "chronicle-net-links" }, this.layer);
-		const nodeLayer = svg("g", { class: "chronicle-net-nodes" }, this.layer);
+		const linkLayer = svg("g", { class: "universeview-net-links" }, this.layer);
+		const nodeLayer = svg("g", { class: "universeview-net-nodes" }, this.layer);
 		for (const l of this.links) {
-			l.path = svg("line", { class: `chronicle-net-link kind-${l.kind}${l.inactive ? " is-inactive" : ""}` }, linkLayer);
+			l.path = svg("line", { class: `universeview-net-link kind-${l.kind}${l.inactive ? " is-inactive" : ""}` }, linkLayer);
 			if (l.label) {
 				const t = svg("title", {}, l.path);
 				t.textContent = l.label;
@@ -261,12 +261,12 @@ export class NetworkRenderer {
 		if (!this.embedded && !this.boundBackground) {
 			this.boundBackground = true;
 			this.svgEl.addEventListener("click", (evt) => {
-				if (this.pz.justPanned || (evt.target as Element).closest(".chronicle-net-node")) return;
+				if (this.pz.justPanned || (evt.target as Element).closest(".universeview-net-node")) return;
 				this.pick(undefined);
 			});
 		}
 		for (const n of this.nodes) {
-			const g = svg("g", { class: `chronicle-net-node type-${n.entity.type}`, "data-chronicle-drag": "1", "data-key": n.key }, nodeLayer);
+			const g = svg("g", { class: `universeview-net-node type-${n.entity.type}`, "data-universeview-drag": "1", "data-key": n.key }, nodeLayer);
 			if (n.key === this.options.focus) g.classList.add("is-focus");
 			if (n.inactive) g.classList.add("is-inactive");
 			if (this.options.pinned?.[n.key]) g.classList.add("is-pinned");
@@ -275,10 +275,10 @@ export class NetworkRenderer {
 				: n.entity.type === "place"
 					? svg("rect", { x: -n.r, y: -n.r, width: n.r * 2, height: n.r * 2, rx: n.r * 0.35 }, g)
 					: svg("circle", { r: n.r }, g);
-			shape.setAttribute("class", "chronicle-net-shape");
+			shape.setAttribute("class", "universeview-net-shape");
 			shape.setAttribute("style", `--node-color: ${entityColor(this.plugin, n.entity)}`);
 			if (this.options.labels || n.degree > 3 || n.entity.type === "culture") {
-				const t = svg("text", { y: n.r + 12, "text-anchor": "middle", class: "chronicle-net-label" }, g);
+				const t = svg("text", { y: n.r + 12, "text-anchor": "middle", class: "universeview-net-label" }, g);
 				t.textContent = n.entity.name;
 			}
 			n.g = g;
@@ -398,14 +398,14 @@ export class NetworkRenderer {
 
 	/** A line from a note follows the pointer; let go over another note to choose how they're tied. */
 	private startLink(n: Node, evt: PointerEvent) {
-		const line = svg("line", { class: "chronicle-net-draft", x1: n.x ?? 0, y1: n.y ?? 0, x2: n.x ?? 0, y2: n.y ?? 0 }, this.layer);
+		const line = svg("line", { class: "universeview-net-draft", x1: n.x ?? 0, y1: n.y ?? 0, x2: n.x ?? 0, y2: n.y ?? 0 }, this.layer);
 		this.root.addClass("is-linking");
 		const move = (m: PointerEvent) => {
 			const [x, y] = this.toGraph(m);
 			line.setAttribute("x2", String(x));
 			line.setAttribute("y2", String(y));
 			this.layer.querySelectorAll(".is-link-target").forEach((x) => x.classList.remove("is-link-target"));
-			const over = (document.elementFromPoint(m.clientX, m.clientY))?.closest<SVGGElement>(".chronicle-net-node");
+			const over = (document.elementFromPoint(m.clientX, m.clientY))?.closest<SVGGElement>(".universeview-net-node");
 			if (over && over !== n.g) over.classList.add("is-link-target");
 		};
 		const up = (u: PointerEvent) => {
@@ -414,7 +414,7 @@ export class NetworkRenderer {
 			line.remove();
 			this.root.removeClass("is-linking");
 			this.layer.querySelectorAll(".is-link-target").forEach((x) => x.classList.remove("is-link-target"));
-			const over = (document.elementFromPoint(u.clientX, u.clientY))?.closest<SVGGElement>(".chronicle-net-node");
+			const over = (document.elementFromPoint(u.clientX, u.clientY))?.closest<SVGGElement>(".universeview-net-node");
 			const other = over && this.nodes.find((x) => x.key === over.getAttribute("data-key"));
 			if (!other || other.key === n.key) return;
 			const choices = linkChoices(this.plugin, n.entity, other.entity);

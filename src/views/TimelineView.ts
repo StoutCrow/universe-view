@@ -5,11 +5,11 @@ import { el, icon, iconButton } from "../render/common";
 import { EntityPickerModal } from "../ui/suggest";
 import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import type { TimeRange } from "../render/timelinerows";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_TIMELINE = "chronicle-timeline";
 
-export class TimelineView extends ChronicleView {
+export class TimelineView extends UniverseViewBase {
 	protected exportable = true;
 	private options: TimelineOptions = { ...structuredClone(DEFAULT_TIMELINE_OPTIONS), lifeEvents: this.plugin.settings.showLifeEvents };
 	private renderer?: TimelineRenderer;
@@ -123,10 +123,10 @@ export class TimelineView extends ChronicleView {
 			];
 			// Some are on unless turned off (unset counts as on), the rest off unless turned on.
 			const isOn = ([k, , , , onByDefault]: Layer) => (onByDefault ? o[k] !== false : !!o[k]);
-			const show = el("button", { cls: "chronicle-chip chronicle-overlay-btn", attr: { "aria-haspopup": "menu", title: "Choose what's on the timeline" } }, chips);
-			icon(el("span", { cls: "chronicle-chip-icon" }, show), "layers");
+			const show = el("button", { cls: "universeview-chip universeview-overlay-btn", attr: { "aria-haspopup": "menu", title: "Choose what's on the timeline" } }, chips);
+			icon(el("span", { cls: "universeview-chip-icon" }, show), "layers");
 			el("span", { text: "Show" }, show);
-			const count = el("span", { cls: "chronicle-chip-count" }, show);
+			const count = el("span", { cls: "universeview-chip-count" }, show);
 			const sync = () => count.setText(`${layers.filter(isOn).length}/${layers.length}`);
 			sync();
 			show.addEventListener("click", (evt) => {
@@ -144,10 +144,10 @@ export class TimelineView extends ChronicleView {
 				menu.showAtMouseEvent(evt);
 			});
 			// Categories: battles, treaties, coronations… (and lifespans, groups, places), each shown or hidden.
-			const cats = el("button", { cls: "chronicle-chip chronicle-overlay-btn" + (o.hiddenCategories?.length ? " is-active" : ""), attr: { "aria-haspopup": "menu", title: "Show or hide kinds of event (from each note's category:, kind: or tag)" } }, chips);
-			icon(el("span", { cls: "chronicle-chip-icon" }, cats), "tags");
+			const cats = el("button", { cls: "universeview-chip universeview-overlay-btn" + (o.hiddenCategories?.length ? " is-active" : ""), attr: { "aria-haspopup": "menu", title: "Show or hide kinds of event (from each note's category:, kind: or tag)" } }, chips);
+			icon(el("span", { cls: "universeview-chip-icon" }, cats), "tags");
 			el("span", { text: "Categories" }, cats);
-			if (o.hiddenCategories?.length) el("span", { cls: "chronicle-chip-count", text: `−${o.hiddenCategories.length}` }, cats);
+			if (o.hiddenCategories?.length) el("span", { cls: "universeview-chip-count", text: `−${o.hiddenCategories.length}` }, cats);
 			cats.addEventListener("click", (evt) => {
 				const list = this.renderer?.categories() ?? [];
 				const hidden = new Set(o.hiddenCategories ?? []);
@@ -191,10 +191,10 @@ export class TimelineView extends ChronicleView {
 			});
 				// Fog of war: shown only while on (it is set from Options), so it can be seen and turned off.
 				if (o.pov) {
-					const pov = el("button", { cls: "chronicle-chip chronicle-overlay-btn is-active", attr: { title: "History as this person knew it: click to show everything again" } }, chips);
-					icon(el("span", { cls: "chronicle-chip-icon" }, pov), "eye");
+					const pov = el("button", { cls: "universeview-chip universeview-overlay-btn is-active", attr: { title: "History as this person knew it: click to show everything again" } }, chips);
+					icon(el("span", { cls: "universeview-chip-icon" }, pov), "eye");
 					el("span", { text: `Seen by ${this.plugin.index.get(o.pov)?.name ?? o.pov}` }, pov);
-					icon(el("span", { cls: "chronicle-chip-icon" }, pov), "x");
+					icon(el("span", { cls: "universeview-chip-icon" }, pov), "x");
 					pov.addEventListener("click", () => {
 						o.pov = undefined;
 						this.fillToolbar();

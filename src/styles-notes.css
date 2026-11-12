@@ -12,14 +12,14 @@
 .uv-creator .uv-quickadd-chips { gap: 4px; }
 .uv-creator .uv-quickadd-chip { border-radius: var(--uv-r-md); }
 .uv-creator .uv-quickadd-chip.is-active { background: var(--background-modifier-hover); border-color: var(--background-modifier-border-hover); }
-.uv-creator .chronicle-dash-problem:empty, .uv-quickadd-warn:empty, .uv-creator-hint:empty { display: none; }
+.uv-creator .universeview-dash-problem:empty, .uv-quickadd-warn:empty, .uv-creator-hint:empty { display: none; }
 .uv-creator-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .uv-creator-form.is-hidden { display: none; }
 .uv-creator-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; align-items: start; }
 .uv-creator-row label, .uv-creator-tags > label { padding-top: 6px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .uv-creator-value { min-width: 0; }
-.uv-creator-value input[type="text"], .uv-creator-value select, .uv-creator-value .chronicle-linklist { width: 100%; }
-.uv-creator-value .chronicle-linklist { box-sizing: border-box; }
+.uv-creator-value input[type="text"], .uv-creator-value select, .uv-creator-value .universeview-linklist { width: 100%; }
+.uv-creator-value .universeview-linklist { box-sizing: border-box; }
 .uv-creator-hint { margin-top: 2px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .uv-creator-hint.is-bad { color: var(--color-orange); }
 .uv-creator-tags { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; margin-top: 12px; }
@@ -38,7 +38,7 @@ button.uv-creator-tag.is-off { color: var(--text-faint); text-decoration: line-t
 .uv-quickadd-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--uv-r-md); font-size: var(--font-ui-smaller); background: var(--background-secondary); box-shadow: none; border: 1px solid var(--background-modifier-border); }
 .uv-quickadd-chip svg { width: 14px; height: 14px; }
 .uv-quickadd-chip.is-active { background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); border-color: var(--interactive-accent); color: var(--text-normal); }
-.uv-quickadd .chronicle-quickadd-input { width: 100%; font-size: 1.05em; }
+.uv-quickadd .universeview-quickadd-input { width: 100%; font-size: 1.05em; }
 .uv-quickadd-examples { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 10px; font-size: var(--font-ui-smaller); }
 .uv-quickadd-examples a { color: var(--text-faint); cursor: pointer; text-decoration: none; }
 .uv-quickadd-examples a:hover { color: var(--text-accent); }
@@ -59,8 +59,8 @@ button.uv-creator-tag.is-off { color: var(--text-faint); text-decoration: line-t
 .uv-quickadd-made { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font-size: var(--font-ui-smaller); }
 .uv-quickadd-made-item { cursor: pointer; }
 .uv-quickadd-keys { margin-top: 8px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
-.uv-quickadd-where .chronicle-create-folder { display: flex; align-items: center; gap: 6px; }
-.uv-quickadd-where .chronicle-create-folder input { flex: 1; min-width: 0; }
+.uv-quickadd-where .universeview-create-folder { display: flex; align-items: center; gap: 6px; }
+.uv-quickadd-where .universeview-create-folder input { flex: 1; min-width: 0; }
 
 /* ---- Quick add: several at once, completion ---- */
 .uv-quickadd-many { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-size: var(--font-ui-small); }

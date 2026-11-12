@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Notice, TFile, normalizePath } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { renderFacts } from "../render/arc";
@@ -10,7 +10,7 @@ const SECTIONS: [EntityType, string][] = [["culture", "Peoples and powers"], ["p
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const slug = (e: Entity) => "n-" + e.path.replace(/[^\w]+/g, "-").toLowerCase();
 
-async function fileToDataUrl(plugin: ChroniclePlugin, path: string, maxBytes = 3_000_000): Promise<string | null> {
+async function fileToDataUrl(plugin: UniverseViewPlugin, path: string, maxBytes = 3_000_000): Promise<string | null> {
 	const f = plugin.app.vault.getAbstractFileByPath(path);
 	if (!(f instanceof TFile) || f.stat.size > maxBytes) return null;
 	const buf = await plugin.app.vault.readBinary(f);
@@ -23,7 +23,7 @@ async function fileToDataUrl(plugin: ChroniclePlugin, path: string, maxBytes = 3
 }
 
 /** Turns links between notes into links within the book, and pictures into embedded data. */
-async function tidyHtml(plugin: ChroniclePlugin, root: HTMLElement, ids: Map<string, string>) {
+async function tidyHtml(plugin: UniverseViewPlugin, root: HTMLElement, ids: Map<string, string>) {
 	root.querySelectorAll("a").forEach((a) => {
 		const target = (a.getAttribute("data-href") ?? a.textContent ?? "").split("#")[0].split("|")[0].trim();
 		const e = plugin.index.findByName(target);
@@ -46,7 +46,7 @@ async function tidyHtml(plugin: ChroniclePlugin, root: HTMLElement, ids: Map<str
 }
 
 /** One map: its picture with the places and painted areas on it, scaled to the page. */
-async function mapFigure(plugin: ChroniclePlugin, m: Entity, ids: Map<string, string>): Promise<string> {
+async function mapFigure(plugin: UniverseViewPlugin, m: Entity, ids: Map<string, string>): Promise<string> {
 	if (!m.mapImage) return "";
 	const data = await fileToDataUrl(plugin, m.mapImage, 12_000_000);
 	if (!data) return "";
@@ -84,10 +84,10 @@ main{max-width:860px;margin:0 auto;padding:48px 24px 96px}h1{font-size:2.6em;mar
 h3{font-size:1.25em;margin:2em 0 .3em}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .lede{color:var(--muted);font-style:italic}.toc{columns:2 260px;font-size:.95em}.toc a{display:block}
 .entry{overflow:hidden;border-bottom:1px solid var(--rule);padding-bottom:1em}
-.chronicle-facts{float:right;width:260px;margin:0 0 1em 1.4em;border:1px solid var(--rule);border-top:4px solid var(--item-color,var(--accent));border-radius:6px;padding:10px 12px;font:14px/1.45 system-ui,sans-serif;background:color-mix(in srgb,var(--paper) 92%,var(--ink))}
-.chronicle-facts-title a{font-weight:700;font-size:1.05em;color:var(--ink)}.chronicle-facts-kind{color:var(--muted);font-size:.9em}
-.chronicle-facts-image{width:100%;border-radius:4px;margin:8px 0}.chronicle-facts-rows{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:6px}
-.chronicle-facts-label{color:var(--muted)}.chronicle-facts-summary{margin-top:8px;font-style:italic}
+.universeview-facts{float:right;width:260px;margin:0 0 1em 1.4em;border:1px solid var(--rule);border-top:4px solid var(--item-color,var(--accent));border-radius:6px;padding:10px 12px;font:14px/1.45 system-ui,sans-serif;background:color-mix(in srgb,var(--paper) 92%,var(--ink))}
+.universeview-facts-title a{font-weight:700;font-size:1.05em;color:var(--ink)}.universeview-facts-kind{color:var(--muted);font-size:.9em}
+.universeview-facts-image{width:100%;border-radius:4px;margin:8px 0}.universeview-facts-rows{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:6px}
+.universeview-facts-label{color:var(--muted)}.universeview-facts-summary{margin-top:8px;font-style:italic}
 .body img{max-width:100%}table{border-collapse:collapse;width:100%;font:14px/1.5 system-ui,sans-serif}td,th{border-bottom:1px solid var(--rule);padding:4px 8px;text-align:left;vertical-align:top}
 figure.map{margin:2em 0}.map-box{position:relative}.map-box img{display:block;width:100%}.map-box svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .pin{position:absolute;transform:translate(-5px,-50%);display:flex;align-items:center;gap:4px;font:12px system-ui,sans-serif;color:#1d1a16;text-shadow:0 0 3px #fff,0 0 3px #fff}
@@ -96,7 +96,7 @@ figure.map{margin:2em 0}.map-box{position:relative}.map-box img{display:block;wi
 `;
 
 /** A single web page with everything about a world: its maps, a timeline, and an entry per note. */
-export async function buildWorldBook(plugin: ChroniclePlugin, world: string | undefined): Promise<string> {
+export async function buildWorldBook(plugin: UniverseViewPlugin, world: string | undefined): Promise<string> {
 	const idx = plugin.index;
 	const inScope = (e: Entity) => !world || e.path.startsWith(world + "/");
 	const entries = idx.all().filter(inScope).filter((e) => e.type !== "map").sort((a, b) => a.name.localeCompare(b.name));
@@ -138,7 +138,7 @@ export async function buildWorldBook(plugin: ChroniclePlugin, world: string | un
 			renderFacts(plugin, facts, e.key);
 			const body = createDiv();
 			body.className = "body";
-			const text = (await plugin.app.vault.cachedRead(e.file)).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```chronicle-[\s\S]*?```/g, "");
+			const text = (await plugin.app.vault.cachedRead(e.file)).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").replace(/```(?:universeview|chronicle)-[\s\S]*?```/g, "");
 			await MarkdownRenderer.render(plugin.app, text, body, e.path, comp);
 			await tidyHtml(plugin, facts, ids);
 			await tidyHtml(plugin, body, ids);
@@ -149,7 +149,7 @@ export async function buildWorldBook(plugin: ChroniclePlugin, world: string | un
 	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title><style>${CSS}</style></head><body><main>${html}</main></body></html>`;
 }
 
-export async function exportWorldBook(plugin: ChroniclePlugin, world: string | undefined) {
+export async function exportWorldBook(plugin: UniverseViewPlugin, world: string | undefined) {
 	const notice = new Notice("Writing the world book…", 0);
 	try {
 		const html = await buildWorldBook(plugin, world);

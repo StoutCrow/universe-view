@@ -1,5 +1,5 @@
 import { Keymap, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, Ref } from "../types";
 import { occupationsByLand } from "../index/wars";
 import { formatDate, formatSpan, yearsBetween } from "../dates/parser";
@@ -38,12 +38,12 @@ export class HoverCards {
 	private pinned: HTMLElement[] = [];
 	private z = 0;
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		const hideNow = () => this.hide(true);
 		plugin.registerDomEvent(window, "wheel", (evt) => {
 			// Only an open card closes on a scroll. A card still on its way is left alone: a trackpad keeps sending
 			// small scroll events after you stop, and they would cancel it just as the ring fills.
-			if (this.card && !(evt.target as Element)?.closest?.(".chronicle-hovercard")) hideNow();
+			if (this.card && !(evt.target as Element)?.closest?.(".universeview-hovercard")) hideNow();
 		}, { passive: true });
 		plugin.registerDomEvent(window, "keydown", (evt) => {
 			if (evt.key === "Escape") {
@@ -79,7 +79,7 @@ export class HoverCards {
 		plugin.registerDomEvent(document, "click", (evt) => {
 			if (!evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey) return;
 			let node = (evt.target as Node | null)?.instanceOf(Element) ? (evt.target as Element) : null;
-			if (node?.closest(".is-tool, .chronicle-hovercard, input, textarea, select")) return;
+			if (node?.closest(".is-tool, .universeview-hovercard, input, textarea, select")) return;
 			while (node) {
 				const key = this.keys.get(node)?.();
 				if (key && plugin.index.get(key)) {
@@ -229,10 +229,10 @@ export class HoverCards {
 	private startRing(target: Element, evt: MouseEvent, delay: number) {
 		this.stopRing();
 		if (delay < 200 || this.plugin.settings.hoverRing === false) return;
-		const ring = document.body.createDiv({ cls: "chronicle-hover-ring" });
+		const ring = document.body.createDiv({ cls: "universeview-hover-ring" });
 		const ringSvg = svg("svg", { viewBox: "0 0 20 20" }, ring);
-		svg("circle", { class: "chronicle-hover-ring-track", cx: 10, cy: 10, r: 7 }, ringSvg);
-		svg("circle", { class: "chronicle-hover-ring-fill", cx: 10, cy: 10, r: 7 }, ringSvg);
+		svg("circle", { class: "universeview-hover-ring-track", cx: 10, cy: 10, r: 7 }, ringSvg);
+		svg("circle", { class: "universeview-hover-ring-fill", cx: 10, cy: 10, r: 7 }, ringSvg);
 		ring.style.setProperty("--ring-ms", `${delay}ms`);
 		const place = (m: MouseEvent) => {
 			ring.style.left = `${m.clientX + 14}px`;
@@ -330,7 +330,7 @@ export class HoverCards {
 		this.hide(true);
 		this.anchor = target;
 		this.key = key;
-		const card = el("div", { cls: "chronicle-hovercard chronicle-scope" }, document.body);
+		const card = el("div", { cls: "universeview-hovercard universeview-scope" }, document.body);
 		card.style.setProperty("--card-accent", entityColor(this.plugin, e));
 		this.card = card;
 		try {
@@ -339,8 +339,8 @@ export class HoverCards {
 			// One odd note must not leave a ring that fills and then nothing: show the name, and say why in the console.
 			console.error("UniverseView: hover card failed for", key, err);
 			card.empty();
-			const head = el("div", { cls: "chronicle-hc-head" }, card);
-			const name = el("a", { cls: "chronicle-hc-name", text: e.name }, head);
+			const head = el("div", { cls: "universeview-hc-head" }, card);
+			const name = el("a", { cls: "universeview-hc-name", text: e.name }, head);
 			name.addEventListener("click", (evt) => {
 				this.hide(true);
 				openEntity(this.plugin, e.key, evt);
@@ -349,9 +349,9 @@ export class HoverCards {
 		card.addEventListener("mouseenter", () => window.clearTimeout(this.hideTimer));
 		card.addEventListener("mouseleave", () => this.scheduleHide());
 		card.style.zIndex = String(CARD_Z + ++this.z);
-		const tools = el("div", { cls: "chronicle-hc-tools" }, card);
+		const tools = el("div", { cls: "universeview-hc-tools" }, card);
 		// A handle to show it can be dragged (any empty part works too).
-		const grip = el("span", { cls: "chronicle-hc-grip", attr: { "aria-label": "Drag to move (keeps the card open)" } }, tools);
+		const grip = el("span", { cls: "universeview-hc-grip", attr: { "aria-label": "Drag to move (keeps the card open)" } }, tools);
 		icon(grip, "grip-horizontal");
 		const tool = (ic: string, label: string, run: () => void) => {
 			const b = el("button", { cls: "clickable-icon", attr: { "aria-label": label } }, tools);
@@ -363,10 +363,10 @@ export class HoverCards {
 		};
 		// One button for the inspector, which reads and edits (I or E).
 		tool("panel-right", "Inspect (I), or Alt+click anything", () => void this.plugin.inspect(key));
-		const pinBtn = el("button", { cls: "clickable-icon chronicle-hc-pin", attr: { "aria-label": "Keep this card open (P, or drag it)" } }, tools);
+		const pinBtn = el("button", { cls: "clickable-icon universeview-hc-pin", attr: { "aria-label": "Keep this card open (P, or drag it)" } }, tools);
 		icon(pinBtn, "pin");
 		pinBtn.addEventListener("click", () => this.pin(card));
-		const close = el("button", { cls: "clickable-icon chronicle-hc-close", attr: { "aria-label": "Close" } }, tools);
+		const close = el("button", { cls: "clickable-icon universeview-hc-close", attr: { "aria-label": "Close" } }, tools);
 		icon(close, "x");
 		close.addEventListener("click", () => (card.hasClass("is-pinned") ? this.unpin(card) : this.hide()));
 		this.makeMovable(card);
@@ -410,41 +410,41 @@ export class HoverCards {
 	/** The card's content (also used by the inspector panel). */
 	fill(card: HTMLElement, e: Entity) {
 		const p = this.plugin;
-		const head = el("div", { cls: "chronicle-hc-head" }, card);
-		const thumb = el("div", { cls: "chronicle-hc-thumb" }, head);
+		const head = el("div", { cls: "universeview-hc-head" }, card);
+		const thumb = el("div", { cls: "universeview-hc-thumb" }, head);
 		const imgUrl = resourceUrl(p, e.image ?? e.logo);
 		if (imgUrl) el("img", { attr: { src: imgUrl, alt: "" } }, thumb);
 		else this.glyph(thumb, e);
-		const titles = el("div", { cls: "chronicle-hc-titles" }, head);
+		const titles = el("div", { cls: "universeview-hc-titles" }, head);
 		const kindLabel = e.type === "culture" ? GROUP_KINDS[groupKind(p, e)].label : TYPE_LABELS[e.type];
 		const eyebrow = [kindLabel, e.category && e.category.toLowerCase() !== kindLabel.toLowerCase() ? cap(e.category) : ""].filter(Boolean).join(" · ");
-		el("div", { cls: "chronicle-hc-eyebrow", text: eyebrow }, titles);
-		const name = el("a", { cls: "chronicle-hc-name", text: e.name }, titles);
+		el("div", { cls: "universeview-hc-eyebrow", text: eyebrow }, titles);
+		const name = el("a", { cls: "universeview-hc-name", text: e.name }, titles);
 		name.addEventListener("click", (evt) => {
 			this.hide(true);
 			openEntity(p, e.key, evt);
 		});
 		const sub = this.subtitle(e);
-		if (sub) el("div", { cls: "chronicle-hc-sub", text: sub }, titles);
+		if (sub) el("div", { cls: "universeview-hc-sub", text: sub }, titles);
 		// Parts left out in Settings → Hover cards.
 		const hide = new Set(p.settings.hoverHide ?? []);
 		// A title: who it's under and who holds it.
-		if ((e.type === "place" || e.type === "culture") && !hide.has("owner")) ownershipLines(p, card, e.key, undefined, "chronicle-owner chronicle-hc-owner");
+		if ((e.type === "place" || e.type === "culture") && !hide.has("owner")) ownershipLines(p, card, e.key, undefined, "universeview-owner universeview-hc-owner");
 		// Where it lies, as a small outline.
 		if ((e.type === "place" || e.type === "culture") && p.settings.hoverMiniMap !== false && !hide.has("map")) miniMap(p, card, e);
 
 		const facts = hide.has("facts") ? [] : this.facts(e);
 		if (facts.length) {
-			const dl = el("div", { cls: "chronicle-hc-facts" }, card);
+			const dl = el("div", { cls: "universeview-hc-facts" }, card);
 			for (const [label, value] of facts) {
-				el("div", { cls: "chronicle-hc-label", text: label }, dl);
-				const dd = el("div", { cls: "chronicle-hc-value" }, dl);
+				el("div", { cls: "universeview-hc-label", text: label }, dl);
+				const dd = el("div", { cls: "universeview-hc-value" }, dl);
 				if (typeof value === "string") dd.setText(value);
 				else this.links(dd, value);
 			}
 		}
 
-		const excerpt = el("div", { cls: "chronicle-hc-excerpt" }, card);
+		const excerpt = el("div", { cls: "universeview-hc-excerpt" }, card);
 		if (hide.has("excerpt")) excerpt.remove();
 		else if (e.summary) excerpt.setText(e.summary);
 		else {
@@ -468,11 +468,11 @@ export class HoverCards {
 		const chips = [...e.tags.filter((t) => !/^(person|character|event|place|culture|map)$/i.test(t)).slice(0, 4).map((t) => "#" + t)];
 		if (e.issues.length) chips.push(`⚠ ${e.issues.length} issue${e.issues.length === 1 ? "" : "s"}`);
 		if (chips.length && !hide.has("tags")) {
-			const row = el("div", { cls: "chronicle-hc-tags" }, card);
-			for (const c of chips) el("span", { cls: "chronicle-hc-tag" + (c.startsWith("⚠") ? " is-warning" : ""), text: c }, row);
+			const row = el("div", { cls: "universeview-hc-tags" }, card);
+			for (const c of chips) el("span", { cls: "universeview-hc-tag" + (c.startsWith("⚠") ? " is-warning" : ""), text: c }, row);
 		}
 
-		const actions = el("div", { cls: "chronicle-hc-actions" }, card);
+		const actions = el("div", { cls: "universeview-hc-actions" }, card);
 		if (hide.has("actions")) actions.addClass("is-hidden");
 		const act = (iconName: string, label: string, run: () => void) =>
 			iconButton(actions, iconName, label, () => {
@@ -505,14 +505,14 @@ export class HoverCards {
 		const shown = refs.slice(0, 3);
 		shown.forEach((r, i) => {
 			if (i) parent.append(", ");
-			const a = el("a", { cls: "chronicle-hc-link" + (r.resolved ? "" : " is-unresolved"), text: r.name }, parent);
+			const a = el("a", { cls: "universeview-hc-link" + (r.resolved ? "" : " is-unresolved"), text: r.name }, parent);
 			if (r.resolved) this.attach(a, r.key);
 			a.addEventListener("click", (evt) => {
 				this.hide(true);
 				if (r.resolved) openEntity(this.plugin, r.key, evt);
 			});
 		});
-		if (refs.length > shown.length) el("span", { cls: "chronicle-hc-more", text: ` +${refs.length - shown.length}` }, parent);
+		if (refs.length > shown.length) el("span", { cls: "universeview-hc-more", text: ` +${refs.length - shown.length}` }, parent);
 	}
 
 	private subtitle(e: Entity): string {

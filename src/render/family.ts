@@ -1,6 +1,6 @@
 import { Menu, Platform } from "obsidian";
 import { AddRelativesModal, relativeMenu } from "../ui/AddRelatives";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { formatDate, yearsBetween } from "../dates/parser";
 import { PanZoom } from "./panzoom";
@@ -93,17 +93,17 @@ export class FamilyTreeRenderer {
 
 	constructor(
 		private container: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		public options: FamilyOptions,
 		private embedded = false,
 		private hoverParent: { hoverPopover: unknown } | HTMLElement = container,
 	) {
-		this.root = el("div", { cls: "chronicle-family" + (embedded ? " is-embedded" : "") }, container);
-		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.root);
+		this.root = el("div", { cls: "universeview-family" + (embedded ? " is-embedded" : "") }, container);
+		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.root);
 		this.layer = svg("g", {}, this.svgEl);
 		// The lines are SVG; the cards are HTML laid over them and moved with them. (HTML inside the SVG,
 		// a foreignObject, is drawn in the wrong place by Safari's engine once the tree is panned or zoomed.)
-		this.cardBox = el("div", { cls: "chronicle-family-html" }, this.root);
+		this.cardBox = el("div", { cls: "universeview-family-html" }, this.root);
 		this.pz = new PanZoom(this.svgEl, this.layer, {
 			requireModifier: embedded,
 			minScale: 0.15,
@@ -120,7 +120,7 @@ export class FamilyTreeRenderer {
 			this.root.addEventListener("keydown", (evt) => this.onKey(evt));
 		}
 		if (embedded) {
-			const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
+			const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.3));
 			iconButton(box, "zoom-out", "Zoom out", () => this.pz.zoomBy(1 / 1.3));
 			iconButton(box, "maximize", "Fit", () => this.fit());
@@ -157,14 +157,14 @@ export class FamilyTreeRenderer {
 	}
 
 	refresh() {
-		this.W = cssNumber(this.root, "--chronicle-card-width", 180);
-		this.H = cssNumber(this.root, "--chronicle-card-height", 64);
+		this.W = cssNumber(this.root, "--universeview-card-width", 180);
+		this.H = cssNumber(this.root, "--universeview-card-height", 64);
 		const clear = () => {
 			this.layer.replaceChildren();
 			this.cardBox.replaceChildren();
 			this.cardEls = [];
 			this.slotsByKey.clear();
-			this.root.querySelector(".chronicle-empty")?.remove();
+			this.root.querySelector(".universeview-empty")?.remove();
 			this.root.querySelector(".uv-family-note")?.remove();
 		};
 		const idx = this.plugin.index;
@@ -503,8 +503,8 @@ export class FamilyTreeRenderer {
 
 	private draw() {
 		this.drawGenerations();
-		const edges = svg("g", { class: "chronicle-family-edges" }, this.layer);
-		const cards = svg("g", { class: "chronicle-family-cards" }, this.layer);
+		const edges = svg("g", { class: "universeview-family-edges" }, this.layer);
+		const cards = svg("g", { class: "universeview-family-cards" }, this.layer);
 		const byId = (id: number) => this.nodes[id];
 		const { W, H, VG } = this;
 
@@ -519,11 +519,11 @@ export class FamilyTreeRenderer {
 				const y = a.y + H / 2;
 				const sameRow = Math.abs(a.y - b.y) < 1;
 				if (sameRow) {
-					svg("path", { d: `M${a.x + W},${y} H${b.x}`, class: "chronicle-edge is-partner" + (dashedCouple ? " is-dashed" : "") }, edges);
+					svg("path", { d: `M${a.x + W},${y} H${b.x}`, class: "universeview-edge is-partner" + (dashedCouple ? " is-dashed" : "") }, edges);
 					// A ring where the couple meet: filled while together, hollow once it ended.
 					svg("circle", { cx: (a.x + W + b.x) / 2, cy: y, r: 4.5, class: "uv-couple-ring" + (dashedCouple ? " is-ended" : "") }, edges);
 					if (f.kind && !["co-parent", "marriage", "married", "spouse"].includes(f.kind.toLowerCase()) && b.x - (a.x + W) > 30) {
-						const t = svg("text", { x: (a.x + W + b.x) / 2, y: y - 9, class: "chronicle-edge-label", "text-anchor": "middle" }, edges);
+						const t = svg("text", { x: (a.x + W + b.x) / 2, y: y - 9, class: "universeview-edge-label", "text-anchor": "middle" }, edges);
 						t.textContent = f.kind;
 					}
 					ox = (a.x + W + b.x) / 2;
@@ -541,7 +541,7 @@ export class FamilyTreeRenderer {
 			const busY = childTop - VG / 2;
 			// One rounded line from the parents to each child: down, along and down again.
 			for (const c of cs) {
-				svg("path", { d: elbow(ox, oy, busY, c.x + W / 2, c.y), class: "chronicle-edge" + (f.adoptive.has(c.id) ? " is-dashed" : "") }, edges);
+				svg("path", { d: elbow(ox, oy, busY, c.x + W / 2, c.y), class: "universeview-edge" + (f.adoptive.has(c.id) ? " is-dashed" : "") }, edges);
 			}
 		}
 
@@ -567,7 +567,7 @@ export class FamilyTreeRenderer {
 	private drawCard(parent: SVGGElement, n: CardNode) {
 		const idx = this.plugin.index;
 		const e = idx.get(n.key);
-		const card = el("div", { cls: "chronicle-card" });
+		const card = el("div", { cls: "universeview-card" });
 		// The card's place in the drawing (so the tree's size and exports still see it), then the card over it.
 		svg("rect", { x: n.x, y: n.y, width: this.W, height: this.H, class: "uv-card-slot" }, parent);
 		const slot = el("div", { cls: "uv-card-html" + (n.root ? " is-root" : "") }, this.cardBox);
@@ -595,7 +595,7 @@ export class FamilyTreeRenderer {
 		const accent = e?.color ?? (e?.cultures[0] ? cultureColor(this.plugin, e.cultures[0].ref.key) : undefined);
 		if (accent) card.style.setProperty("--card-accent", accent);
 
-		const avatar = el("div", { cls: "chronicle-card-avatar" }, card);
+		const avatar = el("div", { cls: "universeview-card-avatar" }, card);
 		const img = resourceUrl(this.plugin, e?.image);
 		if (img) {
 			const im = el("img", {}, avatar);
@@ -604,9 +604,9 @@ export class FamilyTreeRenderer {
 		} else {
 			avatar.setText(initials(name));
 		}
-		const body = el("div", { cls: "chronicle-card-body" }, card);
-		el("div", { cls: "chronicle-card-name", text: e || idx.ghostName(n.key) ? name : titleCase(name) }, body);
-		const sub = el("div", { cls: "chronicle-card-sub" }, body);
+		const body = el("div", { cls: "universeview-card-body" }, card);
+		el("div", { cls: "universeview-card-name", text: e || idx.ghostName(n.key) ? name : titleCase(name) }, body);
+		const sub = el("div", { cls: "universeview-card-sub" }, body);
 		if (e) {
 			sub.setText(lifeText(this.plugin, e));
 			// What they hold (a crown and the highest titles), else their house or group.
@@ -627,25 +627,25 @@ export class FamilyTreeRenderer {
 					});
 					const lead = holderTitle(setting, ruled, gender);
 					const address = ruled.length ? styleFor(setting, Math.min(...ruled.map((r) => r.tier)), gender) : "";
-					const meta = el("div", { cls: "chronicle-card-meta is-titles", title: [address, titles.join(", ")].filter(Boolean).join(" · ") }, body);
-					icon(el("span", { cls: "chronicle-card-crown" }, meta), "crown");
+					const meta = el("div", { cls: "universeview-card-meta is-titles", title: [address, titles.join(", ")].filter(Boolean).join(" · ") }, body);
+					icon(el("span", { cls: "universeview-card-crown" }, meta), "crown");
 					el("span", { text: lead ? lead + (titles.length > 1 ? ` +${titles.length - 1}` : "") : titles.slice(0, 2).join(", ") + (titles.length > 2 ? ` +${titles.length - 2}` : "") }, meta);
 			} else {
 				const culture = e.cultures[0]?.ref.name;
-				if (culture) el("div", { cls: "chronicle-card-meta", text: culture }, body);
+				if (culture) el("div", { cls: "universeview-card-meta", text: culture }, body);
 			}
 		} else {
 			sub.setText("Not created yet");
 		}
 		if (n.dup) {
-			const badge = el("div", { cls: "chronicle-card-badge", title: "Appears elsewhere in this tree" }, card);
+			const badge = el("div", { cls: "universeview-card-badge", title: "Appears elsewhere in this tree" }, card);
 			icon(badge, "copy");
 		}
 		// A fold toggle on anyone below the root with children: their branch folds into a count.
 		const kids = e && !n.dup && n.key !== this.options.root ? idx.children(n.key).length : 0;
 		if (kids && !this.embedded) {
 			const folded = !!this.options.collapsed?.includes(n.key);
-			const t = el("button", { cls: "chronicle-card-fold" + (folded ? " is-folded" : ""), attr: { "aria-label": folded ? `Show ${kids} child${kids === 1 ? "" : "ren"}` : "Fold this branch" } }, card);
+			const t = el("button", { cls: "universeview-card-fold" + (folded ? " is-folded" : ""), attr: { "aria-label": folded ? `Show ${kids} child${kids === 1 ? "" : "ren"}` : "Fold this branch" } }, card);
 			if (folded) el("span", { text: `+${kids}` }, t);
 			icon(el("span", {}, t), folded ? "chevron-down" : "chevron-up");
 			t.addEventListener("click", (evt) => {
@@ -819,7 +819,7 @@ export class FamilyTreeRenderer {
 	}
 }
 
-export function lifeText(plugin: ChroniclePlugin, e: Entity): string {
+export function lifeText(plugin: UniverseViewPlugin, e: Entity): string {
 	const cal = plugin.calendars.get(e.calendar);
 	// Cards only have room for years: "1491 – 1547 · 55".
 	const year = (d: Entity["start"]) => {

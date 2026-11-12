@@ -1,7 +1,7 @@
 import { Modal, Notice, Setting, TFolder } from "obsidian";
 import { makeFolderNote, placementFor, type Placement } from "./foldernotes";
 import { choiceTags, standardFields, type TagChoice } from "./tagstandard";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { EntityType } from "../types";
 import { formatDate, parseDate } from "../dates/parser";
 import { Calendar, GREGORIAN_ID } from "../dates/calendars";
@@ -16,7 +16,7 @@ import { tierName } from "../index/realms";
  * Names to learn a style from: the members of the chosen groups when there are enough, otherwise
  * every note of this type in the same world (or the whole vault).
  */
-export function suggestionPool(plugin: ChroniclePlugin, type: EntityType, groups: string[], scope?: string): string[] {
+export function suggestionPool(plugin: UniverseViewPlugin, type: EntityType, groups: string[], scope?: string): string[] {
 	const idx = plugin.index;
 	const fromGroups = groups
 		.map((g) => idx.findByName(g))
@@ -63,9 +63,9 @@ export class LinkList {
 	private box: HTMLElement;
 	private input: HTMLInputElement;
 
-	constructor(parent: HTMLElement, private plugin: ChroniclePlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false) {
+	constructor(parent: HTMLElement, private plugin: UniverseViewPlugin, types: EntityType[] | undefined, initial: string[] = [], placeholder = "Type to search…", private single = false) {
 		this.values = [...initial];
-		const box = (this.box = el("div", { cls: "chronicle-linklist" }, parent));
+		const box = (this.box = el("div", { cls: "universeview-linklist" }, parent));
 		this.input = el("input", { attr: { type: "text", placeholder } }, box);
 		new EntityInputSuggest(plugin.app, this.input, plugin, types, (e) => {
 			this.add(e.name);
@@ -103,14 +103,14 @@ export class LinkList {
 
 	private render() {
 		// The chips sit in the same row as the input, before it.
-		this.box.querySelectorAll(":scope > .chronicle-linkchip").forEach((c) => c.remove());
+		this.box.querySelectorAll(":scope > .universeview-linkchip").forEach((c) => c.remove());
 		for (const v of this.values) {
-			const chip = createSpan({ cls: "chronicle-linkchip" });
+			const chip = createSpan({ cls: "universeview-linkchip" });
 			this.box.insertBefore(chip, this.input);
 			const known = !!this.plugin.index.findByName(v);
 			if (!known) chip.addClass("is-unresolved");
 			el("span", { text: v }, chip);
-			const x = el("span", { cls: "chronicle-linkchip-x", title: "Remove" }, chip);
+			const x = el("span", { cls: "universeview-linkchip-x", title: "Remove" }, chip);
 			icon(x, "x");
 			x.addEventListener("click", () => {
 				this.values = this.values.filter((y) => y !== v);
@@ -147,7 +147,7 @@ export class CreateEntityModal extends Modal {
 	/** The folder was typed by hand: links no longer move it. */
 	private folderManual = false;
 
-	constructor(private plugin: ChroniclePlugin, private prefill: CreatePrefill = {}) {
+	constructor(private plugin: UniverseViewPlugin, private prefill: CreatePrefill = {}) {
 		super(plugin.app);
 		this.type = prefill.type ?? "event";
 		this.groupKind = prefill.groupKind;
@@ -159,10 +159,10 @@ export class CreateEntityModal extends Modal {
 	}
 
 	onOpen() {
-		this.modalEl.addClass("chronicle-create-modal", "chronicle-scope");
+		this.modalEl.addClass("universeview-create-modal", "universeview-scope");
 		this.titleEl.setText("New note");
 		const { contentEl } = this;
-		const types = el("div", { cls: "chronicle-type-switch" }, contentEl);
+		const types = el("div", { cls: "universeview-type-switch" }, contentEl);
 		// Realms, houses and other groups are separate choices (all group notes underneath, with their kind).
 		const choices: [string, EntityType, string | undefined, string, string][] = [
 			["event", "event", undefined, TYPE_ICONS.event, TYPE_LABELS.event],
@@ -175,7 +175,7 @@ export class CreateEntityModal extends Modal {
 			["map", "map", undefined, TYPE_ICONS.map, TYPE_LABELS.map],
 		];
 		for (const [id, t, kind, ic, label] of choices) {
-			const b = el("button", { cls: "chronicle-type-btn" }, types);
+			const b = el("button", { cls: "universeview-type-btn" }, types);
 			icon(el("span", {}, b), ic);
 			el("span", { text: label }, b);
 			b.addEventListener("click", () => {
@@ -209,10 +209,10 @@ export class CreateEntityModal extends Modal {
 				this.name = nameInput.value;
 			}),
 		);
-		nameSetting.settingEl.addClass("chronicle-name-setting");
-		this.fieldsEl = el("div", { cls: "chronicle-create-fields" }, contentEl);
+		nameSetting.settingEl.addClass("universeview-name-setting");
+		this.fieldsEl = el("div", { cls: "universeview-create-fields" }, contentEl);
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
-		const folderWrap = el("div", { cls: "chronicle-create-folder" }, footer);
+		const folderWrap = el("div", { cls: "universeview-create-folder" }, footer);
 		const fi = el("span", {}, folderWrap);
 		icon(fi, "folder");
 		const folderInput = el("input", { attr: { type: "text", placeholder: "Vault root", list: "uv-folders" } }, folderWrap);
@@ -307,7 +307,7 @@ export class CreateEntityModal extends Modal {
 
 	private dateField(key: string, label: string, desc: string) {
 		const s = new Setting(this.fieldsEl).setName(label);
-		const preview = el("div", { cls: "chronicle-date-preview" });
+		const preview = el("div", { cls: "universeview-date-preview" });
 		const update = () => {
 			const v = this.dates[key]?.trim();
 			preview.removeClass("is-error", "is-ok");
@@ -338,7 +338,7 @@ export class CreateEntityModal extends Modal {
 
 	private listField(key: string, label: string, types: EntityType[] | undefined, initial: string[] = [], single = false) {
 		const s = new Setting(this.fieldsEl).setName(label);
-		s.settingEl.addClass("chronicle-list-setting");
+		s.settingEl.addClass("universeview-list-setting");
 		this.lists[key] = new LinkList(s.controlEl, this.plugin, types, this.lists[key]?.values ?? initial, single ? "Search…" : "Add…", single);
 		this.lists[key].onChange = () => this.place();
 	}
@@ -347,7 +347,7 @@ export class CreateEntityModal extends Modal {
 	private relationFields(type: "person" | "culture", keep: (k: string, init?: string[]) => string[]) {
 		const kinds = presetKinds(type, this.plugin.settings.relationPresets[type]);
 		if (!kinds.length) return;
-		const box = el("details", { cls: "chronicle-create-relations" }, this.fieldsEl);
+		const box = el("details", { cls: "universeview-create-relations" }, this.fieldsEl);
 		if (kinds.some((k) => keep(`rel:${k}`).length)) box.open = true;
 		el("summary", { text: type === "person" ? "Relationships (allies, rivals, mentors…)" : "Relationships (allies, enemies, vassals…)" }, box);
 		const outer = this.fieldsEl;
@@ -356,7 +356,7 @@ export class CreateEntityModal extends Modal {
 			const known = relKind(k);
 			const s = new Setting(box).setName(known?.label ?? k);
 			if (known?.desc) s.setDesc(known.desc);
-			s.settingEl.addClass("chronicle-list-setting");
+			s.settingEl.addClass("universeview-list-setting");
 			// Leaders and founders are people; group ties are other groups; personal ties can be either.
 			const types = type === "person" ? (k === "liege" || k === "employer" ? undefined : ["person" as const]) : known?.key === "leader" || known?.key === "founder" ? ["person" as const] : ["culture" as const];
 			this.lists[`rel:${k}`] = new LinkList(s.controlEl, this.plugin, types, keep(`rel:${k}`), "Add…");
@@ -369,7 +369,7 @@ export class CreateEntityModal extends Modal {
 	 * its size. Open for realms and regions; folded for other places (a tavern isn't land).
 	 */
 	private landFields(open: boolean) {
-		const box = el("details", { cls: "chronicle-create-relations uv-create-land" }, this.fieldsEl);
+		const box = el("details", { cls: "universeview-create-relations uv-create-land" }, this.fieldsEl);
 		box.open = open || this.stdUsed;
 		el("summary", { text: open ? "What it is" : `Is it land? A title (a ${tierName(3).toLowerCase()}, a city) or geography (a region, an island)` }, box);
 		if (open) this.stdUsed = true;
@@ -425,9 +425,9 @@ export class CreateEntityModal extends Modal {
 					.addText((t) => {
 						t.setPlaceholder("crest.png").setValue(this.extra.logo ?? "").onChange((v) => (this.extra.logo = v));
 						const images = this.plugin.app.vault.getFiles().filter((f) => /^(png|jpe?g|webp|gif|svg|avif)$/i.test(f.extension));
-						const dl = el("datalist", { attr: { id: "chronicle-logos" } }, this.fieldsEl);
+						const dl = el("datalist", { attr: { id: "universeview-logos" } }, this.fieldsEl);
 						for (const f of images.slice(0, 500)) el("option", { attr: { value: f.name } }, dl);
-						t.inputEl.setAttribute("list", "chronicle-logos");
+						t.inputEl.setAttribute("list", "universeview-logos");
 					});
 				this.relationFields("culture", keep);
 				break;
@@ -461,9 +461,9 @@ export class CreateEntityModal extends Modal {
 					.addText((t) => {
 						t.setPlaceholder("world.png").setValue(this.extra.image ?? "").onChange((v) => (this.extra.image = v));
 						const images = this.plugin.app.vault.getFiles().filter((f) => /^(png|jpe?g|webp|gif|svg|avif)$/i.test(f.extension));
-						const dl = el("datalist", { attr: { id: "chronicle-images" } }, this.fieldsEl);
+						const dl = el("datalist", { attr: { id: "universeview-images" } }, this.fieldsEl);
 						for (const f of images.slice(0, 500)) el("option", { attr: { value: f.name } }, dl);
-						t.inputEl.setAttribute("list", "chronicle-images");
+						t.inputEl.setAttribute("list", "universeview-images");
 					});
 				break;
 		}

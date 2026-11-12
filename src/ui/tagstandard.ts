@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { TYPE_WORDS, factTag, kindTag, parseTag } from "../index/tagscheme";
 import { DEFAULT_REGION_WORDS, chainOf, tierLabel, tierName, tierRenamed, tierWords, tierWordsWith } from "../index/realms";
@@ -72,7 +72,7 @@ export interface TagChoice {
 const SIZE_WORDS = new Set(SIZES.map((s) => s[0].toLowerCase()).filter(Boolean).concat(["massive", "big", "major", "minor", "little", "middling"]));
 
 /** What a note is now, read the way the realm tree reads it. */
-export function readChoice(plugin: ChroniclePlugin, e: Entity): TagChoice {
+export function readChoice(plugin: UniverseViewPlugin, e: Entity): TagChoice {
 	const node = plugin.realms().nodes.get(e.key);
 	const tags = e.tags.map((t) => t.replace(/^#/, ""));
 	const schemeSize = tags.map((t) => parseTag(t)).find((p) => p?.role === "fact" && p.field === "size");
@@ -107,7 +107,7 @@ export function choiceTags(c: TagChoice, type: EntityType = "place"): string[] {
  * A note's tags with the land tags swapped for the standard ones: anything naming a tier, a kind
  * of settlement, a region or a size goes; other tags (#Nation_United_States, #City_Capital, type tags) stay.
  */
-export function restandardise(plugin: ChroniclePlugin, tags: string[], c: TagChoice, type: EntityType = "place"): string[] {
+export function restandardise(plugin: UniverseViewPlugin, tags: string[], c: TagChoice, type: EntityType = "place"): string[] {
 	const words = tierWordsWith(plugin.settings.tierWords);
 	const regionWords = { ...DEFAULT_REGION_WORDS, ...tierWords(plugin.settings.regionWords ?? "") };
 	// The vault's own type tags (#Location, #Character…) are never touched.
@@ -228,17 +228,17 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
  * sits. Change any row; Apply writes the standard tags to the notes that changed.
  */
 export class TagStandardModal extends Modal {
-	constructor(private plugin: ChroniclePlugin, private world?: string) {
+	constructor(private plugin: UniverseViewPlugin, private world?: string) {
 		super(plugin.app);
 	}
 
 	onOpen() {
 		const p = this.plugin;
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "chronicle-tool-modal", "uv-std-modal");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "universeview-tool-modal", "uv-std-modal");
 		this.titleEl.setText("Standardise land tags");
 		const { contentEl } = this;
-		el("p", { cls: "chronicle-dash-muted", text: "One way to tag land: its kind and its size. Ruled land: its tier (#Place_Realm, #Place_Province, #Place_County…). Settlements: #Place_City, #Place_Town… Geography: #Place_Region or a landform (#Place_Island). Size: #Place_Size_Small (for geography, gigantic is a continent, enormous a sub-continent). Other tags such as #Group_Nation_United_States stay. Only rows you change, or that don't match the standard yet, are written." }, contentEl);
+		el("p", { cls: "universeview-dash-muted", text: "One way to tag land: its kind and its size. Ruled land: its tier (#Place_Realm, #Place_Province, #Place_County…). Settlements: #Place_City, #Place_Town… Geography: #Place_Region or a landform (#Place_Island). Size: #Place_Size_Small (for geography, gigantic is a continent, enormous a sub-continent). Other tags such as #Group_Nation_United_States stay. Only rows you change, or that don't match the standard yet, are written." }, contentEl);
 		const tree = p.realms();
 		const notes = p.index.all().filter((e) => tree.nodes.has(e.key) && (!this.world || e.path.startsWith(this.world + "/")));
 		notes.sort((a, b) => chainOf(tree, a.key).map((k) => p.index.get(k)?.name).join("›").localeCompare(chainOf(tree, b.key).map((k) => p.index.get(k)?.name).join("›")));
@@ -261,7 +261,7 @@ export class TagStandardModal extends Modal {
 			el("strong", { text: e.name }, head);
 			el("span", { cls: "uv-std-badge", text: tierLabel(node) || (node?.nature === "region" ? "Region" : "Title") }, head);
 			const where = [node?.under ? `under ${p.index.get(node.under)?.name}` : node?.nature === "realm" ? "sovereign" : "", node?.region && node.region !== node.under ? `lies in ${p.index.get(node.region)?.name}` : ""].filter(Boolean).join(" · ");
-			el("span", { cls: "chronicle-dash-muted", text: where }, head);
+			el("span", { cls: "universeview-dash-muted", text: where }, head);
 			const now = el("div", { cls: "uv-std-now" }, row);
 			const show = () => {
 				const n = next();

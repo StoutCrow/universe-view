@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { formatSpan } from "../dates/parser";
 import { spacedLabels, yearTicks } from "../dates/calendars";
@@ -20,18 +20,18 @@ abstract class SvgChart {
 
 	constructor(
 		protected container: HTMLElement,
-		protected plugin: ChroniclePlugin,
+		protected plugin: UniverseViewPlugin,
 		public options: FamilyOptions,
 		protected embedded: boolean,
 		protected hoverParent: { hoverPopover: unknown } | HTMLElement,
 		cls: string,
 	) {
-		this.root = el("div", { cls: `chronicle-family ${cls}` + (embedded ? " is-embedded" : "") }, container);
-		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.root);
+		this.root = el("div", { cls: `universeview-family ${cls}` + (embedded ? " is-embedded" : "") }, container);
+		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.root);
 		this.layer = svg("g", {}, this.svgEl);
 		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.1, maxScale: 4 });
 		if (embedded) {
-			const box = el("div", { cls: "chronicle-embed-controls" }, this.root);
+			const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.3));
 			iconButton(box, "zoom-out", "Zoom out", () => this.pz.zoomBy(1 / 1.3));
 			iconButton(box, "maximize", "Fit", () => this.fit());
@@ -53,7 +53,7 @@ abstract class SvgChart {
 
 	protected reset(): boolean {
 		this.layer.replaceChildren();
-		this.root.querySelector(".chronicle-empty")?.remove();
+		this.root.querySelector(".universeview-empty")?.remove();
 		const root = this.plugin.index.get(this.options.root);
 		if (!root || root.type !== "person") {
 			emptyState(this.root, "git-fork", "Choose a person", "Pick someone in the toolbar to draw their family.");
@@ -85,8 +85,8 @@ abstract class SvgChart {
  * next, and so on, each ring split in half per generation (fathers on the left).
  */
 export class FanChartRenderer extends SvgChart {
-	constructor(container: HTMLElement, plugin: ChroniclePlugin, options: FamilyOptions, embedded = false, hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
-		super(container, plugin, options, embedded, hoverParent, "chronicle-fan");
+	constructor(container: HTMLElement, plugin: UniverseViewPlugin, options: FamilyOptions, embedded = false, hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
+		super(container, plugin, options, embedded, hoverParent, "universeview-fan");
 		this.refresh();
 	}
 
@@ -125,7 +125,7 @@ export class FanChartRenderer extends SvgChart {
 			const large = a1 - a0 > 180 ? 1 : 0;
 			return `M${x0},${y0} A${r1},${r1} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r0},${r0} 0 ${large} 0 ${x3},${y3} Z`;
 		};
-		const cards = svg("g", { class: "chronicle-fan-cells" }, this.layer);
+		const cards = svg("g", { class: "universeview-fan-cells" }, this.layer);
 		for (let g = 1; g <= gens; g++) {
 			const n = 2 ** g;
 			const r0 = R0 + (g - 1) * ring;
@@ -134,7 +134,7 @@ export class FanChartRenderer extends SvgChart {
 				const a0 = 180 + (180 * i) / n;
 				const a1 = 180 + (180 * (i + 1)) / n;
 				const e = slot.get(`${g}:${i}`);
-				const cell = svg("g", { class: "chronicle-fan-cell" + (e ? "" : " is-empty") }, cards);
+				const cell = svg("g", { class: "universeview-fan-cell" + (e ? "" : " is-empty") }, cards);
 				svg("path", { d: sector(r0, r1, a0 + 0.4, a1 - 0.4) }, cell);
 				if (!e) continue;
 				cell.setAttribute("style", `--cell-color: ${entityColor(this.plugin, e)}; --i: ${g}`);
@@ -148,7 +148,7 @@ export class FanChartRenderer extends SvgChart {
 				const arcLen = (rad(a1 - a0) * rm);
 				const room = tangential ? arcLen : ring - 6;
 				const maxChars = Math.max(3, Math.floor(room / 6.2));
-				const label = svg("text", { x: tx, y: ty, transform: `rotate(${rot} ${tx} ${ty})`, "text-anchor": "middle", "dominant-baseline": "middle", class: "chronicle-fan-name" }, cell);
+				const label = svg("text", { x: tx, y: ty, transform: `rotate(${rot} ${tx} ${ty})`, "text-anchor": "middle", "dominant-baseline": "middle", class: "universeview-fan-name" }, cell);
 				label.textContent = e.name.length > maxChars ? e.name.slice(0, maxChars - 1) + "…" : e.name;
 				if (tangential || arcLen > 26) {
 					const cal = this.plugin.calendars.get(e.calendar);
@@ -160,7 +160,7 @@ export class FanChartRenderer extends SvgChart {
 						const off = tangential ? 13 : 0;
 						const [yx, yy] = tangential ? pt(rm - off, mid) : [tx, ty];
 						if (tangential) {
-							const yt = svg("text", { x: yx, y: yy, transform: `rotate(${rot} ${yx} ${yy})`, "text-anchor": "middle", "dominant-baseline": "middle", class: "chronicle-fan-years" }, cell);
+							const yt = svg("text", { x: yx, y: yy, transform: `rotate(${rot} ${yx} ${yy})`, "text-anchor": "middle", "dominant-baseline": "middle", class: "universeview-fan-years" }, cell);
 							yt.textContent = years;
 						}
 					}
@@ -171,12 +171,12 @@ export class FanChartRenderer extends SvgChart {
 			}
 		}
 		// The person in the middle.
-		const centre = svg("g", { class: "chronicle-fan-cell is-root" }, cards);
+		const centre = svg("g", { class: "universeview-fan-cell is-root" }, cards);
 		centre.setAttribute("style", `--cell-color: ${entityColor(this.plugin, rootE)}`);
 		svg("path", { d: sector(0.01, R0 - 3, 180, 360) }, centre);
-		const t = svg("text", { x: 0, y: -24, "text-anchor": "middle", class: "chronicle-fan-name is-root" }, centre);
+		const t = svg("text", { x: 0, y: -24, "text-anchor": "middle", class: "universeview-fan-name is-root" }, centre);
 		t.textContent = rootE.name;
-		const ys = svg("text", { x: 0, y: -8, "text-anchor": "middle", class: "chronicle-fan-years" }, centre);
+		const ys = svg("text", { x: 0, y: -8, "text-anchor": "middle", class: "universeview-fan-years" }, centre);
 		ys.textContent = formatSpan(rootE.start, rootE.end, this.plugin.calendars.get(rootE.calendar));
 		this.wire(centre, rootE.key);
 		const R = R0 + gens * ring;
@@ -191,8 +191,8 @@ export class FanChartRenderer extends SvgChart {
  * time and you can see who was alive together.
  */
 export class TimeTreeRenderer extends SvgChart {
-	constructor(container: HTMLElement, plugin: ChroniclePlugin, options: FamilyOptions, embedded = false, hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
-		super(container, plugin, options, embedded, hoverParent, "chronicle-timetree");
+	constructor(container: HTMLElement, plugin: UniverseViewPlugin, options: FamilyOptions, embedded = false, hoverParent: { hoverPopover: unknown } | HTMLElement = container) {
+		super(container, plugin, options, embedded, hoverParent, "universeview-timetree");
 		this.refresh();
 	}
 
@@ -232,31 +232,31 @@ export class TimeTreeRenderer extends SvgChart {
 		const AXIS = 30;
 		const height = AXIS + rows.length * ROW + 10;
 		// Axis
-		const axis = svg("g", { class: "chronicle-lineage-axis" }, this.layer);
+		const axis = svg("g", { class: "universeview-lineage-axis" }, this.layer);
 		const yearPx = (width / (max - min)) * YEAR;
 		const nice = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
 		const step = nice.find((s) => s * yearPx >= 70) ?? 1000;
 		const ticks = yearTicks(cal, cal.fromDays(min).y, cal.fromDays(max).y, step, step * 5).map((t) => ({ ...t, x: x(cal.toDays(t.year, 1, 1)), label: cal.formatYear(t.year) }));
 		const labelled = spacedLabels(ticks);
 		for (const t of ticks) {
-			svg("line", { x1: t.x, x2: t.x, y1: AXIS - 6, y2: height, class: "chronicle-lineage-grid" + (t.era ? " is-era" : "") }, axis);
+			svg("line", { x1: t.x, x2: t.x, y1: AXIS - 6, y2: height, class: "universeview-lineage-grid" + (t.era ? " is-era" : "") }, axis);
 			if (!labelled.has(t)) continue;
-			const tx = svg("text", { x: t.x, y: AXIS - 12, "text-anchor": "middle", class: "chronicle-lineage-tick" }, axis);
+			const tx = svg("text", { x: t.x, y: AXIS - 12, "text-anchor": "middle", class: "universeview-lineage-tick" }, axis);
 			tx.textContent = t.label;
 		}
-		const links = svg("g", { class: "chronicle-timetree-links" }, this.layer);
+		const links = svg("g", { class: "universeview-timetree-links" }, this.layer);
 		const bars = svg("g", {}, this.layer);
 		rows.forEach((r, i) => {
 			const y = AXIS + i * ROW + 6;
 			if (r.parentRow !== undefined) {
 				const py = AXIS + r.parentRow * ROW + 6 + 9;
 				const cx = x(r.a);
-				svg("path", { d: `M${cx},${py} V${y + 9} H${cx + 2}`, class: "chronicle-timetree-link" }, links);
+				svg("path", { d: `M${cx},${py} V${y + 9} H${cx + 2}`, class: "universeview-timetree-link" }, links);
 			}
-			const g = svg("g", { class: "chronicle-timetree-person" + (r.guessed ? " is-guessed" : "") + (r.e.end ? "" : " is-open") }, bars);
+			const g = svg("g", { class: "universeview-timetree-person" + (r.guessed ? " is-guessed" : "") + (r.e.end ? "" : " is-open") }, bars);
 			g.setAttribute("style", `--item-color: ${entityColor(this.plugin, r.e)}`);
-			svg("rect", { x: x(r.a), y, width: Math.max(6, x(r.b) - x(r.a)), height: 18, rx: 9, class: "chronicle-timetree-bar" }, g);
-			const label = svg("text", { x: x(r.a) + 8, y: y + 13, class: "chronicle-timetree-name" }, g);
+			svg("rect", { x: x(r.a), y, width: Math.max(6, x(r.b) - x(r.a)), height: 18, rx: 9, class: "universeview-timetree-bar" }, g);
+			const label = svg("text", { x: x(r.a) + 8, y: y + 13, class: "universeview-timetree-name" }, g);
 			const pcal = this.plugin.calendars.get(r.e.calendar);
 			const span = formatSpan(r.e.start, r.e.end, pcal);
 			// Full dates when they fit on the bar, otherwise just the years (the tooltip has the rest).

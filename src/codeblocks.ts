@@ -1,5 +1,5 @@
 import { MarkdownRenderChild, debounce, parseYaml } from "obsidian";
-import type ChroniclePlugin from "./main";
+import type UniverseViewPlugin from "./main";
 import type { EntityFilter, EntityType } from "./types";
 import { DEFAULT_TIMELINE_OPTIONS, TimelineGroup, TimelineRenderer } from "./render/timeline";
 import { DEFAULT_FAMILY_OPTIONS, FamilyTreeRenderer } from "./render/family";
@@ -41,12 +41,12 @@ const list = (v: unknown): string[] | undefined => {
 const str = (v: unknown) => (typeof v === "string" ? v.replace(/^\[\[|\]\]$/g, "").trim() : typeof v === "number" ? String(v) : undefined);
 const bool = (v: unknown, d: boolean) => (v === undefined ? d : v === true || v === "true" || v === "yes");
 
-class ChronicleBlock extends MarkdownRenderChild {
+class UniverseViewBlock extends MarkdownRenderChild {
 	private renderer?: Renderer;
 
 	constructor(
 		containerEl: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		private make: (host: HTMLElement) => Renderer,
 		private height: number,
 	) {
@@ -54,8 +54,8 @@ class ChronicleBlock extends MarkdownRenderChild {
 	}
 
 	onload() {
-		this.containerEl.addClass("chronicle-block", "chronicle-scope");
-		const host = el("div", { cls: "chronicle-block-host" }, this.containerEl);
+		this.containerEl.addClass("universeview-block", "universeview-scope");
+		const host = el("div", { cls: "universeview-block-host" }, this.containerEl);
 		host.style.height = `${this.height}px`;
 		const mount = () => {
 			try {
@@ -79,7 +79,7 @@ class ChronicleBlock extends MarkdownRenderChild {
 }
 
 function showError(parent: HTMLElement, message: string) {
-	const box = el("div", { cls: "chronicle-block-error" }, parent);
+	const box = el("div", { cls: "universeview-block-error" }, parent);
 	el("strong", { text: "UniverseView: " }, box);
 	el("span", { text: message }, box);
 }
@@ -96,7 +96,7 @@ function parseConfig(source: string): Config {
 	return out;
 }
 
-function filterFrom(plugin: ChroniclePlugin, c: Config): EntityFilter {
+function filterFrom(plugin: UniverseViewPlugin, c: Config): EntityFilter {
 	const cal = plugin.calendars.get(str(c.calendar));
 	const day = (v: unknown) => {
 		if (v === undefined) return undefined;
@@ -117,7 +117,7 @@ function filterFrom(plugin: ChroniclePlugin, c: Config): EntityFilter {
 	};
 }
 
-export function registerCodeBlocks(plugin: ChroniclePlugin) {
+export function registerCodeBlocks(plugin: UniverseViewPlugin) {
 	// Each embed has two names: `universeview-timeline` (what UniverseView writes and documents) and the older
 	// `chronicle-timeline`, which keeps working in every note already written with it.
 	const reg = (name: string, build: Builder, defaultHeight = 360) => {
@@ -132,7 +132,7 @@ export function registerCodeBlocks(plugin: ChroniclePlugin) {
 					return;
 				}
 				const height = Number(config.height) > 80 ? Number(config.height) : defaultHeight;
-				ctx.addChild(new ChronicleBlock(elx, plugin, (host) => build(config, host, ctx.sourcePath), height));
+				ctx.addChild(new UniverseViewBlock(elx, plugin, (host) => build(config, host, ctx.sourcePath), height));
 			});
 		}
 	};

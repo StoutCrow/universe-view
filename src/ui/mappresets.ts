@@ -1,7 +1,7 @@
 // Map look presets: a whole look for maps and territories at once (fills, borders, lettering, tier
 // styles, the border band, roughness, rivers), built in or saved from your own settings.
 const copy = <T,>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
-import type { ChronicleSettings } from "../settings";
+import type { UniverseViewSettings } from "../settings";
 import { DEFAULT_TIER_STYLES, type TierStyle } from "./tierstyles";
 
 /** Everything a preset sets. Anything left out keeps its built-in default. */
@@ -166,19 +166,19 @@ export const BUILT_IN_PRESETS: MapPreset[] = [
 ];
 
 /** The look as the settings have it now (to save as your own preset). */
-export function currentLook(s: ChronicleSettings): MapLook {
+export function currentLook(s: UniverseViewSettings): MapLook {
 	const out: MapLook = {};
 	for (const k of LOOK_KEYS) (out as Record<string, unknown>)[k] = copy(s[k]);
 	return out;
 }
 
 /** Puts a preset's look into the settings: every look setting, so nothing from the last look lingers. */
-export function applyLook(s: ChronicleSettings, look: MapLook) {
+export function applyLook(s: UniverseViewSettings, look: MapLook) {
 	for (const k of LOOK_KEYS) (s as unknown as Record<string, unknown>)[k] = copy(look[k]);
 }
 
 /** Which preset the settings match now, if any. */
-export function matchingPreset(s: ChronicleSettings, presets: MapPreset[]): string | undefined {
+export function matchingPreset(s: UniverseViewSettings, presets: MapPreset[]): string | undefined {
 	const now = JSON.stringify(currentLook(s));
 	return presets.find((p) => JSON.stringify(currentLook({ ...s, ...Object.fromEntries(LOOK_KEYS.map((k) => [k, p.look[k]])) })) === now)?.id;
 }

@@ -4,7 +4,7 @@ import { EntityPickerModal } from "../ui/suggest";
 import type { EntityType } from "../types";
 import { DEFAULT_NETWORK_OPTIONS, LINK_GROUPS, NetworkOptions, NetworkRenderer } from "../render/network";
 import { el, icon, iconButton, toggleChip } from "../render/common";
-import { ChronicleView, TimeSlider } from "./base";
+import { UniverseViewBase, TimeSlider } from "./base";
 
 export const VIEW_NETWORK = "chronicle-network";
 
@@ -15,7 +15,7 @@ const TYPE_CHIPS: [EntityType, string, string][] = [
 	["event", "Events", "calendar-clock"],
 ];
 
-export class NetworkView extends ChronicleView {
+export class NetworkView extends UniverseViewBase {
 	protected exportable = true;
 	private options: NetworkOptions = structuredClone(DEFAULT_NETWORK_OPTIONS);
 	private renderer?: NetworkRenderer;
@@ -111,10 +111,10 @@ export class NetworkView extends ChronicleView {
 				}
 				// Which kinds of link are drawn, in one menu.
 				const hidden = new Set(o.hiddenLinks ?? []);
-				const linksBtn = el("button", { cls: "chronicle-chip chronicle-overlay-btn", attr: { "aria-haspopup": "menu", title: "Which kinds of link to draw" } }, chips);
-				icon(el("span", { cls: "chronicle-chip-icon" }, linksBtn), "spline");
+				const linksBtn = el("button", { cls: "universeview-chip universeview-overlay-btn", attr: { "aria-haspopup": "menu", title: "Which kinds of link to draw" } }, chips);
+				icon(el("span", { cls: "universeview-chip-icon" }, linksBtn), "spline");
 				el("span", { text: "Links" }, linksBtn);
-				el("span", { cls: "chronicle-chip-count", text: `${LINK_GROUPS.length - hidden.size}/${LINK_GROUPS.length}` }, linksBtn);
+				el("span", { cls: "universeview-chip-count", text: `${LINK_GROUPS.length - hidden.size}/${LINK_GROUPS.length}` }, linksBtn);
 				linksBtn.addEventListener("click", (evt) => {
 					const menu = new Menu();
 					for (const [g, label, ic] of LINK_GROUPS)
@@ -128,10 +128,10 @@ export class NetworkView extends ChronicleView {
 					menu.showAtMouseEvent(evt);
 				});
 				if (o.pov) {
-					const pov = el("button", { cls: "chronicle-chip is-active", attr: { title: "The web as this person knows it: click to show everything again" } }, chips);
-					icon(el("span", { cls: "chronicle-chip-icon" }, pov), "eye");
+					const pov = el("button", { cls: "universeview-chip is-active", attr: { title: "The web as this person knows it: click to show everything again" } }, chips);
+					icon(el("span", { cls: "universeview-chip-icon" }, pov), "eye");
 					el("span", { text: `Seen by ${this.plugin.index.get(o.pov)?.name ?? o.pov}` }, pov);
-					icon(el("span", { cls: "chronicle-chip-icon" }, pov), "x");
+					icon(el("span", { cls: "universeview-chip-icon" }, pov), "x");
 					pov.addEventListener("click", () => {
 						o.pov = undefined;
 						this.fillToolbar();

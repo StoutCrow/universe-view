@@ -49,7 +49,7 @@ export function buildGedcom(src: GedcomSource, today = new Date()): string {
 	const add = (level: number, tag: string, value?: string) => lines.push(`${level} ${tag}${value ? " " + value.replace(/\r?\n/g, " ") : ""}`);
 
 	add(0, "HEAD");
-	add(1, "SOUR", "CHRONICLE");
+	add(1, "SOUR", "UNIVERSEVIEW");
 	add(2, "NAME", "UniverseView for Obsidian");
 	add(1, "DATE", `${today.getDate()} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`);
 	add(1, "GEDC");

@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { formatDay, formatSpan, parseSpan } from "../dates/parser";
 import type { EntityIndex } from "../index/EntityIndex";
 import { holdingsOf } from "../index/realms";
@@ -50,7 +50,7 @@ const LEADER_KINDS = new Set(["leader", "ruler", "head", "founder"]);
 const cache = new WeakMap<EntityIndex, Cached>();
 
 /** Reigns written on the ruler (`reign: 1258 - 1291`), over their title, or else the greatest their house holds. */
-function readReigns(plugin: ChroniclePlugin): Reign[] {
+function readReigns(plugin: UniverseViewPlugin): Reign[] {
 	const idx = plugin.index;
 	const tree = plugin.realms();
 	const out: Reign[] = [];
@@ -69,7 +69,7 @@ function readReigns(plugin: ChroniclePlugin): Reign[] {
 	return out;
 }
 
-function cached(plugin: ChroniclePlugin): Cached {
+function cached(plugin: UniverseViewPlugin): Cached {
 	const idx = plugin.index;
 	const have = cache.get(idx);
 	if (have?.version === idx.version) return have;
@@ -84,12 +84,12 @@ function cached(plugin: ChroniclePlugin): Cached {
 	return fresh;
 }
 
-export function writtenReigns(plugin: ChroniclePlugin): Reign[] {
+export function writtenReigns(plugin: UniverseViewPlugin): Reign[] {
 	return cached(plugin).reigns;
 }
 
 /** Everything that happened to a nation, oldest first. `within` keeps events to the days it existed. */
-export function historyOf(plugin: ChroniclePlugin, e: Entity, within?: [number, number]): HistoryMark[] {
+export function historyOf(plugin: UniverseViewPlugin, e: Entity, within?: [number, number]): HistoryMark[] {
 	const data = cached(plugin);
 	const cal = plugin.calendars.get(e.calendar);
 	const out: HistoryMark[] = [];

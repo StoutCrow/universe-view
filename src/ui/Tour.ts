@@ -1,5 +1,5 @@
 import { Modal } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { applyAppearance } from "../appearance";
 import type { SurfaceStyle, ThemeId } from "../settings";
 import { el } from "../render/common";
@@ -29,13 +29,13 @@ export class TourModal extends Modal {
 	private kept = false;
 	private readonly original: { theme: ThemeId; surface: SurfaceStyle };
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 		this.original = { theme: plugin.settings.theme, surface: plugin.settings.surfaceStyle ?? "flat" };
 	}
 
 	onOpen() {
-		this.modalEl.addClass("uv-tour", "chronicle-scope");
+		this.modalEl.addClass("uv-tour", "universeview-scope");
 		this.render();
 	}
 

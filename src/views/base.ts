@@ -1,7 +1,7 @@
 import { UndoHistoryModal } from "../ui/undohistory";
 import { ShortcutsModal } from "../ui/ShortcutsModal";
 import { ItemView, Menu, WorkspaceLeaf, debounce } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { EntityType } from "../types";
 import { formatDay } from "../dates/parser";
 import type { TimeRange } from "../render/timelinerows";
@@ -11,7 +11,7 @@ import { exportMenu, type ExportExtras } from "../ui/export";
 import { EntityInputSuggest } from "../ui/suggest";
 
 /** Shared shell for UniverseView views: a toolbar above a full-size canvas. */
-export abstract class ChronicleView extends ItemView {
+export abstract class UniverseViewBase extends ItemView {
 	protected toolbar!: HTMLElement;
 	protected toolbarRight!: HTMLElement;
 	protected body!: HTMLElement;
@@ -19,15 +19,15 @@ export abstract class ChronicleView extends ItemView {
 	private waiting = false;
 	private changedWhileWaiting = false;
 
-	constructor(leaf: WorkspaceLeaf, protected plugin: ChroniclePlugin) {
+	constructor(leaf: WorkspaceLeaf, protected plugin: UniverseViewPlugin) {
 		super(leaf);
 	}
 
 	async onOpen() {
 		this.contentEl.empty();
-		this.contentEl.addClass("chronicle-view", "chronicle-scope");
-		this.toolbar = el("div", { cls: "chronicle-toolbar" }, this.contentEl);
-		this.body = el("div", { cls: "chronicle-view-body" }, this.contentEl);
+		this.contentEl.addClass("universeview-view", "universeview-scope");
+		this.toolbar = el("div", { cls: "universeview-toolbar" }, this.contentEl);
+		this.body = el("div", { cls: "universeview-view-body" }, this.contentEl);
 		this.build();
 		this.built = true;
 		// Opening animations play once: after this, a redraw (an edit, the time slider) appears at once
@@ -90,7 +90,7 @@ export abstract class ChronicleView extends ItemView {
 		this.toolbar.empty();
 		fill();
 		const last = this.toolbar.lastElementChild as HTMLElement | null;
-		const g = last?.hasClass("chronicle-toolbar-group") ? last : this.group();
+		const g = last?.hasClass("universeview-toolbar-group") ? last : this.group();
 		// What UniverseView changed lately, to undo back to any point.
 		iconButton(g, "history", "Undo history", () => new UndoHistoryModal(this.plugin).open());
 		// What every view has in common, in one place rather than a row of icons.
@@ -128,10 +128,10 @@ export abstract class ChronicleView extends ItemView {
 	protected modeSwitch(parent: HTMLElement, current: string) {
 		const modes: [string, string, string][] = [["chronicle-timeline", "Events", "calendar-range"], ["chronicle-lineage", "Lineage", "git-branch"]];
 		if (!modes.every(([id]) => this.plugin.moduleOn(id))) return;
-		const box = el("div", { cls: "chronicle-segmented", attr: { role: "group", "aria-label": "Timeline mode" } }, parent);
+		const box = el("div", { cls: "universeview-segmented", attr: { role: "group", "aria-label": "Timeline mode" } }, parent);
 		for (const [id, label, ic] of modes) {
-			const b = el("button", { cls: "chronicle-segment" + (id === current ? " is-active" : ""), attr: { "aria-pressed": String(id === current) } }, box);
-			icon(el("span", { cls: "chronicle-chip-icon" }, b), ic);
+			const b = el("button", { cls: "universeview-segment" + (id === current ? " is-active" : ""), attr: { "aria-pressed": String(id === current) } }, box);
+			icon(el("span", { cls: "universeview-chip-icon" }, b), ic);
 			el("span", { text: label }, b);
 			if (id === current) continue;
 			b.addEventListener("click", () => {
@@ -152,15 +152,15 @@ export abstract class ChronicleView extends ItemView {
 	}
 
 	protected group(cls = ""): HTMLElement {
-		return el("div", { cls: `chronicle-toolbar-group ${cls}`.trim() }, this.toolbar);
+		return el("div", { cls: `universeview-toolbar-group ${cls}`.trim() }, this.toolbar);
 	}
 
 	protected spacer() {
-		el("div", { cls: "chronicle-toolbar-spacer" }, this.toolbar);
+		el("div", { cls: "universeview-toolbar-spacer" }, this.toolbar);
 	}
 
 	protected searchBox(parent: HTMLElement, value: string, placeholder: string, onChange: (v: string) => void): HTMLInputElement {
-		const wrap = el("div", { cls: "chronicle-search search-input-container" }, parent);
+		const wrap = el("div", { cls: "universeview-search search-input-container" }, parent);
 		const input = el("input", { attr: { type: "search", placeholder, spellcheck: "false" } }, wrap);
 		input.value = value;
 		const fire = debounce(() => onChange(input.value), 200, true);
@@ -187,13 +187,13 @@ export abstract class ChronicleView extends ItemView {
 		placeholder: string,
 		onPick: (key: string | undefined) => void,
 	): HTMLInputElement {
-		const wrap = el("div", { cls: "chronicle-picker" }, parent);
-		const ic = el("span", { cls: "chronicle-picker-icon" }, wrap);
+		const wrap = el("div", { cls: "universeview-picker" }, parent);
+		const ic = el("span", { cls: "universeview-picker-icon" }, wrap);
 		icon(ic, types?.length === 1 && types[0] === "person" ? "user-round-search" : "search");
 		const input = el("input", { attr: { type: "text", placeholder, spellcheck: "false" } }, wrap);
 		input.value = value ? this.plugin.index.get(value)?.name ?? "" : "";
 		new EntityInputSuggest(this.app, input, this.plugin, types, (e) => onPick(e.key));
-		const clear = el("div", { cls: "chronicle-picker-clear clickable-icon", title: "Clear" }, wrap);
+		const clear = el("div", { cls: "universeview-picker-clear clickable-icon", title: "Clear" }, wrap);
 		icon(clear, "x");
 		clear.addEventListener("click", () => {
 			input.value = "";
@@ -219,7 +219,7 @@ export class TimeSlider {
 
 	constructor(
 		parent: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		private getCalendar: () => string,
 		private folder: () => string | undefined,
 		private value: number | undefined,
@@ -227,16 +227,16 @@ export class TimeSlider {
 		private types: EntityType[] = ["event", "person", "culture", "place"],
 	) {
 		this.enabled = value !== undefined;
-		const box = el("div", { cls: "chronicle-time" }, parent);
-		this.toggle = el("button", { cls: "chronicle-chip is-toggle", title: "Show a moment in time" }, box);
-		const ic = el("span", { cls: "chronicle-chip-icon" }, this.toggle);
+		const box = el("div", { cls: "universeview-time" }, parent);
+		this.toggle = el("button", { cls: "universeview-chip is-toggle", title: "Show a moment in time" }, box);
+		const ic = el("span", { cls: "universeview-chip-icon" }, this.toggle);
 		icon(ic, "history");
 		el("span", { text: "Time" }, this.toggle);
-		icon(el("span", { cls: "chronicle-chip-check" }, this.toggle), "check");
-		this.playBtn = el("div", { cls: "clickable-icon chronicle-icon-btn", title: "Play through time" }, box);
+		icon(el("span", { cls: "universeview-chip-check" }, this.toggle), "check");
+		this.playBtn = el("div", { cls: "clickable-icon universeview-icon-btn", title: "Play through time" }, box);
 		icon(this.playBtn, "play");
-		this.input = el("input", { cls: "slider chronicle-time-range", attr: { type: "range", min: "0", max: "1000", step: "1" } }, box);
-		this.label = el("span", { cls: "chronicle-time-label" }, box);
+		this.input = el("input", { cls: "slider universeview-time-range", attr: { type: "range", min: "0", max: "1000", step: "1" } }, box);
+		this.label = el("span", { cls: "universeview-time-label" }, box);
 		this.toggle.addEventListener("click", () => {
 			this.enabled = !this.enabled;
 			if (this.enabled && this.value === undefined) this.value = this.range[1];

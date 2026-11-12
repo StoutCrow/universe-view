@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { ChronDate, Entity, TimedRef } from "../types";
 import { formatSpan } from "../dates/parser";
 import { occupationsAt } from "../index/wars";
@@ -108,7 +108,7 @@ const AFFILIATION = /\b(faith|religion|church|creed|cult|belief|pantheon|culture
  * their cultures, unless that's only an affiliation (a house that follows a faith isn't part of the
  * church) or the group already has a parent of its own.
  */
-export function subOrgs(plugin: ChroniclePlugin, key: string): Entity[] {
+export function subOrgs(plugin: UniverseViewPlugin, key: string): Entity[] {
 	const idx = plugin.index;
 	const out = new Map<string, Entity>();
 	for (const k of idx.childCulturesOf.get(key) ?? []) {
@@ -129,7 +129,7 @@ export function subOrgs(plugin: ChroniclePlugin, key: string): Entity[] {
 }
 
 /** Who held which role in an organisation (members with roles and dates, plus `leader:`-style relations). */
-export function tenures(plugin: ChroniclePlugin, org: Entity, at?: number): Tenure[] {
+export function tenures(plugin: UniverseViewPlugin, org: Entity, at?: number): Tenure[] {
 	const idx = plugin.index;
 	const out: Tenure[] = [];
 	for (const m of idx.members(org.key)) {
@@ -174,7 +174,7 @@ export function tieOf(self: string, r: TimedRef): Tie {
 }
 
 /** Every relationship between groups, both from `relations`-style properties and `related-cultures`. */
-export function groupTies(plugin: ChroniclePlugin, at?: number): Tie[] {
+export function groupTies(plugin: UniverseViewPlugin, at?: number): Tie[] {
 	const idx = plugin.index;
 	const out = new Map<string, Tie>();
 	const add = (self: string, r: TimedRef) => {
@@ -194,7 +194,7 @@ export function groupTies(plugin: ChroniclePlugin, at?: number): Tie[] {
 }
 
 /** Relationships between people, one per pair and kind. */
-export function personTies(plugin: ChroniclePlugin, keys: Set<string>, at?: number): Tie[] {
+export function personTies(plugin: UniverseViewPlugin, keys: Set<string>, at?: number): Tie[] {
 	const idx = plugin.index;
 	const out = new Map<string, Tie>();
 	for (const k of keys) {
@@ -244,32 +244,32 @@ export class OrgChartRenderer {
 
 	constructor(
 		private container: HTMLElement,
-		private plugin: ChroniclePlugin,
+		private plugin: UniverseViewPlugin,
 		public options: OrgOptions,
 		private embedded = false,
 		private hoverParent: { hoverPopover: unknown } | HTMLElement = container,
 	) {
-		this.root = el("div", { cls: "chronicle-org" + (embedded ? " is-embedded" : "") }, container);
-		this.chartEl = el("div", { cls: "chronicle-org-chart" }, this.root);
-		this.svgEl = svg("svg", { class: "chronicle-canvas" }, this.chartEl);
+		this.root = el("div", { cls: "universeview-org" + (embedded ? " is-embedded" : "") }, container);
+		this.chartEl = el("div", { cls: "universeview-org-chart" }, this.root);
+		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.chartEl);
 		const defs = svg("defs", {}, this.svgEl);
-		const clip = svg("clipPath", { id: "chronicle-org-avatar" }, defs);
+		const clip = svg("clipPath", { id: "universeview-org-avatar" }, defs);
 		svg("circle", { cx: 0, cy: 0, r: 8 }, clip);
-		const logoClip = svg("clipPath", { id: "chronicle-org-logo-clip" }, defs);
+		const logoClip = svg("clipPath", { id: "universeview-org-logo-clip" }, defs);
 		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 10 }, logoClip);
 		// One arrowhead per kind of tie, coloured to match its line.
 		for (const tone of Object.keys(TONE_NAMES)) {
-			const m = svg("marker", { id: `chronicle-org-arrow-${tone}`, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
-			svg("path", { d: "M0,0 L10,5 L0,10 z", class: `chronicle-org-arrowhead tone-${tone}` }, m);
+			const m = svg("marker", { id: `universeview-org-arrow-${tone}`, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+			svg("path", { d: "M0,0 L10,5 L0,10 z", class: `universeview-org-arrowhead tone-${tone}` }, m);
 		}
 		this.layer = svg("g", {}, this.svgEl);
 		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.15, maxScale: 3 });
-		this.legendEl = el("div", { cls: "chronicle-org-legend" }, this.chartEl);
-		this.splitter = el("div", { cls: "chronicle-org-splitter", attr: { title: "Drag to resize the timeline" } }, this.root);
-		this.timelineEl = el("div", { cls: "chronicle-org-timeline" }, this.root);
+		this.legendEl = el("div", { cls: "universeview-org-legend" }, this.chartEl);
+		this.splitter = el("div", { cls: "universeview-org-splitter", attr: { title: "Drag to resize the timeline" } }, this.root);
+		this.timelineEl = el("div", { cls: "universeview-org-timeline" }, this.root);
 		this.bindSplitter();
 		if (embedded) {
-			const box = el("div", { cls: "chronicle-embed-controls" }, this.chartEl);
+			const box = el("div", { cls: "universeview-embed-controls" }, this.chartEl);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.25));
 			iconButton(box, "zoom-out", "Zoom out", () => this.pz.zoomBy(1 / 1.25));
 			iconButton(box, "maximize", "Fit", () => this.fit());
@@ -337,7 +337,7 @@ export class OrgChartRenderer {
 		this.legendEl.empty();
 		this.rowAt.clear();
 		this.taken = [];
-		this.root.querySelector(".chronicle-empty")?.remove();
+		this.root.querySelector(".universeview-empty")?.remove();
 		this.root.toggleClass("has-timeline", this.options.timeline);
 		this.root.style.setProperty("--org-timeline", `${Math.round(this.timelineHeight * 100)}%`);
 		const idx = this.plugin.index;
@@ -489,10 +489,10 @@ export class OrgChartRenderer {
 			left += r.span + GAP_X * 2;
 		}
 
-		const links = svg("g", { class: "chronicle-org-links" }, this.layer);
-		const relLayer = svg("g", { class: "chronicle-org-rels" }, this.layer);
-		const cards = svg("g", { class: "chronicle-org-cards" }, this.layer);
-		const pills = svg("g", { class: "chronicle-org-pills" }, this.layer);
+		const links = svg("g", { class: "universeview-org-links" }, this.layer);
+		const relLayer = svg("g", { class: "universeview-org-rels" }, this.layer);
+		const cards = svg("g", { class: "universeview-org-cards" }, this.layer);
+		const pills = svg("g", { class: "universeview-org-pills" }, this.layer);
 		for (const n of this.nodes) {
 			for (const c of n.children) {
 				const x1 = n.x + CARD_W / 2;
@@ -500,7 +500,7 @@ export class OrgChartRenderer {
 				const x2 = c.x + CARD_W / 2;
 				const y2 = c.y;
 				const mid = y1 + (y2 - y1) / 2;
-				svg("path", { d: `M${x1},${y1} V${mid} H${x2} V${y2}`, class: "chronicle-org-link" }, links);
+				svg("path", { d: `M${x1},${y1} V${mid} H${x2} V${y2}`, class: "universeview-org-link" }, links);
 			}
 			this.drawCard(cards, n);
 		}
@@ -606,17 +606,17 @@ export class OrgChartRenderer {
 
 	private tieLine(lines: SVGGElement, pills: SVGGElement, t: Tie, d: string, mx: number, my: number, cls: string) {
 		const idx = this.plugin.index;
-		const g = svg("g", { class: `chronicle-org-tie ${cls} tone-${t.tone}`, "data-a": t.a, "data-b": t.b }, lines);
-		svg("path", { d, class: "chronicle-org-tie-hit" }, g);
-		const path = svg("path", { d, class: "chronicle-org-tie-line" }, g);
-		if (t.directed) path.setAttribute("marker-end", `url(#chronicle-org-arrow-${t.tone})`);
+		const g = svg("g", { class: `universeview-org-tie ${cls} tone-${t.tone}`, "data-a": t.a, "data-b": t.b }, lines);
+		svg("path", { d, class: "universeview-org-tie-hit" }, g);
+		const path = svg("path", { d, class: "universeview-org-tie-line" }, g);
+		if (t.directed) path.setAttribute("marker-end", `url(#universeview-org-arrow-${t.tone})`);
 		const span = t.from || t.to ? formatSpan(t.from, t.to, this.cal()) : "";
 		const an = idx.get(t.a)?.name ?? t.a;
 		const bn = idx.get(t.b)?.name ?? t.b;
 		const tip = `${an} → ${bn}: ${t.label}${span ? `\n${span}` : ""}`;
 		svg("title", {}, g).textContent = tip;
 		// The label sits on top of everything, so it stays readable where lines cross cards.
-		const pill = svg("g", { class: `chronicle-org-pill ${cls} tone-${t.tone}`, transform: `translate(${mx},${my})`, "data-a": t.a, "data-b": t.b }, pills);
+		const pill = svg("g", { class: `universeview-org-pill ${cls} tone-${t.tone}`, transform: `translate(${mx},${my})`, "data-a": t.a, "data-b": t.b }, pills);
 		const text = t.directed ? `${t.label} →` : t.label;
 		const w = Math.max(30, text.length * 6.1 + 14);
 		// Slide along until the label is clear of the cards and the other labels.
@@ -626,8 +626,8 @@ export class OrgChartRenderer {
 		my += dy;
 		pill.setAttribute("transform", `translate(${mx},${my})`);
 		this.taken.push({ x: mx - w / 2, y: my - 9, w, h: 18 });
-		svg("rect", { x: -w / 2, y: -9, width: w, height: 18, rx: 9, class: "chronicle-org-pill-bg" }, pill);
-		const tx = svg("text", { x: 0, y: 4, "text-anchor": "middle", class: "chronicle-org-pill-text" }, pill);
+		svg("rect", { x: -w / 2, y: -9, width: w, height: 18, rx: 9, class: "universeview-org-pill-bg" }, pill);
+		const tx = svg("text", { x: 0, y: 4, "text-anchor": "middle", class: "universeview-org-pill-text" }, pill);
 		tx.textContent = text;
 		svg("title", {}, pill).textContent = tip;
 		const focus = (on: boolean) => {
@@ -650,13 +650,13 @@ export class OrgChartRenderer {
 		box.empty();
 		box.toggleClass("is-empty", !tones.size);
 		if (!tones.size) return;
-		el("div", { cls: "chronicle-org-legend-title", text: "Relationships" }, box);
+		el("div", { cls: "universeview-org-legend-title", text: "Relationships" }, box);
 		const hidden = new Set(this.options.hiddenTones ?? []);
 		for (const tone of Object.keys(TONE_NAMES) as RelTone[]) {
 			if (!tones.has(tone)) continue;
-			const row = el("button", { cls: `chronicle-org-legend-row tone-${tone}` + (hidden.has(tone) ? " is-off" : ""), attr: { "aria-pressed": String(!hidden.has(tone)), title: hidden.has(tone) ? "Show these" : "Hide these" } }, box);
-			const sw = svg("svg", { width: 26, height: 10, class: "chronicle-org-legend-swatch" }, row);
-			svg("line", { x1: 1, y1: 5, x2: 25, y2: 5, class: "chronicle-org-tie-line" }, sw);
+			const row = el("button", { cls: `universeview-org-legend-row tone-${tone}` + (hidden.has(tone) ? " is-off" : ""), attr: { "aria-pressed": String(!hidden.has(tone)), title: hidden.has(tone) ? "Show these" : "Hide these" } }, box);
+			const sw = svg("svg", { width: 26, height: 10, class: "universeview-org-legend-swatch" }, row);
+			svg("line", { x1: 1, y1: 5, x2: 25, y2: 5, class: "universeview-org-tie-line" }, sw);
 			el("span", { text: TONE_NAMES[tone] }, row);
 			row.addEventListener("click", () => {
 				const next = new Set(this.options.hiddenTones ?? []);
@@ -674,35 +674,35 @@ export class OrgChartRenderer {
 		const cal = this.cal();
 		const idx = this.plugin.index;
 		const color = o.color ?? cultureColor(this.plugin, o.key);
-		const g = svg("g", { class: "chronicle-org-card" + (n.depth === 0 ? " is-top" : ""), transform: `translate(${n.x},${n.y})`, "data-key": o.key }, parent);
+		const g = svg("g", { class: "universeview-org-card" + (n.depth === 0 ? " is-top" : ""), transform: `translate(${n.x},${n.y})`, "data-key": o.key }, parent);
 		g.setAttribute("style", `--item-color: ${color}; --i: ${this.nodes.indexOf(n) % 20}`);
-		svg("rect", { x: 0, y: 0, width: CARD_W, height: n.h, rx: 6, class: "chronicle-org-card-bg" }, g);
-		svg("rect", { x: 0, y: 0, width: CARD_W, height: 3, rx: 1.5, class: "chronicle-org-card-band" }, g);
+		svg("rect", { x: 0, y: 0, width: CARD_W, height: n.h, rx: 6, class: "universeview-org-card-bg" }, g);
+		svg("rect", { x: 0, y: 0, width: CARD_W, height: 3, rx: 1.5, class: "universeview-org-card-band" }, g);
 
 		// The logo area: the group's sigil, or a monogram with a prompt to add one.
-		const logoBox = svg("g", { class: "chronicle-org-logo-box", transform: `translate(14,${(HEAD_H - LOGO) / 2 + 3})` }, g);
-		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 6, class: "chronicle-org-logo-bg" }, logoBox);
+		const logoBox = svg("g", { class: "universeview-org-logo-box", transform: `translate(14,${(HEAD_H - LOGO) / 2 + 3})` }, g);
+		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 6, class: "universeview-org-logo-bg" }, logoBox);
 		const logo = resourceUrl(this.plugin, o.logo ?? o.image);
 		if (logo) {
-			svg("image", { href: logo, x: 0, y: 0, width: LOGO, height: LOGO, preserveAspectRatio: "xMidYMid meet", "clip-path": "url(#chronicle-org-logo-clip)", class: "chronicle-org-logo" }, logoBox);
+			svg("image", { href: logo, x: 0, y: 0, width: LOGO, height: LOGO, preserveAspectRatio: "xMidYMid meet", "clip-path": "url(#universeview-org-logo-clip)", class: "universeview-org-logo" }, logoBox);
 		} else {
 			logoBox.classList.add("is-empty");
-			const mono = svg("text", { x: LOGO / 2, y: LOGO / 2 + 7, "text-anchor": "middle", class: "chronicle-org-monogram" }, logoBox);
+			const mono = svg("text", { x: LOGO / 2, y: LOGO / 2 + 7, "text-anchor": "middle", class: "universeview-org-monogram" }, logoBox);
 			mono.textContent = monogram(o.name);
-			const plus = svg("text", { x: LOGO / 2, y: LOGO / 2 + 6, "text-anchor": "middle", class: "chronicle-org-logo-add" }, logoBox);
+			const plus = svg("text", { x: LOGO / 2, y: LOGO / 2 + 6, "text-anchor": "middle", class: "universeview-org-logo-add" }, logoBox);
 			plus.textContent = "+ logo";
 		}
-		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 6, class: "chronicle-org-logo-ring" }, logoBox);
+		svg("rect", { x: 0, y: 0, width: LOGO, height: LOGO, rx: 6, class: "universeview-org-logo-ring" }, logoBox);
 		svg("title", {}, logoBox).textContent = logo ? `${o.name}'s logo: click to change it` : `Add a logo for ${o.name} (a sigil, crest or flag image)`;
 		logoBox.addEventListener("click", (evt) => {
 			evt.stopPropagation();
 			if (!this.pz.justPanned) pickLogo(this.plugin, o.key);
 		});
 
-		const head = svg("g", { class: "chronicle-org-head" }, g);
+		const head = svg("g", { class: "universeview-org-head" }, g);
 		svg("rect", { x: LOGO + 20, y: 8, width: CARD_W - LOGO - 28, height: HEAD_H - 10, fill: "transparent" }, head);
 		const tx = LOGO + 26;
-		const name = svg("text", { x: tx, y: 33, class: "chronicle-org-name" }, head);
+		const name = svg("text", { x: tx, y: 33, class: "universeview-org-name" }, head);
 		name.textContent = clip(o.name, 21);
 		const sub: string[] = [];
 		if (o.category) sub.push(o.category.charAt(0).toUpperCase() + o.category.slice(1));
@@ -712,7 +712,7 @@ export class OrgChartRenderer {
 		const at = this.options.at;
 		const occupier = at === undefined ? undefined : occupationsAt(idx, at).find((x) => x.land.key === o.key);
 		if (occupier) sub.splice(0, sub.length, `Occupied by ${occupier.by.name}`);
-		const subEl = svg("text", { x: tx, y: 51, class: "chronicle-org-sub" }, head);
+		const subEl = svg("text", { x: tx, y: 51, class: "universeview-org-sub" }, head);
 		subEl.textContent = clip(sub.join(" · "), 30);
 		const total = idx.members(o.key).filter((m) => idx.get(m.key)?.type === "person").length;
 		const kids = n.children.length;
@@ -729,7 +729,7 @@ export class OrgChartRenderer {
 			if (kids) stats.push(mode === "dynasties" ? `${kids} cadet branch${kids === 1 ? "" : "es"}` : `${kids} branch${kids === 1 ? "" : "es"}`);
 		}
 		if (stats.length) {
-			const st = svg("text", { x: tx, y: 67, class: "chronicle-org-stats" }, head);
+			const st = svg("text", { x: tx, y: 67, class: "universeview-org-stats" }, head);
 			st.textContent = stats.join(" · ");
 		}
 		const title = svg("title", {}, head);
@@ -744,7 +744,7 @@ export class OrgChartRenderer {
 		g.addEventListener("mouseenter", () => this.focusCard(o.key, true));
 		g.addEventListener("mouseleave", () => this.focusCard(o.key, false));
 		g.addEventListener("contextmenu", (evt) => {
-			if ((evt.target as Element).closest(".chronicle-org-row")) return;
+			if ((evt.target as Element).closest(".universeview-org-row")) return;
 			evt.preventDefault();
 			showEntityMenu(this.plugin, o.key, evt, {
 				extra: (menu) => {
@@ -760,8 +760,8 @@ export class OrgChartRenderer {
 		let y = HEAD_H;
 		// Every tie to another group, including those not on the chart, as coloured chips.
 		if (n.ties.length) {
-			svg("line", { x1: 12, x2: CARD_W - 12, y1: y, y2: y, class: "chronicle-org-divider" }, g);
-			const row = svg("g", { class: "chronicle-org-ties", transform: `translate(12,${y + 7})` }, g);
+			svg("line", { x1: 12, x2: CARD_W - 12, y1: y, y2: y, class: "universeview-org-divider" }, g);
+			const row = svg("g", { class: "universeview-org-ties", transform: `translate(12,${y + 7})` }, g);
 			let x = 0;
 			const others = n.ties.map((t) => ({ t, other: idx.get(t.a === o.key ? t.b : t.a)! })).filter((x) => x.other);
 			let shown = 0;
@@ -769,10 +769,10 @@ export class OrgChartRenderer {
 				const label = clip(other.name, 16);
 				const w = label.length * 5.8 + 22;
 				if (x + w > CARD_W - 50 && shown) break;
-				const chip = svg("g", { class: `chronicle-org-tie-chip tone-${t.tone}`, transform: `translate(${x},0)` }, row);
-				svg("rect", { x: 0, y: 0, width: w, height: 15, rx: 7.5, class: "chronicle-org-tie-chip-bg" }, chip);
-				svg("circle", { cx: 8, cy: 7.5, r: 3.5, class: "chronicle-org-tie-dot" }, chip);
-				const ct = svg("text", { x: 15, y: 11, class: "chronicle-org-tie-chip-text" }, chip);
+				const chip = svg("g", { class: `universeview-org-tie-chip tone-${t.tone}`, transform: `translate(${x},0)` }, row);
+				svg("rect", { x: 0, y: 0, width: w, height: 15, rx: 7.5, class: "universeview-org-tie-chip-bg" }, chip);
+				svg("circle", { cx: 8, cy: 7.5, r: 3.5, class: "universeview-org-tie-dot" }, chip);
+				const ct = svg("text", { x: 15, y: 11, class: "universeview-org-tie-chip-text" }, chip);
 				ct.textContent = label;
 				// Seen from this card: its vassal is listed as "Vassals", its overlord as "Liege".
 				svg("title", {}, chip).textContent = `${t.directed && t.b === o.key ? relLabel(t.kind, true) : t.label}: ${other.name}`;
@@ -785,7 +785,7 @@ export class OrgChartRenderer {
 				shown++;
 			}
 			if (shown < others.length) {
-				const more = svg("text", { x: x + 2, y: 11, class: "chronicle-org-more" }, row);
+				const more = svg("text", { x: x + 2, y: 11, class: "universeview-org-more" }, row);
 				more.textContent = `+${others.length - shown}`;
 				svg("title", {}, more).textContent = others.slice(shown).map(({ t, other }) => `${t.directed && t.b === o.key ? relLabel(t.kind, true) : t.label}: ${other.name}`).join("\n");
 			}
@@ -793,26 +793,26 @@ export class OrgChartRenderer {
 		}
 
 		const shown = n.people.slice(0, MAX_ROWS);
-		if (shown.length) svg("line", { x1: 12, x2: CARD_W - 12, y1: y, y2: y, class: "chronicle-org-divider" }, g);
+		if (shown.length) svg("line", { x1: 12, x2: CARD_W - 12, y1: y, y2: y, class: "universeview-org-divider" }, g);
 		shown.forEach((t, i) => {
 			const ry = y + 6 + i * ROW_H;
 			const list = this.rowAt.get(t.person.key) ?? [];
 			list.push({ x: n.x, y: n.y + ry + (ROW_H - 2) / 2, card: o.key });
 			this.rowAt.set(t.person.key, list);
-			const row = svg("g", { class: "chronicle-org-row" + (t.leader ? " is-leader" : ""), transform: `translate(0,${ry})`, "data-person": t.person.key }, g);
-			svg("rect", { x: 6, y: 0, width: CARD_W - 12, height: ROW_H - 2, rx: 5, class: "chronicle-org-row-bg" }, row);
+			const row = svg("g", { class: "universeview-org-row" + (t.leader ? " is-leader" : ""), transform: `translate(0,${ry})`, "data-person": t.person.key }, g);
+			svg("rect", { x: 6, y: 0, width: CARD_W - 12, height: ROW_H - 2, rx: 5, class: "universeview-org-row-bg" }, row);
 			const av = svg("g", { transform: `translate(22,${(ROW_H - 2) / 2})` }, row);
 			const img = resourceUrl(this.plugin, t.person.image);
-			svg("circle", { r: 8, class: "chronicle-org-avatar", style: `--avatar: ${entityColor(this.plugin, t.person)}` }, av);
-			if (img) svg("image", { href: img, x: -8, y: -8, width: 16, height: 16, "clip-path": "url(#chronicle-org-avatar)", preserveAspectRatio: "xMidYMid slice" }, av);
+			svg("circle", { r: 8, class: "universeview-org-avatar", style: `--avatar: ${entityColor(this.plugin, t.person)}` }, av);
+			if (img) svg("image", { href: img, x: -8, y: -8, width: 16, height: 16, "clip-path": "url(#universeview-org-avatar)", preserveAspectRatio: "xMidYMid slice" }, av);
 			else if (t.leader) {
-				const star = svg("text", { x: 0, y: 3.5, "text-anchor": "middle", class: "chronicle-org-star" }, av);
+				const star = svg("text", { x: 0, y: 3.5, "text-anchor": "middle", class: "universeview-org-star" }, av);
 				star.textContent = "★";
 			}
-			const nm = svg("text", { x: 36, y: 14, class: "chronicle-org-person" }, row);
+			const nm = svg("text", { x: 36, y: 14, class: "universeview-org-person" }, row);
 			nm.textContent = clip(t.person.name, t.role ? 19 : 30);
 			if (t.role) {
-				const role = svg("text", { x: CARD_W - 14, y: 14, "text-anchor": "end", class: "chronicle-org-role" }, row);
+				const role = svg("text", { x: CARD_W - 14, y: 14, "text-anchor": "end", class: "universeview-org-role" }, row);
 				role.textContent = clip(t.role, 14);
 			}
 			const tt = svg("title", {}, row);
@@ -827,14 +827,14 @@ export class OrgChartRenderer {
 			bindHover(this.plugin, row, t.person.key, this.hoverParent);
 		});
 		if (n.people.length > MAX_ROWS) {
-			const more = svg("text", { x: CARD_W / 2, y: y + 6 + MAX_ROWS * ROW_H + 13, "text-anchor": "middle", class: "chronicle-org-more" }, g);
+			const more = svg("text", { x: CARD_W / 2, y: y + 6 + MAX_ROWS * ROW_H + 13, "text-anchor": "middle", class: "universeview-org-more" }, g);
 			more.textContent = `+ ${n.people.length - MAX_ROWS} more (open the note or the timeline below)`;
 		}
 	}
 
 	/** Hovering a card brings out its relationships and fades the rest. */
 	private focusCard(key: string, on: boolean) {
-		const ties = this.layer.querySelectorAll(`.chronicle-org-tie[data-a="${CSS.escape(key)}"], .chronicle-org-tie[data-b="${CSS.escape(key)}"], .chronicle-org-pill[data-a="${CSS.escape(key)}"], .chronicle-org-pill[data-b="${CSS.escape(key)}"]`);
+		const ties = this.layer.querySelectorAll(`.universeview-org-tie[data-a="${CSS.escape(key)}"], .universeview-org-tie[data-b="${CSS.escape(key)}"], .universeview-org-pill[data-a="${CSS.escape(key)}"], .universeview-org-pill[data-b="${CSS.escape(key)}"]`);
 		if (!ties.length) return;
 		this.root.toggleClass("is-focusing", on);
 		ties.forEach((n) => n.classList.toggle("is-hl", on));
@@ -872,7 +872,7 @@ export class OrgChartRenderer {
 			}
 		}
 		if (!Number.isFinite(min)) {
-			el("div", { cls: "chronicle-org-timeline-empty", text: "No dates yet. Give organisations `founded:`/`dissolved:` and memberships `from:`/`to:` to see who held which role when." }, box);
+			el("div", { cls: "universeview-org-timeline-empty", text: "No dates yet. Give organisations `founded:`/`dissolved:` and memberships `from:`/`to:` to see who held which role when." }, box);
 			return;
 		}
 		if (max <= min) max = min + 365 * 10;
@@ -886,8 +886,8 @@ export class OrgChartRenderer {
 		const plotW = width - LABEL - 16;
 		const x = (d: number) => LABEL + ((d - min) / (max - min)) * plotW;
 		const height = AXIS + lanes.length * LANE + 8;
-		const s = svg("svg", { width, height, class: "chronicle-org-tl" }, box);
-		const axis = svg("g", { class: "chronicle-lineage-axis" }, s);
+		const s = svg("svg", { width, height, class: "universeview-org-tl" }, box);
+		const axis = svg("g", { class: "universeview-lineage-axis" }, s);
 		const yearPx = (plotW / (max - min)) * 365.25;
 		const nice = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000];
 		const step = nice.find((st) => st * yearPx >= 64) ?? 10000;
@@ -896,23 +896,23 @@ export class OrgChartRenderer {
 			.filter((t) => t.x >= LABEL && t.x <= width);
 		const labelled = spacedLabels(ticks);
 		for (const tk of ticks) {
-			svg("line", { x1: tk.x, x2: tk.x, y1: AXIS - 4, y2: height, class: "chronicle-lineage-grid" + (tk.era ? " is-era" : "") }, axis);
+			svg("line", { x1: tk.x, x2: tk.x, y1: AXIS - 4, y2: height, class: "universeview-lineage-grid" + (tk.era ? " is-era" : "") }, axis);
 			if (!labelled.has(tk)) continue;
-			const t = svg("text", { x: tk.x, y: AXIS - 9, "text-anchor": "middle", class: "chronicle-lineage-tick" }, axis);
+			const t = svg("text", { x: tk.x, y: AXIS - 9, "text-anchor": "middle", class: "universeview-lineage-tick" }, axis);
 			t.textContent = tk.label;
 		}
 		lanes.forEach((l, i) => {
 			const y = AXIS + i * LANE;
-			const g = svg("g", { class: "chronicle-org-lane" + (l.org ? " is-org" : "") + (l.leader ? " is-leader" : ""), "data-key": l.key }, s);
+			const g = svg("g", { class: "universeview-org-lane" + (l.org ? " is-org" : "") + (l.leader ? " is-leader" : ""), "data-key": l.key }, s);
 			g.setAttribute("style", `--item-color: ${l.color}`);
-			if (i % 2 === 0) svg("rect", { x: 0, y, width, height: LANE, class: "chronicle-org-lane-bg" }, g);
-			const label = svg("text", { x: 8 + l.indent * 10 + (l.org ? 0 : 12), y: y + 14, class: "chronicle-org-lane-label" }, g);
+			if (i % 2 === 0) svg("rect", { x: 0, y, width, height: LANE, class: "universeview-org-lane-bg" }, g);
+			const label = svg("text", { x: 8 + l.indent * 10 + (l.org ? 0 : 12), y: y + 14, class: "universeview-org-lane-label" }, g);
 			label.textContent = clip(l.label + (l.sub ? ` · ${l.sub}` : ""), l.org ? 26 : 24);
 			const a = l.a ?? min + pad;
 			const b = l.b ?? max - pad * 0.5;
 			const bar = svg("rect", {
 				x: x(a), y: y + (l.org ? 4 : 6), width: Math.max(4, x(b) - x(a)), height: l.org ? 12 : 8, rx: l.org ? 4 : 4,
-				class: "chronicle-org-bar" + (l.b === undefined || l.open ? " is-ongoing" : "") + (l.dashed ? " is-undated" : ""),
+				class: "universeview-org-bar" + (l.b === undefined || l.open ? " is-ongoing" : "") + (l.dashed ? " is-undated" : ""),
 			}, g);
 			const tt = svg("title", {}, bar);
 			tt.textContent = `${l.label}${l.sub ? ` — ${l.sub}` : ""}\n${l.a !== undefined || l.b !== undefined ? formatSpan(l.a !== undefined ? dayDate(l.a, cal.id) : undefined, l.b !== undefined ? dayDate(l.b, cal.id) : undefined, cal) : "undated"}`;
@@ -923,13 +923,13 @@ export class OrgChartRenderer {
 		});
 		// The chosen day, and picking one by clicking the axis.
 		this.cursor = (at: number | undefined) => {
-			s.querySelector(".chronicle-org-cursor")?.remove();
+			s.querySelector(".universeview-org-cursor")?.remove();
 			if (at === undefined) return;
 			const cx = x(at);
-			svg("line", { x1: cx, x2: cx, y1: AXIS - 6, y2: height, class: "chronicle-org-cursor" }, s);
+			svg("line", { x1: cx, x2: cx, y1: AXIS - 6, y2: height, class: "universeview-org-cursor" }, s);
 		};
 		this.cursor(this.options.at);
-		const hit = svg("rect", { x: LABEL, y: 0, width: plotW, height: AXIS, class: "chronicle-org-axis-hit" }, s);
+		const hit = svg("rect", { x: LABEL, y: 0, width: plotW, height: AXIS, class: "universeview-org-axis-hit" }, s);
 		const tip = svg("title", {}, hit);
 		tip.textContent = "Click to see the organisation on that date (Esc or the Time button for all time)";
 		hit.addEventListener("click", (evt) => {
@@ -941,7 +941,7 @@ export class OrgChartRenderer {
 
 	private highlight(key: string, on: boolean) {
 		this.layer.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach((n) => n.classList.toggle("is-hl", on));
-		this.layer.querySelectorAll(".chronicle-org-row").forEach((r) => {
+		this.layer.querySelectorAll(".universeview-org-row").forEach((r) => {
 			const t = r.querySelector("title")?.textContent ?? "";
 			const p = this.plugin.index.get(key);
 			if (p?.type === "person") r.classList.toggle("is-hl", on && t.startsWith(p.name));

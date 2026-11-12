@@ -1,14 +1,14 @@
 import { Notice, TFile, debounce, setIcon, type ViewStateResult } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import { TYPE_ICONS, TYPE_LABELS, el, iconButton, openEntity, setPressed } from "../render/common";
 import { FileTree, TREE_OPTIONS_CHANGED, treeOptionsMenu, type TreeState } from "../ui/filetree";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_FILES = "chronicle-files";
 
 /** A button in the toolbar of Obsidian's file explorer that opens the files panel. */
-export function explorerButton(plugin: ChroniclePlugin) {
+export function explorerButton(plugin: UniverseViewPlugin) {
 	const sync = () => {
 		for (const leaf of plugin.app.workspace.getLeavesOfType("file-explorer")) {
 			const bar = leaf.view.containerEl.querySelector(".nav-buttons-container");
@@ -28,8 +28,8 @@ export function explorerButton(plugin: ChroniclePlugin) {
 }
 
 /** The Library's tree as a sidebar panel, beside Obsidian's own file explorer. */
-export class FilesPanelView extends ChronicleView {
-	private state: TreeState = { expanded: [], onlyChronicle: false, search: "" };
+export class FilesPanelView extends UniverseViewBase {
+	private state: TreeState = { expanded: [], onlyNotes: false, search: "" };
 	private tree!: FileTree;
 	private stale = false;
 
@@ -62,7 +62,7 @@ export class FilesPanelView extends ChronicleView {
 			this.tree.render();
 			this.app.workspace.requestSaveLayout();
 		});
-		const list = el("div", { cls: "chronicle-dash-list" }, root);
+		const list = el("div", { cls: "universeview-dash-list" }, root);
 		this.tree = new FileTree(this.plugin, list, () => this.state, {
 			foldOnClick: true,
 			changed: () => this.app.workspace.requestSaveLayout(),
@@ -112,11 +112,11 @@ export class FilesPanelView extends ChronicleView {
 		const tools = this.group();
 		iconButton(tools, "locate", "Reveal the open note in the tree", () => this.revealOpen());
 		const only = iconButton(tools, "filter", "UniverseView notes only", () => {
-			this.state.onlyChronicle = !this.state.onlyChronicle;
+			this.state.onlyNotes = !this.state.onlyNotes;
 			this.refresh();
 			this.app.workspace.requestSaveLayout();
 		});
-		setPressed(only, this.state.onlyChronicle);
+		setPressed(only, this.state.onlyNotes);
 		iconButton(tools, "sliders-horizontal", "How the tree looks", (evt) => treeOptionsMenu(this.plugin, evt));
 		iconButton(tools, "chevrons-down-up", "Collapse all folders", () => this.tree.collapseAll());
 		iconButton(tools, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());

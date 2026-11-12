@@ -1,5 +1,5 @@
 import { Modal, Notice, Setting, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { buildFieldAliases, type FieldName } from "../settings";
 import { EntityInputSuggest } from "./suggest";
@@ -44,7 +44,7 @@ const kindKey = (k: string | undefined) => (k ? relKind(k)?.key ?? k.trim().toLo
 
 
 /** Adds a link to a note's property, in the property name the note already uses. */
-export async function addLink(plugin: ChroniclePlugin, file: TFile, spec: Pick<LinkSpec, "field" | "single" | "objKey">, name: string, extra: Record<string, string> = {}) {
+export async function addLink(plugin: UniverseViewPlugin, file: TFile, spec: Pick<LinkSpec, "field" | "single" | "objKey">, name: string, extra: Record<string, string> = {}) {
 	const aliases = buildFieldAliases(plugin.settings.fieldAliases)[spec.field];
 	await plugin.editFrontmatter(file, (front) => {
 		let key = aliases.find((a) => a in front) ?? aliases[0];
@@ -70,7 +70,7 @@ export async function addLink(plugin: ChroniclePlugin, file: TFile, spec: Pick<L
 }
 
 /** Removes every link to `name` from a property (under any of its names). Returns whether one was found. */
-export async function removeLink(plugin: ChroniclePlugin, u: Unlink): Promise<boolean> {
+export async function removeLink(plugin: UniverseViewPlugin, u: Unlink): Promise<boolean> {
 	const file = plugin.app.vault.getAbstractFileByPath(u.path);
 	if (!(file instanceof TFile)) return false;
 	const aliases = buildFieldAliases(plugin.settings.fieldAliases)[u.field];
@@ -101,7 +101,7 @@ export async function removeLink(plugin: ChroniclePlugin, u: Unlink): Promise<bo
 }
 
 /** Adds a link to a plain list property (`led-to:`, `founder:`…), keeping what's there. */
-async function addToList(plugin: ChroniclePlugin, file: TFile, prop: string, name: string, label: string) {
+async function addToList(plugin: UniverseViewPlugin, file: TFile, prop: string, name: string, label: string) {
 	await plugin.editFrontmatter(file, (f) => {
 		const key = Object.keys(f).find((k) => k.toLowerCase() === prop) ?? prop;
 		const list = ([] as unknown[]).concat(f[key] ?? []).filter((v) => v !== null && v !== "");
@@ -115,7 +115,7 @@ async function addToList(plugin: ChroniclePlugin, file: TFile, prop: string, nam
  * people, membership and leadership between people and groups, alliances and vassalage between
  * groups, cause and effect between events, and so on. Each choice is written where it belongs.
  */
-export function linkChoices(plugin: ChroniclePlugin, a: Entity, b: Entity): { label: string; icon: string; run: () => Promise<void> }[] {
+export function linkChoices(plugin: UniverseViewPlugin, a: Entity, b: Entity): { label: string; icon: string; run: () => Promise<void> }[] {
 	const out: { label: string; icon: string; run: () => Promise<void> }[] = [];
 	const rel = (on: Entity, other: Entity, kind: string, label: string, ic = "link") =>
 		out.push({ label, icon: ic, run: () => addLink(plugin, on.file, { field: "relations", objKey: "link" }, other.name, { kind }) });
@@ -178,13 +178,13 @@ export function linkChoices(plugin: ChroniclePlugin, a: Entity, b: Entity): { la
 export class AddRelationModal extends Modal {
 	private picked?: Entity;
 
-	constructor(private plugin: ChroniclePlugin, private self: Entity, private spec: LinkSpec) {
+	constructor(private plugin: UniverseViewPlugin, private self: Entity, private spec: LinkSpec) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope");
 		this.titleEl.setText(`${this.self.name}: add to “${this.spec.label}”`);
 		let nameInput!: HTMLInputElement;
 		new Setting(this.contentEl).setName("Note").setDesc("Pick one, or type a name for a note that doesn't exist yet.").addText((t) => {

@@ -15,8 +15,8 @@ let open: { close: () => void } | undefined;
  * open while you change several things, and closes on a click elsewhere or Esc.
  */
 export function optionsButton(parent: HTMLElement, entries: () => OptionEntry[], label = "Options"): HTMLElement {
-	const btn = el("button", { cls: "chronicle-chip uv-options-btn", title: "Options for this view", attr: { "aria-haspopup": "dialog" } }, parent);
-	icon(el("span", { cls: "chronicle-chip-icon" }, btn), "sliders-horizontal");
+	const btn = el("button", { cls: "universeview-chip uv-options-btn", title: "Options for this view", attr: { "aria-haspopup": "dialog" } }, parent);
+	icon(el("span", { cls: "universeview-chip-icon" }, btn), "sliders-horizontal");
 	el("span", { text: label }, btn);
 	btn.addEventListener("click", (evt) => {
 		evt.stopPropagation();
@@ -25,7 +25,7 @@ export function optionsButton(parent: HTMLElement, entries: () => OptionEntry[],
 			return;
 		}
 		open?.close();
-		const pop = el("div", { cls: "uv-options chronicle-scope", attr: { role: "dialog", "aria-label": "Options" } }, document.body);
+		const pop = el("div", { cls: "uv-options universeview-scope", attr: { role: "dialog", "aria-label": "Options" } }, document.body);
 		for (const e of entries()) {
 			if (e.type === "heading") {
 				el("div", { cls: "uv-options-heading", text: e.label }, pop);
@@ -33,7 +33,7 @@ export function optionsButton(parent: HTMLElement, entries: () => OptionEntry[],
 			}
 			if (e.type === "action") {
 				const b = el("button", { cls: "uv-options-action" }, pop);
-				if (e.icon) icon(el("span", { cls: "chronicle-chip-icon" }, b), e.icon);
+				if (e.icon) icon(el("span", { cls: "universeview-chip-icon" }, b), e.icon);
 				el("span", { text: e.label }, b);
 				b.addEventListener("click", () => {
 					close();
@@ -48,7 +48,7 @@ export function optionsButton(parent: HTMLElement, entries: () => OptionEntry[],
 				box.checked = e.get();
 				box.addEventListener("change", () => e.set(box.checked));
 			} else {
-				const sel = el("select", { cls: "dropdown chronicle-select" }, row);
+				const sel = el("select", { cls: "dropdown universeview-select" }, row);
 				for (const [v, text] of e.options) el("option", { text, attr: { value: v } }, sel);
 				sel.value = e.get();
 				sel.addEventListener("change", () => e.set(sel.value));

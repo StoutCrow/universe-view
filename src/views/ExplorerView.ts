@@ -16,7 +16,7 @@ import { renderCompleteness } from "../ui/tidying";
 import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/relations";
 import { relInverse } from "../index/relkinds";
 import { CardLayout } from "../ui/cardlayout";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 import { asText } from "../index/text";
 import { kindLabel } from "../index/reader";
 import { KindSuggest, kindsFor } from "../ui/kindpicker";
@@ -60,8 +60,8 @@ const DATE_FIELDS: Partial<Record<EntityType, [FieldName, string, FieldName, str
  * are, which calendar they use) and a sortable table of their notes. Nothing picked: quick
  * settings and what needs attention.
  */
-export class ExplorerView extends ChronicleView {
-	private state: ExplorerState = { expanded: [], onlyChronicle: true, search: "" };
+export class ExplorerView extends UniverseViewBase {
+	private state: ExplorerState = { expanded: [], onlyNotes: true, search: "" };
 	private statsEl!: HTMLElement;
 	private treeEl!: HTMLElement;
 	private tree!: FileTree;
@@ -95,19 +95,19 @@ export class ExplorerView extends ChronicleView {
 	}
 
 	protected build() {
-		this.contentEl.addClass("chronicle-explorer-view");
+		this.contentEl.addClass("universeview-explorer-view");
 		this.fillToolbar();
-		const root = el("div", { cls: "chronicle-dash" }, this.body);
-		this.statsEl = el("div", { cls: "chronicle-dash-stats" }, root);
-		const main = (this.mainEl = el("div", { cls: "chronicle-dash-main" }, root));
-		this.treeEl = el("div", { cls: "chronicle-dash-tree" }, main);
-		const head = el("div", { cls: "chronicle-dash-tree-head" }, this.treeEl);
+		const root = el("div", { cls: "universeview-dash" }, this.body);
+		this.statsEl = el("div", { cls: "universeview-dash-stats" }, root);
+		const main = (this.mainEl = el("div", { cls: "universeview-dash-main" }, root));
+		this.treeEl = el("div", { cls: "universeview-dash-tree" }, main);
+		const head = el("div", { cls: "universeview-dash-tree-head" }, this.treeEl);
 		this.searchInput = this.searchBox(head, this.state.search, "Find a note or folder…", (v) => {
 			this.state.search = v;
 			this.tree.render();
 			this.save();
 		});
-		const list = el("div", { cls: "chronicle-dash-list" }, this.treeEl);
+		const list = el("div", { cls: "universeview-dash-list" }, this.treeEl);
 		this.tree = new FileTree(this.plugin, list, () => this.state, {
 			changed: () => this.save(),
 			select: (path, isFolder, evt) => {
@@ -115,8 +115,8 @@ export class ExplorerView extends ChronicleView {
 				this.select(path, isFolder);
 			},
 		});
-		this.dragTree(el("div", { cls: "chronicle-dash-grip", attr: { role: "separator", "aria-label": "Resize the file tree" } }, main));
-		this.detailEl = el("div", { cls: "chronicle-dash-detail" }, main);
+		this.dragTree(el("div", { cls: "universeview-dash-grip", attr: { role: "separator", "aria-label": "Resize the file tree" } }, main));
+		this.detailEl = el("div", { cls: "universeview-dash-detail" }, main);
 		this.applyLayout();
 		// Side by side while there's room for both, otherwise one above the other.
 		this.register(() => this.layout.destroy());
@@ -134,7 +134,7 @@ export class ExplorerView extends ChronicleView {
 				this.renderAll();
 			}
 		}));
-		this.registerEvent(this.app.workspace.on("chronicle:history-changed" as "quit", () => this.syncUndo()));
+		this.registerEvent(this.app.workspace.on("universeview:history-changed" as "quit", () => this.syncUndo()));
 		this.registerEvent(this.app.workspace.on(TREE_OPTIONS_CHANGED as "quit", () => this.tree.render()));
 		this.registerEvent(this.app.vault.on("rename", (f, old) => this.tree.followRename(f.path, old)));
 	}
@@ -237,8 +237,8 @@ export class ExplorerView extends ChronicleView {
 	private fillToolbar() {
 		this.rebuildToolbar(() => {
 			const left = this.group();
-			toggleChip(left, "UniverseView notes only", "filter", this.state.onlyChronicle, (v) => {
-				this.state.onlyChronicle = v;
+			toggleChip(left, "UniverseView notes only", "filter", this.state.onlyNotes, (v) => {
+				this.state.onlyNotes = v;
 				this.tree.render();
 				this.save();
 			});
@@ -287,14 +287,14 @@ export class ExplorerView extends ChronicleView {
 		const idx = this.plugin.index;
 		const files = this.app.vault.getMarkdownFiles().length;
 		const tile = (iconName: string, label: string, value: number, color: string, onClick?: () => void, active = false) => {
-			const t = el("button", { cls: "chronicle-dash-stat" + (active ? " is-active" : "") }, box);
+			const t = el("button", { cls: "universeview-dash-stat" + (active ? " is-active" : "") }, box);
 			t.style.setProperty("--stat-color", color);
-			const ic = el("span", { cls: "chronicle-dash-stat-icon" }, t);
+			const ic = el("span", { cls: "universeview-dash-stat-icon" }, t);
 			icon(ic, iconName);
-			const txt = el("span", { cls: "chronicle-dash-stat-text" }, t);
-			el("span", { cls: "chronicle-dash-stat-value", text: value.toLocaleString() }, txt);
+			const txt = el("span", { cls: "universeview-dash-stat-text" }, t);
+			el("span", { cls: "universeview-dash-stat-value", text: value.toLocaleString() }, txt);
 			// The label carries its own count for plurals ("23 people"); show only the words.
-			el("span", { cls: "chronicle-dash-stat-label", text: label.replace(/^[\d,.\s]+/, "") }, txt);
+			el("span", { cls: "universeview-dash-stat-label", text: label.replace(/^[\d,.\s]+/, "") }, txt);
 			if (onClick) t.addEventListener("click", onClick);
 			else t.disabled = true;
 			return t;
@@ -340,7 +340,7 @@ export class ExplorerView extends ChronicleView {
 		if (!sel) this.renderHome(box);
 		else if (this.state.isFolder) this.renderFolder(box, sel);
 		else this.renderNote(box, sel);
-		const grid = box.querySelector<HTMLElement>(":scope > .chronicle-dash-grid");
+		const grid = box.querySelector<HTMLElement>(":scope > .universeview-dash-grid");
 		if (grid) this.layout.apply(grid, !sel ? "library-home" : this.state.isFolder ? "library-folder" : "library-note");
 		box.scrollTop = scroll;
 	}
@@ -348,31 +348,31 @@ export class ExplorerView extends ChronicleView {
 	private card(parent: HTMLElement, title: string, iconName: string, cls = ""): HTMLElement {
 		// Named without its counts, so a card keeps its place as they change.
 		const id = /problem/i.test(title) ? "problems" : title.replace(/[^a-z]+/gi, "-").toLowerCase();
-		const c = el("section", { cls: `chronicle-dash-card ${cls}`.trim(), attr: { "data-card": id, "data-title": title.replace(/\s*\(\d+\)$/, "") } }, parent);
-		const h = el("h3", { cls: "chronicle-dash-card-title" }, c);
-		const ic = el("span", { cls: "chronicle-dash-card-icon" }, h);
+		const c = el("section", { cls: `universeview-dash-card ${cls}`.trim(), attr: { "data-card": id, "data-title": title.replace(/\s*\(\d+\)$/, "") } }, parent);
+		const h = el("h3", { cls: "universeview-dash-card-title" }, c);
+		const ic = el("span", { cls: "universeview-dash-card-icon" }, h);
 		icon(ic, iconName);
 		el("span", { text: title }, h);
-		return el("div", { cls: "chronicle-dash-card-body" }, c);
+		return el("div", { cls: "universeview-dash-card-body" }, c);
 	}
 
 	private renderHome(box: HTMLElement) {
-		const head = el("div", { cls: "chronicle-dash-head" }, box);
-		el("h2", { cls: "chronicle-dash-title", text: "Library" }, head);
-		el("div", { cls: "chronicle-dash-path", text: "Pick a note or folder to see and edit it." }, head);
-		const grid = el("div", { cls: "chronicle-dash-grid" }, box);
+		const head = el("div", { cls: "universeview-dash-head" }, box);
+		el("h2", { cls: "universeview-dash-title", text: "Library" }, head);
+		el("div", { cls: "universeview-dash-path", text: "Pick a note or folder to see and edit it." }, head);
+		const grid = el("div", { cls: "universeview-dash-grid" }, box);
 
 		// Problems
 		const issues = validate(this.plugin.index).filter((i) => i.severity !== "info");
 		const pb = this.card(grid, issues.length ? `${plural("problem", issues.length)} to look at` : "No problems found", issues.length ? "shield-alert" : "shield-check");
-		if (!issues.length) el("div", { cls: "chronicle-dash-muted", text: "Dates, families and links all check out." }, pb);
+		if (!issues.length) el("div", { cls: "universeview-dash-muted", text: "Dates, families and links all check out." }, pb);
 		for (const i of issues.slice(0, 12)) {
-			const row = el("button", { cls: "chronicle-dash-rel is-" + i.severity }, pb);
-			el("span", { cls: "chronicle-dash-rel-name", text: i.name }, row);
-			el("span", { cls: "chronicle-dash-rel-note", text: i.message }, row);
+			const row = el("button", { cls: "universeview-dash-rel is-" + i.severity }, pb);
+			el("span", { cls: "universeview-dash-rel-name", text: i.name }, row);
+			el("span", { cls: "universeview-dash-rel-note", text: i.message }, row);
 			row.addEventListener("click", () => this.select(i.key, false));
 		}
-		if (issues.length > 12) el("div", { cls: "chronicle-dash-muted", text: `+ ${issues.length - 12} more (Actions… → “Check data”)` }, pb);
+		if (issues.length > 12) el("div", { cls: "universeview-dash-muted", text: `+ ${issues.length - 12} more (Actions… → “Check data”)` }, pb);
 
 		// Recent edits
 		const recent = this.plugin.index.all().sort((a, b) => b.file.stat.mtime - a.file.stat.mtime).slice(0, 10);
@@ -382,12 +382,12 @@ export class ExplorerView extends ChronicleView {
 		// Saved views
 		const p = this.plugin;
 		const sv = this.card(grid, "Saved views", "bookmark");
-		if (!p.settings.savedViews.length) el("div", { cls: "chronicle-dash-muted", text: "Save any UniverseView view (with its filters, focus and date) with the bookmark button in its toolbar." }, sv);
+		if (!p.settings.savedViews.length) el("div", { cls: "universeview-dash-muted", text: "Save any UniverseView view (with its filters, focus and date) with the bookmark button in its toolbar." }, sv);
 		for (const v of p.settings.savedViews) {
-			const row = el("button", { cls: "chronicle-dash-rel" }, sv);
-			const ic = el("span", { cls: "chronicle-dash-rel-icon" }, row);
+			const row = el("button", { cls: "universeview-dash-rel" }, sv);
+			const ic = el("span", { cls: "universeview-dash-rel-icon" }, row);
 			icon(ic, "bookmark");
-			el("span", { cls: "chronicle-dash-rel-name", text: v.name }, row);
+			el("span", { cls: "universeview-dash-rel-name", text: v.name }, row);
 			row.addEventListener("click", () => void p.openSavedView(v.name));
 		}
 
@@ -409,18 +409,18 @@ export class ExplorerView extends ChronicleView {
 			this.renderHome(box);
 			return;
 		}
-		const head = el("div", { cls: "chronicle-dash-head" }, box);
+		const head = el("div", { cls: "universeview-dash-head" }, box);
 		if (e) head.style.setProperty("--head-color", entityColor(this.plugin, e));
-		const title = el("div", { cls: "chronicle-dash-title-row" }, head);
-		const ic = el("span", { cls: "chronicle-dash-title-icon" }, title);
+		const title = el("div", { cls: "universeview-dash-title-row" }, head);
+		const ic = el("span", { cls: "universeview-dash-title-icon" }, title);
 		icon(ic, e ? TYPE_ICONS[e.type] : "file-text");
-		el("h2", { cls: "chronicle-dash-title", text: file.basename }, title);
-		if (e) el("span", { cls: "chronicle-dash-badge", text: TYPE_LABELS[e.type] + (e.category ? ` · ${kindLabel(e.category)}` : "") }, title);
-		el("div", { cls: "chronicle-dash-path", text: file.path }, head);
-		const actions = el("div", { cls: "chronicle-dash-actions" }, head);
+		el("h2", { cls: "universeview-dash-title", text: file.basename }, title);
+		if (e) el("span", { cls: "universeview-dash-badge", text: TYPE_LABELS[e.type] + (e.category ? ` · ${kindLabel(e.category)}` : "") }, title);
+		el("div", { cls: "universeview-dash-path", text: file.path }, head);
+		const actions = el("div", { cls: "universeview-dash-actions" }, head);
 		const act = (label: string, iconName: string, run: (evt: MouseEvent) => void, cta = false) => {
 			const b = el("button", { cls: cta ? "mod-cta" : "" }, actions);
-			const i2 = el("span", { cls: "chronicle-dash-btn-icon" }, b);
+			const i2 = el("span", { cls: "universeview-dash-btn-icon" }, b);
 			icon(i2, iconName);
 			el("span", { text: label }, b);
 			b.addEventListener("click", run);
@@ -439,7 +439,7 @@ export class ExplorerView extends ChronicleView {
 			if (e.type === "person") act("What they know", "eye", () => new KnowledgeModal(p, e.key).open());
 		}
 
-		const grid = el("div", { cls: "chronicle-dash-grid is-note" }, box);
+		const grid = el("div", { cls: "universeview-dash-grid is-note" }, box);
 		this.basicsCard(grid, file, e);
 		// A person's whole life on one line.
 		if (e?.type === "person") {
@@ -451,25 +451,25 @@ export class ExplorerView extends ChronicleView {
 			const groups = this.relationGroups(e);
 			const rel = this.card(grid, "Relationships", "share-2", "is-relations");
 			this.egoGraph(rel, e, groups);
-			const lists = el("div", { cls: "chronicle-dash-rel-groups" }, rel);
-			if (!groups.some((g) => g.items.length)) el("div", { cls: "chronicle-dash-muted", text: "No relationships yet. Use the + buttons to link parents, members, places or events." }, lists);
+			const lists = el("div", { cls: "universeview-dash-rel-groups" }, rel);
+			if (!groups.some((g) => g.items.length)) el("div", { cls: "universeview-dash-muted", text: "No relationships yet. Use the + buttons to link parents, members, places or events." }, lists);
 			for (const g of groups) {
 				if (!g.items.length && !g.add) continue;
-				const gEl = el("div", { cls: "chronicle-dash-rel-group" + (g.items.length ? "" : " is-empty") }, lists);
-				const h = el("div", { cls: "chronicle-dash-rel-head" }, gEl);
+				const gEl = el("div", { cls: "universeview-dash-rel-group" + (g.items.length ? "" : " is-empty") }, lists);
+				const h = el("div", { cls: "universeview-dash-rel-head" }, gEl);
 				const gi = el("span", {}, h);
 				icon(gi, g.icon);
 				el("span", { text: g.items.length ? `${g.label} (${g.items.length})` : g.label }, h);
 				if (g.add) {
 					const spec = g.add;
-					iconButton(h, "plus", `Add to ${g.label.toLowerCase()}`, () => new AddRelationModal(this.plugin, e, spec).open(), "chronicle-dash-rel-add");
+					iconButton(h, "plus", `Add to ${g.label.toLowerCase()}`, () => new AddRelationModal(this.plugin, e, spec).open(), "universeview-dash-rel-add");
 				}
 				for (const it of g.items.slice(0, 40)) this.relRow(gEl, it);
-				if (g.items.length > 40) el("div", { cls: "chronicle-dash-muted", text: `+ ${g.items.length - 40} more` }, gEl);
+				if (g.items.length > 40) el("div", { cls: "universeview-dash-muted", text: `+ ${g.items.length - 40} more` }, gEl);
 			}
 			if (e.issues.length) {
 				const iss = this.card(grid, "Problems", "alert-triangle", "is-wide");
-				for (const m of e.issues) el("div", { cls: "chronicle-dash-problem", text: m }, iss);
+				for (const m of e.issues) el("div", { cls: "universeview-dash-problem", text: m }, iss);
 			}
 		}
 		this.propertiesCard(grid, file);
@@ -497,7 +497,7 @@ export class ExplorerView extends ChronicleView {
 		typeSel.value = e?.type ?? "";
 		typeSel.addEventListener("change", () => void this.plugin.editFrontmatter(file, (f) => this.plugin.setTypeMark(f, (typeSel.value || null) as EntityType | null), "Change type"));
 		if (!e) {
-			el("div", { cls: "chronicle-dash-muted", text: "Pick a type to bring this note into UniverseView. It's marked the way your vault marks types." }, body);
+			el("div", { cls: "universeview-dash-muted", text: "Pick a type to bring this note into UniverseView. It's marked the way your vault marks types." }, body);
 			return;
 		}
 		if (e.type !== "place") {
@@ -555,7 +555,7 @@ export class ExplorerView extends ChronicleView {
 				});
 			});
 			const d = kindDefaults(this.plugin, e.category);
-			el("div", { cls: "chronicle-dash-muted", text: `Shown on the map as ${e.pinSize ?? d.size ?? "event-sized"} pins, layer ${e.layer ?? d.layer} (${LAYER_NAMES[(e.layer ?? d.layer) - 1].toLowerCase()}).` }, body);
+			el("div", { cls: "universeview-dash-muted", text: `Shown on the map as ${e.pinSize ?? d.size ?? "event-sized"} pins, layer ${e.layer ?? d.layer} (${LAYER_NAMES[(e.layer ?? d.layer) - 1].toLowerCase()}).` }, body);
 		}
 		new Setting(body).setName("Importance").setDesc("1–5: bigger on timelines and in lists.").addSlider((sl) =>
 			sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => void write(keyFor("importance"), v)),
@@ -580,27 +580,27 @@ export class ExplorerView extends ChronicleView {
 		const keys = Object.keys(fm).filter((k) => k !== "position" || Array.isArray(fm[k]));
 		const body = this.card(grid, `All properties (${keys.length})`, "list", "is-wide");
 		if (!keys.length) {
-			el("div", { cls: "chronicle-dash-muted", text: "This note has no properties." }, body);
+			el("div", { cls: "universeview-dash-muted", text: "This note has no properties." }, body);
 			return;
 		}
-		const table = el("div", { cls: "chronicle-dash-props" }, body);
+		const table = el("div", { cls: "universeview-dash-props" }, body);
 		for (const k of keys) {
-			el("div", { cls: "chronicle-dash-prop-key", text: k }, table);
+			el("div", { cls: "universeview-dash-prop-key", text: k }, table);
 			const v = fm[k];
-			el("div", { cls: "chronicle-dash-prop-value", text: typeof v === "object" ? JSON.stringify(v) : asText(v) }, table);
+			el("div", { cls: "universeview-dash-prop-value", text: typeof v === "object" ? JSON.stringify(v) : asText(v) }, table);
 		}
 	}
 
 	private relRow(parent: HTMLElement, it: RelItem) {
 		const e = this.plugin.index.get(it.key);
-		const row = el("button", { cls: "chronicle-dash-rel" + (e ? "" : " is-missing") }, parent);
+		const row = el("button", { cls: "universeview-dash-rel" + (e ? "" : " is-missing") }, parent);
 		if (e) row.style.setProperty("--row-color", entityColor(this.plugin, e));
-		const ic = el("span", { cls: "chronicle-dash-rel-icon" }, row);
+		const ic = el("span", { cls: "universeview-dash-rel-icon" }, row);
 		icon(ic, e ? TYPE_ICONS[e.type] : "file-plus");
-		el("span", { cls: "chronicle-dash-rel-name", text: it.name }, row);
-		if (it.note) el("span", { cls: "chronicle-dash-rel-note", text: it.note }, row);
+		el("span", { cls: "universeview-dash-rel-name", text: it.name }, row);
+		if (it.note) el("span", { cls: "universeview-dash-rel-note", text: it.note }, row);
 		if (it.remove?.length) {
-			const x = el("span", { cls: "chronicle-dash-rel-remove clickable-icon", attr: { "aria-label": `Remove ${it.name}`, title: "Remove this relationship (Undo puts it back)" } }, row);
+			const x = el("span", { cls: "universeview-dash-rel-remove clickable-icon", attr: { "aria-label": `Remove ${it.name}`, title: "Remove this relationship (Undo puts it back)" } }, row);
 			icon(x, "x");
 			x.addEventListener("click", (evt) => {
 				evt.stopPropagation();
@@ -765,7 +765,7 @@ export class ExplorerView extends ChronicleView {
 		const shown = nodes.slice(0, 28);
 		const W = 640;
 		const H = shown.length > 14 ? 300 : 230;
-		const s = svg("svg", { class: "chronicle-dash-ego", viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" }, parent);
+		const s = svg("svg", { class: "universeview-dash-ego", viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "xMidYMid meet" }, parent);
 		const cx = W / 2;
 		const cy = H / 2;
 		const rx = W / 2 - 90;
@@ -777,9 +777,9 @@ export class ExplorerView extends ChronicleView {
 			const y = cy + Math.sin(a) * ry;
 			const other = this.plugin.index.get(n.it.key);
 			const color = other ? entityColor(this.plugin, other) : "var(--text-faint)";
-			const l = svg("line", { x1: cx, y1: cy, x2: x, y2: y, class: "chronicle-dash-ego-line" }, lines);
+			const l = svg("line", { x1: cx, y1: cy, x2: x, y2: y, class: "universeview-dash-ego-line" }, lines);
 			l.setAttribute("style", `--line-color: ${color}`);
-			const g = svg("g", { class: "chronicle-dash-ego-node" + (other ? "" : " is-missing"), transform: `translate(${x},${y})` }, s);
+			const g = svg("g", { class: "universeview-dash-ego-node" + (other ? "" : " is-missing"), transform: `translate(${x},${y})` }, s);
 			g.setAttribute("style", `--node-color: ${color}; --i: ${i}`);
 			svg("circle", { r: 7 }, g);
 			const t = svg("text", { x: Math.cos(a) >= 0 ? 11 : -11, y: 4, "text-anchor": Math.cos(a) >= 0 ? "start" : "end" }, g);
@@ -792,13 +792,13 @@ export class ExplorerView extends ChronicleView {
 			});
 			if (other) this.plugin.hoverCards?.attach(g, other.key);
 		});
-		const c = svg("g", { class: "chronicle-dash-ego-center", transform: `translate(${cx},${cy})` }, s);
+		const c = svg("g", { class: "universeview-dash-ego-center", transform: `translate(${cx},${cy})` }, s);
 		c.setAttribute("style", `--node-color: ${entityColor(this.plugin, e)}`);
 		svg("circle", { r: 13 }, c);
 		const t = svg("text", { y: 30, "text-anchor": "middle" }, c);
 		t.textContent = e.name;
 		if (nodes.length > shown.length) {
-			const more = svg("text", { x: W - 8, y: H - 8, "text-anchor": "end", class: "chronicle-dash-ego-more" }, s);
+			const more = svg("text", { x: W - 8, y: H - 8, "text-anchor": "end", class: "universeview-dash-ego-more" }, s);
 			more.textContent = `+ ${nodes.length - shown.length} more below`;
 		}
 	}
@@ -810,23 +810,23 @@ export class ExplorerView extends ChronicleView {
 		const s = this.plugin.settings;
 		const files = this.app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(path + "/"));
 		const entities = files.map((f) => idx.get(f.path)).filter((e): e is Entity => !!e);
-		const head = el("div", { cls: "chronicle-dash-head" }, box);
-		const title = el("div", { cls: "chronicle-dash-title-row" }, head);
-		const ic = el("span", { cls: "chronicle-dash-title-icon" }, title);
+		const head = el("div", { cls: "universeview-dash-head" }, box);
+		const title = el("div", { cls: "universeview-dash-title-row" }, head);
+		const ic = el("span", { cls: "universeview-dash-title-icon" }, title);
 		icon(ic, "folder-open");
-		el("h2", { cls: "chronicle-dash-title", text: path.split("/").pop() ?? path }, title);
-		el("span", { cls: "chronicle-dash-badge", text: `${plural("note", files.length)} · ${entities.length} in UniverseView` }, title);
-		el("div", { cls: "chronicle-dash-path", text: path }, head);
-		const actions = el("div", { cls: "chronicle-dash-actions" }, head);
+		el("h2", { cls: "universeview-dash-title", text: path.split("/").pop() ?? path }, title);
+		el("span", { cls: "universeview-dash-badge", text: `${plural("note", files.length)} · ${entities.length} in UniverseView` }, title);
+		el("div", { cls: "universeview-dash-path", text: path }, head);
+		const actions = el("div", { cls: "universeview-dash-actions" }, head);
 		for (const [view, label, iconName, state] of folderViews(path)) {
 			const b = el("button", {}, actions);
-			const i2 = el("span", { cls: "chronicle-dash-btn-icon" }, b);
+			const i2 = el("span", { cls: "universeview-dash-btn-icon" }, b);
 			icon(i2, iconName);
 			el("span", { text: label.replace(/ (of|in) this folder$/, "") }, b);
 			b.addEventListener("click", () => void this.plugin.activateView(view, state));
 		}
 
-		const grid = el("div", { cls: "chronicle-dash-grid" }, box);
+		const grid = el("div", { cls: "universeview-dash-grid" }, box);
 		const fs = this.card(grid, "Folder settings", "folder-cog");
 		const typeLine = findMapping(s.folderTypes, path);
 		new Setting(fs).setName("Notes in this folder are").setDesc("For notes without their own type property or tag.").addDropdown((d) => {
@@ -853,20 +853,20 @@ export class ExplorerView extends ChronicleView {
 			),
 		);
 		const counts = this.card(grid, "What's in it", "pie-chart");
-		const bar = el("div", { cls: "chronicle-dash-bar" }, counts);
+		const bar = el("div", { cls: "universeview-dash-bar" }, counts);
 		for (const t of ENTITY_TYPES) {
 			const n = entities.filter((e) => e.type === t).length;
 			if (!n) continue;
-			const seg = el("span", { cls: "chronicle-dash-bar-seg", attr: { title: plural(TYPE_LABELS[t].toLowerCase(), n) } }, bar);
+			const seg = el("span", { cls: "universeview-dash-bar-seg", attr: { title: plural(TYPE_LABELS[t].toLowerCase(), n) } }, bar);
 			seg.style.setProperty("--seg-color", typeColorVar(t));
 			seg.style.flexGrow = String(n);
-			const lg = el("div", { cls: "chronicle-dash-legend-row" }, counts);
-			const dot = el("span", { cls: "chronicle-dash-count" }, lg);
+			const lg = el("div", { cls: "universeview-dash-legend-row" }, counts);
+			const dot = el("span", { cls: "universeview-dash-count" }, lg);
 			dot.style.setProperty("--dot-color", typeColorVar(t));
 			el("span", { text: `${plural(TYPE_LABELS[t].toLowerCase(), n)}` }, lg);
 		}
 		const other = files.length - entities.length;
-		if (other) el("div", { cls: "chronicle-dash-muted", text: `${plural("other note", other)} (not people, places, events, cultures or maps)` }, counts);
+		if (other) el("div", { cls: "universeview-dash-muted", text: `${plural("other note", other)} (not people, places, events, cultures or maps)` }, counts);
 
 		// Sortable table of the folder's notes.
 		const tb = this.card(grid, "Notes", "table", "is-wide");
@@ -887,15 +887,15 @@ export class ExplorerView extends ChronicleView {
 		];
 		// Tick rows to change several notes at once.
 		const selected = new Set<string>();
-		const bulk = el("div", { cls: "chronicle-dash-bulk" }, tb);
-		const table = el("table", { cls: "chronicle-dash-table" }, tb);
+		const bulk = el("div", { cls: "universeview-dash-bulk" }, tb);
+		const table = el("table", { cls: "universeview-dash-table" }, tb);
 		const thead = el("tr", {}, el("thead", {}, table));
 		const tbody = el("tbody", {}, table);
 		const drawBulk = () => {
 			bulk.empty();
 			bulk.toggleClass("is-active", selected.size > 0);
 			if (!selected.size) {
-				el("span", { cls: "chronicle-dash-muted", text: "Tick notes to change several at once." }, bulk);
+				el("span", { cls: "universeview-dash-muted", text: "Tick notes to change several at once." }, bulk);
 				return;
 			}
 			el("strong", { text: `${selected.size} selected` }, bulk);
@@ -973,7 +973,7 @@ export class ExplorerView extends ChronicleView {
 					drawBulk();
 				});
 				const nameTd = el("td", { cls: "is-name" }, tr);
-				const ic2 = el("span", { cls: "chronicle-dash-rel-icon" }, nameTd);
+				const ic2 = el("span", { cls: "universeview-dash-rel-icon" }, nameTd);
 				icon(ic2, TYPE_ICONS[e.type]);
 				el("span", { text: e.name }, nameTd);
 				el("td", { text: TYPE_LABELS[e.type] }, tr);

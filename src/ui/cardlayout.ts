@@ -1,5 +1,5 @@
 import { Menu, Platform } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el, iconButton } from "../render/common";
 
 /** One page's arrangement of cards: anything not set keeps the page's own layout. */
@@ -94,7 +94,7 @@ export class CardLayout {
 	private observer = new ResizeObserver(() => this.fit());
 
 	/** `onToggle`: customising went on or off (the toolbar's button shows it). */
-	constructor(private plugin: ChroniclePlugin, private onToggle: () => void) {}
+	constructor(private plugin: UniverseViewPlugin, private onToggle: () => void) {}
 
 	destroy() {
 		this.observer.disconnect();
@@ -229,7 +229,7 @@ export class CardLayout {
 
 	/** A card's title drags it, any time, and right-clicking it offers the rest. */
 	private title(c: HTMLElement) {
-		const head = c.querySelector<HTMLElement>(":scope > h3, :scope > .chronicle-ov-panel-head");
+		const head = c.querySelector<HTMLElement>(":scope > h3, :scope > .universeview-ov-panel-head");
 		if (!head || head.dataset.moves) return;
 		head.dataset.moves = "true";
 		head.addClass("uv-card-title");

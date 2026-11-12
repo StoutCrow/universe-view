@@ -5,7 +5,7 @@ import { tierLabel } from "../index/realms";
 import { relLabel, relOne } from "../index/relkinds";
 import { nameAt } from "../index/renames";
 import { TYPE_ICONS, el, emptyState, entityColor, icon, openEntity } from "../render/common";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_TODAY = "chronicle-today";
 
@@ -17,7 +17,7 @@ const WAR = /\b(war|wars|battle|siege|rebellion|revolt|uprising|invasion|crusade
  * lately and what's coming, and the anniversaries falling around now. Set "today" in the calendar
  * (or a world note) and it follows.
  */
-export class TodayView extends ChronicleView {
+export class TodayView extends UniverseViewBase {
 	private world?: string;
 	private page?: HTMLElement;
 
@@ -85,10 +85,10 @@ export class TodayView extends ChronicleView {
 		}
 		const d = cal.fromDays(today);
 		const hero = el("div", { cls: "uv-today-hero" }, page);
-		el("div", { cls: "chronicle-ov-eyebrow", text: scope || this.app.vault.getName() }, hero);
+		el("div", { cls: "universeview-ov-eyebrow", text: scope || this.app.vault.getName() }, hero);
 		const w = cal.weekdayOf(today);
 		el("h1", { cls: "uv-today-date", text: `${w >= 0 ? cal.weekdays[w] + ", " : ""}${formatDay(today, cal)}` }, hero);
-		el("div", { cls: "chronicle-ov-sub", text: "Who rules, what's going on, and what's coming. Change today in the Calendar view." }, hero);
+		el("div", { cls: "universeview-ov-sub", text: "Who rules, what's going on, and what's coming. Change today in the Calendar view." }, hero);
 
 		const grid = el("div", { cls: "uv-today-grid" }, page);
 		const card = (title: string, ic: string, wide = false) => {
@@ -107,7 +107,7 @@ export class TodayView extends ChronicleView {
 			r.addEventListener("click", (evt) => openEntity(p, e.key, evt));
 			p.hoverCards?.attach(r, e.key);
 		};
-		const empty = (parent: HTMLElement, text: string) => el("div", { cls: "chronicle-dash-muted", text }, parent);
+		const empty = (parent: HTMLElement, text: string) => el("div", { cls: "universeview-dash-muted", text }, parent);
 
 		// Who rules: the realms standing today, with their holders, greatest first.
 		const tree = p.realms(today);

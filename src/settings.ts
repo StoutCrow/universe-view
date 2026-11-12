@@ -66,7 +66,7 @@ export const DEFAULT_FIELD_ALIASES: Record<FieldName, string[]> = {
 	knownBy: ["known-by", "known_by", "knownby"],
 };
 
-export interface ChronicleSettings {
+export interface UniverseViewSettings {
 	/** Lines of "Folder/ = type", used when a note has no type property. */
 	folderTypes: string;
 	/** Treat #person, #event, … tags (optionally under a prefix) as types. */
@@ -444,7 +444,7 @@ station = #00a8b5, satellite`;
 /** The Kinds list every vault starts with: one catalogue (index/placekinds.ts) the pickers, tags and map all read. */
 export const DEFAULT_MAP_CATEGORIES = defaultKindsText();
 
-export const DEFAULT_SETTINGS: ChronicleSettings = {
+export const DEFAULT_SETTINGS: UniverseViewSettings = {
 	folderTypes: "",
 	tagTypes: true,
 	tagPrefix: "",

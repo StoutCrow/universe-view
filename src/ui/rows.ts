@@ -31,7 +31,7 @@ export interface RowEditorOptions<T> {
 
 /** A shared list of the vault's folders for folder fields to suggest from. */
 function folderList(app: App): string {
-	const id = "chronicle-folder-list";
+	const id = "universeview-folder-list";
 	let dl = document.getElementById(id);
 	if (!dl) {
 		dl = document.body.createEl("datalist", { attr: { id } });
@@ -51,22 +51,22 @@ function folderList(app: App): string {
  */
 export function rowEditor<T extends Record<string, unknown>>(app: App, parent: HTMLElement, fields: Field<T>[], initial: T[], onChange: (rows: T[]) => void, opts: RowEditorOptions<T>) {
 	const rows = initial.map((r) => ({ ...r }));
-	const box = el("div", { cls: "chronicle-rows" }, parent);
+	const box = el("div", { cls: "universeview-rows" }, parent);
 	const cols = `${fields.map((f) => f.width ?? "1fr").join(" ")} auto`;
 	const commit = () => onChange(rows.map((r) => ({ ...r })));
 	const render = () => {
 		box.empty();
 		if (rows.length) {
-			const head = el("div", { cls: "chronicle-rows-head" }, box);
+			const head = el("div", { cls: "universeview-rows-head" }, box);
 			head.style.gridTemplateColumns = cols;
 			for (const f of fields) el("div", { text: f.label, attr: f.title ? { title: f.title } : {} }, head);
 			el("div", {}, head);
-		} else if (opts.empty) el("div", { cls: "chronicle-rows-empty", text: opts.empty }, box);
+		} else if (opts.empty) el("div", { cls: "universeview-rows-empty", text: opts.empty }, box);
 		rows.forEach((row, i) => {
-			const line = el("div", { cls: "chronicle-rows-row" }, box);
+			const line = el("div", { cls: "universeview-rows-row" }, box);
 			line.style.gridTemplateColumns = cols;
 			for (const f of fields) {
-				const cell = el("div", { cls: `chronicle-rows-cell kind-${f.kind}` }, line);
+				const cell = el("div", { cls: `universeview-rows-cell kind-${f.kind}` }, line);
 				const v = row[f.key];
 				const set = (x: unknown) => {
 					(row as Record<string, unknown>)[f.key] = x;
@@ -105,7 +105,7 @@ export function rowEditor<T extends Record<string, unknown>>(app: App, parent: H
 					input.value = v === undefined || v === null ? "" : String(v);
 					let preview: HTMLElement | undefined;
 					if (f.kind === "icon") {
-						preview = el("span", { cls: "chronicle-rows-icon" }, cell);
+						preview = el("span", { cls: "universeview-rows-icon" }, cell);
 						cell.prepend(preview);
 						const show = () => {
 							preview!.empty();
@@ -117,7 +117,7 @@ export function rowEditor<T extends Record<string, unknown>>(app: App, parent: H
 					input.addEventListener("change", () => set(f.kind === "number" ? (input.value === "" ? undefined : Number(input.value)) : input.value.trim()));
 				}
 			}
-			const tools = el("div", { cls: "chronicle-rows-tools" }, line);
+			const tools = el("div", { cls: "universeview-rows-tools" }, line);
 			const button = (ic: string, label: string, run: () => void, disabled = false) => {
 				const b = el("button", { cls: "clickable-icon", attr: { "aria-label": label } }, tools);
 				icon(b, ic);
@@ -134,14 +134,14 @@ export function rowEditor<T extends Record<string, unknown>>(app: App, parent: H
 			}
 			button("trash-2", "Remove", () => rows.splice(i, 1));
 		});
-		const add = el("button", { cls: "chronicle-rows-add" }, box);
+		const add = el("button", { cls: "universeview-rows-add" }, box);
 		icon(el("span", {}, add), "plus");
 		el("span", { text: opts.addLabel }, add);
 		add.addEventListener("click", () => {
 			rows.push(opts.blank());
 			commit();
 			render();
-			box.querySelector<HTMLElement>(".chronicle-rows-row:last-of-type input, .chronicle-rows-row:last-of-type select")?.focus();
+			box.querySelector<HTMLElement>(".universeview-rows-row:last-of-type input, .universeview-rows-row:last-of-type select")?.focus();
 		});
 	};
 	render();

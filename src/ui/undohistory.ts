@@ -1,5 +1,5 @@
 import { Modal, TFile } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { el, icon, openEntity } from "../render/common";
 
 /** "just now", "4 min ago", "2 h ago". */
@@ -20,18 +20,18 @@ function ago(ms: number): string {
 export class UndoHistoryModal extends Modal {
 	private ref?: { off: () => void };
 
-	constructor(private plugin: ChroniclePlugin) {
+	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
 	}
 
 	onOpen() {
-		this.containerEl.addClass("chronicle-scope-host");
-		this.modalEl.addClass("chronicle-scope", "uv-sheet", "uv-history");
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope", "uv-sheet", "uv-history");
 		this.titleEl.empty();
 		const head = el("div", { cls: "uv-sheet-head" }, this.titleEl);
 		icon(el("span", { cls: "uv-sheet-icon" }, head), "history");
 		el("span", { text: "Undo history" }, head);
-		const evRef = this.app.workspace.on("chronicle:history-changed" as never, () => this.draw());
+		const evRef = this.app.workspace.on("universeview:history-changed" as never, () => this.draw());
 		this.ref = { off: () => this.app.workspace.offref(evRef) };
 		this.draw();
 	}

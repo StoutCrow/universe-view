@@ -4,11 +4,11 @@ import { LineageOptions, LineageRenderer } from "../render/lineage";
 import { dropdown, iconButton } from "../render/common";
 import { GROUP_KINDS, type GroupKind } from "../render/houses";
 import type { TimeRange } from "../render/timelinerows";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_LINEAGE = "chronicle-lineage";
 
-export class LineageView extends ChronicleView {
+export class LineageView extends UniverseViewBase {
 	protected exportable = true;
 	private options: LineageOptions = {};
 	private renderer?: LineageRenderer;

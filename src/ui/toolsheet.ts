@@ -1,5 +1,5 @@
 import { Modal } from "obsidian";
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import { formatSpan } from "../dates/parser";
 import { el, icon } from "../render/common";
 
@@ -33,15 +33,15 @@ export interface SheetOptions {
 export class ToolSheet extends Modal {
 	private values: Record<string, string> = {};
 
-	constructor(private plugin: ChroniclePlugin, private o: SheetOptions) {
+	constructor(private plugin: UniverseViewPlugin, private o: SheetOptions) {
 		super(plugin.app);
 		for (const f of o.fields) this.values[f.key] = f.kind === "number" ? String(f.value) : f.value ?? "";
 	}
 
 	onOpen() {
 		const { contentEl, modalEl } = this;
-		this.containerEl.addClass("chronicle-scope-host");
-		modalEl.addClass("chronicle-scope", "uv-sheet");
+		this.containerEl.addClass("universeview-scope-host");
+		modalEl.addClass("universeview-scope", "uv-sheet");
 		this.titleEl.empty();
 		const head = el("div", { cls: "uv-sheet-head" }, this.titleEl);
 		icon(el("span", { cls: "uv-sheet-icon" + (this.o.danger ? " is-danger" : "") }, head), this.o.icon);
@@ -142,6 +142,6 @@ export class ToolSheet extends Modal {
 }
 
 /** Opens a tool sheet. */
-export function toolSheet(plugin: ChroniclePlugin, o: SheetOptions) {
+export function toolSheet(plugin: UniverseViewPlugin, o: SheetOptions) {
 	new ToolSheet(plugin, o).open();
 }

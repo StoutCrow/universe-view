@@ -10,7 +10,7 @@ import { ValidateModal } from "../ui/ValidateModal";
 import { DetectModal } from "../ui/DetectModal";
 import { addSampleWorld, sampleBlurb } from "../ui/sample";
 import { CardLayout } from "../ui/cardlayout";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 import { VIEW_TIMELINE } from "./TimelineView";
 import { VIEW_FAMILY } from "./FamilyTreeView";
 import { VIEW_NETWORK } from "./NetworkView";
@@ -22,7 +22,7 @@ export const VIEW_OVERVIEW = "chronicle-overview";
 const PLURAL: Record<EntityType, string> = { person: "People", event: "Events", culture: "Groups", place: "Places", map: "Maps" };
 
 /** The UniverseView "main menu": a summary of one world with ways into every view. */
-export class OverviewView extends ChronicleView {
+export class OverviewView extends UniverseViewBase {
 	/** Top-level folder (one world) to summarise; empty for the whole vault. */
 	private world?: string;
 	private page?: HTMLElement;
@@ -58,7 +58,7 @@ export class OverviewView extends ChronicleView {
 		this.world ??= this.defaultScope();
 		this.register(() => this.layout.destroy());
 		this.fillToolbar();
-		this.page = el("div", { cls: "chronicle-overview" }, this.body);
+		this.page = el("div", { cls: "universeview-overview" }, this.body);
 		this.render();
 	}
 
@@ -92,7 +92,7 @@ export class OverviewView extends ChronicleView {
 	private firstRun(page: HTMLElement) {
 		const p = this.plugin;
 		const box = el("div", { cls: "uv-setup" }, page);
-		el("h1", { cls: "chronicle-ov-title", text: "Start your world" }, box);
+		el("h1", { cls: "universeview-ov-title", text: "Start your world" }, box);
 		el("p", { cls: "uv-setup-lead", text: "UniverseView builds its timelines, trees and maps from the properties on your notes. Choose how to begin." }, box);
 		const choice = (iconName: string, title: string, desc: string, run: () => void) => {
 			const b = el("button", { cls: "uv-setup-choice" }, box);
@@ -120,8 +120,8 @@ export class OverviewView extends ChronicleView {
 		const options = (extra: Record<string, unknown> = {}) => ({ options: { filter: { folder: this.world ?? "" }, ...extra } });
 
 		// ---- Header ----
-		const hero = el("div", { cls: "chronicle-ov-hero" }, page);
-		el("h1", { cls: "chronicle-ov-title", text: this.world || this.app.vault.getName() }, hero);
+		const hero = el("div", { cls: "universeview-ov-hero" }, page);
+		el("h1", { cls: "universeview-ov-title", text: this.world || this.app.vault.getName() }, hero);
 		let min = Infinity;
 		let max = -Infinity;
 		for (const e of all) {
@@ -138,7 +138,7 @@ export class OverviewView extends ChronicleView {
 		const groupCounts = [...byKind].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${n} ${(n === 1 ? GROUP_KINDS[k as keyof typeof GROUP_KINDS].label : GROUP_KINDS[k as keyof typeof GROUP_KINDS].plural).toLowerCase()}`);
 		const counts = [...(["person", "event", "place"] as EntityType[]).map((t) => `${of(t).length} ${PLURAL[t].toLowerCase()}`), ...groupCounts];
 		const span = Number.isFinite(min) ? ` · ${cal.formatYear(cal.fromDays(min).y)} – ${cal.formatYear(cal.fromDays(max).y)}` : "";
-		el("div", { cls: "chronicle-ov-sub", text: counts.join(" · ") + span }, hero);
+		el("div", { cls: "universeview-ov-sub", text: counts.join(" · ") + span }, hero);
 
 		if (!idx.all().length) {
 			hero.remove();
@@ -146,23 +146,23 @@ export class OverviewView extends ChronicleView {
 			return;
 		}
 		if (!all.length) {
-			const empty = el("div", { cls: "chronicle-ov-emptynote" }, page);
+			const empty = el("div", { cls: "universeview-ov-emptynote" }, page);
 			empty.setText("No people, places, events, realms or houses here yet. Create one, or let UniverseView detect them in your existing notes.");
 		}
 
 		// ---- Views ----
 		const p = this.plugin;
-		const tiles = el("div", { cls: "chronicle-ov-tiles" }, page);
+		const tiles = el("div", { cls: "universeview-ov-tiles" }, page);
 		const biggestFamily = of("person").sort((a, b) => kinCount(p, b) - kinCount(p, a))[0];
 		let n = 0;
 		const tile = (type: string, iconName: string, title: string, desc: string, stat: string, key: string, state: Record<string, unknown>) => {
-			const t = el("button", { cls: "chronicle-ov-tile" }, tiles);
+			const t = el("button", { cls: "universeview-ov-tile" }, tiles);
 			t.style.setProperty("--i", String(n++));
-			const ic = el("div", { cls: "chronicle-ov-tile-icon" }, t);
+			const ic = el("div", { cls: "universeview-ov-tile-icon" }, t);
 			icon(ic, iconName);
-			el("div", { cls: "chronicle-ov-tile-title", text: title }, t);
-			el("div", { cls: "chronicle-ov-tile-desc", text: desc }, t);
-			const foot = el("div", { cls: "chronicle-ov-tile-foot" }, t);
+			el("div", { cls: "universeview-ov-tile-title", text: title }, t);
+			el("div", { cls: "universeview-ov-tile-desc", text: desc }, t);
+			const foot = el("div", { cls: "universeview-ov-tile-foot" }, t);
 			el("span", { text: stat }, foot);
 			el("kbd", { text: this.hotkey(key) }, foot);
 			t.addEventListener("click", (evt) => void p.activateView(type, state, Keymap.isModEvent(evt) ? "tab" : false));
@@ -189,14 +189,14 @@ export class OverviewView extends ChronicleView {
 		tile("chronicle-orgchart", "network", "Organisation chart", "Who leads and serves in each faction, house or guild, with a timeline of roles.", `${of("culture").length} organisations`, "R", { options: { folder: this.world ?? "" } });
 		tile(VIEW_MAP, "map", "Map", "Places, territories and journeys on your maps, with what happened where.", `${of("place").filter((x) => x.position || x.coords).length} of ${of("place").length} places placed`, "M", mapState);
 		// ---- Actions ----
-		const grid = el("div", { cls: "chronicle-ov-grid" }, page);
-		const actions = el("div", { cls: "chronicle-ov-actions", attr: { "data-card": "actions", "data-title": "Quick actions", "data-span": "full" } }, grid);
+		const grid = el("div", { cls: "universeview-ov-grid" }, page);
+		const actions = el("div", { cls: "universeview-ov-actions", attr: { "data-card": "actions", "data-title": "Quick actions", "data-span": "full" } }, grid);
 		const action = (iconName: string, label: string, run: () => void, badge?: number, cls = "") => {
-			const b = el("button", { cls: `chronicle-ov-action ${cls}`.trim() }, actions);
+			const b = el("button", { cls: `universeview-ov-action ${cls}`.trim() }, actions);
 			const ic = el("span", {}, b);
 			icon(ic, iconName);
 			el("span", { text: label }, b);
-			if (badge) el("span", { cls: "chronicle-ov-badge", text: String(badge) }, b);
+			if (badge) el("span", { cls: "universeview-ov-badge", text: String(badge) }, b);
 			b.addEventListener("click", run);
 		};
 		for (const t of ["event", "person", "culture", "place"] as EntityType[]) {
@@ -208,14 +208,14 @@ export class OverviewView extends ChronicleView {
 
 		// ---- Panels ----
 		const panel = (kind: ListKind, i: number, more?: () => void) => {
-			const box = el("section", { cls: "chronicle-ov-panel", attr: { "data-card": kind, "data-title": LIST_INFO[kind].title } }, grid);
+			const box = el("section", { cls: "universeview-ov-panel", attr: { "data-card": kind, "data-title": LIST_INFO[kind].title } }, grid);
 			box.style.setProperty("--i", String(i));
-			const head = el("div", { cls: "chronicle-ov-panel-head" }, box);
+			const head = el("div", { cls: "universeview-ov-panel-head" }, box);
 			const ic = el("span", {}, head);
 			icon(ic, LIST_INFO[kind].icon);
 			el("h3", { text: LIST_INFO[kind].title }, head);
 			if (more) {
-				const m = el("a", { cls: "chronicle-ov-more", text: "Open view" }, head);
+				const m = el("a", { cls: "universeview-ov-more", text: "Open view" }, head);
 				m.addEventListener("click", more);
 			}
 			const { rows, detail } = listRows(p, kind, this.world || undefined);

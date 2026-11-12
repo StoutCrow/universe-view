@@ -1,4 +1,4 @@
-import type ChroniclePlugin from "../main";
+import type UniverseViewPlugin from "../main";
 import type { Entity } from "../types";
 import { descendantsOf } from "./realms";
 import { ringArea, type P2 } from "./geometry";
@@ -26,7 +26,7 @@ export const STAT_NAMES: [StatKey, string][] = [["area", "Area"], ["population",
  * borders on a map (each spot once: a vassal's land inside its liege's isn't counted twice when the
  * liege has an area of its own), population, places, people and titles.
  */
-export function realmStats(plugin: ChroniclePlugin, key: string, map?: string, at?: number): RealmStats {
+export function realmStats(plugin: UniverseViewPlugin, key: string, map?: string, at?: number): RealmStats {
 	const idx = plugin.index;
 	const tree = plugin.realms(at);
 	const lands = [key, ...descendantsOf(tree, key)];

@@ -2,11 +2,11 @@ import type { ViewStateResult } from "obsidian";
 import { optionsButton, type OptionEntry } from "../render/optionsmenu";
 import { DEFAULT_HOUSES_OPTIONS, GROUP_KINDS, HousesOptions, HousesRenderer } from "../render/houses";
 import { iconButton } from "../render/common";
-import { ChronicleView } from "./base";
+import { UniverseViewBase } from "./base";
 
 export const VIEW_HOUSES = "chronicle-houses";
 
-export class HousesView extends ChronicleView {
+export class HousesView extends UniverseViewBase {
 	protected exportable = true;
 	private options: HousesOptions = { ...DEFAULT_HOUSES_OPTIONS };
 	private renderer?: HousesRenderer;

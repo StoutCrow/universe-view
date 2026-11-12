@@ -12,14 +12,14 @@ import { GROUP_KINDS } from "../render/houses";
 import { relOne } from "../index/relkinds";
 import type { PinColorBy } from "../settings";
 import { EntityPickerModal } from "../ui/suggest";
-import { ChronicleView, TimeSlider } from "./base";
+import { UniverseViewBase, TimeSlider } from "./base";
 import { exportTimelapse, type ExportExtras } from "../ui/export";
 import { toolSheet } from "../ui/toolsheet";
 import { formatDay } from "../dates/parser";
 
 export const VIEW_MAP = "chronicle-map";
 
-export class MapView extends ChronicleView {
+export class MapView extends UniverseViewBase {
 	protected exportable = true;
 	private options: MapOptions = { ...DEFAULT_MAP_OPTIONS };
 	private renderer?: MapRenderer;
@@ -190,8 +190,8 @@ export class MapView extends ChronicleView {
 		if (this.compare || !this.renderer) return;
 		const idx = this.plugin.index;
 		this.body.addClass("is-compare");
-		const wrap = el("div", { cls: "chronicle-compare" }, this.body);
-		const bar = el("div", { cls: "chronicle-compare-bar" }, wrap);
+		const wrap = el("div", { cls: "universeview-compare" }, this.body);
+		const bar = el("div", { cls: "universeview-compare-bar" }, wrap);
 		const state = { el: wrap, renderer: undefined as unknown as MapRenderer, map: this.options.map, at: this.options.at, sync: true };
 		const maps: [string, string][] = [[WORLD_MAP, "World map"], ...idx.all("map").map((m) => [m.key, m.name] as [string, string])];
 		dropdown(bar, maps, state.map, (v) => {
@@ -199,8 +199,8 @@ export class MapView extends ChronicleView {
 			this.update(false);
 		}, "Map on the right");
 		const cal = this.plugin.calendars.get(this.options.map !== WORLD_MAP ? idx.get(this.options.map)?.calendar : idx.dominantCalendar(this.options.folder));
-		const date = el("input", { cls: "chronicle-compare-date", attr: { type: "text", placeholder: "Date (blank = all time)", "aria-label": "Date on the right" } }, bar);
-		const status = el("span", { cls: "chronicle-compare-status" }, bar);
+		const date = el("input", { cls: "universeview-compare-date", attr: { type: "text", placeholder: "Date (blank = all time)", "aria-label": "Date on the right" } }, bar);
+		const status = el("span", { cls: "universeview-compare-status" }, bar);
 		date.addEventListener("change", () => {
 			const raw = date.value.trim();
 			const d = raw ? this.plugin.parseDate(raw, cal.id) : null;
@@ -209,7 +209,7 @@ export class MapView extends ChronicleView {
 			this.update(false);
 		});
 		toggleChip(bar, "Move together", "link", true, (v) => (state.sync = v));
-		const host = el("div", { cls: "chronicle-compare-map" }, wrap);
+		const host = el("div", { cls: "universeview-compare-map" }, wrap);
 		state.renderer = new MapRenderer(host, this.plugin, { ...this.options, map: state.map, at: state.at, views: undefined }, true);
 		// Keep both in step when they show the same map.
 		const follow = (from: MapRenderer, to: MapRenderer) => (center: import("leaflet").LatLng, zoom: number) => {
@@ -285,7 +285,7 @@ export class MapView extends ChronicleView {
 		if (!t) return;
 		const name = t.text.split(/ \(|: /)[0];
 		b.empty();
-		icon(el("span", { cls: "chronicle-chip-icon" }, b), t.icon);
+		icon(el("span", { cls: "universeview-chip-icon" }, b), t.icon);
 		el("span", { text: `Again: ${name.length > 26 ? `${name.slice(0, 25)}…` : name}` }, b);
 		b.title = `Repeat: ${t.text}`;
 		b.setAttribute("aria-label", b.title);
@@ -307,7 +307,7 @@ export class MapView extends ChronicleView {
 		this.syncToolButtons();
 		this.banner?.remove();
 		if (on) {
-			this.banner = el("div", { cls: "chronicle-map-banner", text: "Click the map to place a note there · Esc to cancel" }, this.body);
+			this.banner = el("div", { cls: "universeview-map-banner", text: "Click the map to place a note there · Esc to cancel" }, this.body);
 			this.containerEl.tabIndex = -1;
 			this.containerEl.focus();
 		}
@@ -320,7 +320,7 @@ export class MapView extends ChronicleView {
 				this.setPlacing(false);
 			}
 		});
-		this.registerEvent(this.app.workspace.on("chronicle:history-changed" as "quit", () => this.syncUndo()));
+		this.registerEvent(this.app.workspace.on("universeview:history-changed" as "quit", () => this.syncUndo()));
 	}
 
 	private undoBtn?: HTMLElement;
@@ -381,10 +381,10 @@ export class MapView extends ChronicleView {
 			});
 			// Through someone's eyes: the journey they made, or the map as only they know it (fog of war).
 			const nameOf = (k?: string) => (k ? idx.get(k)?.name ?? k : "");
-			const lens = el("button", { cls: "chronicle-chip chronicle-overlay-btn" + (o.trace || o.pov ? " is-active" : ""), attr: { "aria-haspopup": "menu", title: "Trace someone's journey, or show the map as one person knows it" } }, find);
-			icon(el("span", { cls: "chronicle-chip-icon" }, lens), o.pov ? "eye" : "footprints");
+			const lens = el("button", { cls: "universeview-chip universeview-overlay-btn" + (o.trace || o.pov ? " is-active" : ""), attr: { "aria-haspopup": "menu", title: "Trace someone's journey, or show the map as one person knows it" } }, find);
+			icon(el("span", { cls: "universeview-chip-icon" }, lens), o.pov ? "eye" : "footprints");
 			el("span", { text: o.trace ? `Journey: ${nameOf(o.trace)}` : o.pov ? `Seen by ${nameOf(o.pov)}` : "Person" }, lens);
-			if (o.trace && o.pov) el("span", { cls: "chronicle-chip-count", text: `seen by ${nameOf(o.pov)}` }, lens);
+			if (o.trace && o.pov) el("span", { cls: "universeview-chip-count", text: `seen by ${nameOf(o.pov)}` }, lens);
 			lens.addEventListener("click", (evt) => {
 				const menu = new Menu();
 				const pick = (title: string, set: (k: string) => void) => new EntityPickerModal(this.plugin, ["person"], (p) => {
@@ -430,13 +430,13 @@ export class MapView extends ChronicleView {
 				// Everything on the right stays together, however the toolbar wraps: how it is drawn (one Options panel, as in every
 			// other view), then tools in labelled menus so each says what it is for, then undo and the rest.
 			const cluster = this.group("uv-map-tools");
-			const subgroup = () => el("div", { cls: "chronicle-toolbar-group" }, cluster);
+			const subgroup = () => el("div", { cls: "universeview-toolbar-group" }, cluster);
 			optionsButton(subgroup(), () => this.lookOptions());
 			const tools = subgroup();
 			type Tool = [MapMode | undefined, string, string, () => void];
 			const labelled = (parent: HTMLElement, iconName: string, label: string, title: string, menu: boolean) => {
-				const b = el("button", { cls: "chronicle-chip" + (menu ? " chronicle-tool-menu" : ""), attr: { title, "aria-label": title } }, parent);
-				icon(el("span", { cls: "chronicle-chip-icon" }, b), iconName);
+				const b = el("button", { cls: "universeview-chip" + (menu ? " universeview-tool-menu" : ""), attr: { title, "aria-label": title } }, parent);
+				icon(el("span", { cls: "universeview-chip-icon" }, b), iconName);
 				el("span", { text: label }, b);
 				if (menu) icon(el("span", { cls: "uv-chip-caret" }, b), "chevron-down");
 				return b;
