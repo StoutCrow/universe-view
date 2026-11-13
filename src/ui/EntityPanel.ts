@@ -2,6 +2,9 @@ import { TFile } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, Side, TimedRef } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
+import { locate, peopleAmong, placesBeen } from "../index/whereabouts";
+import { ancestorOfKind, eventsWithin, kindsAlong, placeChain, placeLine, placesInside } from "../index/placepath";
+import { isMovement } from "../index/eventkinds";
 import { chainOf, holdingsOf , tierLabel } from "../index/realms";
 import { relLabel, relOne, relTone } from "../index/relkinds";
 import { totalPopulation } from "../index/tidy";
@@ -38,6 +41,13 @@ const HELP: Record<string, string> = {
 	Branches: "Groups that branched off this one (`branch-of:`, `parent-org:` or `branches:`). For a house, its cadet branches.",
 	"Caused by": "Events written as leading to this one (`caused-by:` here, or `led-to:` on the other).",
 	"Led to": "Events this one led to.",
+	"Led by": "Who led it (`lead:` on an event). They count as present too.",
+	"Members present": "An event at a place lists who was there (`participants:`). Each counts as being at that place on those dates, so it shows under their \"Places been\".",
+	Residences: "Where they live by default (`residences:`, with dates if they moved). Their location whenever no event puts them elsewhere.",
+	"Where were they?": "Type a date: the place of the event they were in then, otherwise their home at the time, otherwise where they were born.",
+	"Places been":"Where they were born, lived, took part in an event, and died, oldest first.",
+	Inside: "Places directly inside this one (`located-in:` on them), with how many more are inside those.",
+	People: "Everyone born, living, dead or in an event here or in any place inside it.",
 	"Groups here": "Groups that hold or live in this place, from its `cultures:` or `nation:`.",
 };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -75,6 +85,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	const titles = el("div", { cls: "universeview-ep-titles" }, hero);
 	const name = el("a", { cls: "universeview-ep-name", text: e.name }, titles);
 	name.addEventListener("click", (evt) => openEntity(p, e.key, evt));
+	if (e.aka.length) el("div", { cls: "universeview-ep-aka", text: `Also called ${e.aka.join(", ")}` }, titles);
 	const chips = el("div", { cls: "universeview-ep-chips" }, titles);
 	const chip = (text: string, ic?: string, cls = "") => {
 		const c = el("span", { cls: "universeview-ep-tag " + cls }, chips);
@@ -111,12 +122,34 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		}
 	}
 
+	// ---- Where it is: the place, then each place it is inside, as in a postal address ----
+	if (e.type === "place") {
+		const chain = placeChain((k) => idx.get(k), e.key);
+		const top = chain[chain.length - 1];
+		const further = top?.locatedIn && !top.locatedIn.resolved ? top.locatedIn.name : undefined;
+		if (chain.length > 1 || further) {
+			const line = el("div", { cls: "universeview-ep-crumbs uv-where", attr: { "aria-label": "Where it is: each place is inside the next" } }, root);
+			chain.forEach((place, i) => {
+				if (i) el("span", { cls: "universeview-ep-crumb-sep", text: "," }, line);
+				const b = el("span", { cls: "universeview-ep-crumb" + (i ? "" : " is-here"), text: place.name, attr: i ? { role: "button", tabindex: "0" } : {} }, line);
+				if (!i) return;
+				b.addEventListener("click", (evt) => (evt.ctrlKey || evt.metaKey ? openEntity(p, place.key, evt) : opts.pick(place.key)));
+				bindHover(p, b, place.key, opts.host);
+			});
+			if (further) {
+				el("span", { cls: "universeview-ep-crumb-sep", text: "," }, line);
+				el("span", { cls: "universeview-ep-crumb is-missing", text: further, attr: { title: `${further} has no note yet` } }, line);
+			}
+		}
+	}
+
 	// ---- Its span, against today ----
 	spanBar(p, root, e);
 
 	// ---- Numbers at a glance ----
 	const tiles: [string, string, string][] = [];
-	const events = idx.events(e.key);
+	// A place's events are those at it and at every place inside it.
+	const events = e.type === "place" ? eventsWithin(idx, e.key) : idx.events(e.key);
 	const people = (keys: string[]) => keys.filter((k) => idx.get(k)?.type === "person").length;
 	if (e.type === "person") {
 		const kids = idx.children(e.key).length;
@@ -191,6 +224,66 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		list("Partners", "heart", idx.partners(e.key).map((t) => ({ ...t.ref, sub: formatSpan(t.from, t.to, cal) || span(idx.get(t.ref.key)) })));
 		list("Children", "baby", idx.children(e.key).map((k) => refOf(k, span(idx.get(k)))));
 		list("Siblings", "users-round", idx.siblings(e.key).map((k) => refOf(k, span(idx.get(k)))), 8);
+		// Where they live by default (folds away in the inspector), then every place they have been.
+		list("Residences", "home", e.residences.map((r) => ({ ...r.ref, sub: formatSpan(r.from, r.to, cal) })));
+		const been = placesBeen(e, idx.events(e.key));
+		if (been.length) {
+			// One chip per place, with why they were there (the first two reasons) and the first date. When the places
+			// sit in a hierarchy, buttons roll them up to the county, state or country they are in.
+			const get = (k: string) => idx.get(k);
+			const WHY = { born: "Born", lived: "Lived", died: "Died" } as const;
+			const levels = kindsAlong(been.map((s) => placeChain(get, s.place.key)));
+			const body = section("Places been", "map-pin");
+			let level = "";
+			const show = () => {
+				body.empty();
+				const byPlace = new Map<string, { place: (typeof been)[number]["place"]; why: string[]; when: string }>();
+				for (const s of been) {
+					const chain = placeChain(get, s.place.key);
+					const target = (level && ancestorOfKind(chain, level)) || chain[0];
+					const place = target ? { key: target.key, name: target.name, resolved: true } : s.place;
+					const g = byPlace.get(place.key) ?? { place, why: [], when: "" };
+					const why = s.how === "event" ? s.event!.name : WHY[s.how];
+					if (!g.why.includes(why)) g.why.push(why);
+					g.when ||= formatSpan(s.from, s.to, cal);
+					byPlace.set(place.key, g);
+				}
+				const groups = [...byPlace.values()];
+				for (const g of groups.slice(0, 12)) person(body, g.place, [g.why.length > 2 ? `${g.why.slice(0, 2).join(", ")} +${g.why.length - 2}` : g.why.join(", "), g.when].filter(Boolean).join(" · "));
+				if (groups.length > 12) el("span", { cls: "universeview-ep-more", text: `+${groups.length - 12} more` }, body);
+			};
+			if (levels.length > 1) {
+				const bar = el("div", { cls: "uv-levels", attr: { role: "group", "aria-label": "Show places as" } });
+				body.parentElement?.insertBefore(bar, body);
+				for (const [value, label] of [["", "Exact"], ...levels.map((k) => [k, cap(k)] as [string, string])]) {
+					const b = el("button", { cls: "uv-level", text: label, attr: { "aria-pressed": String(value === level) } }, bar);
+					b.addEventListener("click", () => {
+						level = value;
+						for (const x of Array.from(bar.children)) x.setAttribute("aria-pressed", String(x === b));
+						show();
+					});
+				}
+			}
+			show();
+		}
+		if (been.length) {
+			// Type a date to see where they were then, and why. The answer's row is always there, so nothing jumps.
+			const s = section("Where were they?", "calendar-search");
+			s.addClass("uv-when");
+			const input = el("input", { cls: "uv-when-input", attr: { type: "text", placeholder: "A date, such as 1066", "aria-label": "Date" } }, s);
+			const out = el("div", { cls: "uv-when-out", attr: { "aria-live": "polite" } }, s);
+			input.addEventListener("input", () => {
+				out.empty();
+				const v = input.value.trim();
+				if (!v) return;
+				const note = (text: string, bad = false) => el("span", { cls: "uv-when-note" + (bad ? " is-bad" : ""), text }, out);
+				const d = p.parseDate(v, e.calendar);
+				if (!d) return void note("Not a date yet", true);
+				const w = locate(e, idx.events(e.key), d.start);
+				if (!w) return void note("No known place then");
+				person(out, w.place, w.event ? `${isMovement(w.event) ? "On" : "At"} ${w.event.name}` : w.why === "home" ? "Home" : "Where they were born");
+			});
+		}
 		for (const [row, refs] of groupsByRow(p, e.cultures)) list(ROW_INFO[row].plural, GROUP_KINDS[row].icon, refs.map((c) => ({ ...c.ref, sub: [c.role, c.label, formatSpan(c.from, c.to, cal)].filter(Boolean).join(" · ") })));
 	}
 	if (e.type === "person" || e.type === "culture") {
@@ -205,8 +298,12 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		if (e.type === "culture") list("Places", "map-pin", e.places.map((r) => ({ ...r })));
 	}
 	if (e.type === "event") {
-		list("Who was there", "users", e.participants.map((r) => ({ ...r })));
-		list("Where", "map-pin", e.places.map((r) => ({ ...r })));
+		list("Led by", "crown", e.leads.map((r) => ({ ...r })));
+		// An event at a place lists its members; one with no place only says who was there.
+		list(e.places.length ? "Members present" : "Who was there", "users", e.participants.filter((r) => !e.leads.some((l) => l.key === r.key)).map((r) => ({ ...r })), 16);
+		list("From", "map-pin", e.startPlace ? [{ ...e.startPlace }] : []);
+		list("To", "flag", e.endPlace ? [{ ...e.endPlace }] : []);
+		list("Where", "map-pin", e.places.filter((r) => r.key !== e.startPlace?.key && r.key !== e.endPlace?.key).map((r) => ({ ...r })));
 		list("Caused by", "arrow-left", [...(idx.causesOf.get(e.key) ?? [])].map((k) => refOf(k, span(idx.get(k)))));
 		list("Led to", "arrow-right", [...(idx.effectsOf.get(e.key) ?? [])].map((k) => refOf(k, span(idx.get(k)))));
 		// Who fought, side by side, each with how it ended for them.
@@ -223,12 +320,16 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	const occupiers = (occupationsByLand(idx).get(e.key) ?? []).map((o) => ({ ...o.by, sub: [o.event.name, formatSpan(o.from ?? o.event.start, o.to ?? o.event.end, cal)].filter(Boolean).join(" · ") }));
 	list("Occupied by", "flag", occupiers);
 	if (e.type === "place") {
-		// Geography, apart from rule: shown when it differs from the title it's ruled under.
-		if (e.locatedIn && e.locatedIn.key !== node?.under) {
-			const s = section("Lies in", "map", undefined, "Where it is geographically (`located-in:` or `location:`): its region, island or continent, whoever rules it. The trail at the top is who it's ruled under; the two differ for enclaves, colonies and conquered lands.");
-			person(s, e.locatedIn, "geographically");
-		}
-		list("Groups here", "flag", e.cultures.map((c) => ({ ...c.ref, sub: formatSpan(c.from, c.to, cal) })));
+		// What is inside it, and who and what is tied to it or to anything inside it.
+		const inside = placesInside(idx.subPlacesOf, e.key);
+		list("Inside", "layers", [...(idx.subPlacesOf.get(e.key) ?? [])].map((k) => {
+			const deeper = placesInside(idx.subPlacesOf, k).size;
+			return refOf(k, [cap(idx.get(k)?.category ?? ""), deeper ? `${deeper} inside` : ""].filter(Boolean).join(" · "));
+		}), 16);
+		const within = new Set([e.key, ...inside]);
+		list("People", "users", peopleAmong(idx.all("person"), (k) => idx.events(k), within).map(({ person: who, why }) => ({ key: who.key, name: who.name, sub: why.length > 2 ? `${why.slice(0, 2).join(", ")} +${why.length - 2}` : why.join(", ") })), 12);
+		const seated = idx.all("culture").filter((c) => !e.cultures.some((x) => x.ref.key === c.key) && c.places.some((r) => within.has(r.key)));
+		list("Groups here", "flag", [...e.cultures.map((c) => ({ ...c.ref, sub: formatSpan(c.from, c.to, cal) })), ...seated.map((c) => ({ key: c.key, name: c.name, sub: `Based at ${c.places.find((r) => within.has(r.key))?.name ?? ""}` }))]);
 	}
 	// Relationships, coloured by kind (allies green, rivals red, lieges purple…), minus the ones shown above.
 	const shownKinds = new Set(["holder", "owner", "lord", "lady", "ruler"]);
@@ -344,7 +445,9 @@ export function noteChip(p: UniverseViewPlugin, into: HTMLElement, r: { key: str
 	else av.setText(r.name.charAt(0).toUpperCase());
 	const txt = el("span", { cls: "universeview-ep-person-text" }, c);
 	el("span", { cls: "universeview-ep-person-name", text: target?.name ?? r.name }, txt);
-	if (sub) el("span", { cls: "universeview-ep-person-sub", text: sub }, txt);
+	// A place with nothing else to say says where it is: "Oklahoma County, Oklahoma".
+	const where = sub ?? (target?.type === "place" ? placeLine(placeChain((k) => p.index.get(k), target.key).slice(1, 3)) : "");
+	if (where) el("span", { cls: "universeview-ep-person-sub", text: where }, txt);
 	if (!target) {
 		c.title = `${r.name} has no note yet`;
 		return c;

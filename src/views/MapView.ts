@@ -422,11 +422,25 @@ export class MapView extends UniverseViewBase {
 					const same = idx.timeStep(day) === idx.timeStep(o.at);
 					o.at = day;
 					// Nothing on the map changes between these two days: keep what's drawn.
-					if (same) this.timeOnly();
-					else this.update();
+					// Between two changes nothing is redrawn, except what travels with the date: journeys and people.
+					if (same) {
+						this.timeOnly();
+						this.renderer?.redrawMoving();
+					} else this.update();
 				},
 				["event", "place", "culture"],
 			);
+			// The place the map is narrowed to (with everything inside it): click to show every place again.
+			if (o.within) {
+				const only = el("button", { cls: "universeview-chip is-active", attr: { title: "Showing only this place and what is in it. Click to show every place", "aria-label": `Only in ${idx.get(o.within)?.name ?? "a place"}: click to clear` } }, time);
+				icon(el("span", { cls: "universeview-chip-icon" }, only), "map-pin");
+				el("span", { text: `In ${idx.get(o.within)?.name ?? "a place"}` }, only);
+				only.addEventListener("click", () => {
+					o.within = undefined;
+					this.fillToolbar();
+					this.update();
+				});
+			}
 				// Everything on the right stays together, however the toolbar wraps: how it is drawn (one Options panel, as in every
 			// other view), then tools in labelled menus so each says what it is for, then undo and the rest.
 			const cluster = this.group("uv-map-tools");
@@ -529,13 +543,14 @@ export class MapView extends UniverseViewBase {
 			["showRoutes", "Routes", "Roads, rivers and sea lanes"],
 			["heatmap", "Event heat map", "A glow where events happened (follows the time slider)"],
 			["showMovements", "Campaigns and migrations", "Arrows for wars, campaigns, migrations and voyages across several places"],
+			["showPeople", "People at this date", "Where each person is on the time slider's date: at an event, on the road, or at home (their residence). Needs a date set on the slider"],
 			["showWars", "Battles", "Crossed swords where battles were fought, coloured by who won, joined by their war's campaign (follows the time slider)"],
 			["showNotes", "Map notes", "Your sticky notes, arrows and lines"],
 			["useLayers", "Zoom layers", "Small places appear as you zoom in"],
 			["cluster", "Group crowded pins", "When zoomed out, pins close together merge into a numbered bubble"],
 			["photoPins", "Photos in pins", "Places with a picture show it in their pin"],
 		];
-		const isOn = (k: keyof MapOptions) => (k === "heatmap" || k === "photoPins" ? !!o[k] : o[k] !== false);
+		const isOn = (k: keyof MapOptions) => (k === "heatmap" || k === "photoPins" || k === "showPeople" ? !!o[k] : o[k] !== false);
 		const by = o.colorBy ?? this.plugin.settings.pinColorBy;
 		return [
 			{ type: "heading", label: "Map" },
@@ -547,6 +562,16 @@ export class MapView extends UniverseViewBase {
 			{ type: "choice", label: "Realm tiers", options: tierLevels, get: () => (o.tierLevel ? String(o.tierLevel) : ""), set: (v) => { o.tierLevel = v ? Number(v) : undefined; this.update(); } },
 			{ type: "heading", label: "Show on the map" },
 			...overlays.map(([k, label, hint]): OptionEntry => ({ type: "toggle", label, hint, get: () => isOn(k), set: (v) => { (o as unknown as Record<string, boolean>)[k] = v; this.update(); } })),
+			{
+				type: "action", label: o.within ? `Only in ${this.plugin.index.get(o.within)?.name ?? "a place"}: change…` : "Only in a place…", icon: "map-pin",
+				run: () => new EntityPickerModal(this.plugin, ["place"], (place) => {
+					o.within = place.key;
+					this.fillToolbar();
+					this.update();
+					this.renderer?.focusOn(place.key);
+				}, "Only what is in or under which place?").open(),
+			},
+			...(o.within ? [{ type: "action", label: "Show every place", icon: "x", run: () => { o.within = undefined; this.fillToolbar(); this.update(); } } as OptionEntry] : []),
 			{ type: "toggle", label: "Only places with events", get: () => !!o.onlyWithEvents, set: (v) => { o.onlyWithEvents = v; this.update(); } },
 			{ type: "heading", label: "View" },
 			{ type: "toggle", label: "Compare with a second map", get: () => !!this.compare, set: (v) => this.toggleCompare(v), hint: "A second map beside this one: another map, or another date" },

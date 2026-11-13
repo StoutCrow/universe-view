@@ -9,6 +9,8 @@ import { readNames } from "./renames";
 import { holdersProperty, readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
 import { asText } from "./text";
+import { readAliases } from "./aliases";
+import { placeChain } from "./placepath";
 import { parseKin, type KinPerson } from "./relatives";
 import { PARENT_KINDS, parseDetails } from "./ties";
 import { ROW_PROPERTY, rowOfKind } from "./membership";
@@ -108,7 +110,9 @@ export class EntityIndex extends Events {
 		for (const path of paths) {
 			const file = this.app.vault.getAbstractFileByPath(path);
 			this.entities.delete(path);
+			for (const [name, at] of this.byAlias) if (at === path) this.byAlias.delete(name);
 			if (!(file instanceof TFile) || file.extension !== "md" || this.isTemplate(path)) continue;
+			this.noteAliases(file);
 			try {
 				const e = this.readFile(file);
 				if (e) this.entities.set(e.key, e);
@@ -150,6 +154,9 @@ export class EntityIndex extends Events {
 		this.applySettings();
 		this.worlds = this.readWorlds();
 		const entities = new Map<string, Entity>();
+		// Every note's other names first, so a link written with one resolves while the notes are read.
+		this.byAlias = new Map();
+		for (const file of this.app.vault.getMarkdownFiles()) if (!this.isTemplate(file.path)) this.noteAliases(file);
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (this.isTemplate(file.path)) continue;
 			try {
@@ -284,12 +291,15 @@ export class EntityIndex extends Events {
 	}
 
 	resolveLink(linktext: string, sourcePath: string): Ref {
-		const { path, alias } = cleanLinkText(linktext);
+		const { path } = cleanLinkText(linktext);
 		if (!path) return { key: "?", name: "", resolved: false };
 		const dest = this.app.metadataCache.getFirstLinkpathDest(path, sourcePath);
 		if (dest && dest.extension === "md") return { key: dest.path, name: dest.basename, resolved: true };
 		const base = path.split("/").pop() ?? path;
-		void alias;
+		// A name a note goes by (`aliases:`) finds it too: [[USA]] is the United States.
+		const named = this.byAlias.get(base.trim().toLowerCase());
+		const target = named ? this.app.vault.getAbstractFileByPath(named) : undefined;
+		if (target instanceof TFile) return { key: target.path, name: target.basename, resolved: true };
 		return { key: "?" + base.toLowerCase(), name: base, resolved: false };
 	}
 
@@ -438,7 +448,10 @@ export class EntityIndex extends Events {
 			calendar,
 			importance: Number.isFinite(importanceRaw) && importanceRaw > 0 ? Math.min(5, importanceRaw) : 3,
 			summary: typeof summaryRaw === "string" ? summaryRaw : undefined,
+			aka: readAliases(fm.aliases ?? fm.alias, file.basename),
 			participants: [],
+			leads: [],
+			residences: [],
 			places: [],
 			cultures: [],
 			parents: [],
@@ -509,11 +522,25 @@ export class EntityIndex extends Events {
 			case "event":
 				e.start = date("date");
 				e.end = date("end");
-				e.participants = refs("participants");
-				e.places = refs("places");
+				// Whoever leads an event was there: leads count as participants too, so every view sees them.
+				e.leads = refs("leads");
+				{
+					const who = timed("participants");
+					e.participants = [...e.leads, ...who.map((t) => t.ref).filter((r) => !e.leads.some((l) => l.key === r.key))];
+					for (const t of who) {
+						if (!t.from && !t.to) continue;
+						e.presence ??= {};
+						e.presence[t.ref.key] = { from: t.from, to: t.to };
+					}
+				}
+				// A journey's start and end are its first and last places, with the written places between.
+				e.startPlace = refs("startPlace")[0];
+				e.endPlace = refs("endPlace")[0];
+				e.places = [...(e.startPlace ? [e.startPlace] : []), ...refs("places").filter((r) => r.key !== e.startPlace?.key && r.key !== e.endPlace?.key), ...(e.endPlace ? [e.endPlace] : [])];
 				e.cultures = tagGroups(timed("cultures"));
 				break;
 			case "person":
+				e.residences = timed("residences");
 				e.start = date("born");
 				e.end = date("died");
 				e.parents = refs("parents");
@@ -775,8 +802,17 @@ export class EntityIndex extends Events {
 		const n = name.replace(/^\[\[|\]\]$/g, "").split("|")[0].trim();
 		const direct = this.entities.get(n) ?? this.entities.get(n + ".md");
 		if (direct) return direct;
-		const key = this.byName.get(n.split("/").pop()!.toLowerCase());
+		const low = n.split("/").pop()!.toLowerCase();
+		const key = this.byName.get(low) ?? this.byAlias.get(low);
 		return key ? this.entities.get(key) : undefined;
+	}
+
+	/** Notes the vault knows by another name, lower case, to the note's path. */
+	private byAlias = new Map<string, string>();
+
+	private noteAliases(file: TFile) {
+		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		for (const a of readAliases(fm?.aliases ?? fm?.alias, file.basename)) if (!this.byAlias.has(a.toLowerCase())) this.byAlias.set(a.toLowerCase(), file.path);
 	}
 
 	all(type?: EntityType): Entity[] {
@@ -900,7 +936,14 @@ export class EntityIndex extends Events {
 		}
 		if (f.places && f.places.length) {
 			const want = keysOf(f.places);
-			const has = new Set([e.key, ...e.places.map((p) => p.key)]);
+			// A place counts at every level above it: something in Oklahoma City is in Oklahoma County, Oklahoma and the United States.
+			const here = [...e.places, ...(e.type === "person" ? [e.birthPlace, e.deathPlace, ...e.residences.map((r) => r.ref)] : [])];
+			const has = new Set([e.key]);
+			for (const p of here) {
+				if (!p) continue;
+				has.add(p.key);
+				for (const above of placeChain((k) => this.entities.get(k), p.key)) has.add(above.key);
+			}
 			if (!want.some((w) => has.has(w))) return false;
 		}
 		if (f.from !== undefined || f.to !== undefined) {

@@ -15,6 +15,18 @@
 .uv-creator .universeview-dash-problem:empty, .uv-quickadd-warn:empty, .uv-creator-hint:empty { display: none; }
 .uv-creator-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .uv-creator-form.is-hidden { display: none; }
+/* The fields flow into as many columns as the pane is wide, so a wider pane shows more at once. */
+.uv-creator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 8px 20px; }
+.uv-creator-row.is-wide { grid-column: 1 / -1; }
+.uv-creator-moredetails { margin-top: 8px; }
+.uv-creator-moredetails > .uv-creator-grid { margin-top: 8px; }
+.uv-creator-color { display: flex; align-items: center; gap: 8px; }
+.uv-creator-color input[type="color"] { width: 36px; height: 26px; padding: 0; border: 1px solid var(--background-modifier-border); border-radius: var(--uv-r-sm); background: none; box-shadow: none; cursor: pointer; }
+.uv-creator-color.is-unset input[type="color"] { opacity: 0.35; }
+.uv-creator-color.is-unset .uv-creator-clear { display: none; }
+button.uv-creator-clear { height: 26px; padding: 0 8px; border: none; border-radius: var(--uv-r-sm); background: transparent; box-shadow: none; font-size: var(--font-ui-smaller); color: var(--text-muted); cursor: pointer; }
+button.uv-creator-clear:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.uv-creator .universeview-quickadd-input { min-height: 3.2em; resize: vertical; }
 .uv-creator-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; align-items: start; }
 .uv-creator-row label, .uv-creator-tags > label { padding-top: 6px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .uv-creator-value { min-width: 0; }

@@ -21,6 +21,9 @@ import { simplifyShared } from "../src/index/simplify";
 import { ribbon, smoothLine } from "../src/index/ribbon";
 import { landFill } from "../src/render/landfill";
 import { compareVersions, parseChangelog } from "../src/index/changelog";
+import { clashes, locate, locationAt, peopleAmong, placesBeen, presenceIn } from "../src/index/whereabouts";
+import { isMovement, pathPoint } from "../src/index/eventkinds";
+import { ancestorOfKind, chainLoop, kindsAlong, orderProblem, placeChain, placeLine, placesInside } from "../src/index/placepath";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "../src/ui/mappresets";
@@ -36,7 +39,8 @@ import { markPath, shapeFor } from "../src/render/categories";
 import { historyOf } from "../src/render/history";
 import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timelinerows";
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
-import { dropEmptyProperties, quickAddFrontmatter, withFields } from "../src/import/quickadd";
+import { dropEmptyProperties, parseQuickAdd, quickAddFrontmatter, withFields } from "../src/import/quickadd";
+import { aliasCandidate, readAliases } from "../src/index/aliases";
 import { addKinChildren, addKinPartner, addLinks, forgetKin, kinLines, parseKin, parseNames } from "../src/index/relatives";
 import { dropEmpty, emptyKeys } from "../src/index/emptyprops";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
@@ -390,14 +394,15 @@ eq(findMapping("People/ = person\n/Vael = vaelic", "Vael"), "vaelic", "find a fo
 	eq(days(120), "about 17 weeks", "travel: weeks");
 	const d = (s: string) => parseDate(s, g)!;
 	const people = new Map<string, unknown>([
-		["A", { key: "A", name: "Alice", type: "person", issues: [], parents: [], adoptiveParents: [], participants: [], places: [], parentCultures: [], partners: [], cultures: [], relations: [] }],
-		["B", { key: "B", name: "Bob", type: "person", issues: [], parents: [], adoptiveParents: [], participants: [], places: [], parentCultures: [], partners: [], cultures: [], relations: [], end: d("1520") }],
+		["A", { key: "A", name: "Alice", type: "person", residences: [], issues: [], parents: [], adoptiveParents: [], participants: [], places: [], parentCultures: [], partners: [], cultures: [], relations: [] }],
+		["B", { key: "B", name: "Bob", type: "person", residences: [], issues: [], parents: [], adoptiveParents: [], participants: [], places: [], parentCultures: [], partners: [], cultures: [], relations: [], end: d("1520") }],
 		["G", { key: "G", name: "Guild", type: "culture", issues: [], parents: [], adoptiveParents: [], participants: [], places: [], parentCultures: [], partners: [], cultures: [], relations: [] }],
 	]);
 	(people.get("B") as { cultures: unknown[] }).cultures = [{ ref: { key: "G", name: "Guild", resolved: true }, role: "Master", from: d("1530") }];
 	const fakeIndex = {
 		entities: people,
 		get: (k: string) => people.get(k),
+		events: () => [],
 		members: (k: string) => (k === "G" ? [
 			{ key: "A", link: { ref: { key: "G" }, role: "Grand Master", from: d("1500"), to: d("1520") } },
 			{ key: "B", link: { ref: { key: "G" }, role: "Grand Master", from: d("1510") } },
@@ -1744,6 +1749,57 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq([rankTitle("Knight", "female"), rankTitle("knight", "male"), rankTitle("peasant")], ["Dame", "Sir", undefined], "titles: an honorific for rank without land");
 	eq(holderTitle("medieval", [{ tier: 3, name: "Kent" }, { tier: 2, name: "England" }], "female"), "Queen of England", "titles: the highest land they hold");
 	eq(holderTitle("medieval", [], "male"), "", "titles: nothing held, no title");
+	// ---- Other names (index/aliases.ts) and the creator's new fields ----
+	{
+		eq(readAliases(["USA", " America ", "united states", "", "USA", 7], "United States"), ["USA", "America", "7"], "aliases: trimmed, no repeats, not the note's own name");
+		eq([readAliases("USA, America", "x"), readAliases(undefined), readAliases("[[Rome]]")], [["USA", "America"], [], ["Rome"]], "aliases: a comma text, nothing, a link");
+		const notes = [{ name: "United States of America" }, { name: "Oklahoma County" }, { name: "Oklahoma City" }, { name: "Tulsa" }, { name: "Vael Mountains" }];
+		eq([aliasCandidate("USA", notes)?.name, aliasCandidate("Oklahoma", notes)?.name, aliasCandidate("Oklahma County", notes)?.name, aliasCandidate("Tulsa", notes), aliasCandidate("Zzz", notes)], ["United States of America", undefined, "Oklahoma County", undefined, undefined], "alias sweep: initials, near spelling; never a guess between two");
+		eq(aliasCandidate("Vael", notes)?.name, "Vael Mountains", "alias sweep: a whole word of one name");
+		const ctx = { find: () => undefined, isDate: () => false };
+		eq(parseQuickAdd("Rome, aka the Eternal City, also called Roma", ctx).aliases, ["the Eternal City", "Roma"], "quick add: aka and also called");
+		const fm = quickAddFrontmatter({ ...parseQuickAdd("Ava", ctx), type: "person", aliases: ["Av", " "], partners: ["Bo"], children: ["Cy"], deathPlace: "Rome", color: "#112233", image: "ava.png" });
+		eq([fm.aliases, fm.partners, fm.children, fm.deathplace, fm.color, fm.image], [["Av"], ["[[Bo]]"], ["[[Cy]]"], "[[Rome]]", "#112233", "[[ava.png]]"], "quick add: the new fields become properties");
+		const place = quickAddFrontmatter({ ...parseQuickAdd("Rome", ctx), type: "place", population: "1,200", terrain: "Hills" });
+		eq([place.population, place.terrain], [1200, "hills"], "quick add: population and terrain");
+	}
+	// ---- The place hierarchy (index/placepath.ts) ----
+	{
+		const ref = (key: string, resolved = true) => ({ key, name: key, resolved });
+		const place = (key: string, category: string, inside?: string) => [key, { key, name: key, type: "place", category, locatedIn: inside ? ref(inside) : undefined }] as const;
+		const all = new Map<string, unknown>([place("US", "country"), place("OK", "state", "US"), place("OKC", "county", "OK"), place("City", "city", "OKC"), place("Odd", "county", "City")]);
+		const get = (k: string) => all.get(k) as never;
+		eq(placeLine(placeChain(get, "City")), "City, OKC, OK, US", "place chain: nearest first, to the top");
+		eq(ancestorOfKind(placeChain(get, "City"), "state")?.name, "OK", "place chain: the state a city is in");
+		eq(kindsAlong([placeChain(get, "City")]), ["country", "state", "county", "city"], "place chain: kinds largest first");
+		eq([orderProblem(get("OKC"), get("OK")), orderProblem(get("OK"), get("OKC"))?.includes("smaller kind"), orderProblem(get("Odd"), get("City"))?.includes("smaller kind")], [undefined, true, true], "place order: a bigger kind inside a smaller one is flagged");
+		const loop = new Map<string, unknown>([place("A", "city", "B"), place("B", "city", "A")]);
+		eq([placeChain((k) => loop.get(k) as never, "A").length, chainLoop((k) => loop.get(k) as never, "A")?.length, chainLoop(get, "City")], [2, 2, undefined], "place chain: a loop ends and is found");
+		const subs = new Map([["US", new Set(["OK"])], ["OK", new Set(["OKC"])], ["OKC", new Set(["City"])]]);
+		eq([...placesInside(subs, "US")], ["OK", "OKC", "City"], "place chain: everything inside, at any depth");
+		const person = { key: "p", birthPlace: ref("City"), residences: [], places: [], deathPlace: undefined } as never;
+		const hold = { key: "ev", type: "event", name: "Fair", participants: [ref("p")], places: [ref("OKC")] } as never;
+		eq(peopleAmong([person], () => [hold], new Set(["US", "OK", "OKC", "City"]))[0]?.why, ["Born", "Fair"], "place people: born or in an event anywhere inside");
+		eq(peopleAmong([person], () => [], new Set(["Elsewhere"])).length, 0, "place people: others left out");
+	}
+	// ---- Where people have been (index/whereabouts.ts) ----
+	{
+		const ref = (key: string) => ({ key, name: key, resolved: true });
+		const d = (n: number) => ({ start: n, end: n + 364 }) as never;
+		const anna = { key: "anna", type: "person", start: d(0), end: d(9000), birthPlace: ref("york"), deathPlace: ref("rome"), places: [], residences: [{ ref: ref("dover"), from: d(1000) }, { ref: ref("bath"), from: d(4000) }] } as never;
+		const siege = { key: "siege", type: "event", start: d(2000), end: undefined, participants: [ref("anna")], leads: [ref("anna")], places: [ref("calais")] } as never;
+		const feast = { key: "feast", type: "event", start: d(3000), participants: [ref("bob")], leads: [], places: [ref("paris")] } as never;
+		eq(placesBeen(anna, [siege, feast]).map((s) => `${s.place.key}:${s.how}`), ["york:born", "dover:lived", "calais:event", "bath:lived", "rome:died"], "where: born, homes and event places in date order, died last; others' events left out");
+		const trip = { key: "trip", name: "Trip", props: {}, type: "event", start: d(6000), end: d(6010), participants: [ref("anna")], leads: [], presence: { anna: { from: d(6050) } }, places: [ref("york"), ref("rome")], startPlace: ref("york"), endPlace: ref("rome") } as never;
+		const at = (n: number) => ({ key: "e" + n, name: "E", props: {}, type: "event", start: d(n), participants: [ref("anna")], leads: [], places: [ref("paris")] }) as never;
+		eq(clashes(anna, [trip, at(9000)]).length, 0, "clash: events apart in time are fine");
+		eq(clashes(anna, [trip, at(6200)]).map((c) => c.gap < 0), [true], "clash: overlapping events at different places clash");
+		eq([clashes(anna, [trip, at(6500)], 400).map((c) => Math.round(c.gap)), clashes(anna, [trip, at(6500)]).length], [[126], 0], "clash: a close follow-up is reported with its gap, only when asked");
+		eq(presenceIn(trip, "anna").from?.start, 6050, "presence: dated part of an event");
+		eq([pathPoint([[0, 0], [0, 10]], 0.5), pathPoint([[0, 0], [0, 10], [10, 10]], 0.75), isMovement(trip), isMovement({ ...(feast as object), name: "Feast", props: {} } as never)], [[0, 5], [5, 10], true, false], "path: a point along the journey; a start and end place makes a movement");
+		eq([locate(anna, [siege], 2100)?.why, locate(anna, [siege], 3000)?.why, locate(anna, [siege], 500)?.why, locate({ ...(anna as object), residences: [], birthPlace: undefined } as never, [], 500)], ["event", "home", "born", undefined], "locate: why a person is where they are");
+		eq([locationAt(anna, [siege], 2100)?.key, locationAt(anna, [siege], 3000)?.key, locationAt(anna, [siege], 5000)?.key, locationAt(anna, [siege], 500)?.key], ["calais", "dover", "bath", "york"], "where: an event sets the place that day, else the home then, else birth");
+	}
 }
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

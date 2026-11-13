@@ -482,6 +482,95 @@
 	font-size: 0.8em;
 	color: var(--text-faint);
 }
+.universeview-ep .universeview-ep-aka {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	overflow-wrap: anywhere;
+}
+/* A place's address: its own name first, then each place it is inside. A name with no note yet is dashed. */
+.universeview-ep .uv-where .universeview-ep-crumb.is-missing {
+	cursor: default;
+	border-style: dashed;
+}
+/* "Show places as": exact places, or rolled up to the county, state or country. Quiet: the chosen one is only heavier and filled. */
+.universeview-ep .uv-levels {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px;
+}
+.universeview-ep button.uv-level {
+	appearance: none;
+	height: 22px;
+	min-width: 0;
+	margin: 0;
+	padding: 0 8px;
+	border: none;
+	border-radius: var(--uv-r-sm);
+	background: transparent;
+	box-shadow: none;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: background-color var(--universeview-fast) var(--universeview-ease), color var(--universeview-fast) var(--universeview-ease);
+}
+.universeview-ep button.uv-level:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+.universeview-ep button.uv-level[aria-pressed="true"] {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+	font-weight: 600;
+}
+.universeview-ep button.uv-level:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 1px;
+}
+/* "Where were they?": a date box with the answer beside it (under it when narrow). The answer's row keeps its height. */
+.universeview-ep .uv-when {
+	align-items: center;
+	gap: 6px 8px;
+}
+.universeview-ep .uv-when-input {
+	flex: 0 1 9.5em;
+	min-width: 0;
+	height: 26px;
+	padding: 0 8px;
+	box-sizing: border-box;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--uv-r-md);
+	background: var(--background-primary);
+	box-shadow: none;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	transition: border-color var(--universeview-fast) var(--universeview-ease);
+}
+.universeview-ep .uv-when-input:hover {
+	border-color: var(--background-modifier-border-hover);
+}
+.universeview-ep .uv-when-input:focus,
+.universeview-ep .uv-when-input:focus-visible {
+	border-color: var(--interactive-accent);
+	box-shadow: none;
+	outline: none;
+}
+.universeview-ep .uv-when-input::placeholder {
+	color: var(--text-faint);
+}
+.universeview-ep .uv-when-out {
+	flex: 1 1 10em;
+	display: flex;
+	align-items: center;
+	min-height: 28px;
+	min-width: 0;
+}
+.universeview-ep .uv-when-note {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+.universeview-ep .uv-when-note.is-bad {
+	color: var(--color-orange);
+}
 
 /* Events */
 .universeview-ep .universeview-ep-events {

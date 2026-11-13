@@ -3,6 +3,7 @@ import type { ChronDate, Entity } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { spacedLabels, yearTicks } from "../dates/calendars";
 import { totalPopulation } from "../index/tidy";
+import { placeChain } from "../index/placepath";
 import { TFile } from "obsidian";
 import { bindHover, cultureColor, el, emptyState, entityColor, icon, openEntity, resourceUrl, svg } from "./common";
 
@@ -273,9 +274,7 @@ export function renderFacts(plugin: UniverseViewPlugin, host: HTMLElement, key: 
 			break;
 		}
 		case "place": {
-			const chain: { key: string; name: string }[] = [];
-			for (let cur = e.locatedIn, i = 0; cur && i < 8; cur = idx.get(cur.key)?.locatedIn, i++) chain.push(ref(cur));
-			row("In", ...chain);
+			row("In", ...placeChain((k) => idx.get(k), e.key).slice(1).map((p) => ref(p)));
 			row("Founded", date(e.start));
 			row("Abandoned", date(e.end));
 			const pop = totalPopulation(idx, e.key);

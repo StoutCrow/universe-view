@@ -2,6 +2,7 @@ import { AbstractInputSuggest, App, FuzzySuggestModal, TFile, prepareFuzzySearch
 import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { formatSpan } from "../dates/parser";
+import { placeChain, placeLine } from "../index/placepath";
 import { TYPE_ICONS, icon } from "../render/common";
 
 function rank(plugin: UniverseViewPlugin, query: string, types?: EntityType[]): Entity[] {
@@ -12,7 +13,7 @@ function rank(plugin: UniverseViewPlugin, query: string, types?: EntityType[]): 
 	// A note's aliases count too ("The Golden State" finds California), a little below its name.
 	const score = (e: Entity) => {
 		let best = fuzzy(e.name)?.score ?? -Infinity;
-		for (const a of ([] as unknown[]).concat(e.props.aliases ?? [])) if (typeof a === "string" && a) best = Math.max(best, (fuzzy(a)?.score ?? -Infinity) - 0.5);
+		for (const a of e.aka) best = Math.max(best, (fuzzy(a)?.score ?? -Infinity) - 0.5);
 		return best;
 	};
 	return list
@@ -31,7 +32,10 @@ export function renderEntityRow(plugin: UniverseViewPlugin, e: Entity, row: HTML
 	main.createDiv({ cls: "universeview-suggest-title", text: e.name });
 	const span = formatSpan(e.start, e.end, plugin.calendars.get(e.calendar));
 	const folder = e.folder && e.folder !== "/" ? e.folder : "";
-	const note = [span, folder].filter(Boolean).join(" · ");
+	// Two places can share a name; the places above one tell them apart (Springfield, Illinois, United States).
+	const where = e.type === "place" ? placeLine(placeChain((k) => plugin.index.get(k), e.key).slice(1, 4)) : "";
+	const also = e.aka.length ? `also ${e.aka.slice(0, 2).join(", ")}` : "";
+	const note = [also, where, span, where ? "" : folder].filter(Boolean).join(" · ");
 	if (note) main.createDiv({ cls: "universeview-suggest-note", text: note });
 }
 

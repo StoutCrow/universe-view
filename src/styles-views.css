@@ -1569,7 +1569,7 @@ button.uv-card-add:hover { color: var(--text-on-accent); background: var(--inter
 /* A wider ring around each plus counts as near it: the relationship tag fades when the pointer comes close to the top one. */
 button.uv-card-add::before { content: ""; position: absolute; inset: -12px; border-radius: 999px; }
 .uv-card-rel { transition: opacity var(--universeview-fast, 120ms) ease-out; }
-.uv-card-html:has(button.uv-card-add.is-up:hover) .uv-card-rel { opacity: 0; }
+.is-near-up > .uv-card-rel { opacity: 0; }
 /* A row the tree has just revealed */
 @keyframes uv-reveal { from { background: color-mix(in srgb, var(--interactive-accent) 35%, transparent); } to { background: transparent; } }
 .universeview-dash-row.is-revealed { animation: uv-reveal 1.5s ease-out; }

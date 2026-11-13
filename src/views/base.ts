@@ -216,6 +216,8 @@ export class TimeSlider {
 	private playBtn: HTMLElement;
 	private timer = 0;
 	private until?: number;
+	/** How fast it plays, as a multiple of the usual pace (the whole range in about 16 seconds). */
+	private speed = 1;
 
 	constructor(
 		parent: HTMLElement,
@@ -235,6 +237,15 @@ export class TimeSlider {
 		icon(el("span", { cls: "universeview-chip-check" }, this.toggle), "check");
 		this.playBtn = el("div", { cls: "clickable-icon universeview-icon-btn", title: "Play through time" }, box);
 		icon(this.playBtn, "play");
+		// Playback speed: click to go round 1×, 2×, 4×, ½×. It takes effect at once, even while playing.
+		const speeds = [1, 2, 4, 0.5];
+		const speedBtn = el("button", { cls: "universeview-chip uv-speed", text: "1×", attr: { title: "Playback speed", "aria-label": "Playback speed: 1 times" } }, box);
+		speedBtn.addEventListener("click", () => {
+			this.speed = speeds[(speeds.indexOf(this.speed) + 1) % speeds.length];
+			const label = this.speed === 0.5 ? "½×" : `${this.speed}×`;
+			speedBtn.setText(label);
+			speedBtn.setAttribute("aria-label", `Playback speed: ${this.speed === 0.5 ? "half" : this.speed} times`);
+		});
 		this.input = el("input", { cls: "slider universeview-time-range", attr: { type: "range", min: "0", max: "1000", step: "1" } }, box);
 		this.label = el("span", { cls: "universeview-time-label" }, box);
 		this.toggle.addEventListener("click", () => {
@@ -348,7 +359,7 @@ export class TimeSlider {
 		const end = this.until ?? this.range[1];
 		const step = (end - (this.value ?? this.range[0])) / 200;
 		this.timer = window.setInterval(() => {
-			this.value = Math.min(end, (this.value ?? this.range[0]) + step);
+			this.value = Math.min(end, (this.value ?? this.range[0]) + step * this.speed);
 			this.sync();
 			this.emit();
 			if (this.value >= end) this.stop();

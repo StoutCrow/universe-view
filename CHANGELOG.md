@@ -2,6 +2,39 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.5.0 — 2026-11-13
+
+### Places have an address
+- **A place knows everything it is inside.** Write only `located-in:` on each place; the whole chain is read from that: Oklahoma City, Oklahoma County, Oklahoma, United States. A place's panel shows it under the name, each name a link (a top place with no note yet shows dashed).
+- **There is an order of kinds** from galaxy and planet down through continent, empire, country, state or province, county, city or town, village or district, and buildings to rooms. *Check data* flags a bigger kind inside a smaller one (a county inside a city) and a place inside itself.
+- **Everything inside counts.** A place's People, Events and Groups include everything in the places inside it, and it lists what is directly *Inside*. Under every place chip (an event's Where, a person's places, an organisation's seat) the two places above it are shown, and the pickers show a place's chain so two places with one name can be told apart.
+- **Only in a place**: the timeline and the map can be narrowed to one place and everything inside it, from their Options menus. A chip says which, and clears it. The same filter now matches at every level in code blocks too.
+- **A person's *Places been*** is one chip per place with why (born, lived, an event) and when, and buttons roll them up to the county, state or country.
+
+### Events
+- **Led by**: an event takes `lead:` (people who led it). Leads count as present, and the panel, the timeline card and the hover card show them first.
+- **Members present**: an event at a place lists who was there, and each of them counts as being at that place on those dates.
+- **Journeys, marches and voyages** take `start-place:` and `end-place:` (also `departs-from`, `arrives-at`), with places between them in `places:`. The map draws the path, bending it along your roads, rivers and sea lanes where that is quicker than a straight line. While the time slider is inside the journey, a dot shows how far along it is.
+- **Part of it**: `participants: [[Anna]] (1066-1068)` puts someone at only part of an event.
+- **Kinds of event** (battle, siege, coronation, journey, voyage, migration…) are offered in the creator.
+
+### Where people are
+- **Residences**: a person takes `residences:` (with dates if they moved), their default location. *Where were they?* on a person's panel takes a date and says where they were, and why: at an event, at home, or where they were born.
+- **People at this date** (map Options): each person on the slider's date, at an event, on the road along a journey, or at home. People in one spot share a numbered bubble. Journeys and people now move smoothly as the date plays, and a speed button (1×, 2×, 4×, ½×) sits beside play.
+- **Check data** reports a person at two places at once, a gap between two events too short to ride, and homes that overlap in time.
+
+### Other names
+- **Aliases**: Obsidian's `aliases:` property is read everywhere. A link written with one finds the note (`located-in: [[USA]]` is the United States), the creator's name check and Tab completion know them, search finds them, and a note's panel says "Also called …".
+- **Alias sweep**: *Check data* spots a link with no note that looks like another note (initials like USA, a whole word of its name, a slip of the keys) and offers to make it that note's alias, with Undo, instead of offering to create a new note.
+
+### The creator
+- **More about it**: both creators keep the main fields up front and fold the rest away. It adds also called, died at, lives at, partners, children, caused by, led to, part of, population, terrain, a picture and a colour, as the note's own properties.
+- **The quick creator's fields flow into columns** as its pane gets wider, the one-line box can be dragged taller, and the full creator window can be dragged bigger from its corner. The line understands `aka …`, `also called …` and `known as …`.
+
+### Fixes and tidying
+- The family tree's relationship tag no longer needs the `:has` selector (it was slow to restyle); a class does the same job.
+- One place chain reader replaces three separate walks up the tree (hover cards, the arc view, fog of war).
+
 ## 4.4.0 — 2026-11-13
 
 ### Size, rank and level

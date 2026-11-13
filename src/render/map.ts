@@ -18,7 +18,7 @@ import { activeAt } from "../index/EntityIndex";
 import { motionMs } from "../appearance";
 import { bindHover, cultureColor, el, emptyState, entityColor, glyph, hashColor, helpTip, icon, openEntity, ownershipLines, resourceUrl, showEntityMenu, typeColorVar, warningItem } from "./common";
 import { fillFrom, nearestSet, Pt, Raster, rasterize, simplifyOpen, simplifyRing, snapPoint, snapRing, traceOutlines } from "./fill";
-import { days, kmPerUnit, parseScale, planJourney, ROUTE_SPEED, SPEED_KM, TERRAIN_SLOW, terrainFactor, type XY } from "./travel";
+import { days, kmPerUnit, parseScale, planJourney, ROUTE_SPEED, SPEED_KM, TERRAIN_SLOW, terrainFactor, type RouteLine, type XY } from "./travel";
 import { totalPopulation } from "../index/tidy";
 import { labelOutlines, partitionLand } from "./fill";
 import { detectCoast, detectLines, edgeColor, lineColorAt, traceBetween, waterLines, wetMask } from "./trace";
@@ -44,6 +44,9 @@ import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
 import { battlesByWar, isBattle, occupationsAt, sidesOf, victorOf } from "../index/wars";
 import { asText, splitSpan } from "../index/text";
+import { isMovement, pathPoint, progress } from "../index/eventkinds";
+import { eventAt, locationAt } from "../index/whereabouts";
+import { placesInside } from "../index/placepath";
 
 export const WORLD_MAP = "world";
 
@@ -84,6 +87,10 @@ export interface MapOptions {
 	/** A glow where events happened (respects the time slider). */
 	heatmap?: boolean;
 	showPins?: boolean;
+	/** Narrowed to one place and everything inside it (the key of a place note): only its pins, events and people show. */
+	within?: string;
+	/** Where each person is on the time slider's date: at an event, on the road, or at home. Off unless asked for. */
+	showPeople?: boolean;
 	/** Arrows for wars, campaigns, migrations and voyages that cross several places. */
 	showMovements?: boolean;
 	/** Crowded pins merge into numbered bubbles when zoomed out. */
@@ -213,6 +220,7 @@ export class MapRenderer {
 	private routeLayer?: L.LayerGroup;
 	private heatLayer?: L.LayerGroup;
 	private moveLayer?: L.LayerGroup;
+	private peopleLayer?: L.LayerGroup;
 	private noteLayer?: L.LayerGroup;
 	private warLayer?: L.LayerGroup;
 	private strategyLayer?: L.LayerGroup;
@@ -499,6 +507,7 @@ export class MapRenderer {
 		this.drawRoutes();
 		this.drawMovements();
 		this.drawWars();
+		this.drawPeople();
 		this.drawPins();
 		this.drawHeat();
 		this.drawNotes();
@@ -755,6 +764,7 @@ export class MapRenderer {
 		this.routeLayer = L.layerGroup().addTo(map);
 		this.moveLayer = L.layerGroup().addTo(map);
 		this.warLayer = L.layerGroup().addTo(map);
+		this.peopleLayer = L.layerGroup().addTo(map);
 		this.layers = L.layerGroup().addTo(map);
 		this.clusterLayer = L.layerGroup().addTo(map);
 		this.noteLayer = L.layerGroup().addTo(map);
@@ -830,12 +840,20 @@ export class MapRenderer {
 
 	// ---- Pins -------------------------------------------------------------------------------------
 
+	/** The place the map is narrowed to and everything inside it, or undefined when it shows everywhere. */
+	private withinSet(): Set<string> | undefined {
+		const key = this.options.within;
+		return key ? new Set([key, ...placesInside(this.plugin.index.subPlacesOf, key)]) : undefined;
+	}
+
 	/** Events per place, counting events in sub-places towards every region above them. */
 	private eventsByPlace(): Map<string, Entity[]> {
 		const idx = this.plugin.index;
 		const at = this.options.at;
+		const within = this.withinSet();
 		const out = new Map<string, Set<Entity>>();
 		for (const e of idx.all("event")) {
+			if (within && !e.places.some((p) => within.has(p.key))) continue;
 			if (at !== undefined && (!e.start || e.start.start > at)) continue;
 			if (!this.seen(e.key)) continue;
 			for (const p of e.places) {
@@ -911,7 +929,8 @@ export class MapRenderer {
 		const hidden = new Set(this.options.hidden ?? []);
 		const byPlace = this.eventsByPlace();
 		// Places, and groups given a pin of their own (a realm placed at its heart).
-		const places = idx.all().filter((p) => (p.type === "place" || (p.type === "culture" && (p.map || p.coords))) && (!this.options.folder || p.path.startsWith(this.options.folder + "/")));
+		const within = this.withinSet();
+		const places = idx.all().filter((p) => (p.type === "place" || (p.type === "culture" && (p.map || p.coords))) && (!this.options.folder || p.path.startsWith(this.options.folder + "/")) && (!within || (p.type === "place" ? within.has(p.key) : p.places.some((r) => within.has(r.key)))));
 		let i = 0;
 		for (const place of places) {
 			const ll = this.toLatLng(place);
@@ -5100,17 +5119,18 @@ export class MapRenderer {
 		if (this.options.showMovements === false) return;
 		const idx = this.plugin.index;
 		const at = this.options.at;
-		const MOVES = /\b(war|campaign|migration|voyage|march|invasion|expedition|journey|crusade|retreat|exodus|raid|conquest|pilgrimage|flight|trek)\b/i;
 		// Wars with battles on the map are drawn through their battles instead (drawWars).
 		const viaBattles = this.options.showWars === false ? new Set<string>() : new Set([...battlesByWar(idx)].filter(([, bs]) => bs.filter((b) => this.battleSpot(b)).length >= 2).map(([k]) => k));
+		const within = this.withinSet();
 		for (const e of idx.all("event")) {
 			if (viaBattles.has(e.key)) continue;
+			if (within && !e.places.some((p) => within.has(p.key))) continue;
 			if (isBattle(e)) continue;
 			if (this.options.folder && !e.path.startsWith(this.options.folder + "/")) continue;
 			if (!this.seen(e.key)) continue;
-			if (!MOVES.test(`${e.category ?? ""} ${e.name}`) && !e.props.path && !e.props.movement) continue;
+			if (!isMovement(e)) continue;
 			if (at !== undefined && (!e.start || e.start.start > at)) continue;
-			const pts = e.places.map((p) => idx.get(p.key)).map((p) => (p ? this.toLatLng(p) : null)).filter((x): x is L.LatLngExpression => !!x).map((x) => L.latLng(x));
+			const pts = this.eventPath(e);
 			if (pts.length < 2) continue;
 			const now = at !== undefined && e.start && (e.end?.end ?? e.start.end) >= at;
 			const color = entityColor(this.plugin, e.cultures[0] ? idx.get(e.cultures[0].ref.key) ?? e : e);
@@ -5122,6 +5142,67 @@ export class MapRenderer {
 				openEntity(this.plugin, e.key, evt.originalEvent);
 			});
 			this.arrowHead(layer, pts[pts.length - 2], pts[pts.length - 1], color, "universeview-move-head");
+			// While it is under way on the slider's date, a dot shows how far along the path it has got.
+			if (now && at !== undefined && e.start && (e.end || e.start.end > e.start.start)) {
+				const here = pathPoint(pts.map((p) => [p.lat, p.lng] as [number, number]), progress(e, at));
+				const dot = L.circleMarker(here, { className: "uv-traveller", radius: 7, interactive: false }).addTo(layer);
+				(dot.getElement() as HTMLElement | undefined)?.style.setProperty("--move-color", color);
+			}
+		}
+	}
+
+	// ---- People at a date -----------------------------------------------------------------------------
+
+	/**
+	 * Each person on the slider's date, where they are: on an event's path, at an event's place, or at home
+	 * (their latest residence, else where they were born). People in the same spot share one numbered bubble.
+	 */
+	redrawMoving() {
+		this.drawMovements();
+		this.drawPeople();
+	}
+
+	private drawPeople() {
+		const layer = this.peopleLayer;
+		if (!layer) return;
+		layer.clearLayers();
+		const at = this.options.at;
+		if (!this.options.showPeople || at === undefined) return;
+		const idx = this.plugin.index;
+		const within = this.withinSet();
+		const spots = new Map<string, { ll: L.LatLng; people: Entity[]; place?: string }>();
+		for (const p of idx.all("person")) {
+			if ((p.start && p.start.start > at) || (p.end && p.end.end < at) || !this.seen(p.key)) continue;
+			if (this.options.folder && !p.path.startsWith(this.options.folder + "/")) continue;
+			const events = idx.events(p.key);
+			const ev = eventAt(p, events, at);
+			let ll: L.LatLng | undefined;
+			let place: string | undefined;
+			if (ev && isMovement(ev) && ev.places.length > 1) {
+				const pts = this.eventPath(ev);
+				if (pts.length > 1) {
+					const [lat, lng] = pathPoint(pts.map((x) => [x.lat, x.lng] as [number, number]), progress(ev, at));
+					ll = L.latLng(lat, lng);
+				}
+			}
+			if (!ll) {
+				place = locationAt(p, events, at)?.key;
+				ll = place ? this.latLngOf(place) : undefined;
+			}
+			if (!ll || (within && !(ev ? ev.places.some((r) => within.has(r.key)) : place && within.has(place)))) continue;
+			const id = `${ll.lat.toFixed(4)},${ll.lng.toFixed(4)}`;
+			const spot = spots.get(id) ?? { ll, people: [], place };
+			spot.people.push(p);
+			spots.set(id, spot);
+		}
+		for (const { ll, people, place } of spots.values()) {
+			const html = el("div", { cls: "uv-person-dot", text: people.length > 1 ? String(people.length) : (people[0].name.charAt(0) || "?").toUpperCase() });
+			html.style.setProperty("--pin-color", entityColor(this.plugin, people[0]));
+			const names = people.map((p) => p.name);
+			L.marker(ll, { icon: L.divIcon({ html, className: "universeview-pin-wrap", iconSize: [0, 0] }), zIndexOffset: 900 })
+				.bindTooltip(names.length > 8 ? `${names.slice(0, 8).join(", ")} and ${names.length - 8} more` : names.join(", "), { direction: "top", offset: [0, -10] })
+				.on("click", (evt: L.LeafletMouseEvent) => openEntity(this.plugin, people.length === 1 || !place ? people[0].key : place, evt.originalEvent))
+				.addTo(layer);
 		}
 	}
 
@@ -5149,7 +5230,8 @@ export class MapRenderer {
 		if (this.options.showWars === false) return;
 		const idx = this.plugin.index;
 		const at = this.options.at;
-		const inScope = (e: Entity) => (!this.options.folder || e.path.startsWith(this.options.folder + "/")) && this.seen(e.key) && (at === undefined || (!!e.start && e.start.start <= at));
+		const within = this.withinSet();
+		const inScope = (e: Entity) => (!this.options.folder || e.path.startsWith(this.options.folder + "/")) && this.seen(e.key) && (at === undefined || (!!e.start && e.start.start <= at)) && (!within || e.places.some((p) => within.has(p.key)));
 		const colourOf = (p: Entity | undefined) => (p ? entityColor(this.plugin, p) : "var(--text-muted)");
 		// Campaigns first, so the swords sit on top of the lines.
 		for (const [warKey, battles] of battlesByWar(idx)) {
@@ -5620,6 +5702,63 @@ export class MapRenderer {
 		new EntityPickerModal(this.plugin, ["place"], (to) => this.showJourney(fromKey, to.key), "Journey to which place?").open();
 	}
 
+	/** The roads, rivers and sea lanes in force on the slider's date, and the slow terrain, as the planner wants them (kept until the lands are redrawn). */
+	private network?: { key: string; routes: RouteLine[]; terrain: { poly: XY[]; factor: number }[]; paths: Map<string, L.LatLng[]> };
+
+	private networkNow() {
+		const idx = this.plugin.index;
+		const key = `${this.drawVersion}|${this.options.at ?? ""}|${idx.version}`;
+		if (this.network?.key === key) return this.network;
+		const xy = (ll: L.LatLng): XY => [ll.lng, ll.lat];
+		const routes: RouteLine[] = idx.all().flatMap((e) => this.areasHere(e, "route").filter(({ t }) => this.shapeNow(t)).map(({ t }) => ({ points: t.points.map((p) => xy(this.pointToLatLng(p))), kind: t.kind ?? "road", name: t.name ?? e.name })));
+		const terrain = idx.all().filter((e) => e.terrain && TERRAIN_SLOW[e.terrain]).flatMap((e) => this.areasHere(e).map(({ t }) => ({ poly: t.points.map((p) => xy(this.pointToLatLng(p))), factor: TERRAIN_SLOW[e.terrain!] })));
+		this.network = { key, routes, terrain, paths: new Map() };
+		return this.network;
+	}
+
+	/** The quickest way between two spots along the map's routes (in km where the map has a real scale, else in its own units). */
+	private planBetween(la: L.LatLng, lb: L.LatLng) {
+		const map = this.map!;
+		const perUnit = this.kmPerMapUnit();
+		const xy = (ll: L.LatLng): XY => [ll.lng, ll.lat];
+		// Distances in km where the map has a real scale; otherwise in map units (no travel times then).
+		const dist = (p: XY, q: XY) => (this.isImageMap ? Math.hypot(p[0] - q[0], p[1] - q[1]) * (perUnit ?? 1) : map.distance(L.latLng(p[1], p[0]), L.latLng(q[1], q[0])) / 1000);
+		const { routes, terrain } = this.networkNow();
+		const straight = dist(xy(la), xy(lb));
+		const j = planJourney(routes, xy(la), xy(lb), {
+			dist,
+			speed: (k) => (perUnit ? this.routeSpeed(k) : 1),
+			footSpeed: perUnit ? this.speed("foot") : 1,
+			join: straight * 0.02,
+			access: Math.max(straight * 0.25, perUnit ? 10 : 30),
+			slow: terrain.length ? (p, q) => terrainFactor(p, q, terrain) : undefined,
+		});
+		return { j, perUnit };
+	}
+
+	/** The points of an event's path: its places in order, with each stretch following roads, rivers and sea lanes when that is quicker than a straight line. */
+	private eventPath(e: Entity): L.LatLng[] {
+		const stops = e.places.map((p) => this.latLngOf(p.key)).filter((x): x is L.LatLng => !!x);
+		if (stops.length < 2) return stops;
+		const net = this.networkNow();
+		if (!net.routes.length || stops.length > 8) return stops;
+		const out: L.LatLng[] = [stops[0]];
+		for (let i = 1; i < stops.length; i++) {
+			const a = stops[i - 1];
+			const b = stops[i];
+			const id = `${a.lat},${a.lng}>${b.lat},${b.lng}`;
+			let leg = net.paths.get(id);
+			if (!leg) {
+				const { j } = this.planBetween(a, b);
+				// Only a stretch that really uses a route is bent; walking straight there stays a straight line.
+				leg = j.legs.some((l) => l.kind !== "foot") ? j.path.map(([x, y]) => L.latLng(y, x)) : [a, b];
+				net.paths.set(id, leg);
+			}
+			out.push(...leg.slice(1));
+		}
+		return out;
+	}
+
 	showJourney(fromKey: string, toKey: string) {
 		const map = this.map;
 		const idx = this.plugin.index;
@@ -5631,21 +5770,7 @@ export class MapRenderer {
 			new Notice("Both places need to be on this map.");
 			return;
 		}
-		const perUnit = this.kmPerMapUnit();
-		const xy = (ll: L.LatLng): XY => [ll.lng, ll.lat];
-		// Distances in km where the map has a real scale; otherwise in map units (no travel times then).
-		const dist = (p: XY, q: XY) => (this.isImageMap ? Math.hypot(p[0] - q[0], p[1] - q[1]) * (perUnit ?? 1) : map.distance(L.latLng(p[1], p[0]), L.latLng(q[1], q[0])) / 1000);
-		const routes = idx.all().flatMap((e) => this.areasHere(e, "route").filter(({ t }) => this.shapeNow(t)).map(({ t }) => ({ points: t.points.map((p) => xy(this.pointToLatLng(p))), kind: t.kind ?? "road", name: t.name ?? e.name })));
-		const terrain = idx.all().filter((e) => e.terrain && TERRAIN_SLOW[e.terrain]).flatMap((e) => this.areasHere(e).map(({ t }) => ({ poly: t.points.map((p) => xy(this.pointToLatLng(p))), factor: TERRAIN_SLOW[e.terrain!] })));
-		const straight = dist(xy(L.latLng(la)), xy(L.latLng(lb)));
-		const j = planJourney(routes, xy(L.latLng(la)), xy(L.latLng(lb)), {
-			dist,
-			speed: (k) => (perUnit ? this.routeSpeed(k) : 1),
-			footSpeed: perUnit ? this.speed("foot") : 1,
-			join: straight * 0.02,
-			access: Math.max(straight * 0.25, perUnit ? 10 : 30),
-			slow: terrain.length ? (p, q) => terrainFactor(p, q, terrain) : undefined,
-		});
+		const { j, perUnit } = this.planBetween(L.latLng(la), L.latLng(lb));
 		this.endMode();
 		const layer = this.toolLayer;
 		const line = L.polyline(j.path.map(([x, y]) => L.latLng(y, x)), { className: "universeview-journey", weight: 5 }).addTo(layer);

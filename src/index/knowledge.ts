@@ -8,6 +8,7 @@
  * places and people there; and, if `famous` is on, every event of importance 5 once it has happened.
  */
 import type { Entity, Scene, TimedRef } from "../types";
+import { placeChain } from "./placepath";
 
 export interface KnowledgeIndex {
 	all(type?: Entity["type"]): Entity[];
@@ -80,7 +81,7 @@ export function knownTo(idx: KnowledgeIndex, person: string, opts: KnowledgeOpti
 	if (opts.famous !== false) for (const e of idx.all("event")) if (e.importance >= 5 && e.start && by(e.start)) add(e.key);
 	// Knowing a place means knowing the land it lies in.
 	for (const k of [...out]) {
-		for (let cur = idx.get(k)?.locatedIn, i = 0; cur && i < 12; cur = idx.get(cur.key)?.locatedIn, i++) add(cur.key);
+		for (const above of placeChain((x) => idx.get(x), k).slice(1)) add(above.key);
 	}
 	return out;
 }

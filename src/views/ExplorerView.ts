@@ -8,7 +8,7 @@ import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity,
 import { subOrgs } from "../render/orgchart";
 import { placeStyleFields, placeKinds, LAYER_NAMES, kindDefaults } from "../ui/PlaceStyleModal";
 import { TextPrompt } from "../ui/TextPrompt";
-import { SIZES, readChoice, realmTiers, restandardise, type TagChoice } from "../ui/tagstandard";
+import { SIZES, isSettlement, readChoice, realmTiers, restandardise, type TagChoice } from "../ui/tagstandard";
 import { withFactTag } from "../index/tagscheme";
 import { PLACE_ROLES, PLACE_STATUSES } from "../index/placekinds";
 import { REGION_TIER_LABELS, tierLabel } from "../index/realms";
@@ -944,6 +944,8 @@ export class ExplorerView extends UniverseViewBase {
 			const fact = (label: string, field: "role" | "status" | "size", v: string) =>
 				run(label, (f, e) => {
 					if (e.type !== "place" && (e.type !== "culture" || field !== "size")) return;
+					// Roles belong to settlements only: a region or a kingdom has none.
+					if (field === "role" && v && !isSettlement(readChoice(this.plugin, e))) return;
 					const own = ([] as unknown[]).concat(f.tags ?? e.tags).map(String);
 					f.tags = withFactTag(own, e.type, field, v);
 				});

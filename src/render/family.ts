@@ -713,6 +713,11 @@ export class FamilyTreeRenderer {
 					new AddRelativesModal(this.plugin, target, kind).open();
 				});
 				b.addEventListener("dblclick", (evt) => evt.stopPropagation());
+				// The relationship tag fades while the top plus is hovered (a class, so the stylesheet needs no :has).
+				if (where === "is-up") {
+					b.addEventListener("mouseenter", () => slot.addClass("is-near-up"));
+					b.addEventListener("mouseleave", () => slot.removeClass("is-near-up"));
+				}
 			}
 		}
 		if (e) bindHover(this.plugin, card, n.key, this.hoverParent);

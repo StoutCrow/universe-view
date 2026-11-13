@@ -11,7 +11,8 @@ export type FieldName =
 	| "participants" | "places" | "cultures" | "parents" | "adoptiveParents" | "partners"
 	| "relations" | "parentCultures" | "relatedCultures" | "coordinates" | "map" | "position"
 	| "locatedIn" | "image" | "color" | "importance" | "calendar" | "gender" | "summary"
-	| "lifespan" | "children" | "childCultures" | "birthPlace" | "deathPlace" | "mapId" | "knows" | "knownBy";
+	| "lifespan" | "children" | "childCultures" | "birthPlace" | "deathPlace" | "mapId" | "knows" | "knownBy"
+	| "leads" | "residences" | "startPlace" | "endPlace";
 
 /**
  * Property names that are recognized for each field, in priority order. Users can extend these.
@@ -65,6 +66,10 @@ export const DEFAULT_FIELD_ALIASES: Record<FieldName, string[]> = {
 	summary: ["summary", "description", "desc", "aliases-summary"],
 	knows: ["knows", "knowledge", "secrets", "aware-of"],
 	knownBy: ["known-by", "known_by", "knownby"],
+	leads: ["lead", "led-by", "led_by", "commanders", "commander"],
+	residences: ["residences", "residence", "lives-in", "lives_in", "home", "homes"],
+	startPlace: ["start-place", "start_place", "from-place", "departs-from", "departure", "starts-at", "origin-place"],
+	endPlace: ["end-place", "end_place", "to-place", "arrives-at", "arrival", "destination", "ends-at"],
 };
 
 export interface UniverseViewSettings {

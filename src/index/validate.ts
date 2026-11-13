@@ -1,5 +1,8 @@
 import type { EntityIndex } from "./EntityIndex";
 import type { Entity, Scene } from "../types";
+import { clashes } from "./whereabouts";
+import { chainLoop, orderProblem } from "./placepath";
+import { aliasCandidate } from "./aliases";
 import { days, haversineKm, kmPerUnit, parseScale, SPEED_KM } from "../render/travel";
 
 export type Severity = "error" | "warning" | "info";
@@ -17,7 +20,9 @@ export interface Issue {
 export type IssueFix =
 	| { kind: "create"; items: { name: string; type: "person" | "place" | "culture" | "event" }[] }
 	| { kind: "place"; map: string }
-	| { kind: "create-map"; name: string };
+	| { kind: "create-map"; name: string }
+	/** Add `name` to the aliases of the note at `target`, so links written with it find that note. */
+	| { kind: "alias"; name: string; target: string };
 
 const YEAR = 365.25;
 
@@ -79,6 +84,34 @@ export function continuity(index: Pick<EntityIndex, "get" | "scenes">, push: Pus
 	}
 }
 
+/**
+ * A person in two places at once, or between two events further apart than a horse could ride in the time between,
+ * and homes that overlap in time (`residences:`).
+ */
+export function whereaboutsChecks(index: Pick<EntityIndex, "get" | "entities" | "events">, push: Push) {
+	for (const p of index.entities.values()) {
+		if (p.type !== "person") continue;
+		const events = index.events(p.key);
+		for (const c of clashes(p, events, 400)) {
+			const pa = index.get(c.placeA.key);
+			const pb = index.get(c.placeB.key);
+			if (c.gap < 0) {
+				push(p.key, p.name, "warning", `${p.name} is at ${c.placeA.name} (${c.a.name}) and ${c.placeB.name} (${c.b.name}) at the same time`);
+				continue;
+			}
+			const km = pa && pb ? placeDistanceKm(index, pa, pb) : undefined;
+			if (km === undefined) continue;
+			const needed = km / SPEED_KM.horse;
+			if (needed > c.gap + 0.5 && needed > 1) push(p.key, p.name, "warning", `${p.name} gets from ${c.placeA.name} (${c.a.name}) to ${c.placeB.name} (${c.b.name}), ${Math.round(km)} km, in ${days(c.gap).replace(/^about /, "")}; on horseback that takes ${days(needed)}`);
+		}
+		const homes = p.residences.filter((r) => r.from).sort((a, b) => a.from!.start - b.from!.start);
+		for (let i = 1; i < homes.length; i++) {
+			const prev = homes[i - 1];
+			if (prev.to && prev.ref.key !== homes[i].ref.key && homes[i].from!.start < prev.to.start - YEAR) push(p.key, p.name, "info", `${p.name} lives at ${prev.ref.name} and ${homes[i].ref.name} at the same time`);
+		}
+	}
+}
+
 /** Two people holding the same one-person role of a group at the same time. */
 function roleClashes(index: EntityIndex, key: string, name: string, push: Push) {
 	const byRole = new Map<string, { who: string; a: number; b: number }[]>();
@@ -122,6 +155,8 @@ export function validate(index: EntityIndex): Issue[] {
 function runChecks(index: EntityIndex): Issue[] {
 	const out: Issue[] = [];
 	const push = (key: string, name: string, severity: Severity, message: string, fix?: IssueFix) => out.push({ key, name, severity, message, fix });
+	const byType = new Map<string, Entity[]>();
+	for (const x of index.entities.values()) byType.set(x.type, [...(byType.get(x.type) ?? []), x]);
 
 	for (const e of index.entities.values()) {
 		for (const msg of e.issues) push(e.key, e.name, msg.startsWith("Could not") || msg.includes("before start") ? "error" : "warning", msg);
@@ -129,11 +164,18 @@ function runChecks(index: EntityIndex): Issue[] {
 		// Each missing note, typed by the link it's in (a parent is a person, a place a place…).
 		const typed: [{ name: string; resolved: boolean }[], "person" | "place" | "culture" | "event"][] = [
 			[e.parents, "person"], [e.adoptiveParents, "person"], [e.participants, "person"], [e.partners.map((p) => p.ref), "person"],
-			[e.places, "place"], [e.parentCultures, "culture"], [e.cultures.map((c) => c.ref), e.type === "person" || e.type === "event" ? "culture" : "culture"],
+			[e.places, "place"], [e.locatedIn ? [e.locatedIn] : [], "place"], [e.parentCultures, "culture"], [e.cultures.map((c) => c.ref), e.type === "person" || e.type === "event" ? "culture" : "culture"],
 			[e.relations.map((r) => r.ref), e.type === "culture" ? "culture" : "person"],
 		];
 		const missing = new Map<string, "person" | "place" | "culture" | "event">();
 		for (const [refs, type] of typed) for (const r of refs) if (!r.resolved && !missing.has(r.name)) missing.set(r.name, type);
+		// A name that looks like another note's (USA for United States) is offered as that note's alias, not as a new note.
+		for (const [name, type] of [...missing]) {
+			const target = aliasCandidate(name, (byType.get(type) ?? []).filter((x) => x.key !== e.key));
+			if (!target) continue;
+			missing.delete(name);
+			push(e.key, e.name, "info", `“${name}” has no note, but looks like ${target.name}`, { kind: "alias", name, target: target.key });
+		}
 		if (missing.size) {
 			const names = [...missing.keys()];
 			push(e.key, e.name, "info", `Links to notes that don't exist yet: ${names.slice(0, 5).join(", ")}${names.length > 5 ? "…" : ""}`, { kind: "create", items: [...missing].map(([name, type]) => ({ name, type })) });
@@ -182,6 +224,12 @@ function runChecks(index: EntityIndex): Issue[] {
 			const hasMap = !!e.map && !!index.get(e.map.key);
 			if (e.map && hasMap && !e.position && !e.territories.some((t) => t.map === e.map!.key)) push(e.key, e.name, "info", `Not yet positioned on ${e.map.name}`, { kind: "place", map: e.map.key });
 			if (e.map && !hasMap) push(e.key, e.name, "warning", `Map “${e.map.name}” doesn't exist`, { kind: "create-map", name: e.map.name });
+			// Where it sits: a loop (A in B in A), or a bigger kind of place inside a smaller one (a county inside a city).
+			const loop = chainLoop((k) => index.get(k), e.key);
+			if (loop?.every((x) => x.key >= e.key)) push(e.key, e.name, "error", `Is inside itself: ${loop.map((x) => x.name).join(" in ")} in ${loop[0].name}`);
+			const parent = e.locatedIn?.resolved ? index.get(e.locatedIn.key) : undefined;
+			const wrong = parent && !loop ? orderProblem(e, parent) : undefined;
+			if (wrong) push(e.key, e.name, "info", wrong);
 		}
 
 		// Memberships that start after death or before birth.
@@ -195,6 +243,7 @@ function runChecks(index: EntityIndex): Issue[] {
 		if (e.type === "culture") roleClashes(index, e.key, e.name, push);
 	}
 	continuity(index, push);
+	whereaboutsChecks(index, push);
 	const order: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
 	return out.sort((a, b) => order[a.severity] - order[b.severity] || a.name.localeCompare(b.name));
 }

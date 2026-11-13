@@ -1,6 +1,5 @@
 import { Menu, Modal, Notice, Setting, TFile } from "obsidian";
 import { IconPickerModal } from "./icons";
-import { TextPrompt } from "./TextPrompt";
 import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { TYPE_WORDS, factTag, kindTag, parseTag } from "../index/tagscheme";
@@ -44,6 +43,70 @@ export function realmTiers(): [string, string, string][] {
 const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** The word written for each region level (1 continent … 6 spot). */
 const LEVEL_WORDS = ["", "Continent", "Subcontinent", "Region", "Area", "Locale", "Spot"];
+
+/** Icons offered at once when adding your own role or status; any other icon or an emoji is one click away. */
+const OWN_ICONS = {
+	role: ["castle", "anchor", "church", "store", "landmark", "shield", "graduation-cap", "hammer", "pickaxe", "wheat", "flask-conical", "lock"],
+	status: ["flame", "skull", "eye-off", "swords", "scale", "waves", "biohazard", "ghost"],
+};
+
+/** Your own role or status: a name and an icon, chosen together so no entry is left without one. */
+class OwnTraitModal extends Modal {
+	private chosen = "circle";
+
+	constructor(private plugin: UniverseViewPlugin, private kind: "role" | "status", private onDone: (name: string, icon: string) => void) {
+		super(plugin.app);
+	}
+
+	onOpen() {
+		this.containerEl.addClass("universeview-scope-host");
+		this.modalEl.addClass("universeview-scope");
+		this.titleEl.setText(`Your own ${this.kind}`);
+		const name = el("input", { cls: "universeview-prompt-input", attr: { type: "text", placeholder: this.kind === "role" ? "Spaceport" : "Quarantined", "aria-label": "Name" } }, this.contentEl);
+		const row = el("div", { cls: "uv-own-icons" }, this.contentEl);
+		const preview = el("span", { cls: "uv-own-preview", attr: { title: "The icon it will wear" } }, row);
+		const paint = () => {
+			preview.empty();
+			if (!glyph(preview, this.chosen)) icon(preview, "circle");
+		};
+		paint();
+		for (const ic of OWN_ICONS[this.kind]) {
+			const b = el("button", { cls: "clickable-icon", attr: { "aria-label": ic, title: ic } }, row);
+			glyph(b, ic);
+			b.addEventListener("click", () => {
+				this.chosen = ic;
+				paint();
+			});
+		}
+		const more = el("button", { text: "More icons…" }, row);
+		more.addEventListener("click", () => new IconPickerModal(this.plugin, (id) => {
+			if (id) this.chosen = id;
+			paint();
+		}, this.chosen).open());
+		const buttons = el("div", { cls: "modal-button-container" }, this.contentEl);
+		const add = el("button", { cls: "mod-cta", text: "Add" }, buttons);
+		const submit = () => {
+			const word = name.value.trim();
+			if (!word) return;
+			this.close();
+			this.onDone(word, this.chosen);
+		};
+		add.addEventListener("click", submit);
+		name.addEventListener("keydown", (evt) => {
+			if (evt.key === "Enter") submit();
+		});
+		window.setTimeout(() => name.focus(), 30);
+	}
+
+	onClose() {
+		this.contentEl.empty();
+	}
+}
+
+/** Whether a choice is a settlement (a city, town, fort…): only those have roles; regions and larger ruled lands don't. */
+export function isSettlement(c: TagChoice): boolean {
+	return c.nature === "realm" && c.tier === "6";
+}
 
 /** Where a choice ranks (lower is bigger): a title's tier plus its size, or a region's level plus its size. Undefined when nothing says. */
 export function rankOfChoice(c: TagChoice, regionWords: Record<string, number> = DEFAULT_REGION_WORDS): number | undefined {
@@ -112,7 +175,7 @@ export function choiceTags(c: TagChoice, type: EntityType = "place"): string[] {
 	const size = c.size ? [factTag(type, "size", c.size)] : [];
 	// A place's traits go with its kind: a role and a status, each only when there is one.
 	if (type === "place") {
-		if (c.role) size.push(factTag(type, "role", c.role));
+		if (c.role && isSettlement(c)) size.push(factTag(type, "role", c.role));
 		if (c.status) size.push(factTag(type, "status", c.status));
 	}
 	if (c.nature === "region") return [kindTag(type, c.landform || LEVEL_WORDS[Number(c.level)] || "region"), ...size];
@@ -289,18 +352,16 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 					el("span", { text: "Your own" }, add);
 					add.addEventListener("click", (evt) => {
 						evt.preventDefault();
-						new TextPrompt(p, `New ${name}`, "", (word) => {
-							new IconPickerModal(p, (id) => {
-								editTraits(p, name, (list) => [...list.filter((t) => t.name.toLowerCase() !== word.toLowerCase()), { name: word, icon: id ?? "circle" }]);
-								expanded.add(name);
-								set(cap1(word));
-								onChange(c);
-							}).open();
+						new OwnTraitModal(p, name, (word, ic) => {
+							editTraits(p, name, (list) => [...list.filter((t) => t.name.toLowerCase() !== word.toLowerCase()), { name: word, icon: ic }]);
+							expanded.add(name);
+							set(cap1(word));
+							onChange(c);
 						}).open();
 					});
 				}
 			};
-			chips("role", "What it does, beyond what it is: its pin wears the role's icon.", PLACE_ROLES.map((r) => [r.role, r.icon]), () => c.role, (v) => (c.role = v));
+			if (isSettlement(c)) chips("role", "What the settlement does, beyond what it is: its pin wears the role's icon.", PLACE_ROLES.map((r) => [r.role, r.icon]), () => c.role, (v) => (c.role = v));
 			chips("status", "How it stands now. Nothing chosen means as it was.", PLACE_STATUSES.map((s) => [s, STATUS_ICONS[s] ?? "circle"]), () => c.status, (v) => (c.status = v));
 		}
 		el("div", { cls: "uv-std-tags", text: `Tags: ${choiceTags(c).map((t) => "#" + t).join(" ")}` }, box);

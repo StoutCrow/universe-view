@@ -95,6 +95,13 @@ export class TimelineView extends UniverseViewBase {
 					list.push({
 						type: "choice", label: "Importance", options: [["0", "All events"], ["3", "3 and up"], ["4", "4 and up"], ["5", "Key events only"]], get: () => String(o.filter.minImportance ?? 0), set: (v) => { o.filter.minImportance = +v || undefined; this.update(); },
 					});
+					list.push({
+						type: "action", label: o.filter.places?.length ? "Only in another place…" : "Only in a place…", icon: "map-pin", run: () => new EntityPickerModal(this.plugin, ["place"], (place) => {
+							o.filter.places = [place.name];
+							this.fillToolbar();
+							this.update();
+						}, "Only what happened in or under which place?").open(),
+					});
 					list.push({ type: "action", label: "Shorter rows (Alt + scroll)", icon: "chevrons-down-up", run: () => this.renderer?.zoomRows(1 / 1.25) });
 					list.push({ type: "action", label: "Taller rows (Alt + scroll)", icon: "chevrons-up-down", run: () => this.renderer?.zoomRows(1.25) });
 					list.push({
@@ -107,6 +114,18 @@ export class TimelineView extends UniverseViewBase {
 					return list;
 				});
 			const chips = this.group();
+			// The place the timeline is narrowed to (it takes in everything inside it): click to take it off.
+			if (o.filter.places?.length) {
+				const only = el("button", { cls: "universeview-chip is-active", attr: { title: "Showing only what is in or under this place. Click to show everything again", "aria-label": `Only in ${o.filter.places[0]}: click to clear` } }, chips);
+				icon(el("span", { cls: "universeview-chip-icon" }, only), "map-pin");
+				el("span", { text: `In ${o.filter.places[0]}` }, only);
+				icon(el("span", { cls: "universeview-chip-check" }, only), "x");
+				only.addEventListener("click", () => {
+					o.filter.places = undefined;
+					this.fillToolbar();
+					this.update();
+				});
+			}
 			// What's on the timeline, in one menu (a count shows how many are on), like the map's overlays.
 			type Layer = [keyof TimelineOptions, string, string, string, boolean];
 			const layers: Layer[] = [

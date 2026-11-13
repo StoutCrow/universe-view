@@ -2,6 +2,7 @@ import { Keymap, TFile } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, Ref } from "../types";
 import { occupationsByLand } from "../index/wars";
+import { placeChain } from "../index/placepath";
 import { formatDate, formatSpan, yearsBetween } from "../dates/parser";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { ROW_INFO } from "../index/membership";
@@ -561,8 +562,11 @@ export class HoverCards {
 				break;
 			}
 			case "event": {
-				add("Where", e.places);
-				add("Who", e.participants);
+				if (e.startPlace) add("From", [e.startPlace]);
+				if (e.endPlace) add("To", [e.endPlace]);
+				add("Where", e.places.filter((r) => r.key !== e.startPlace?.key && r.key !== e.endPlace?.key));
+				add("Led by", e.leads);
+				add("Who", e.participants.filter((r) => !e.leads.some((l) => l.key === r.key)));
 				add("Sides", cultures);
 				const [prev, next] = this.neighbours(e);
 				if (prev) add("Before", [ref(prev.key)]);
@@ -582,13 +586,7 @@ export class HoverCards {
 				break;
 			}
 			case "place": {
-				const chain: Ref[] = [];
-				let cur = e.locatedIn;
-				for (let i = 0; cur && i < 4; i++) {
-					chain.push(cur);
-					cur = idx.get(cur.key)?.locatedIn;
-				}
-				add("Located in", chain);
+				add("Located in", placeChain((k) => idx.get(k), e.key).slice(1, 5).map((x) => ({ key: x.key, name: x.name, resolved: true })));
 				const pop = totalPopulation(idx, e.key);
 				if (pop) add("Population", `${pop.total.toLocaleString()}${pop.counted > 1 ? ` in ${pop.counted} places` : ""}`);
 				add("Held by", cultures);

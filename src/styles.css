@@ -1005,6 +1005,41 @@ g.is-dimmed .universeview-net-link.is-lit {
 .universeview-trace {
 	color: var(--trace-color, var(--interactive-accent));
 }
+/* The speed button beside the time slider's play button: small, and the figures keep their width as they change. */
+.universeview-time .uv-speed {
+	min-width: 34px;
+	padding: 0 6px;
+	justify-content: center;
+	font-variant-numeric: tabular-nums;
+}
+/* Someone on the map at the slider's date: a round dot with their initial, or the number of people there. */
+.uv-person-dot {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	border-radius: 10px;
+	box-sizing: border-box;
+	background: var(--pin-color, var(--interactive-accent));
+	border: 2px solid var(--background-primary);
+	color: #fff;
+	font-size: 11px;
+	font-weight: var(--font-bold);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+/* The dot that travels along a journey as the date moves. */
+.uv-traveller {
+	fill: var(--move-color, var(--interactive-accent));
+	fill-opacity: 1;
+	stroke: var(--background-primary);
+	stroke-width: 2px;
+}
 .universeview-trace-stop {
 	position: absolute;
 	/* Sits above-left of the place pin so the pin and its name stay visible. */
@@ -1150,8 +1185,14 @@ g.is-dimmed .universeview-net-link.is-lit {
 
 /* ---- Create modal ---------------------------------------------------------------------------- */
 
+/* The full creator opens at a comfortable size and can be dragged bigger from its corner. */
 .universeview-create-modal {
 	width: min(560px, 92vw);
+	min-width: min(420px, 92vw);
+	max-width: 96vw;
+	max-height: 92vh;
+	overflow: auto;
+	resize: both;
 }
 .universeview-type-switch {
 	display: grid;

@@ -226,6 +226,10 @@ button.uv-std-chip.is-active { color: var(--text-normal); border-color: var(--in
 button.uv-std-chip svg { width: 14px; height: 14px; }
 button.uv-std-chip .is-text-glyph { font-size: 14px; line-height: 1; }
 button.uv-std-chip.is-more, button.uv-std-chip.is-add { border-style: dashed; }
+/* Your own role or status: the chosen icon, then suggestions to pick from. */
+.uv-own-icons { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 10px; }
+.uv-own-preview { display: inline-grid; place-items: center; width: 32px; height: 32px; margin-right: 6px; border: 1px solid var(--interactive-accent); border-radius: var(--uv-r-md); background: color-mix(in srgb, var(--interactive-accent) 14%, transparent); font-size: 18px; }
+.uv-own-preview svg { width: 18px; height: 18px; }
 .uv-std-rank { font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
 .uv-std-tags { font-size: var(--font-ui-smaller); color: var(--text-faint); font-family: var(--font-monospace); margin-top: 4px; }
 .uv-std-modal { width: min(900px, 94vw); }

@@ -2,6 +2,8 @@ import { Notice, TFile, TFolder } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { EntityType } from "../types";
 import { formatDate } from "../dates/parser";
+import { EVENT_KINDS } from "../index/eventkinds";
+import { namesOf } from "../index/aliases";
 import { CREATOR_FIELDS, parseQuickAdd, quickAddFrontmatter, withFields, type CreatorField, type QuickAdd } from "../import/quickadd";
 import { factsFromPath, standardTag, standardTagsFor, type TagSample } from "../index/tagrules";
 import { factTag, kindTag, parseTag, tidyKinds } from "../index/tagscheme";
@@ -53,6 +55,8 @@ export class QuickCreator {
 	private tagsOwn: string[] = [];
 	private std: TagChoice = { nature: "realm", tier: "6", settlement: "City", landform: "", size: "" };
 	private stdUsed = false;
+	/** "More about it" stays open between notes once opened. */
+	private moreOpen = false;
 	private samples: TagSample[] = [];
 	private known: string[] = [];
 
@@ -228,7 +232,8 @@ export class QuickCreator {
 			if (!m) return undefined;
 			const frag = m[1].trim();
 			const low = frag.toLowerCase();
-			const hit = idx.all().filter((e) => e.name.toLowerCase().startsWith(low) && e.name.length > frag.length).sort((a, b) => a.name.length - b.name.length)[0];
+			// Any name a note goes by completes to its own name, so the link finds it.
+			const hit = idx.all().filter((e) => namesOf(e).some((n) => n.toLowerCase().startsWith(low) && n.length > frag.length)).sort((a, b) => a.name.length - b.name.length)[0];
 			return hit ? { frag, name: hit.name, at: before.length - m[1].length + m[1].indexOf(frag) } : undefined;
 		};
 		const showKeys = () => {
@@ -290,18 +295,34 @@ export class QuickCreator {
 		const { q, kind } = this.current();
 		this.formEl.empty();
 		this.lists.clear();
-		const name = this.row("Name");
+		// The fields that matter come first, in columns that follow the width of the pane; the rest fold under "More about it".
+		const grid = el("div", { cls: "uv-creator-grid" }, this.formEl);
+		const name = this.row("Name", grid, true);
 		const nameInput = el("input", { attr: { type: "text", "aria-label": "Name" } }, name);
 		nameInput.value = q.name;
 		const exists = el("div", { cls: "uv-quickadd-warn" }, name);
-		const checkName = (v: string) => exists.setText(v && this.plugin.index.findByName(v) ? "A note with this name exists" : "");
+		const checkName = (v: string) => {
+			const hit = v ? this.plugin.index.findByName(v) : undefined;
+			exists.setText(!hit ? "" : hit.name.toLowerCase() === v.trim().toLowerCase() ? "A note with this name exists" : `${hit.name} also goes by this name`);
+		};
 		checkName(q.name);
 		nameInput.addEventListener("input", () => {
 			this.fields.name = nameInput.value;
 			checkName(nameInput.value);
 			this.refresh();
 		});
-		for (const f of CREATOR_FIELDS[q.type]) this.field(f, q);
+		const fields = CREATOR_FIELDS[q.type];
+		for (const f of fields.filter((x) => !x.more)) this.field(f, q, grid);
+		const extra = fields.filter((x) => x.more);
+		if (extra.length) {
+			const more = el("details", { cls: "universeview-create-relations uv-creator-moredetails" }, this.formEl);
+			// Open when asked for, or when something in it is already filled in.
+			more.open = this.moreOpen || extra.some((f) => { const v = this.fields[f.key] ?? q[f.key]; return Array.isArray(v) ? v.length > 0 : !!v; });
+			el("summary", { text: "More about it" }, more);
+			more.addEventListener("toggle", () => (this.moreOpen = more.open));
+			const moreGrid = el("div", { cls: "uv-creator-grid" }, more);
+			for (const f of extra) this.field(f, q, moreGrid);
+		}
 		if (q.type === "place" || kind === "realm") {
 			const box = el("details", { cls: "universeview-create-relations uv-create-land" }, this.formEl);
 			box.open = this.stdUsed;
@@ -319,14 +340,19 @@ export class QuickCreator {
 		}
 	}
 
-	private row(label: string): HTMLElement {
-		const r = el("div", { cls: "uv-creator-row" }, this.formEl);
+	private row(label: string, into: HTMLElement, wide = false): HTMLElement {
+		const r = el("div", { cls: "uv-creator-row" + (wide ? " is-wide" : "") }, into);
 		el("label", { text: label }, r);
 		return el("div", { cls: "uv-creator-value" }, r);
 	}
 
-	private field(f: CreatorField, q: QuickAdd) {
-		const cell = this.row(f.label);
+	/** The picture names the vault has, offered as the box is typed in. */
+	private imageNames(): string[] {
+		return this.plugin.app.vault.getFiles().filter((f) => /^(png|jpe?g|webp|gif|svg|avif)$/i.test(f.extension)).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 300).map((f) => f.name);
+	}
+
+	private field(f: CreatorField, q: QuickAdd, into: HTMLElement) {
+		const cell = this.row(f.label, into, f.wide);
 		const value = q[f.key];
 		const set = (v: string | string[]) => {
 			this.fields[f.key] = v;
@@ -347,13 +373,39 @@ export class QuickCreator {
 			select.addEventListener("change", () => set(select.value));
 			return;
 		}
-		const input = el("input", { attr: { type: "text", "aria-label": f.label } }, cell);
-		input.value = String(value ?? "");
+		if (f.input === "color") {
+			// No colour until one is picked; "None" takes it away again.
+			const wrap = el("div", { cls: "uv-creator-color" + (value ? "" : " is-unset") }, cell);
+			const pick = el("input", { attr: { type: "color", "aria-label": f.label } }, wrap);
+			pick.value = /^#[0-9a-f]{6}$/i.test(String(value ?? "")) ? String(value) : "#7c5cff";
+			const none = el("button", { cls: "uv-creator-clear", text: "None", attr: { "aria-label": `No ${f.label.toLowerCase()}` } }, wrap);
+			pick.addEventListener("input", () => {
+				wrap.removeClass("is-unset");
+				set(pick.value);
+			});
+			none.addEventListener("click", () => {
+				wrap.addClass("is-unset");
+				set("");
+			});
+			return;
+		}
+		const input = el("input", { attr: { type: "text", "aria-label": f.label, ...(f.hint ? { placeholder: f.hint } : {}), ...(f.input === "number" ? { inputmode: "numeric" } : {}) } }, cell);
+		input.value = Array.isArray(value) ? value.join(", ") : String(value ?? "");
+		if (f.input === "image") {
+			const id = `uv-creator-images-${f.key}`;
+			input.setAttribute("list", id);
+			const dl = el("datalist", { attr: { id } }, cell);
+			for (const n of this.imageNames()) el("option", { attr: { value: n } }, dl);
+		}
+		if (f.input === "words") {
+			input.addEventListener("input", () => set(input.value.split(",").map((x) => x.trim()).filter(Boolean)));
+			return;
+		}
 		if (f.key === "kind") {
 			const id = `uv-creator-kinds-${q.type}`;
 			input.setAttribute("list", id);
 			const dl = el("datalist", { attr: { id } }, cell);
-			for (const c of new Set(this.plugin.index.all(q.type).flatMap((e) => e.category ?? []))) el("option", { attr: { value: c } }, dl);
+			for (const c of new Set([...(q.type === "event" ? EVENT_KINDS.map((k) => k.key) : []), ...this.plugin.index.all(q.type).flatMap((e) => e.category ?? [])])) el("option", { attr: { value: c } }, dl);
 		}
 		const hint = f.input === "date" ? el("div", { cls: "uv-creator-hint" }, cell) : undefined;
 		const check = () => {
@@ -517,7 +569,8 @@ export class QuickCreator {
 		if (all.length > 1) return this.makeMany(all);
 		for (const [key, list] of this.lists) {
 			const typedIn = list.collect();
-			if (typedIn.length) this.fields[key] = Array.isArray(this.parseLine("").q[key]) ? [...typedIn] : typedIn[0];
+			const many = CREATOR_FIELDS[this.current().q.type].find((f) => f.key === key)?.input === "links";
+			if (typedIn.length) this.fields[key] = many ? [...typedIn] : typedIn[0];
 		}
 		const { q, kind } = this.current();
 		if (!q.name.trim()) {

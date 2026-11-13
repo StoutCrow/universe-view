@@ -1,5 +1,6 @@
-import { Modal, Notice } from "obsidian";
+import { Modal, Notice, TFile } from "obsidian";
 import type UniverseViewPlugin from "../main";
+import { readAliases } from "../index/aliases";
 import { Issue, Severity, validate } from "../index/validate";
 import { el, icon, openEntity } from "../render/common";
 
@@ -91,6 +92,18 @@ export class ValidateModal extends Modal {
 			btn("map-pin-plus", "Place it on the map", () => {
 				this.close();
 				void this.plugin.placeOnMap(issue.key);
+			}, "mod-cta");
+		} else if (fix?.kind === "alias") {
+			const target = this.plugin.index.get(fix.target);
+			btn("tag", `Make it an alias of ${target?.name ?? "that note"}`, async () => {
+				const file = this.app.vault.getAbstractFileByPath(fix.target);
+				if (!(file instanceof TFile)) return;
+				await this.plugin.editFrontmatter(file, (front) => {
+					const key = "alias" in front && !("aliases" in front) ? "alias" : "aliases";
+					front[key] = [...readAliases(front[key], file.basename), fix.name];
+				}, "Add an alias");
+				new Notice(`${fix.name} now finds ${file.basename}.`);
+				window.setTimeout(() => this.render(), 600);
 			}, "mod-cta");
 		} else if (fix?.kind === "create-map") {
 			btn("map", `Create the map note “${fix.name}”`, async () => {

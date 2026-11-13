@@ -7,6 +7,7 @@ import type UniverseViewPlugin from "../main";
 import { EntityType } from "../types";
 import type { Entity } from "../types";
 import { formatDate, parseDate } from "../dates/parser";
+import { readAliases } from "../index/aliases";
 import { Calendar, GREGORIAN_ID } from "../dates/calendars";
 import { TYPE_ICONS, TYPE_LABELS, el, icon } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
@@ -186,6 +187,8 @@ export class CreateEntityModal extends Modal {
 	/** Realm or house, when a group of that kind is being made. */
 	private groupKind?: string;
 	private importance = 3;
+	/** "More about it" stays open between type switches once opened. */
+	private moreOpen = false;
 	private folderInput?: HTMLInputElement;
 	private folderHint?: HTMLElement;
 	/** Inside what the note belongs to (House Whitmore for James II), worked out from its links. */
@@ -442,6 +445,9 @@ export class CreateEntityModal extends Modal {
 			case "event":
 				this.dateField("date", "Date", "When it happened. Any precision works.");
 				this.dateField("end", "End date", "Optional: makes this a span.");
+				this.listField("startPlace", "Starts at", ["place"], keep("startPlace"));
+				this.listField("endPlace", "Ends at", ["place"], keep("endPlace"));
+				this.listField("leads", "Led by", ["person"], keep("leads"));
 				this.listField("participants", "People", ["person"], keep("participants", p.participants));
 				this.listField("places", "Places", ["place"], keep("places", p.places));
 				this.listField("cultures", "Cultures", ["culture"], keep("cultures", p.cultures));
@@ -458,6 +464,7 @@ export class CreateEntityModal extends Modal {
 				);
 				this.listField("parents", "Parents", ["person"], keep("parents", p.parents));
 				this.listField("partners", "Partners", ["person"], keep("partners"));
+				this.listField("residences", "Lives at", ["place"], keep("residences"));
 				this.listField("cultures", "Cultures", ["culture"], keep("cultures", p.cultures));
 				this.relationFields("person", keep);
 				break;
@@ -517,6 +524,55 @@ export class CreateEntityModal extends Modal {
 					});
 				break;
 		}
+		this.moreFields(keep);
+	}
+
+	/** "More about it": what the main fields leave out, folded away until asked for (open again if something in it is filled in). */
+	private moreFields(keep: (k: string, init?: string[]) => string[]) {
+		const type = this.type;
+		const box = el("details", { cls: "universeview-create-relations uv-create-more" }, this.fieldsEl);
+		const text = (key: string, label: string, desc: string, placeholder = "") => {
+			let input!: HTMLInputElement;
+			new Setting(this.fieldsEl).setName(label).setDesc(desc).addText((t) => {
+				input = t.inputEl;
+				t.setPlaceholder(placeholder).setValue(this.extra[key] ?? "").onChange((v) => (this.extra[key] = v));
+			});
+			return input;
+		};
+		el("summary", { text: "More about it" }, box);
+		box.addEventListener("toggle", () => (this.moreOpen = box.open));
+		const outer = this.fieldsEl;
+		this.fieldsEl = box;
+		try {
+			text("aliases", "Also called", "Other names it goes by, separated by commas. A link written with one finds this note.", "USA, America");
+			text("summary", "Summary", "One line about it, shown on cards and in the inspector.");
+			if (type === "person") {
+				text("occupation", "Occupation", "What they do or did.");
+				this.listField("birthPlace", "Born at", ["place"], keep("birthPlace"), true);
+				this.listField("deathPlace", "Died at", ["place"], keep("deathPlace"), true);
+				this.listField("children", "Children", ["person"], keep("children"));
+			}
+			if (type === "event") {
+				this.listField("war", "Part of", ["event"], keep("war"), true);
+				this.listField("causes", "Caused by", ["event"], keep("causes"));
+				this.listField("effects", "Led to", ["event"], keep("effects"));
+			}
+			if (type === "place") {
+				text("population", "Population", "How many live there (a number).", "12000");
+				text("terrain", "Terrain", "Mountains, forest, marsh… slows journeys across it.");
+			}
+			if (type === "event" || type === "person" || type === "place") {
+				new Setting(this.fieldsEl).setName("Colour").setDesc("Used on timelines, cards and maps. Leave alone to keep the default.").addColorPicker((c) => c.setValue(this.extra.color ?? "#7c5cff").onChange((v) => (this.extra.color = v)));
+				const picture = text("image", type === "person" ? "Portrait" : "Picture", "An image in your vault, such as portrait.png.", "portrait.png");
+				const dl = el("datalist", { attr: { id: "universeview-more-images" } }, box);
+				for (const f of this.plugin.app.vault.getFiles().filter((x) => /^(png|jpe?g|webp|gif|svg|avif)$/i.test(x.extension)).slice(0, 500)) el("option", { attr: { value: f.name } }, dl);
+				picture.setAttribute("list", "universeview-more-images");
+			}
+		} finally {
+			this.fieldsEl = outer;
+		}
+		// Open when asked for before, or when something in it is already filled in.
+		box.open = this.moreOpen || ["aliases", "summary", "occupation", "population", "terrain", "image"].some((k) => !!this.extra[k]?.trim()) || ["birthPlace", "deathPlace", "children", "war", "causes", "effects"].some((k) => (this.lists[k]?.values.length ?? 0) > 0);
 	}
 
 	private async submit() {
@@ -539,6 +595,9 @@ export class CreateEntityModal extends Modal {
 			case "event":
 				setIf(f("date"), this.dates.date?.trim());
 				setIf(f("end"), this.dates.end?.trim());
+				setIf(f("startPlace"), links("startPlace")[0]);
+				setIf(f("endPlace"), links("endPlace")[0]);
+				setIf(f("leads"), links("leads"));
 				setIf(f("participants"), links("participants"));
 				setIf(f("places"), links("places"));
 				setIf(f("cultures"), links("cultures"));
@@ -550,6 +609,7 @@ export class CreateEntityModal extends Modal {
 				setIf(f("gender"), this.extra.gender);
 				setIf(f("parents"), links("parents"));
 				setIf(f("partners"), links("partners"));
+				setIf(f("residences"), links("residences"));
 				setIf(f("cultures"), links("cultures"));
 				this.writeRelations(fm, links);
 				break;
@@ -574,6 +634,31 @@ export class CreateEntityModal extends Modal {
 			case "map":
 				if (this.extra.image) fm[f("image")] = `[[${this.extra.image.replace(/^\[\[|\]\]$/g, "")}]]`;
 				break;
+		}
+		const aka = readAliases(this.extra.aliases ?? "", name);
+		if (aka.length) fm.aliases = aka;
+		// What "More about it" holds.
+		const x = (k: string) => this.extra[k]?.trim();
+		setIf(f("summary"), x("summary"));
+		if (this.type === "person") {
+			setIf("occupation", x("occupation"));
+			setIf(f("birthPlace"), links("birthPlace")[0]);
+			setIf(f("deathPlace"), links("deathPlace")[0]);
+			setIf(f("children"), links("children"));
+		}
+		if (this.type === "event") {
+			setIf("war", links("war")[0]);
+			setIf("caused-by", links("causes"));
+			setIf("led-to", links("effects"));
+		}
+		if (this.type === "place") {
+			const pop = Number((x("population") ?? "").replace(/[,_\s]/g, ""));
+			if (x("population") && Number.isFinite(pop)) fm.population = pop;
+			setIf("terrain", x("terrain")?.toLowerCase());
+		}
+		if (this.type === "event" || this.type === "person" || this.type === "place") {
+			setIf(f("color"), this.extra.color);
+			if (x("image")) fm[f("image")] = `[[${x("image").replace(/^!?\[\[|\]\]$/g, "")}]]`;
 		}
 		if (cal && cal !== p.index.calendarFor(this.folder.replace(/\/$/, ""))) fm[f("calendar")] = cal;
 		try {

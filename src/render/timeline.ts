@@ -353,7 +353,7 @@ export class TimelineRenderer {
 				const file = plugin.app.vault.getAbstractFileByPath(s.path);
 				if (!file) continue;
 				// Not a UniverseView note, so it stands in as a light event-shaped entry.
-				const pseudo = { key: s.path, path: s.path, name: s.name, type: "event", importance: 3, cultures: [], places: s.places, participants: s.cast, tags: [], props: {} } as unknown as Entity;
+				const pseudo = { key: s.path, path: s.path, name: s.name, type: "event", importance: 3, cultures: [], places: s.places, participants: s.cast, leads: [], tags: [], props: {} } as unknown as Entity;
 				out.push({ id: `scene:${s.path}`, key: s.path, label: s.name, start: s.date.start, end: s.date.start, point: true, approx: s.date.approx, color: "var(--interactive-accent)", kind: "scene", importance: 3, dateText: `Story: ${formatDate(s.date, cal)}${s.flashback ? " (flashback)" : ""}`, entity: pseudo });
 			}
 		}
@@ -549,8 +549,11 @@ export class TimelineRenderer {
 		if (e.summary) el("p", { cls: "uv-tl-card-summary", text: e.summary }, card);
 		// Its people, places and groups; each one picks that one on the timeline if it's there.
 		const rows: [string, { key: string; name: string }[]][] = [
-			["People", e.participants.map((r) => ({ key: r.key, name: r.name }))],
-			["Where", e.places.map((r) => ({ key: r.key, name: r.name }))],
+			["Led by", e.leads.map((r) => ({ key: r.key, name: r.name }))],
+			["Members", e.participants.filter((r) => !e.leads.some((l) => l.key === r.key)).map((r) => ({ key: r.key, name: e.presence?.[r.key] ? `${r.name} (part of it)` : r.name }))],
+			["From", e.startPlace ? [{ key: e.startPlace.key, name: e.startPlace.name }] : []],
+			["To", e.endPlace ? [{ key: e.endPlace.key, name: e.endPlace.name }] : []],
+			["Where", e.places.filter((r) => r.key !== e.startPlace?.key && r.key !== e.endPlace?.key).map((r) => ({ key: r.key, name: r.name }))],
 			["Groups", e.cultures.map((c) => ({ key: c.ref.key, name: c.ref.name }))],
 			["Sides", sidesOf(idx, e).map((s) => ({ key: s.party.key, name: `${s.party.name}${s.outcome ? ` (${s.outcome})` : ""}` }))],
 		];

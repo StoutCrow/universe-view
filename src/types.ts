@@ -127,6 +127,8 @@ export interface Entity {
 	tags: string[];
 	color?: string;
 	image?: string;
+	/** Other names it goes by (`aliases:`). A link written with one finds this note. */
+	aka: string[];
 	/** Lucide icon name or emoji for map pins and cards ("icon: castle"). */
 	icon?: string;
 	/** Small image (sigil, crest, flag) shown on map pins. */
@@ -181,10 +183,19 @@ export interface Entity {
 
 	// events
 	participants: Ref[];
+	/** On an event: who led it (`lead:`). Always also in `participants`. */
+	leads: Ref[];
+	/** Who was there only part of the time (`participants: [[Anna]] (1066-1068)`), by key; everyone else was there throughout. */
+	presence?: Record<string, { from?: ChronDate; to?: ChronDate }>;
+	/** On a journey, march or voyage: where it set out from and where it ended (`start-place:`, `end-place:`). Both are also in `places`, first and last. */
+	startPlace?: Ref;
+	endPlace?: Ref;
 	places: Ref[];
 	cultures: TimedRef[];
 
 	// people
+	/** Where a person lives by default (`residences:`), with dates when they moved. */
+	residences: TimedRef[];
 	parents: Ref[];
 	adoptiveParents: Ref[];
 	/** How a parent who is not one by birth is one (`step`, `foster`, `guardian`), by their key. */

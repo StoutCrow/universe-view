@@ -73,6 +73,7 @@ body.uv-t-toolbar .universeview-toolbar {
 /* ---- Fields: recessed ---- */
 body.uv-t-fields .universeview-toolbar .dropdown,
 body.uv-t-fields .universeview-picker input,
+body.uv-t-fields .universeview-ep .uv-when-input,
 body.uv-t-fields .universeview-toolbar .universeview-search input,
 body.uv-t-fields .universeview-dash-tree-head .universeview-search input {
 	background: var(--uv-t-sunk);

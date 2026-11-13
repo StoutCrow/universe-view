@@ -16,6 +16,26 @@ export interface QuickAdd {
 	cultures: string[];
 	parents: string[];
 	leaders: string[];
+	/** Where a person lives by default. */
+	residences?: string[];
+	/** Where a journey, march or voyage set out from and where it ended. */
+	startPlace?: string;
+	endPlace?: string;
+	/** Other names it goes by (`aliases:`). */
+	aliases?: string[];
+	/** Where a person died. */
+	deathPlace?: string;
+	partners?: string[];
+	children?: string[];
+	/** On an event: what led to it, and what it led to. */
+	causes?: string[];
+	effects?: string[];
+	population?: string;
+	terrain?: string;
+	/** A colour for its pins, bars and cards ("#8844cc"). */
+	color?: string;
+	/** A picture from the vault (its file name). */
+	image?: string;
 	tags: string[];
 	kind?: string;
 	summary?: string;
@@ -44,7 +64,7 @@ const TYPE_OF: Record<string, EntityType> = { event: "event", person: "person", 
 const names = (s: string) => s.split(/\s*(?:,|\band\b|&|\+)\s*/i).map((x) => x.replace(/^\[\[|\]\]$/g, "").trim()).filter(Boolean);
 
 export function parseQuickAdd(text: string, ctx: QuickAddContext): QuickAdd {
-	const out: QuickAdd = { name: "", type: "event", places: [], participants: [], cultures: [], parents: [], leaders: [], tags: [], unknown: [] };
+	const out: QuickAdd = { name: "", type: "event", places: [], participants: [], cultures: [], parents: [], leaders: [], residences: [], tags: [], unknown: [] };
 	// Commas inside [[links]] aren't separators.
 	const parts = text.split(/,(?![^[]*\]\])/).map((s) => s.trim()).filter(Boolean);
 	if (!parts.length) return out;
@@ -79,6 +99,7 @@ export function parseQuickAdd(text: string, ctx: QuickAddContext): QuickAdd {
 			if (TYPE_OF[v]) explicitType = TYPE_OF[v];
 			else out.kind = v;
 		} else if ((m = p.match(/^(?:summary|about|note)\s*:\s*(.+)$/i))) out.summary = m[1].trim();
+		else if ((m = p.match(/^(?:aka|a\.k\.a\.?|also called|also known as|known as|alias)\s*:?\s+(.+)$/i))) (out.aliases ??= []).push(m[1].replace(/^\[\[|\]\]$/g, "").trim());
 		else if ((m = p.match(/^(?:born|b\.)\s+(.+)$/i))) {
 			out.date = m[1].trim();
 			personHints += 2;
@@ -133,10 +154,17 @@ export function parseQuickAdd(text: string, ctx: QuickAddContext): QuickAdd {
 export interface CreatorField {
 	key: keyof QuickAdd;
 	label: string;
-	input: "date" | "text" | "links" | "link" | "choice";
+	/** words: a few short names, separated by commas. image: a file from the vault. color: a colour or none. */
+	input: "date" | "text" | "links" | "link" | "choice" | "words" | "image" | "color" | "number";
 	/** What a link can point at. */
 	types?: EntityType[];
 	options?: [string, string][];
+	/** Tucked under "More about it" until asked for. */
+	more?: boolean;
+	/** Takes the whole row, even where the form has several columns. */
+	wide?: boolean;
+	/** A hint inside the empty box. */
+	hint?: string;
 }
 
 const IMPORTANCE: [string, string][] = [["", "Normal"], ["5", "Key event"], ["4", "Major"], ["2", "Minor"], ["1", "Footnote"]];
@@ -149,11 +177,19 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "end", label: "End", input: "date" },
 		{ key: "kind", label: "Kind", input: "text" },
 		{ key: "places", label: "Where", input: "links", types: ["place"] },
+		{ key: "leaders", label: "Led by", input: "links", types: ["person"] },
 		{ key: "participants", label: "Who", input: "links", types: ["person"] },
-		{ key: "cultures", label: "Groups", input: "links", types: ["culture"] },
-		{ key: "war", label: "Part of", input: "link", types: ["event"] },
-		{ key: "importance", label: "Importance", input: "choice", options: IMPORTANCE },
-		{ key: "summary", label: "Summary", input: "text" },
+		{ key: "summary", label: "Summary", input: "text", wide: true },
+		{ key: "startPlace", label: "Starts at", input: "link", types: ["place"], more: true },
+		{ key: "endPlace", label: "Ends at", input: "link", types: ["place"], more: true },
+		{ key: "cultures", label: "Groups", input: "links", types: ["culture"], more: true },
+		{ key: "war", label: "Part of", input: "link", types: ["event"], more: true },
+		{ key: "causes", label: "Caused by", input: "links", types: ["event"], more: true },
+		{ key: "effects", label: "Led to", input: "links", types: ["event"], more: true },
+		{ key: "importance", label: "Importance", input: "choice", options: IMPORTANCE, more: true },
+		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
+		{ key: "image", label: "Picture", input: "image", more: true },
+		{ key: "color", label: "Colour", input: "color", more: true },
 	],
 	person: [
 		{ key: "date", label: "Born", input: "date" },
@@ -163,7 +199,14 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "parents", label: "Parents", input: "links", types: ["person"] },
 		{ key: "cultures", label: "House and groups", input: "links", types: ["culture"] },
 		{ key: "birthPlace", label: "Born at", input: "link", types: ["place"] },
-		{ key: "summary", label: "Summary", input: "text" },
+		{ key: "summary", label: "Summary", input: "text", wide: true },
+		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
+		{ key: "deathPlace", label: "Died at", input: "link", types: ["place"], more: true },
+		{ key: "residences", label: "Lives at", input: "links", types: ["place"], more: true },
+		{ key: "partners", label: "Partners", input: "links", types: ["person"], more: true },
+		{ key: "children", label: "Children", input: "links", types: ["person"], more: true },
+		{ key: "image", label: "Portrait", input: "image", more: true },
+		{ key: "color", label: "Colour", input: "color", more: true },
 	],
 	culture: [
 		{ key: "date", label: "Founded", input: "date" },
@@ -171,7 +214,10 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "leaders", label: "Led by", input: "links", types: ["person"] },
 		{ key: "cultures", label: "Part of", input: "links", types: ["culture"] },
 		{ key: "places", label: "Seat", input: "links", types: ["place"] },
-		{ key: "summary", label: "Summary", input: "text" },
+		{ key: "summary", label: "Summary", input: "text", wide: true },
+		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
+		{ key: "image", label: "Logo or picture", input: "image", more: true },
+		{ key: "color", label: "Colour", input: "color", more: true },
 	],
 	place: [
 		{ key: "kind", label: "Kind", input: "text" },
@@ -179,9 +225,14 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "cultures", label: "Held by", input: "links", types: ["culture"] },
 		{ key: "date", label: "Founded", input: "date" },
 		{ key: "end", label: "Abandoned", input: "date" },
-		{ key: "summary", label: "Summary", input: "text" },
+		{ key: "summary", label: "Summary", input: "text", wide: true },
+		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
+		{ key: "population", label: "Population", input: "number", more: true },
+		{ key: "terrain", label: "Terrain", input: "text", hint: "Mountains, forest, marsh…", more: true },
+		{ key: "image", label: "Picture", input: "image", more: true },
+		{ key: "color", label: "Colour", input: "color", more: true },
 	],
-	map: [{ key: "summary", label: "Summary", input: "text" }],
+	map: [{ key: "summary", label: "Summary", input: "text", wide: true }],
 };
 
 /** A parsed line with what was set by hand in the form on top of it. */
@@ -206,11 +257,16 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 		case "event":
 			if (q.date) fm.date = q.date;
 			if (q.end) fm.end = q.end;
+			if (q.startPlace) fm["start-place"] = link(q.startPlace);
+			if (q.endPlace) fm["end-place"] = link(q.endPlace);
+			if (q.leaders.length) fm.lead = list(q.leaders);
 			if (q.participants.length) fm.participants = list(q.participants);
 			if (q.places.length) fm.places = list(q.places);
 			if (q.cultures.length) fm.cultures = list(q.cultures);
 			if (q.war) fm.war = link(q.war);
 			if (q.importance) fm.importance = Number(q.importance);
+			if (q.causes?.length) fm["caused-by"] = list(q.causes);
+			if (q.effects?.length) fm["led-to"] = list(q.effects);
 			break;
 		case "person":
 			if (q.date) fm.born = q.date;
@@ -218,6 +274,10 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.gender) fm.gender = q.gender;
 			if (q.occupation) fm.occupation = q.occupation;
 			if (q.birthPlace) fm.birthplace = link(q.birthPlace);
+			if (q.deathPlace) fm.deathplace = link(q.deathPlace);
+			if (q.residences?.length) fm.residences = list(q.residences);
+			if (q.partners?.length) fm.partners = list(q.partners);
+			if (q.children?.length) fm.children = list(q.children);
 			if (q.parents.length) fm.parents = list(q.parents);
 			if (q.cultures.length) fm.cultures = list(q.cultures);
 			if (q.places.length) fm.places = list(q.places);
@@ -234,8 +294,14 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.end) fm.dissolved = q.end;
 			if (q.places.length) fm["located-in"] = link(q.places[0]);
 			if (q.cultures.length) fm.cultures = list(q.cultures);
+			if (q.population && Number.isFinite(Number(q.population.replace(/[,_\s]/g, "")))) fm.population = Number(q.population.replace(/[,_\s]/g, ""));
+			if (q.terrain) fm.terrain = q.terrain.trim().toLowerCase();
 			break;
 	}
+	// What every note can have.
+	if (q.aliases?.length) fm.aliases = [...new Set(q.aliases.map((a) => a.trim()).filter(Boolean))];
+	if (q.color) fm.color = q.color;
+	if (q.image) fm.image = link(q.image.replace(/^!?\[\[|\]\]$/g, ""));
 	if (q.summary) fm.summary = q.summary;
 	if (q.tags.length) fm.tags = [...new Set(q.tags)];
 	return fm;
