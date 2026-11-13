@@ -10,7 +10,7 @@ import { formatDay } from "../dates/parser";
 import { TYPE_LABELS, el, glyph, helpTip, icon, tuckDescriptions } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
 import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
-import { PLACE_GROUPS, groupOfKind, normaliseKind } from "../index/placekinds";
+import { PLACE_GROUPS, defaultRoles, defaultStatuses, groupOfKind, normaliseKind } from "../index/placekinds";
 import { chooseWorldSetting } from "./worldsettingui";
 import { renderThemeCards } from "./themecards";
 import { previewButtons, previewEdges, previewFonts, previewHeadings, previewIcons, previewTabs, stylePicker } from "./stylepicker";
@@ -764,8 +764,35 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		}
 		new Setting(lastKinds)
 			.setName("Traits")
-			.setDesc("What is special about a place goes in tags, not in its kind: a role (#Place_Role_Capital, #Place_Role_Port, #Place_Role_Holy, #Place_Role_Market), a size (#Place_Size_Small) and a status (#Place_Status_Ruined, Abandoned, Lost, Destroyed). A place with a role wears that role's crown, anchor or other icon on the map. The Tag standard window sets them.");
-		new Setting(lastKinds).addButton((b) => b.setButtonText("Reset to the built-in kinds").onClick(async () => {
+			.setDesc("What is special about a place goes in tags, not in its kind: a role (#Place_Role_Capital), a size (#Place_Size_Small) and a status (#Place_Status_Ruined). The roles and statuses are lists you can edit just below. A place with a role wears that role's crown, anchor or other icon on the map. The Tag standard window sets them.");
+		// Roles and statuses are lists of your own: name, icon (a Lucide name or an emoji) and, for a role, its pin's colour.
+			type TraitRow = { name: string; icon: string; color: string };
+			const saveTraits = async () => {
+				await this.save(false);
+				this.plugin.refreshMaps();
+			};
+			this.rows(containerEl, "Roles of places", "What a place does, beyond what it is (Capital, Port…). A place with a role wears its icon and colour on the map; pick roles in the inspector's What it is. The first few are shown in the inspector, the rest behind More.", [
+				{ key: "name", label: "Role", kind: "text", width: "1.4fr", placeholder: "Capital" },
+				{ key: "icon", label: "Icon", kind: "icon", width: "1.3fr", placeholder: "crown" },
+				{ key: "color", label: "Pin colour", kind: "color", width: "84px" },
+			], (s.placeRoles ?? defaultRoles()).map((r): TraitRow => ({ name: r.name, icon: r.icon, color: r.color ?? "#7a6a58" })), async (rows) => {
+				s.placeRoles = rows.filter((r) => String(r.name ?? "").trim()).map((r) => ({ name: String(r.name).trim(), icon: String(r.icon ?? ""), color: String(r.color ?? "") }));
+				await saveTraits();
+			}, { blank: (): TraitRow => ({ name: "", icon: "", color: "#7a6a58" }), addLabel: "Add a role" });
+			this.rows(containerEl, "Statuses of places", "How a place stands now (Ruined, Abandoned…).", [
+				{ key: "name", label: "Status", kind: "text", width: "1.4fr", placeholder: "Ruined" },
+				{ key: "icon", label: "Icon", kind: "icon", width: "1.3fr", placeholder: "flame" },
+			], (s.placeStatuses ?? defaultStatuses()).map((r) => ({ name: r.name, icon: r.icon })), async (rows) => {
+				s.placeStatuses = rows.filter((r) => String(r.name ?? "").trim()).map((r) => ({ name: String(r.name).trim(), icon: String(r.icon ?? "") }));
+				await saveTraits();
+			}, { blank: () => ({ name: "", icon: "" }), addLabel: "Add a status" });
+			new Setting(containerEl).addButton((b) => b.setButtonText("Reset roles and statuses").onClick(async () => {
+				s.placeRoles = undefined;
+				s.placeStatuses = undefined;
+				await saveTraits();
+				this.update();
+			}));
+			new Setting(lastKinds).addButton((b) => b.setButtonText("Reset to the built-in kinds").onClick(async () => {
 			s.mapCategories = DEFAULT_SETTINGS.mapCategories;
 			await this.save(false);
 			this.update();

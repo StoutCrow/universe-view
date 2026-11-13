@@ -83,7 +83,7 @@ export const DEFAULT_REGION_WORDS: Record<string, number> = {
 	region: 3, archipelago: 3, expanse: 3, wilds: 3,
 	area: 4, peninsula: 4, island: 4, isle: 4, mountains: 4, range: 4, desert: 4, highlands: 4, lowlands: 4, steppe: 4, tundra: 4,
 	forest: 5, wood: 5, woods: 5, valley: 5, plain: 5, plains: 5, coast: 5, marsh: 5, swamp: 5, moor: 5, hills: 5, bay: 5, gulf: 5, strait: 5,
-	lake: 6, glade: 6, pass: 6,
+	lake: 6, glade: 6, pass: 6, locale: 5, spot: 6,
 };
 
 /** The built-in names of each realm tier (1 empire … 6 settlement), one and many. */
@@ -198,10 +198,24 @@ export function natureOf(e: Entity, words: Record<string, number> = DEFAULT_TIER
 	return undefined;
 }
 
+/** How a size word moves a region's rank: geography spans more, so #Region_Gigantic is a continent and #Region_Enormous a sub-continent. */
+export const REGION_SIZE_OFFSET: Record<string, number> = { gigantic: -2, enormous: -1.4, massive: -1.4, huge: -1, large: -0.5, big: -0.5, major: -0.5, medium: 0, small: 0.5, minor: 0.5, little: 0.5, tiny: 1 };
+
+/** A region's level (1 continent … 6 spot) from its geography words alone, before any size; undefined when nothing names one. */
+export function regionLevelOf(e: Entity, regionWords: Record<string, number> = DEFAULT_REGION_WORDS): number | undefined {
+	let best = 9;
+	for (const raw of [e.category ?? "", ...e.tags]) {
+		const parts = landParts(raw);
+		const sized = parts.length === 2 && REGION_SIZE_OFFSET[parts[1]] !== undefined;
+		const r = regionWords[parts.join("")] ?? (parts.length === 1 || sized ? regionWords[parts[0]] : undefined);
+		if (r !== undefined && r < best) best = r;
+	}
+	return best === 9 ? undefined : best;
+}
+
 /** A region's scale from its geography words, with sizes (#Region_Enormous is bigger than #Region). */
 export function regionRankOf(e: Entity, regionWords: Record<string, number> = DEFAULT_REGION_WORDS): number {
-	// Geography spans more: #Region_Gigantic is a continent, #Region_Enormous a sub-continent.
-	const REGION_SIZE: Record<string, number> = { gigantic: -2, enormous: -1.4, massive: -1.4, huge: -1, large: -0.5, big: -0.5, major: -0.5, medium: 0, small: 0.5, minor: 0.5, little: 0.5, tiny: 1 };
+	const REGION_SIZE = REGION_SIZE_OFFSET;
 	let best = 9;
 	let size = 0;
 	for (const raw of [e.category ?? "", ...e.tags]) {
@@ -225,7 +239,7 @@ export function tierWords(text: string): Record<string, number> {
 }
 
 /** Size suffixes on tags like `Region_Small`: a hint between equal ranks. */
-const SIZE = { gigantic: -0.45, enormous: -0.45, massive: -0.45, huge: -0.4, large: -0.2, big: -0.2, major: -0.2, medium: 0, small: 0.2, minor: 0.2, little: 0.2, tiny: 0.4 } as Record<string, number>;
+export const SIZE = { gigantic: -0.45, enormous: -0.45, massive: -0.45, huge: -0.4, large: -0.2, big: -0.2, major: -0.2, medium: 0, small: 0.2, minor: 0.2, little: 0.2, tiny: 0.4 } as Record<string, number>;
 
 /** A note's tier rank from its kind and tags (9 when nothing names one). */
 export function rankOf(e: Entity, words: Record<string, number> = DEFAULT_TIER_WORDS): number {

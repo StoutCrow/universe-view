@@ -80,7 +80,7 @@ export class OrgChartView extends UniverseViewBase {
 				this.update();
 			}, "What the chart shows");
 			const mode = o.mode ?? "realms";
-			this.entityPicker(left, mode === "realms" ? ["culture", "place"] : ["culture"], o.root, mode === "realms" ? "Realm (all when empty)…" : mode === "dynasties" ? "House (all when empty)…" : "Organisation (all when empty)…", (k) => {
+			this.entityPicker(left, mode === "realms" ? ["culture", "place"] : ["culture"], o.root, mode === "realms" ? "Realm or place (all when empty)…" : mode === "dynasties" ? "House (all when empty)…" : "Organisation (all when empty)…", (k) => {
 				o.root = k;
 				this.update();
 			});
@@ -103,7 +103,12 @@ export class OrgChartView extends UniverseViewBase {
 				},
 				["culture", "person"],
 			);
-			optionsButton(left, () => [
+			dropdown(left, [["chart", "Chart"], ["outline", "Outline"], ["time", "Over time"]], o.layout ?? "chart", (v) => {
+					o.layout = v as OrgOptions["layout"];
+					this.update();
+				}, "Layout");
+				optionsButton(left, () => [
+					...(o.collapsed?.length ? [{ type: "action", label: `Unfold all branches (${o.collapsed.length})`, icon: "unfold-vertical", run: () => { o.collapsed = []; this.update(); } } as OptionEntry] : []),
 				{ type: "choice", label: "Levels shown", options: [["1", "1 level"], ["2", "2 levels"], ["3", "3 levels"], ["4", "4 levels"], ["8", "All levels"]], get: () => String(o.depth), set: (v) => { o.depth = Number(v); this.update(); } },
 				{ type: "toggle", label: "Members", get: () => !!o.members, set: (v) => { o.members = v; this.update(); } },
 				{ type: "toggle", label: "Group ties", get: () => o.relations !== false, set: (v) => { o.relations = v; this.update(); } },

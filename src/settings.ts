@@ -217,6 +217,9 @@ export interface UniverseViewSettings {
 	mapMovesFiles?: "ask" | "always" | "off";
 	/** Extra geography words ("word = scale", 1 continent … 6 spot): notes named only by these are regions. */
 	regionWords?: string;
+	/** The roles and statuses places can have (Capital, Ruined…), each with an icon (a Lucide name or an emoji); the built-in few when unset. */
+	placeRoles?: { name: string; icon: string; color?: string }[];
+	placeStatuses?: { name: string; icon: string }[];
 	/** Hover cards on notes and folders in the file explorer. */
 	explorerHover?: boolean;
 	/** A small outline map in hover cards for places and realms. */

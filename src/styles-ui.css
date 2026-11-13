@@ -1490,7 +1490,7 @@ textarea.universeview-mono {
 	z-index: var(--layer-menu, 65);
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 4px;
 	/* One fixed width: a different selected value never resizes the panel or its rows. */
 	width: min(320px, calc(100vw - 16px));
 	max-height: min(70vh, 520px);
@@ -1537,25 +1537,30 @@ textarea.universeview-mono {
 	flex: none;
 	margin: 0 4px 0 auto;
 }
-.uv-options-action {
+/* `button.` beats Obsidian's own `button:not(.clickable-icon)` look (raised, bordered, centred). */
+button.uv-options-action {
 	display: flex;
 	align-items: center;
+	justify-content: flex-start;
 	gap: 8px;
 	width: 100%;
+	height: auto;
 	min-height: 30px;
 	padding: 2px 8px;
 	font-size: var(--font-ui-small);
+	font-weight: var(--font-normal);
 	text-align: left;
 	color: var(--text-muted);
 	background: transparent;
 	border: 0;
+	border-radius: var(--uv-r-sm);
 	box-shadow: none;
 }
-.uv-options-action:hover {
+button.uv-options-action:hover {
 	color: var(--text-normal);
 	background: var(--background-modifier-hover);
 }
-.uv-options-action:first-of-type {
+button.uv-options-action:first-of-type {
 	margin-top: 4px;
 }
 .uv-options-btn[aria-expanded="true"] {
@@ -1563,6 +1568,8 @@ textarea.universeview-mono {
 }
 body.uv-t-panels .uv-options {
 	background: var(--uv-t-face);
+	/* The shorthand above clears the colour, and an edge look's `background-image: none` would then leave the panel see-through. */
+	background-color: var(--background-primary);
 	border-color: var(--uv-t-edge);
 	box-shadow: var(--uv-t-raised);
 }

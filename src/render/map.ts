@@ -2376,6 +2376,8 @@ export class MapRenderer {
 			// Shaded by a statistic: the realm it shows as, from light (least) to dark (most).
 			if (this.options.shadeBy) color = this.shade((tiers && shownAs(a.chain, tiers)) || a.owner) ?? color;
 			path.style.setProperty("--terr-color", color);
+			// Several cultures or faiths on one land: stripes of each.
+			this.stripeFill(path, this.options.shadeBy ? [] : this.paintColors((tiers && shownAs(a.chain, tiers)) || a.owner));
 			// Its edge and texture are those of the tier it shows as: a county inside a kingdom shown whole wears the kingdom's texture.
 			const asNode = tree?.nodes.get((tiers && shownAs(a.chain, tiers)) || a.owner);
 			const look = styleFor(this.plugin, tierNumber(asNode?.rank, asNode?.nature));
@@ -2440,14 +2442,60 @@ export class MapRenderer {
 			const house = node?.house ? idx.get(node.house.key) : undefined;
 			return house ? entityColor(this.plugin, house) : NO_GROUP;
 		}
-		// Culture or faith: the realm's own, else its ruler's.
+		return this.paintColors(shown)[0] ?? NO_GROUP;
+	}
+
+	/** Every culture or faith of a land (the realm's own, else its ruler's), as colours: several mean stripes. Empty in the other modes. */
+	private paintColors(shown: string): string[] {
+		const mode = this.options.paint ?? "realm";
+		if (mode !== "culture" && mode !== "faith") return [];
+		const idx = this.plugin.index;
 		const e = idx.get(shown);
-		const holder = node?.holder ? idx.get(node.holder.key) : undefined;
-		for (const r of [...(e?.cultures ?? []), ...(holder?.cultures ?? [])]) {
-			const g = idx.get(r.ref.key);
-			if (g?.type === "culture" && groupKind(this.plugin, g) === mode) return entityColor(this.plugin, g);
+		const own = this.colorsOfGroups(e?.cultures ?? [], mode);
+		if (own.length) return own;
+		const holder = this.realmTree?.nodes.get(shown)?.holder;
+		return this.colorsOfGroups(holder ? idx.get(holder.key)?.cultures ?? [] : [], mode);
+	}
+
+	private colorsOfGroups(refs: { ref: { key: string } }[], mode: PaintMode): string[] {
+		const out: string[] = [];
+		for (const r of refs) {
+			const g = this.plugin.index.get(r.ref.key);
+			if (g?.type === "culture" && groupKind(this.plugin, g) === mode) {
+				const c = entityColor(this.plugin, g);
+				if (!out.includes(c)) out.push(c);
+			}
 		}
-		return NO_GROUP;
+		return out;
+	}
+
+	private stripePatterns = new Map<string, string>();
+
+	/** Fills a land with equal stripes of each colour when it has several cultures or faiths; clears it otherwise. */
+	private stripeFill(path: HTMLElement | SVGElement, colours: string[]) {
+		const svgEl = (path as SVGElement).ownerSVGElement;
+		if (colours.length < 2 || !svgEl) {
+			path.setCssStyles({ fill: "" });
+			return;
+		}
+		ensureTerritoryDefs(svgEl);
+		const key = colours.join("|");
+		let id = this.stripePatterns.get(key);
+		if (!id || !svgEl.querySelector(`#${id}`)) {
+			id = `uv-multi-${++this.terrSeq}`;
+			this.stripePatterns.set(key, id);
+			const n = colours.length;
+			const pattern = createSvg("pattern");
+			for (const [k, v] of Object.entries({ id, patternUnits: "userSpaceOnUse", width: String(10 * n), height: String(10 * n), patternTransform: "rotate(45)" })) pattern.setAttribute(k, v);
+			colours.forEach((c, i) => {
+				const rect = createSvg("rect");
+				for (const [k, v] of Object.entries({ x: String(i * 10), y: "0", width: "10", height: String(10 * n) })) rect.setAttribute(k, v);
+				rect.setCssStyles({ fill: c });
+				pattern.appendChild(rect);
+			});
+			svgEl.querySelector("#uv-terr-defs")?.appendChild(pattern);
+		}
+		path.setCssStyles({ fill: `url(#${id})` });
 	}
 
 	/** Cached realm outlines and name curves, by realm and the shapes they were made from. */

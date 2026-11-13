@@ -117,8 +117,46 @@ export const PLACE_ROLES: { role: string; color: string; icon: string; size: Pin
 	{ role: "market", color: "#d35400", icon: "store", size: "small", layer: 3, alias: ["trade"] },
 ];
 
-/** How a place stands now: tags like #Place_Status_Ruined. */
+/** How a place stands now: tags like #Place_Status_Ruined, with the icon each shows in the inspector. */
 export const PLACE_STATUSES = ["ruined", "abandoned", "lost", "destroyed"];
+export const STATUS_ICONS: Record<string, string> = { ruined: "brick-wall", abandoned: "door-closed", lost: "map-pin-off", destroyed: "flame" };
+
+/** A role or status as the settings keep it: a name, an icon (a Lucide name or an emoji) and, for roles, the pin's colour. */
+export interface PlaceTrait {
+	name: string;
+	icon: string;
+	color?: string;
+}
+
+const DEFAULT_ROLES = PLACE_ROLES.map((r) => ({ ...r }));
+const DEFAULT_STATUSES = [...PLACE_STATUSES];
+const DEFAULT_STATUS_ICONS = { ...STATUS_ICONS };
+
+/** The lists as the settings would hold them before anyone edits them. */
+export const defaultRoles = (): PlaceTrait[] => DEFAULT_ROLES.map((r) => ({ name: r.role, icon: r.icon, color: r.color }));
+export const defaultStatuses = (): PlaceTrait[] => DEFAULT_STATUSES.map((s) => ({ name: s, icon: DEFAULT_STATUS_ICONS[s] ?? "circle" }));
+
+/**
+ * Makes the roles and statuses what the settings say (the built-in few when they say nothing), so pins, the
+ * inspector and the tag standard all offer the same lists. Called whenever settings load or change.
+ */
+export function setPlaceTraits(roles?: PlaceTrait[], statuses?: PlaceTrait[]) {
+	PLACE_ROLES.length = 0;
+	for (const r of roles ?? defaultRoles()) {
+		const role = CLEAN(r.name);
+		if (!role || PLACE_ROLES.some((x) => x.role === role)) continue;
+		const base = DEFAULT_ROLES.find((d) => d.role === role);
+		PLACE_ROLES.push({ role, color: r.color || base?.color || "#7a6a58", icon: r.icon || base?.icon || "circle", size: base?.size ?? "small", layer: base?.layer ?? 3, alias: base?.alias });
+	}
+	PLACE_STATUSES.length = 0;
+	for (const k of Object.keys(STATUS_ICONS)) delete STATUS_ICONS[k];
+	for (const s of statuses ?? defaultStatuses()) {
+		const status = CLEAN(s.name);
+		if (!status || PLACE_STATUSES.includes(status)) continue;
+		PLACE_STATUSES.push(status);
+		STATUS_ICONS[status] = s.icon || "circle";
+	}
+}
 
 /** The kinds of settlement from smallest to largest, and the Size a settlement of each kind usually has. */
 export const SETTLEMENT_LADDER: [string, string][] = [["hamlet", "tiny"], ["village", "small"], ["town", "medium"], ["city", "large"], ["metropolis", "huge"]];

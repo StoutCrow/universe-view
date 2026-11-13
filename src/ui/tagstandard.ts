@@ -1,10 +1,12 @@
-import { Modal, Notice, Setting, TFile } from "obsidian";
+import { Menu, Modal, Notice, Setting, TFile } from "obsidian";
+import { IconPickerModal } from "./icons";
+import { TextPrompt } from "./TextPrompt";
 import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
 import { TYPE_WORDS, factTag, kindTag, parseTag } from "../index/tagscheme";
-import { DEFAULT_REGION_WORDS, chainOf, tierLabel, tierName, tierRenamed, tierWords, tierWordsWith } from "../index/realms";
-import { el, icon } from "../render/common";
-import { LAND_FORMS, PLACE_ROLES, PLACE_STATUSES, SETTLEMENT_LADDER, normaliseKind, resolvePlace, usualSize } from "../index/placekinds";
+import { DEFAULT_REGION_WORDS, REGION_SIZE_OFFSET, REGION_TIER_LABELS, SIZE, chainOf, regionLevelOf, tierLabel, tierName, tierRenamed, tierWords, tierWordsWith } from "../index/realms";
+import { el, glyph, icon } from "../render/common";
+import { LAND_FORMS, PLACE_ROLES, PLACE_STATUSES, STATUS_ICONS, SETTLEMENT_LADDER, defaultRoles, defaultStatuses, type PlaceTrait, normaliseKind, resolvePlace, usualSize } from "../index/placekinds";
 
 /**
  * One standard for tagging land, so every note says the same things the same way:
@@ -40,6 +42,18 @@ export function realmTiers(): [string, string, string][] {
 	});
 }
 const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** The word written for each region level (1 continent … 6 spot). */
+const LEVEL_WORDS = ["", "Continent", "Subcontinent", "Region", "Area", "Locale", "Spot"];
+
+/** Where a choice ranks (lower is bigger): a title's tier plus its size, or a region's level plus its size. Undefined when nothing says. */
+export function rankOfChoice(c: TagChoice, regionWords: Record<string, number> = DEFAULT_REGION_WORDS): number | undefined {
+	const size = c.size.toLowerCase();
+	if (c.nature === "region") {
+		const level = Number(c.level) || regionWords[c.landform.toLowerCase()];
+		return level ? Math.max(1, level + (REGION_SIZE_OFFSET[size] ?? 0)) : undefined;
+	}
+	return Number(c.tier) + (SIZE[size] ?? 0);
+}
 /** The ladder of settlements, biggest first (metropolis … hamlet), then holdings and the plain word. */
 export const SETTLEMENT_KINDS = [...SETTLEMENT_LADDER.map(([k]) => cap1(k)).reverse(), "Castle", "Fort", "Settlement"];
 export const LANDFORMS = ["", ...LAND_FORMS];
@@ -63,6 +77,8 @@ export interface TagChoice {
 	settlement: string;
 	/** For regions: Island, Forest… or "". */
 	landform: string;
+	/** For regions: its level "1" (continent) … "6" (spot), or "" to let its landform say; written as the level's word when there is no landform. */
+	level?: string;
 	size: string;
 	/** A place's role (Capital, Port…) and status (Ruined…): "" for none, undefined where the note isn't a place. */
 	role?: string;
@@ -87,7 +103,8 @@ export function readChoice(plugin: UniverseViewPlugin, e: Entity): TagChoice {
 	const landform = named(LANDFORMS) ?? "";
 	// Nothing says its tier yet: a realm note (a group) is most likely a kingdom, a place a county.
 	const tier = node && node.nature !== "region" && node.rank < 9 ? String(Math.max(1, Math.min(6, Math.round(node.rank)))) : e.type === "culture" ? "2" : "4";
-	return { nature: node?.nature ?? "realm", tier, settlement, landform, size: SIZES.some((s) => s[0] === cap(size)) ? cap(size) : "", role: facts ? cap(facts.roles[0] ?? "") : undefined, status: facts ? cap(facts.status ?? "") : undefined };
+	const level = regionLevelOf(e, { ...DEFAULT_REGION_WORDS, ...tierWords(plugin.settings.regionWords ?? "") });
+	return { nature: node?.nature ?? "realm", tier, settlement, landform, level: level ? String(level) : "", size: SIZES.some((s) => s[0] === cap(size)) ? cap(size) : "", role: facts ? cap(facts.roles[0] ?? "") : undefined, status: facts ? cap(facts.status ?? "") : undefined };
 }
 
 /** The tags a choice stands for, in the tag scheme (`tagscheme.ts`): its kind and its size. */
@@ -98,7 +115,7 @@ export function choiceTags(c: TagChoice, type: EntityType = "place"): string[] {
 		if (c.role) size.push(factTag(type, "role", c.role));
 		if (c.status) size.push(factTag(type, "status", c.status));
 	}
-	if (c.nature === "region") return [kindTag(type, c.landform || "region"), ...size];
+	if (c.nature === "region") return [kindTag(type, c.landform || LEVEL_WORDS[Number(c.level)] || "region"), ...size];
 	if (c.tier === "6") return [kindTag(type, c.settlement), ...size];
 	return [kindTag(type, realmTiers().find((t) => t[0] === c.tier)?.[2] || "Province"), ...size];
 }
@@ -133,7 +150,17 @@ export function restandardise(plugin: UniverseViewPlugin, tags: string[], c: Tag
  * The three questions, with what they mean: ruled land or geography, which tier (or landform),
  * and how big. Calls back with each change.
  */
-export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: TagChoice) => void, opts: { kinds?: boolean } = {}) {
+export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: TagChoice) => void, opts: { kinds?: boolean; plugin?: UniverseViewPlugin } = {}) {
+	/** Chips shown before "more": the first few roles or statuses. */
+	const CHIPS_SHOWN = 8;
+	const expanded = new Set<string>();
+	/** Changes the user's own list of roles or statuses (kept in Settings), then draws again. */
+	const editTraits = (p: UniverseViewPlugin, kind: "role" | "status", fn: (list: PlaceTrait[]) => PlaceTrait[]) => {
+		const s = p.settings;
+		if (kind === "role") s.placeRoles = fn(s.placeRoles ?? defaultRoles());
+		else s.placeStatuses = fn(s.placeStatuses ?? defaultStatuses());
+		void p.saveSettings().then(() => draw());
+	};
 	// Where a Kind box sits beside these (the inspector), the landform and kind of settlement are that box.
 	const kinds = opts.kinds !== false;
 	const box = el("div", { cls: "uv-std" }, parent);
@@ -186,36 +213,95 @@ export function standardFields(parent: HTMLElement, c: TagChoice, onChange: (c: 
 				});
 			});
 		}
+		// A region has levels too: a continent holds sub-continents, which hold regions, and so on down to a spot.
+		if (c.nature === "region" && !c.landform) {
+			new Setting(box).setName("Level").setDesc("Where it sits among regions, largest first.").addDropdown((d) => {
+				d.addOption("", "Not set");
+				for (let i = 1; i <= 6; i++) d.addOption(String(i), `${i}. ${REGION_TIER_LABELS[i]}`);
+				d.setValue(c.level ?? "").onChange((v) => {
+					c.level = v;
+					onChange(c);
+					draw();
+				});
+			});
+		}
+		// Sizes are named for the kind of thing they size: a large duchy and a large county are different things.
+		const noun = (c.nature === "region" ? REGION_TIER_LABELS[Number(c.level)] || c.landform || "region" : c.tier === "6" ? c.settlement || "settlement" : tierName(Number(c.tier))).toLowerCase();
 		new Setting(box)
 			.setName("Size")
-			.setDesc(c.nature === "region" ? "How big it is beside other regions." : "How big it is beside titles of the same tier.")
+			.setDesc(c.nature === "region" ? "How big it is beside regions of the same level." : "How big it is beside titles of the same tier.")
 			.addDropdown((d) => {
-				for (const [v, asTitle, asRegion] of SIZES) d.addOption(v, c.nature === "region" ? asRegion : asTitle);
+				for (const [v] of SIZES) d.addOption(v, v ? `${v} ${noun}` : "No size");
 				d.setValue(c.size).onChange((v) => {
 					c.size = v;
 					onChange(c);
 					draw();
 				});
 			});
+		// What that makes of its rank, in one line: lower is bigger, and the tree and map order by it.
+		const rank = rankOfChoice(c);
+		el("div", { cls: "uv-std-rank", text: rank === undefined ? "Rank: not set (give it a level)." : `Rank ${Math.round(rank * 10) / 10}: ${c.size ? `${c.size} ` : ""}${noun}. Lower ranks are bigger.` }, box);
 		if (c.role !== undefined) {
-			new Setting(box).setName("Role").setDesc("What it does, beyond what it is: its pin wears the role's icon.").addDropdown((d) => {
-				d.addOption("", "None");
-				for (const r of PLACE_ROLES) d.addOption(cap1(r.role), cap1(r.role));
-				d.setValue(c.role ?? "").onChange((v) => {
-					c.role = v;
-					onChange(c);
-					draw();
-				});
-			});
-			new Setting(box).setName("Status").setDesc("How it stands now.").addDropdown((d) => {
-				d.addOption("", "As it was");
-				for (const s of PLACE_STATUSES) d.addOption(cap1(s), cap1(s));
-				d.setValue(c.status ?? "").onChange((v) => {
-					c.status = v;
-					onChange(c);
-					draw();
-				});
-			});
+			// Picked from chips, so every option is in view at once; pressing the chosen one clears it.
+			const chips = (name: "role" | "status", desc: string, options: [string, string][], get: () => string | undefined, set: (v: string) => void) => {
+				const title = cap1(name);
+				new Setting(box).setName(title).setDesc(desc).settingEl.addClass("uv-std-chip-head");
+				const grid = el("div", { cls: "uv-std-chips", attr: { role: "group", "aria-label": title } }, box);
+				const chosen = (get() ?? "").toLowerCase();
+				// Only the first few show until opened; the chosen one always does.
+				const open = expanded.has(name);
+				const shown = options.filter(([v], i) => open || i < CHIPS_SHOWN || v === chosen);
+				const p = opts.plugin;
+				for (const [v, ic] of shown) {
+					const on = chosen === v;
+					const b = el("button", { cls: "uv-std-chip" + (on ? " is-active" : ""), attr: { "aria-pressed": String(on) } }, grid);
+					if (!glyph(el("span", {}, b), ic)) icon(el("span", {}, b), "circle");
+					el("span", { text: cap1(v) }, b);
+					b.addEventListener("click", (evt) => {
+						evt.preventDefault();
+						set(on ? "" : cap1(v));
+						onChange(c);
+						draw();
+					});
+					// Right-click: a different icon, or take it off the list (both live in Settings too).
+					if (p) {
+						b.addEventListener("contextmenu", (evt) => {
+							evt.preventDefault();
+							const menu = new Menu();
+							menu.addItem((i) => i.setTitle("Change icon…").setIcon("image").onClick(() => new IconPickerModal(p, (id) => id && editTraits(p, name, (list) => list.map((t) => (t.name.toLowerCase() === v ? { ...t, icon: id } : t))), ic).open()));
+							menu.addItem((i) => i.setTitle(`Remove this ${name}`).setIcon("trash-2").onClick(() => editTraits(p, name, (list) => list.filter((t) => t.name.toLowerCase() !== v))));
+							menu.showAtMouseEvent(evt);
+						});
+					}
+				}
+				if (options.length > shown.length || open) {
+					const more = el("button", { cls: "uv-std-chip is-more", text: open ? "Show fewer" : `${options.length - shown.length} more`, attr: { "aria-expanded": String(open) } }, grid);
+					more.addEventListener("click", (evt) => {
+						evt.preventDefault();
+						if (!expanded.delete(name)) expanded.add(name);
+						draw();
+					});
+				}
+				// Your own: a name, then an icon from all of Obsidian's (or an emoji); it joins the list in Settings.
+				if (p) {
+					const add = el("button", { cls: "uv-std-chip is-add", attr: { "aria-label": `Add your own ${name}` } }, grid);
+					icon(el("span", {}, add), "plus");
+					el("span", { text: "Your own" }, add);
+					add.addEventListener("click", (evt) => {
+						evt.preventDefault();
+						new TextPrompt(p, `New ${name}`, "", (word) => {
+							new IconPickerModal(p, (id) => {
+								editTraits(p, name, (list) => [...list.filter((t) => t.name.toLowerCase() !== word.toLowerCase()), { name: word, icon: id ?? "circle" }]);
+								expanded.add(name);
+								set(cap1(word));
+								onChange(c);
+							}).open();
+						}).open();
+					});
+				}
+			};
+			chips("role", "What it does, beyond what it is: its pin wears the role's icon.", PLACE_ROLES.map((r) => [r.role, r.icon]), () => c.role, (v) => (c.role = v));
+			chips("status", "How it stands now. Nothing chosen means as it was.", PLACE_STATUSES.map((s) => [s, STATUS_ICONS[s] ?? "circle"]), () => c.status, (v) => (c.status = v));
 		}
 		el("div", { cls: "uv-std-tags", text: `Tags: ${choiceTags(c).map((t) => "#" + t).join(" ")}` }, box);
 	};

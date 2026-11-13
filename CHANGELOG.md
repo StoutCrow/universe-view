@@ -2,6 +2,33 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.4.0 — 2026-11-13
+
+### Size, rank and level
+- **Sizes are named for what they size.** The Size box says "Large duchy" or "Small county", and a line under it shows the rank it makes ("Rank 2.8: Large duchy. Lower ranks are bigger."), the same number the realm tree and map order by.
+- **Regions have levels too**: Continent, Sub-continent, Region, Land, Locale and Spot. Choose one under *What it is* (or let the landform say) and the size works within that level.
+- **The Library's notes table has a Rank column** that sorts lands biggest first, and the tick-boxes bar sets **role, status, tier, level and size** for many places at once (one undo step).
+
+### Realm chart
+- **Fold the tiers.** Each card with branches has a button under it that folds them away ("+3" shows how many are hidden); an Options entry unfolds all.
+- **Layouts**: Chart, Outline (the tiers as an indented, foldable list) and Over time (who held each tier, full size).
+- **Cards say what they are**: "Place" or "Realm", and "6 places within" for lands inside a land.
+
+### Roles and statuses of places
+- **Roles and statuses are lists you edit** in Settings → Maps: a name and an icon (any Lucide icon or an emoji) each, and a pin colour for roles. Few generic ones come built in (Capital, Port, Holy, Market; Ruined, Abandoned, Lost, Destroyed).
+- **In the inspector they are chips with icons**, the first few shown and the rest behind "more". *Your own* adds one with an icon of your choice; right-click a chip to change its icon or remove it. A place with a role wears its icon and colour on the map.
+- **What it is saves as you change it**, with no Apply button to miss.
+
+### Map and groups
+- **Several cultures or faiths show as stripes** in the map's Culture and Faith colouring, one band of colour for each.
+- The graph's filter says **Groups**, not "Cultures", for group notes.
+
+### Fixes
+- Events drawn on an organisation's bar are no longer drawn again loose in their own lane, and hovering one names the event, not the organisation.
+- The Options panel is no longer see-through with the tactile panel style, and its actions are flat rows like the rest.
+- The calendar's header, month names and year buttons no longer take Obsidian's raised button look, and share one height.
+- A relationship chip in a narrow panel keeps its name, and the pencil no longer sits over the Add box.
+
 ## 4.3.0 — 2026-11-12
 
 ### Realms: a title, a land and a people

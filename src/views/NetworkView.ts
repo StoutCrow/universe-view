@@ -10,7 +10,7 @@ export const VIEW_NETWORK = "chronicle-network";
 
 const TYPE_CHIPS: [EntityType, string, string][] = [
 	["person", "People", "user-round"],
-	["culture", "Cultures", "flag"],
+	["culture", "Groups", "flag"],
 	["place", "Places", "map-pin"],
 	["event", "Events", "calendar-clock"],
 ];

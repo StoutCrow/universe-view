@@ -8,6 +8,10 @@ import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity,
 import { subOrgs } from "../render/orgchart";
 import { placeStyleFields, placeKinds, LAYER_NAMES, kindDefaults } from "../ui/PlaceStyleModal";
 import { TextPrompt } from "../ui/TextPrompt";
+import { SIZES, readChoice, realmTiers, restandardise, type TagChoice } from "../ui/tagstandard";
+import { withFactTag } from "../index/tagscheme";
+import { PLACE_ROLES, PLACE_STATUSES } from "../index/placekinds";
+import { REGION_TIER_LABELS, tierLabel } from "../index/realms";
 import { ArcRenderer } from "../render/arc";
 import { renderWorldStats } from "../render/stats";
 import { totalPopulation } from "../index/tidy";
@@ -877,10 +881,17 @@ export class ExplorerView extends UniverseViewBase {
 			if (n === undefined) linkCounts.set(e.key, (n = this.relationGroups(e, false).reduce((s2, g) => s2 + g.items.length, 0)));
 			return n;
 		};
+		// Where a land ranks (lower is bigger: a duchy above a county, a continent above a region); notes that aren't lands sort last.
+		const tree = this.plugin.realms();
+		const rankOf = (e: Entity) => {
+			const r = tree.nodes.get(e.key)?.rank;
+			return r === undefined || r >= 9 ? Infinity : r;
+		};
 		const cols: [string, string, (e: Entity) => string | number][] = [
 			["name", "Name", (e) => e.name],
 			["type", "Type", (e) => TYPE_LABELS[e.type]],
 			["kind", "Kind", (e) => e.category ?? ""],
+			["rank", "Rank", rankOf],
 			["dates", "Dates", (e) => e.start?.start ?? e.end?.start ?? Infinity],
 			["links", "Relationships", links],
 			["issues", "Problems", (e) => e.issues.length],
@@ -919,6 +930,28 @@ export class ExplorerView extends UniverseViewBase {
 				if (v === "__other") new TextPrompt(this.plugin, "Kind", "", (k) => apply(k.toLowerCase())).open();
 				else apply(v);
 			});
+			// Lands (places and realms): their role, status, size, tier or level, written as the standard tags.
+			const land = (label: string, patch: (c: TagChoice, e: Entity) => void) =>
+				run(label, (f, e) => {
+					if (e.type !== "place" && e.type !== "culture") return;
+					const c = readChoice(this.plugin, e);
+					patch(c, e);
+					const own = ([] as unknown[]).concat(f.tags ?? e.tags).map((t) => String(t).replace(/^#/, ""));
+					f.tags = restandardise(this.plugin, own, c, e.type);
+				});
+			const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+			// A role, status or size is one fact tag: only that tag changes, never the land's kind or tier.
+			const fact = (label: string, field: "role" | "status" | "size", v: string) =>
+				run(label, (f, e) => {
+					if (e.type !== "place" && (e.type !== "culture" || field !== "size")) return;
+					const own = ([] as unknown[]).concat(f.tags ?? e.tags).map(String);
+					f.tags = withFactTag(own, e.type, field, v);
+				});
+			pick("Set role…", [...PLACE_ROLES.map((r) => [cap(r.role), cap(r.role)] as [string, string]), ["__none", "No role"]], (v) => fact(v ? `Set role ${v}` : "Clear role", "role", v));
+			pick("Set status…", [...PLACE_STATUSES.map((s) => [cap(s), cap(s)] as [string, string]), ["__none", "As it was"]], (v) => fact(v ? `Set status ${v}` : "Clear status", "status", v));
+			pick("Set tier…", realmTiers().map(([v, label]) => [v, label] as [string, string]), (v) => land(`Set tier ${v}`, (c) => { c.nature = "realm"; c.tier = v; }));
+			pick("Set level…", [1, 2, 3, 4, 5, 6].map((i) => [String(i), `${i}. ${REGION_TIER_LABELS[i]}`] as [string, string]), (v) => land(`Set level ${v}`, (c) => { c.nature = "region"; c.level = v; c.landform = ""; }));
+			pick("Set size…", [...SIZES.filter(([v]) => v).map(([v]) => [v, v] as [string, string]), ["__none", "No size"]], (v) => fact(v ? `Set size ${v}` : "Clear size", "size", v));
 			pick("Set map layer…", [...LAYER_NAMES.map((n, i) => [String(i + 1), `${i + 1}: ${n}`] as [string, string]), ["__none", "Automatic"]], (v) =>
 				run(v ? `Set layer ${v}` : "Clear layer", (f) => (v ? (f.layer = Number(v)) : delete f.layer)));
 			pick("Set pin size…", [...PIN_SIZES.map((s) => [s, s] as [string, string]), ["__none", "Automatic"]], (v) =>
@@ -978,6 +1011,8 @@ export class ExplorerView extends UniverseViewBase {
 				el("span", { text: e.name }, nameTd);
 				el("td", { text: TYPE_LABELS[e.type] }, tr);
 				el("td", { text: kindLabel(e.category) }, tr);
+				const rank = rankOf(e);
+				el("td", { text: rank === Infinity ? "" : `${Math.round(rank * 10) / 10} · ${tierLabel(tree.nodes.get(e.key))}`, cls: "is-num", attr: { title: "Lower ranks are bigger" } }, tr);
 				el("td", { text: formatSpan(e.start, e.end, this.plugin.calendars.get(e.calendar) ?? cal) }, tr);
 				el("td", { text: String(links(e)), cls: "is-num" }, tr);
 				el("td", { text: e.issues.length ? String(e.issues.length) : "", cls: "is-num" + (e.issues.length ? " is-warning" : ""), attr: { title: e.issues.join("\n") } }, tr);
@@ -987,7 +1022,7 @@ export class ExplorerView extends UniverseViewBase {
 					showEntityMenu(this.plugin, e.key, evt);
 				});
 			}
-			if (rows.length > 500) el("td", { text: `+ ${rows.length - 500} more`, attr: { colspan: "7" } }, el("tr", {}, tbody));
+			if (rows.length > 500) el("td", { text: `+ ${rows.length - 500} more`, attr: { colspan: "8" } }, el("tr", {}, tbody));
 		};
 		draw();
 	}

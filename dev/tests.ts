@@ -5,7 +5,8 @@ import { ROW_ORDER, fitsRow, readMembers, rebuildMembers, rowOfKind, rowOfProper
 import { REL_KINDS } from "../src/index/relkinds";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { realmWords, rulerWord } from "../src/index/realmwords";
-import { PLACE_KINDS, PLACE_ROLES, defaultKindsText, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
+import { withFactTag } from "../src/index/tagscheme";
+import { PLACE_KINDS, PLACE_ROLES, PLACE_STATUSES, STATUS_ICONS, defaultKindsText, setPlaceTraits, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
 import { ROW_FORMATS, holdersProperty, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
 import { checkBorders } from "../src/index/bordercheck";
 import { boxOf, labelSpot, mainAxis, snapToNeighbour, unionOutline } from "../src/index/geometry";
@@ -1711,6 +1712,23 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	const out = rebuildMembers(mfm, mem, edited);
 	eq([out.family, out.allegience, out.faith], [["[[House Tudor]] (\"the cadet line\")", "[[House Stuart]]"], ["[[England]]"], "[[Church of England]]"], "membership: an edit stays in its property, a new house goes to the property used for houses, a lone value stays single");
 	eq(rebuildMembers({ family: "[[House Tudor]]" }, [{ name: "House Tudor", prop: "family", raw: "[[House Tudor]]" }], { ...Object.fromEntries(ROW_ORDER.map((r) => [r, []])), faith: [{ name: "Church of England", value: "[[Church of England]]" }] } as Record<GroupRow, { name: string; value: unknown }[]>), { family: undefined, faith: "[[Church of England]]" }, "membership: a removed entry empties its property and a first faith goes to faith");
+	// Several faiths and several cultures: a lone one grows into a list, in the property already used, and new ones start `faith:` / `culture:`.
+	const empty = Object.fromEntries(ROW_ORDER.map((r) => [r, []])) as unknown as Record<GroupRow, { name: string; value: unknown }[]>;
+	eq(
+		rebuildMembers({ faith: "[[Catholic Church]]" }, [{ name: "Catholic Church", prop: "faith", raw: "[[Catholic Church]]" }], { ...empty, faith: [{ name: "Catholic Church", value: "[[Catholic Church]]" }, { name: "Church of England", value: "[[Church of England]]" }], culture: [{ name: "English", value: "[[English]]" }, { name: "Welsh", value: "[[Welsh]]" }] }),
+		{ faith: ["[[Catholic Church]]", "[[Church of England]]"], culture: ["[[English]]", "[[Welsh]]"] },
+		"membership: several faiths and several cultures",
+	);
+	// Roles and statuses come from the settings: your own join (or replace) the built-in few, and unset brings them back.
+	setPlaceTraits([{ name: "Capital", icon: "crown" }, { name: "Spaceport hub", icon: "🚀", color: "#123456" }], [{ name: "Quarantined", icon: "biohazard" }]);
+	eq(PLACE_ROLES.map((r) => r.role), ["capital", "spaceport hub"], "traits: the settings' roles replace the list");
+	eq([PLACE_ROLES[1].icon, PLACE_ROLES[1].color, PLACE_ROLES[0].size], ["🚀", "#123456", "large"], "traits: your icon and colour, a built-in role keeps its pin size");
+	eq([PLACE_STATUSES, STATUS_ICONS.quarantined], [["quarantined"], "biohazard"], "traits: your own status and icon");
+	eq(styleKeyOf(undefined, ["Place_Role_Spaceport_hub"]) !== undefined, true, "traits: a custom role styles a pin");
+	eq(withFactTag(["Place_Moon", "Place_Role_Port", "Place_Size_Small"], "place", "role", "Capital"), ["Place_Moon", "Place_Size_Small", "Place_Role_Capital"], "bulk: a role changes only its own tag");
+	eq(withFactTag(["Place_Moon", "Place_Role_Port"], "place", "role", ""), ["Place_Moon"], "bulk: clearing a role leaves the kind");
+	setPlaceTraits();
+	eq([PLACE_ROLES.map((r) => r.role), PLACE_STATUSES], [["capital", "port", "holy", "market"], ["ruined", "abandoned", "lost", "destroyed"]], "traits: unset brings the built-in lists back");
 	// ---- Fixing broken kinds (index/kindcheck.ts) ----
 	const knownKinds = knownKindWords();
 	const never = () => 0;

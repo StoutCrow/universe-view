@@ -15,6 +15,7 @@ import { formatDate, formatDay, parseDate } from "./dates/parser";
 import { EntityIndex } from "./index/EntityIndex";
 import { presetKinds, relKind } from "./index/relkinds";
 import { knownTo } from "./index/knowledge";
+import { setPlaceTraits } from "./index/placekinds";
 import { DEFAULT_REGION_WORDS, realmTree, setTierNames, tierWords, tierWordsWith, type RealmTree } from "./index/realms";
 import { absorbGaps, untangle } from "./index/merge";
 import { BUILT_IN_PRESETS, applyLook, type MapPreset } from "./ui/mappresets";
@@ -419,11 +420,13 @@ export default class UniverseViewPlugin extends Plugin {
 			(this.settings as unknown as Record<string, unknown>).tierSplitV2 = true;
 		}
 		setTierNames(this.settings.tierNames);
+		setPlaceTraits(this.settings.placeRoles, this.settings.placeStatuses);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
 		setTierNames(this.settings.tierNames);
+		setPlaceTraits(this.settings.placeRoles, this.settings.placeStatuses);
 		this.calendars.load(this.settings.calendars, this.settings.defaultCalendar);
 		applyAppearance(this.settings);
 		setHelpDelay(this.settings.helpDelay ?? 350);

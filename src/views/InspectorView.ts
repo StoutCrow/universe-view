@@ -607,22 +607,18 @@ export class InspectorView extends ItemView {
 		const h = el("div", { cls: "universeview-insp-section-head" }, s);
 		icon(el("span", {}, h), "shapes");
 		el("span", { text: "What it is" }, h);
-		helpTip(h, "Ruled land is a title: a kingdom, a duchy, a county or a city, held by someone and answering to the title above. Geography is a region: a continent, a sub-continent, an island or a forest. Nobody rules it and it's never anyone's liege, so a kingdom lying in a sub-continent stays sovereign.\n\nApply writes the standard tags (#Title #Province #Region_Small, or #Region #Region_Enormous) and keeps the rest, like #Nation_United_States.");
+		helpTip(h, "Ruled land is a title: a kingdom, a duchy, a county or a city, held by someone and answering to the title above. Geography is a region: a continent, a sub-continent, an island or a forest. Nobody rules it and it's never anyone's liege, so a kingdom lying in a sub-continent stays sovereign.\n\nChanges are saved as you make them, as the standard tags (#Title #Province #Region_Small, or #Region #Region_Enormous) and keeps the rest, like #Nation_United_States.");
 		const choice = readChoice(p, e);
 		const before = e.tags.map((t) => t.replace(/^#/, ""));
-		const row = el("div", { cls: "universeview-insp-actions" }, s);
-		const apply = el("button", { cls: "mod-cta", text: "Apply" }, row);
-		apply.disabled = true;
-		standardFields(s, choice, () => (apply.disabled = false), { kinds: false });
-		s.appendChild(row);
-		apply.addEventListener("click", () => {
+		// Each change is saved as it's made (it's one undo step), so there is no Apply button to miss below the fold.
+		standardFields(s, choice, () => {
 			const file = this.app.vault.getAbstractFileByPath(e.key);
 			if (!(file instanceof TFile)) return;
 			void p.editFrontmatter(file, (fm) => {
 				const own = ([] as unknown[]).concat(fm.tags ?? before).map((t) => String(t).replace(/^#/, ""));
 				fm.tags = restandardise(p, own, choice, e.type);
 			}, `${e.name}: what it is`);
-		});
+		}, { kinds: false, plugin: p });
 	}
 
 	/** Who a title is under and who holds it (editable), its vassals, what a person or house holds, and how a place shows on the map. */

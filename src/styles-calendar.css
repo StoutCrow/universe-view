@@ -25,23 +25,37 @@
 	align-items: center;
 	gap: 2px;
 }
-.universeview-cal-nav {
-	padding: 4px;
+/* `button.` beats Obsidian's raised, bordered `button:not(.clickable-icon)`. One height for every control in the head. */
+button.universeview-cal-nav {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 28px;
+	height: 28px;
+	padding: 0;
 }
-.universeview-cal-label {
+button.universeview-cal-label {
 	background: none;
 	box-shadow: none;
 	border: none;
 	display: flex;
 	align-items: baseline;
 	gap: 8px;
+	box-sizing: border-box;
+	min-height: 28px;
 	padding: 2px 8px;
 	height: auto;
 	cursor: pointer;
-	border-radius: var(--radius-s);
+	border-radius: var(--uv-r-sm);
 }
-.universeview-cal-label:hover {
+button.universeview-cal-label:hover {
 	background: var(--background-modifier-hover);
+	box-shadow: none;
+}
+.universeview-cal-head .universeview-chip {
+	box-sizing: border-box;
+	height: 28px;
 }
 .universeview-cal-month {
 	font-family: var(--universeview-font-display);
@@ -301,10 +315,14 @@
 .universeview-cal-mini.is-festival {
 	background: color-mix(in srgb, #d9a33a 7%, var(--background-primary));
 }
-.universeview-cal-mini-head {
+/* `button.` so it beats Obsidian's raised, bordered `button:not(.clickable-icon)`. */
+button.universeview-cal-mini-head {
+	display: block;
+	width: 100%;
 	background: none;
 	box-shadow: none;
 	border: none;
+	text-align: left;
 	padding: 0 0 6px;
 	height: auto;
 	font-weight: 700;
@@ -312,7 +330,9 @@
 	color: var(--text-normal);
 	cursor: pointer;
 }
-.universeview-cal-mini-head:hover {
+button.universeview-cal-mini-head:hover {
+	background: none;
+	box-shadow: none;
 	color: var(--text-accent);
 }
 .universeview-cal-mini-grid {

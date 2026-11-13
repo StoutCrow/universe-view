@@ -1237,6 +1237,16 @@ g.is-dimmed .universeview-net-link.is-lit {
 	background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
 	color: var(--text-accent);
 	font-size: var(--font-ui-smaller);
+	/* Never squeezed by a narrow panel: it keeps its size, or clips its name, and the input wraps below. */
+	flex: none;
+	max-width: 100%;
+	box-sizing: border-box;
+	white-space: nowrap;
+}
+.universeview-linkchip > span:first-child {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .universeview-linkchip.is-unresolved {
 	background: var(--background-modifier-hover);

@@ -392,9 +392,13 @@ export class TimelineRenderer {
 		const hidden = new Set(options.hiddenCategories ?? []);
 		const shown = new Set(out.filter((it) => it.kind === "event").map((it) => it.key));
 		const on: Record<HistoryKind, boolean> = { event: true, rename: options.renames !== false, reign: options.reigns !== false, occupation: options.occupations !== false };
+		const anchored = new Set<string>();
 		for (const bar of bars.values()) {
 			bar.marks = historyOf(plugin, bar.entity, [bar.start, bar.end]).filter((m) => on[m.kind] && !hidden.has(m.categoryId) && (m.kind !== "event" || shown.has(m.key)));
+			for (const m of bar.marks) if (m.kind === "event") anchored.add(m.key);
 		}
+		// An event drawn on its organisation's bar isn't also drawn loose in its own lane.
+		for (let i = out.length - 1; i >= 0; i--) if (out[i].kind === "event" && anchored.has(out[i].key)) out.splice(i, 1);
 		for (let i = out.length - 1; i >= 0; i--) {
 			const it = out[i];
 			const host = it.kind === "reign" ? it.context : it.kind === "rename" || it.kind === "occupation" ? it.key : undefined;
@@ -781,8 +785,13 @@ export class TimelineRenderer {
 		box.style.left = `${x - barLeft - 7}px`;
 		box.style.top = `${-6 - level * 11}px`;
 		if (m.name) svg("text", { x: 13, y: 3, class: "uv-lin-rename-label" }, box).textContent = m.name;
-		box.setAttribute("aria-label", m.text);
-		box.setAttribute("data-tooltip-position", "top");
+		// Hovering the mark names its event, not the organization the bar belongs to: bind it, and keep the bar's own hover from seeing it.
+		bindHover(this.plugin, box, m.key, this.hoverParent);
+		if (!this.plugin.settings.hoverCards) {
+			box.setAttribute("aria-label", m.text);
+			box.setAttribute("data-tooltip-position", "top");
+		}
+		for (const t of ["mouseover", "mousemove"]) box.addEventListener(t, (evt) => evt.stopPropagation());
 		box.addEventListener("pointerdown", (evt) => evt.stopPropagation());
 		box.addEventListener("click", (evt) => {
 			evt.stopPropagation();

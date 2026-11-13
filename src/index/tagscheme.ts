@@ -82,6 +82,15 @@ export function factTag(type: EntityType, field: FactField, value: string): stri
 	return `${TYPE_WORDS[type]}_${field.charAt(0).toUpperCase() + field.slice(1)}_${joined(value)}`;
 }
 
+/** A note's tags with one fact (a role, a status, a size) set or cleared and nothing else touched: its kind and tier stay as they are. */
+export function withFactTag(tags: string[], type: EntityType, field: FactField, value: string): string[] {
+	const kept = tags.map((t) => t.replace(/^#/, "")).filter((t) => {
+		const s = parseTag(t);
+		return !(s && s.type === type && s.role === "fact" && s.field === field);
+	});
+	return value ? [...kept, factTag(type, field, value)] : kept;
+}
+
 /** The tag saying a note belongs to another: that note's kind tag and its name. */
 export function memberTag(type: EntityType, kind: string | undefined, name: string): string {
 	const n = name.replace(/[^\p{L}\p{N}\s_-]/gu, "").trim().split(/\s+/).join("_");

@@ -6,7 +6,7 @@ import { spacedLabels, yearTicks } from "../dates/calendars";
 import { activeAt } from "../index/EntityIndex";
 import { relInverse, relKind, relLabel, relOne, relSymmetric, relTone, type RelTone } from "../index/relkinds";
 import { PanZoom } from "./panzoom";
-import { bindHover, cultureColor, el, emptyState, entityColor, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
+import { bindHover, cultureColor, el, emptyState, entityColor, icon, iconButton, openEntity, resourceUrl, showEntityMenu, svg } from "./common";
 import { pickLogo } from "../ui/suggest";
 import { isHouse } from "./houses";
 import { holdingsOf, type RealmTree } from "../index/realms";
@@ -37,6 +37,10 @@ export interface OrgOptions {
 	ties?: boolean;
 	/** Kinds of tie switched off in the legend. */
 	hiddenTones?: RelTone[];
+	/** Groups whose branches are folded away (the button under each card, or the chevron in the outline). */
+	collapsed?: string[];
+	/** "chart": the tree of cards; "outline": the same tiers as an indented list; "time": who held each tier, over time. */
+	layout?: "chart" | "outline" | "time";
 }
 
 export const DEFAULT_ORG_OPTIONS: OrgOptions = { members: true, timeline: true, depth: 4, relations: true, ties: true };
@@ -74,6 +78,8 @@ interface OrgNode {
 	people: Tenure[];
 	/** Ties to other groups, on the chart or not. */
 	ties: Tie[];
+	/** How many branches are folded away under it. */
+	folded?: number;
 	/** Layout */
 	x: number;
 	y: number;
@@ -221,6 +227,7 @@ export class OrgChartRenderer {
 	private root: HTMLElement;
 	private chartEl: HTMLElement;
 	private svgEl: SVGSVGElement;
+	private outlineEl: HTMLElement;
 	private layer: SVGGElement;
 	private pz: PanZoom;
 	private timelineEl: HTMLElement;
@@ -262,6 +269,7 @@ export class OrgChartRenderer {
 			const m = svg("marker", { id: `universeview-org-arrow-${tone}`, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
 			svg("path", { d: "M0,0 L10,5 L0,10 z", class: `universeview-org-arrowhead tone-${tone}` }, m);
 		}
+		this.outlineEl = el("div", { cls: "universeview-org-outline" }, this.chartEl);
 		this.layer = svg("g", {}, this.svgEl);
 		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.15, maxScale: 3 });
 		this.legendEl = el("div", { cls: "universeview-org-legend" }, this.chartEl);
@@ -338,7 +346,12 @@ export class OrgChartRenderer {
 		this.rowAt.clear();
 		this.taken = [];
 		this.root.querySelector(".universeview-empty")?.remove();
-		this.root.toggleClass("has-timeline", this.options.timeline);
+		const outline = this.options.layout === "outline";
+		this.outlineEl.empty();
+		this.root.toggleClass("is-outline", outline);
+		const time = this.options.layout === "time";
+		this.root.toggleClass("is-time", time);
+		this.root.toggleClass("has-timeline", (this.options.timeline || time) && !outline);
 		this.root.style.setProperty("--org-timeline", `${Math.round(this.timelineHeight * 100)}%`);
 		const idx = this.plugin.index;
 		const o = this.options;
@@ -395,7 +408,8 @@ export class OrgChartRenderer {
 				const kids = kidsOf(org).filter((c) => !seen.has(c.key) && exists(c) && (o.root || inScope(c)));
 				// Titles come largest first already; groups by age.
 				if (mode !== "realms") kids.sort((a, b) => (a.start?.start ?? 0) - (b.start?.start ?? 0) || a.name.localeCompare(b.name));
-				for (const k of kids) if (!seen.has(k.key)) node.children.push(build(k, depth + 1));
+				if (o.collapsed?.includes(org.key)) node.folded = kids.length;
+				else for (const k of kids) if (!seen.has(k.key)) node.children.push(build(k, depth + 1));
 			}
 			return node;
 		};
@@ -456,6 +470,12 @@ export class OrgChartRenderer {
 				this.embedded ? undefined : { label: mode === "realms" ? "New realm" : mode === "dynasties" ? "New house" : "New organisation", onClick: () => this.plugin.createEntityPrompt({ type: "culture" }) },
 			);
 			this.timelineEl.empty();
+			return;
+		}
+
+		if (outline) {
+			this.timelineEl.empty();
+			this.drawOutline(forest);
 			return;
 		}
 
@@ -538,6 +558,46 @@ export class OrgChartRenderer {
 		this.bbox = { x: -40, y: top, width: left - GAP_X * 2 + 80, height: maxY - top + 30 };
 		if (!this.pz.touched) window.requestAnimationFrame(() => this.fit());
 		this.drawTimeline();
+	}
+
+	/** Folds a group's branches away, or brings them back. */
+	toggleFold(key: string) {
+		const set = new Set(this.options.collapsed ?? []);
+		if (!set.delete(key)) set.add(key);
+		this.options.collapsed = [...set];
+		this.onOptionsChange?.();
+		this.refresh();
+	}
+
+	/** The tiers as an indented list: each group with its branches under it, folded with its chevron. */
+	private drawOutline(forest: OrgNode[]) {
+		const cal = this.cal();
+		const idx = this.plugin.index;
+		const add = (n: OrgNode, parent: HTMLElement) => {
+			const o = n.org;
+			const row = el("div", { cls: "universeview-org-outline-row" }, parent);
+			row.style.setProperty("--depth", String(n.depth));
+			row.style.setProperty("--item-color", o.color ?? cultureColor(this.plugin, o.key));
+			const branches = n.children.length + (n.folded ?? 0);
+			const fold = el("button", { cls: "universeview-org-outline-fold clickable-icon", attr: { "aria-label": n.folded ? "Show branches" : "Fold branches", "aria-expanded": String(!n.folded) } }, row);
+			if (branches) {
+				icon(fold, n.folded ? "chevron-right" : "chevron-down");
+				fold.addEventListener("click", () => this.toggleFold(o.key));
+			} else fold.disabled = true;
+			const name = el("a", { cls: "universeview-org-outline-name", text: o.name, attr: { role: "link", tabindex: "0" } }, row);
+			name.addEventListener("click", (evt) => openEntity(this.plugin, o.key, evt));
+			name.addEventListener("keydown", (evt) => {
+				if (evt.key === "Enter") openEntity(this.plugin, o.key, evt);
+			});
+			bindHover(this.plugin, name, o.key, this.hoverParent);
+			const bits = [o.category ? o.category.charAt(0).toUpperCase() + o.category.slice(1) : "", formatSpan(o.start, o.end, cal)];
+			const total = idx.members(o.key).filter((m) => idx.get(m.key)?.type === "person").length;
+			if (total) bits.push(`${total} member${total === 1 ? "" : "s"}`);
+			if (branches) bits.push(`${branches} branch${branches === 1 ? "" : "es"}`);
+			el("span", { cls: "universeview-org-outline-sub", text: bits.filter(Boolean).join(" · ") }, row);
+			n.children.forEach((c) => add(c, parent));
+		};
+		forest.forEach((r) => add(r, this.outlineEl));
 	}
 
 	/** An arc between two group cards: bowing over the row for neighbours, round the side otherwise. */
@@ -705,7 +765,9 @@ export class OrgChartRenderer {
 		const name = svg("text", { x: tx, y: 33, class: "universeview-org-name" }, head);
 		name.textContent = clip(o.name, 21);
 		const sub: string[] = [];
-		if (o.category) sub.push(o.category.charAt(0).toUpperCase() + o.category.slice(1));
+		// In the realm tree a land and its ruler are different things: say which this is (a land is a place; its ruling realm is a group).
+		if ((this.options.mode ?? "realms") === "realms") sub.push(o.type === "place" ? "Place" : "Realm");
+		if (o.category && o.category.toLowerCase() !== sub[0]?.toLowerCase()) sub.push(o.category.charAt(0).toUpperCase() + o.category.slice(1));
 		const span = formatSpan(o.start, o.end, cal);
 		if (span) sub.push(span);
 		// On a chosen date, whoever is occupying it says more than how long it lasted.
@@ -715,7 +777,7 @@ export class OrgChartRenderer {
 		const subEl = svg("text", { x: tx, y: 51, class: "universeview-org-sub" }, head);
 		subEl.textContent = clip(sub.join(" · "), 30);
 		const total = idx.members(o.key).filter((m) => idx.get(m.key)?.type === "person").length;
-		const kids = n.children.length;
+		const kids = n.children.length + (n.folded ?? 0);
 		const mode = this.options.mode ?? "realms";
 		const stats: string[] = [];
 		const node = this.realmTree?.nodes.get(o.key);
@@ -723,7 +785,7 @@ export class OrgChartRenderer {
 			// Who holds it, even when they have no note yet.
 			if (node.holder && !node.holder.resolved) stats.push(node.holder.name);
 			if (node.house) stats.push(node.house.name);
-			if (kids) stats.push(`${kids} ${kids === 1 ? relOne("vassals") : relLabel("vassals").toLowerCase()}`);
+			if (kids) stats.push(!n.folded && n.children.every((c) => c.org.type === "place") ? `${kids} ${kids === 1 ? "place" : "places"} within` : `${kids} ${kids === 1 ? relOne("vassals") : relLabel("vassals").toLowerCase()}`);
 		} else {
 			if (total) stats.push(`${total} member${total === 1 ? "" : "s"}`);
 			if (kids) stats.push(mode === "dynasties" ? `${kids} cadet branch${kids === 1 ? "" : "es"}` : `${kids} branch${kids === 1 ? "" : "es"}`);
@@ -756,6 +818,18 @@ export class OrgChartRenderer {
 			});
 		});
 		bindHover(this.plugin, head, o.key, this.hoverParent);
+
+		// Under the card: folds its branches away, or shows how many are folded.
+		if (kids) {
+			const fold = svg("g", { class: "universeview-org-fold" + (n.folded ? " is-folded" : ""), transform: `translate(${CARD_W / 2},${n.h})` }, g);
+			svg("rect", { x: -13, y: -9, width: 26, height: 18, rx: 9, class: "universeview-org-fold-bg" }, fold);
+			svg("text", { x: 0, y: 4, "text-anchor": "middle", class: "universeview-org-fold-text" }, fold).textContent = n.folded ? `+${n.folded}` : "−";
+			svg("title", {}, fold).textContent = n.folded ? `Show ${n.folded} branch${n.folded === 1 ? "" : "es"}` : "Fold these branches away";
+			fold.addEventListener("click", (evt) => {
+				evt.stopPropagation();
+				if (!this.pz.justPanned) this.toggleFold(o.key);
+			});
+		}
 
 		let y = HEAD_H;
 		// Every tie to another group, including those not on the chart, as coloured chips.
@@ -844,7 +918,7 @@ export class OrgChartRenderer {
 	private drawTimeline() {
 		const box = this.timelineEl;
 		box.empty();
-		if (!this.options.timeline || !this.nodes.length) return;
+		if ((!this.options.timeline && this.options.layout !== "time") || !this.nodes.length) return;
 		const cal = this.cal();
 		type Lane = { key: string; label: string; sub?: string; a?: number; b?: number; org: boolean; leader?: boolean; color: string; indent: number; dashed?: boolean; open?: boolean };
 		const lanes: Lane[] = [];

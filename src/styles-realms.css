@@ -204,6 +204,29 @@
 .uv-std-card span:last-child { font-size: var(--font-ui-smaller); color: var(--text-muted); font-weight: normal; }
 .uv-std-card.is-active { border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-secondary)); }
 .uv-std-card-icon svg { width: 16px; height: 16px; color: var(--interactive-accent); }
+/* Role and status: every option as a chip, the chosen one filled. */
+.uv-std-chip-head { padding-bottom: 4px; border-bottom: 0; }
+.uv-std-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 10px; }
+button.uv-std-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 10px;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-normal);
+	color: var(--text-muted);
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--uv-r-md);
+	box-shadow: none;
+}
+button.uv-std-chip:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+button.uv-std-chip.is-active { color: var(--text-normal); border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 14%, transparent); }
+button.uv-std-chip svg { width: 14px; height: 14px; }
+button.uv-std-chip .is-text-glyph { font-size: 14px; line-height: 1; }
+button.uv-std-chip.is-more, button.uv-std-chip.is-add { border-style: dashed; }
+.uv-std-rank { font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
 .uv-std-tags { font-size: var(--font-ui-smaller); color: var(--text-faint); font-family: var(--font-monospace); margin-top: 4px; }
 .uv-std-modal { width: min(900px, 94vw); }
 .uv-std-filter { width: 100%; margin-bottom: 6px; }
