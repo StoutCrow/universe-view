@@ -626,6 +626,10 @@ class ButtonComponent {
 		this.buttonEl.setText(t);
 		return this;
 	}
+	setDisabled(d: boolean) {
+		this.buttonEl.disabled = d;
+		return this;
+	}
 	setCta() {
 		this.buttonEl.addClass("mod-cta");
 		return this;
@@ -723,7 +727,16 @@ export class PluginSettingTab {
 	private openPage?: string;
 	update() {
 		this.settingItems = this.getSettingDefinitions();
-		const page = this.settingItems.find((i) => i.type === "page" && i.name === this.openPage);
+		const find = (list: any[]): any => {
+			for (const i of list) {
+				if (i.type !== "page") continue;
+				if (i.name === this.openPage) return i;
+				const inner = find(i.items ?? []);
+				if (inner) return inner;
+			}
+			return undefined;
+		};
+		const page = find(this.settingItems);
 		if (page) this.renderItems(page.items ?? [], page.name);
 		else this.renderItems(this.settingItems);
 	}
@@ -753,7 +766,10 @@ export class PluginSettingTab {
 					for (const b of it.extraButtons ?? []) b(new ButtonComponent(h, true));
 				}
 				const list = g.createDiv("setting-items");
-				for (const x of it.items ?? []) this.renderOne(x, list);
+				for (const x of it.items ?? []) {
+					if (x.visible === false || (typeof x.visible === "function" && !x.visible())) continue;
+					this.renderOne(x, list);
+				}
 			} else this.renderOne(it, box);
 		}
 	}

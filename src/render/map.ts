@@ -1,3 +1,6 @@
+import { ROW_INFO } from "../index/membership";
+import { groupsByRow } from "../ui/groupsplit";
+import { journeyOf } from "../index/journey";
 import * as L from "leaflet";
 import { Menu, Notice, Platform, TFile, debounce } from "obsidian";
 import { phoneCopy, phoneCopyByName, savePhoneCopy, tooBigForPhone } from "./phonecopy";
@@ -28,7 +31,7 @@ import { shownAs, visibleTiers, type Tiers } from "./tiers";
 import { chainOf, tierLabel, tierName, type RealmTree } from "../index/realms";
 import { ensureTerritoryDefs, styleFor, tierClass, tierNumber } from "../ui/territorystyle";
 import { boxOf, gridIn, inRing, labelSpot, mainAxis, nearestOnRing, ringArea, shapeHash, snapToNeighbour, splitRing, unionOutline, type P2 } from "../index/geometry";
-import { checkBorders, type BorderArea, type BorderIssue, type BorderIssueKind } from "../index/bordercheck";
+import { checkBorders, spikesOf, withoutCorners, type BorderArea, type BorderIssue, type BorderIssueKind } from "../index/bordercheck";
 import { nameSize, realmShape, type RealmShape } from "./strategy";
 import { GROUP_KINDS, groupKind } from "./houses";
 
@@ -44,6 +47,7 @@ import { readPoints, writePoints } from "../index/reader";
 import type { MapNote } from "../settings";
 import { battlesByWar, isBattle, occupationsAt, sidesOf, victorOf } from "../index/wars";
 import { asText, splitSpan } from "../index/text";
+import { weldBorders } from "../index/weld";
 import { isMovement, pathPoint, progress } from "../index/eventkinds";
 import { eventAt, locationAt } from "../index/whereabouts";
 import { placesInside } from "../index/placepath";
@@ -1085,10 +1089,32 @@ export class MapRenderer {
 		if (span) meta.push(span);
 		if (meta.length) el("div", { cls: "universeview-popup-meta", text: meta.join(" · ") }, box);
 		// Who it's under and who holds it; otherwise its groups, as before.
-		if (!ownershipLines(this.plugin, box, place.key, this.options.at, "universeview-popup-meta universeview-owner")) {
-			const cultures = place.cultures.filter((c) => this.options.at === undefined || activeAt(c, this.options.at)).map((c) => c.ref.name);
-			if (cultures.length) el("div", { cls: "universeview-popup-meta", text: cultures.join(", ") }, box);
+		const idx = this.plugin.index;
+		const live = place.cultures.filter((c) => this.options.at === undefined || activeAt(c, this.options.at));
+		const byRow = new Map(groupsByRow(this.plugin, live));
+		const owned = ownershipLines(this.plugin, box, place.key, this.options.at, "universeview-popup-meta universeview-owner");
+		// Who lives here and what they speak and believe, then the creatures found here (in this place or any inside it).
+		const listRow = (label: string, refs: { key: string; name: string }[]) => {
+			if (!refs.length) return;
+			const row = el("div", { cls: "universeview-popup-meta universeview-popup-row" }, box);
+			el("span", { cls: "universeview-popup-label", text: `${label}: ` }, row);
+			refs.slice(0, 8).forEach((r, i) => {
+				if (i) row.appendText(", ");
+				const a = el("a", { cls: "internal-link", text: r.name }, row);
+				a.addEventListener("click", (evt) => openEntity(this.plugin, r.key, evt));
+			});
+			if (refs.length > 8) row.appendText(` +${refs.length - 8} more`);
+		};
+		for (const row of ["culture", "language", "faith"] as const) listRow(ROW_INFO[row].plural, (byRow.get(row) ?? []).map((c) => c.ref));
+		if (!owned) {
+			const rest = [...byRow].filter(([r]) => r !== "culture" && r !== "language" && r !== "faith").flatMap(([, refs]) => refs.map((c) => c.ref.name));
+			if (rest.length) el("div", { cls: "universeview-popup-meta", text: rest.join(", ") }, box);
 		}
+		const inside = (key: string) => {
+			for (let p: Entity | undefined = idx.get(key), n = 0; p && n < 12; p = p.locatedIn ? idx.get(p.locatedIn.key) : undefined, n++) if (p.key === place.key) return true;
+			return false;
+		};
+		listRow("Creatures", idx.all("creature").filter((c) => c.places.some((p) => inside(p.key))).map((c) => ({ key: c.key, name: c.name })));
 		const pop = totalPopulation(this.plugin.index, place.key);
 		if (pop) el("div", { cls: "universeview-popup-meta", text: `Population ${pop.total.toLocaleString()}${pop.counted > 1 ? ` (${pop.counted} places)` : ""}` }, box);
 		if (place.summary) el("div", { cls: "universeview-popup-summary", text: place.summary }, box);
@@ -1198,7 +1224,7 @@ export class MapRenderer {
 			L.DomEvent.disableClickPropagation(box);
 			L.DomEvent.disableScrollPropagation(box);
 			const head = el("div", { cls: "universeview-legend-head" }, box);
-			const titles: Record<PinColorBy, string> = { realm: "Realms", region: "Realms", liege: "Held under", house: `Held by ${GROUP_KINDS.house.label.toLowerCase()}`, culture: "Groups", category: "Kinds of place", type: "" };
+			const titles: Record<PinColorBy, string> = { realm: "Realms", region: "Realms", liege: "Held under", house: `Held by ${GROUP_KINDS.house.label.toLowerCase()}`, culture: "Societies", category: "Kinds of place", type: "" };
 			el("span", { text: titles[this.colorBy] }, head);
 			const legendHelp: Record<PinColorBy, string> = {
 				realm: "Pins and areas coloured by the realm they belong to: the highest title above them that someone holds. Each row says who holds it; click a row to hide or show it (Alt-click shows only it), or the target to zoom there.",
@@ -1714,12 +1740,56 @@ export class MapRenderer {
 		return n;
 	}
 
+	/**
+	 * Borders that run side by side, a few pixels apart, are moved onto one line (see weldBorders), and saved: each land that
+	 * changed is one undo step. Returns how many lands changed.
+	 */
+	private async weldAll(mapSize: number): Promise<number> {
+		const tree = this.realmTree ?? this.plugin.realms(this.options.at);
+		const lands = this.drawnAreas.filter((a) => tree.nodes.get(a.key)?.nature !== "region");
+		// How close two borders must run to count as one (about 12 px on a 16,000 px map): further apart than that may be a river or a strait.
+		const tol = Math.max(4, Math.min(14, mapSize * 0.00075));
+		const id = (a: { key: string; n: number }) => `${a.key}#${a.n}`;
+		const welded = weldBorders(lands.map((a) => ({ id: id(a), ring: a.points })), tol);
+		let changed = 0;
+		// One undo step for the whole weld, and the rings written exactly as welded (a drawn border's own clean-up would move them again).
+		await this.plugin.undoGroup("Weld shared borders", async () => {
+			for (const a of lands) {
+				// Welding can bring a corner onto one the border already passes: untangle takes such loops and spikes off,
+				// and moves no other corner.
+				const raw = welded.get(id(a));
+				const ring = raw && untangle(raw, 0.05);
+				if (!ring || (ring.length === a.points.length && ring.every((p, i) => Math.hypot(p[0] - a.points[i][0], p[1] - a.points[i][1]) < 0.05))) continue;
+				await this.plugin.saveTerritory(a.key, this.options.map, a.n, ring, [], true);
+				a.points = ring;
+				changed++;
+			}
+		});
+		return changed;
+	}
+
 	/** Takes the spikes and loops out of an area's border and saves it. */
 	private async untangleArea(key: string, n: number) {
 		const area = this.drawnAreas.find((a) => a.key === key && a.n === n);
 		if (!area) return;
 		const fixed = untangle(area.points, 0.05);
 		await this.plugin.saveTerritory(key, this.options.map, n, fixed);
+	}
+
+	/** What the border check finds on the lands drawn right now. */
+	private async borderIssues(): Promise<{ areas: BorderArea[]; issues: BorderIssue[]; mapSize: number } | undefined> {
+		const isWater = await this.wetForCheck();
+		if (!this.map) return undefined;
+		const idx = this.plugin.index;
+		const tree = this.realmTree ?? this.plugin.realms(this.options.at);
+		const areas: BorderArea[] = this.drawnAreas.map((a) => {
+			const node = tree.nodes.get(a.key);
+			return { key: a.key, n: a.n, points: a.points, name: idx.get(a.key)?.name ?? a.key, chain: node ? chainOf(tree, a.key) : [a.key], region: !node || node.nature === "region" };
+		});
+		const all = areas.flatMap((a) => a.points);
+		const box = all.length ? boxOf(all) : { x0: 0, y0: 0, x1: 1, y1: 1 };
+		const mapSize = this.isImageMap && this.imageWidth ? Math.max(this.imageWidth, this.imageHeight) : Math.hypot(box.x1 - box.x0, box.y1 - box.y0);
+		return { areas, issues: checkBorders(areas, { mapSize, isWater }), mapSize };
 	}
 
 	async checkBorders(open = true) {
@@ -1731,18 +1801,10 @@ export class MapRenderer {
 		}
 		const map = this.map;
 		if (!map) return;
-		const isWater = await this.wetForCheck();
-		if (!this.map) return;
+		const found = await this.borderIssues();
+		if (!found || !this.map) return;
 		const idx = this.plugin.index;
-		const tree = this.realmTree ?? this.plugin.realms(this.options.at);
-		const areas: BorderArea[] = this.drawnAreas.map((a) => {
-			const node = tree.nodes.get(a.key);
-			return { key: a.key, n: a.n, points: a.points, name: idx.get(a.key)?.name ?? a.key, chain: node ? chainOf(tree, a.key) : [a.key], region: !node || node.nature === "region" };
-		});
-		const all = areas.flatMap((a) => a.points);
-		const box = all.length ? boxOf(all) : { x0: 0, y0: 0, x1: 1, y1: 1 };
-		const mapSize = this.isImageMap && this.imageWidth ? Math.max(this.imageWidth, this.imageHeight) : Math.hypot(box.x1 - box.x0, box.y1 - box.y0);
-		const issues = checkBorders(areas, { mapSize, isWater });
+		const { areas, issues, mapSize } = found;
 		this.checkPanel?.remove();
 		const panel = el("div", { cls: "uv-check-panel universeview-scope" }, this.root);
 		this.checkPanel = panel;
@@ -1753,19 +1815,51 @@ export class MapRenderer {
 		const titles = el("div", { cls: "uv-check-titles" }, head);
 		el("div", { cls: "uv-check-title", text: "Border check" }, titles);
 		el("div", { cls: "uv-check-sub", text: issues.length ? `${issues.length} thing${issues.length === 1 ? "" : "s"} to look at, across ${areas.length} areas` : `All ${areas.length} areas fit together` }, titles);
-		// Everything that can be fixed without a choice: borders untangled, gaps closed.
-		const fixable = issues.filter((i) => i.kind === "crossed" || i.kind === "gap");
+		// Everything that can be fixed without a choice: borders untangled, thin overlaps trimmed, gaps closed.
+		const canFix = (x: BorderIssue) => x.kind === "crossed" || x.kind === "gap" || x.kind === "spike" || (x.kind === "overlap" && !!x.thin);
+		const fixable = issues.filter(canFix);
 		if (fixable.length) {
-			const all = el("button", { cls: "mod-cta uv-check-fixall", text: `Fix all (${fixable.length})`, attr: { title: "Untangle crossed borders and close the gaps; Undo puts each back" } }, head);
+			const all = el("button", { cls: "mod-cta uv-check-fixall", text: `Fix all (${fixable.length})`, attr: { title: "Untangle crossed borders, trim borders pushed into a neighbour and close the gaps; Undo puts each back" } }, head);
 			all.addEventListener("click", () => void (async () => {
 				all.disabled = true;
-				for (const i of fixable.filter((x) => x.kind === "crossed")) await this.untangleArea(i.key, i.n);
-				for (const i of fixable.filter((x) => x.kind === "gap")) await this.closeGap(i, true);
-				const filled = await this.fillPockets(mapSize);
-				new Notice(`Fixed ${fixable.length} border problem${fixable.length === 1 ? "" : "s"}${filled ? `, and filled ${filled} pocket${filled === 1 ? "" : "s"} where lands meet` : ""}. Undo puts them back one at a time.`);
-				window.setTimeout(() => this.checkPanel && void this.checkBorders(), 700);
+				// Fixing one border can show the next (a closed gap leaves a neighbour's crossing, say), so it goes round again
+				// while that helps, up to four times.
+				const fixableIn = (list: BorderIssue[]) => list.filter(canFix);
+				let todo = fixable;
+				let fixed = 0;
+				let filled = 0;
+				let welded = 0;
+				let passes = 0;
+				while (todo.length && passes < 4) {
+					passes++;
+					for (const i of todo.filter((x) => x.kind === "crossed")) await this.untangleArea(i.key, i.n);
+					for (const i of todo.filter((x) => x.kind === "spike")) await this.simplifySpikes(i, mapSize, true);
+					for (const i of todo.filter((x) => x.kind === "overlap")) await this.trimOverlap(i, mapSize, true);
+					for (const i of todo.filter((x) => x.kind === "gap")) await this.closeGap(i, true);
+					fixed += todo.length;
+					filled += await this.fillPockets(mapSize);
+					// Borders left side by side a few pixels apart go onto one shared line; the next round tidies what that leaves.
+					welded += await this.weldAll(mapSize);
+					// Wait for the map to redraw with the new borders, then look again.
+					await new Promise((done) => window.setTimeout(done, 900));
+					const next = fixableIn((await this.borderIssues())?.issues ?? []);
+					if (next.length >= todo.length) break;
+					todo = next;
+				}
+				new Notice(`Fixed ${fixed} border problem${fixed === 1 ? "" : "s"}${passes > 1 ? ` in ${passes} rounds` : ""}${filled ? `, filled ${filled} pocket${filled === 1 ? "" : "s"} where lands meet` : ""}${welded ? `, and welded the borders of ${welded} land${welded === 1 ? "" : "s"}` : ""}. Undo puts them back one at a time.`);
+				window.setTimeout(() => this.checkPanel && void this.checkBorders(), 300);
 			})());
 		}
+		// Borders drawn side by side that never quite meet look like two lines: this puts each pair on one.
+		const tools = el("div", { cls: "uv-check-tools" }, panel);
+		const weld = el("button", { cls: "uv-check-weld", text: "Weld shared borders", attr: { title: "Move borders that run side by side, a few pixels apart, onto one shared line. Bigger lands stay as they are; one Undo puts it all back" } }, tools);
+		el("span", { cls: "uv-check-sub", text: "One line where two lands meet" }, tools);
+		weld.addEventListener("click", () => void (async () => {
+			weld.disabled = true;
+			const changed = await this.weldAll(mapSize);
+			new Notice(changed ? `Welded the borders of ${changed} land${changed === 1 ? "" : "s"}. One Undo puts them all back.` : "Nothing to weld: the borders already share their lines.");
+			window.setTimeout(() => this.checkPanel && void this.checkBorders(), 700);
+		})());
 		const again = el("button", { cls: "clickable-icon", attr: { "aria-label": "Check again" } }, head);
 		icon(again, "refresh-cw");
 		again.addEventListener("click", () => void this.checkBorders());
@@ -1781,6 +1875,7 @@ export class MapRenderer {
 			overlap: ["Overlaps", "layers"],
 			outside: ["Sticking out", "square-dashed-bottom"],
 			gap: ["Gaps", "move-horizontal"],
+			spike: ["Spikes", "triangle"],
 			partial: ["Partly covered", "square-dashed"],
 			sliver: ["Slivers", "minus"],
 		};
@@ -1807,6 +1902,8 @@ export class MapRenderer {
 			const e = idx.get(i.key);
 			if (!e) return undefined;
 			if (i.kind === "gap") return ["Close the gap", "expand", () => void this.closeGap(i)];
+			if (i.kind === "spike") return ["Simplify", "wand-sparkles", () => void this.simplifySpikes(i, mapSize).then(() => window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600))];
+			if (i.kind === "overlap" && i.thin) return ["Trim to one border", "scissors", () => void this.trimOverlap(i, mapSize).then(() => window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600))];
 		if (i.kind === "crossed") return ["Untangle", "wand-sparkles", () => void this.untangleArea(i.key, i.n).then(() => window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600))];
 			if (i.kind === "sliver") return ["Delete it", "trash-2", () => void this.plugin.deleteArea(i.key, this.options.map, i.n).then(() => window.setTimeout(() => this.checkPanel && void this.checkBorders(), 600))];
 			if (i.kind === "partial") return ["New land within", "plus-square", () => newLandSheet(this.plugin, e, (file) => void this.plugin.drawOnMap(file.path, "paint", 0, this.options.map))];
@@ -1852,6 +1949,50 @@ export class MapRenderer {
 			}
 		};
 		draw();
+	}
+
+	/** Takes the spikes off a land's border where it meets its neighbours (the border check's "Simplify"). Undo puts them back. */
+	async simplifySpikes(issue: BorderIssue, mapSize: number, quiet = false) {
+		const mine = this.drawnAreas.find((a) => a.key === issue.key && a.n === issue.n);
+		if (!mine) return;
+		const neighbours = this.drawnAreas.filter((a) => a.key !== mine.key);
+		const { ring, dropped, at } = spikesOf(mine.points, neighbours.map((a) => a.points), mapSize);
+		if (!dropped) return;
+		// One undo for the land and every neighbour that shared a corner it lost, so their border stays one line.
+		await this.plugin.undoGroup(`Simplified ${this.plugin.index.get(mine.key)?.name ?? mine.key}`, async () => {
+			await this.plugin.saveTerritory(mine.key, this.options.map, mine.n, ring);
+			mine.points = ring;
+			for (const a of neighbours) {
+				const theirs = withoutCorners(a.points, at);
+				if (theirs.length === a.points.length) continue;
+				await this.plugin.saveTerritory(a.key, this.options.map, a.n, theirs);
+				a.points = theirs;
+			}
+		});
+		if (!quiet) new Notice(`Took ${dropped} spike${dropped === 1 ? "" : "s"} off ${this.plugin.index.get(mine.key)?.name ?? mine.key}. Undo puts ${dropped === 1 ? "it" : "them"} back.`);
+	}
+
+	/**
+	 * Trims a thin overlap the border check found: the smaller land is cut back to the bigger one's border, so the two
+	 * share one line. The bigger land stays as drawn; pieces of the smaller one left on the far side are dropped when
+	 * they are slivers. Undo puts it back.
+	 */
+	async trimOverlap(issue: BorderIssue, mapSize: number, quiet = false) {
+		const mine = this.drawnAreas.find((a) => a.key === issue.key && a.n === issue.n);
+		const other = issue.other && this.drawnAreas.find((a) => a.key === issue.other!.key && a.n === issue.other!.n);
+		if (!mine || !other) return;
+		const sliver = (mapSize * mapSize) / 40000;
+		const res = cutFrom(mine.points, [other.points], sliver);
+		const name = this.plugin.index.get(mine.key)?.name ?? mine.key;
+		if (!res || res.ring.length < 3) {
+			if (!quiet) new Notice(`Trimming ${name} would leave nothing of it: reshape it instead.`);
+			return;
+		}
+		const ring = res.ring.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt);
+		await this.plugin.saveTerritory(mine.key, this.options.map, mine.n, ring, res.detached.map((d) => d.map(([x, y]) => [round(x, 1), round(y, 1)] as Pt)));
+		// The drawn copy follows at once, so several fixes in a row see each other's results.
+		mine.points = ring;
+		if (!quiet) new Notice(`Trimmed ${name} to ${this.plugin.index.get(other.key)?.name ?? other.key}'s border. Undo puts it back.`);
 	}
 
 	/**
@@ -2303,7 +2444,7 @@ export class MapRenderer {
 		if (hit && hitOwner) {
 			const del = el("button", { cls: "uv-map-picked-delete", attr: { "aria-label": `Delete this area of ${hitOwner.name} (Delete key)` } }, row);
 			icon(el("span", {}, del), "trash-2");
-			el("span", { text: hitOwner.key === e.key ? "Delete area" : `Delete ${hitOwner.name}'s area` }, del);
+			el("span", { text: hitOwner.key === e.key ? "Delete this area" : `Delete ${hitOwner.name}'s area` }, del);
 			del.addEventListener("click", (evt) => {
 				evt.stopPropagation();
 				remove();
@@ -2322,16 +2463,17 @@ export class MapRenderer {
 			};
 			document.addEventListener("keydown", onKey, true);
 		}
-		if (this.canSplit(e.key)) act("zoom-in", "Split", () => this.drillTo(e.key));
-		if (node?.under && this.tierBounds.has(node.under)) act("zoom-out", this.plugin.index.get(node.under)?.name ?? "Up", () => {
+		// Zooming in or out through the realm's tiers (the Split tool, which cuts a land off along a line, is in the toolbar).
+		if (this.canSplit(e.key)) act("zoom-in", "Zoom in", () => this.drillTo(e.key));
+		if (node?.under && this.tierBounds.has(node.under)) act("zoom-out", `Zoom out to ${this.plugin.index.get(node.under)?.name ?? "the realm"}`, () => {
 			this.showWhole(node.under!);
 			this.selectRealm(node.under);
 		});
 		// Its borders on this map, in the territory editor.
 		const first = this.areasHere(e)[0];
-		if (first) act("pencil-ruler", "Edit", () => this.openTerritoryEditor(e, first.n));
+		if (first) act("pencil-ruler", "Edit borders", () => this.openTerritoryEditor(e, first.n));
 		act("panel-right", "Inspect", () => void this.plugin.inspect(e.key, "edit"));
-		act("file-text", "Open", () => openEntity(this.plugin, e.key));
+		act("file-text", "Open note", () => openEntity(this.plugin, e.key));
 		const close = el("button", { cls: "clickable-icon", attr: { "aria-label": "Clear" } }, head);
 		icon(close, "x");
 		close.addEventListener("click", (evt) => {
@@ -2400,6 +2542,11 @@ export class MapRenderer {
 			// Its edge and texture are those of the tier it shows as: a county inside a kingdom shown whole wears the kingdom's texture.
 			const asNode = tree?.nodes.get((tiers && shownAs(a.chain, tiers)) || a.owner);
 			const look = styleFor(this.plugin, tierNumber(asNode?.rank, asNode?.nature));
+			// The fill and line too wear the tier it shows as, so a realm drawn whole looks like a realm and not like its smallest division.
+			if (asNode) {
+				for (const c of Array.from(path.classList)) if (/^uv-tier-\d$/.test(c) || c === "uv-region") path.removeClass(c);
+				path.addClass(...tierClass(asNode.rank, asNode.nature).split(" "));
+			}
 			const ov = a.overlay?.getElement() as HTMLElement | undefined;
 			if (ov) {
 				if (asNode) ov.setAttribute("class", `uv-terr-overlay uv-edge-${look.edge ?? "plain"} ${tierClass(asNode?.rank, asNode?.nature)}`);
@@ -2614,26 +2761,33 @@ export class MapRenderer {
 			// Like the grand strategy games: a soft band of the realm's colour just inside its border, fading
 			// inwards (top realm and the tier below), kept inside the realm by clipping to its own areas.
 			const terrSvg = (parts[0].poly.getElement() as unknown as SVGElement | undefined)?.ownerSVGElement;
-			if (depth <= 1 && terrSvg && this.plugin.settings.realmBand !== "off") {
+			// The realm's own lands as one clip, so what is drawn along its border stays inside it.
+			const makeClip = (): Element | undefined => {
+				if (part.clip || !terrSvg) return part.clip;
 				ensureTerritoryDefs(terrSvg);
-				const clip = createSvg("clipPath");
-				clip.id = `uv-realm-clip-${++this.terrSeq}`;
-				clip.setAttribute("class", "uv-realm-clip");
+				const made = createSvg("clipPath");
+				made.id = `uv-realm-clip-${++this.terrSeq}`;
+				made.setAttribute("class", "uv-realm-clip");
 				for (const a of parts) {
 					const p = a.poly.getElement() as unknown as SVGElement | undefined;
 					if (!p) continue;
 					if (!p.id) p.id = `uv-terr-${++this.terrSeq}`;
 					const use = createSvg("use");
 					use.setAttribute("href", `#${p.id}`);
-					clip.appendChild(use);
+					made.appendChild(use);
 				}
-				terrSvg.querySelector("#uv-terr-defs")?.appendChild(clip);
-				part.clip = clip;
+				terrSvg.querySelector("#uv-terr-defs")?.appendChild(made);
+				part.clip = made;
+				return made;
+			};
+			if (depth <= 1 && terrSvg && this.plugin.settings.realmBand !== "off") {
+				const clip = makeClip()!;
 				// Three strokes, wide and faint to narrow, overlap into a fade: the look of a blur without
 				// blurring (a blur filter redrawn on every zoom and pan was slow on big maps).
-				// All of the realm's border stretches in one line per stroke (not one per stretch), simplified:
-				// a soft band needn't follow every wiggle, and fewer lines and points redraw faster on zoom.
-				const soft = (cached.edges ?? shape.outline).map((line) => simplifyOpen(line as Pt[], mapSpan * 0.0008).map((p) => fromPlane(p)));
+				// All of the realm's border stretches in one line per stroke (not one per stretch), thinned only a little:
+				// a band thinned more than a border's bends cut straight across them (a river bank's curve), leaving a strip
+				// along the border that looked like the land stopped short. Leaflet thins it further to the screen on each zoom.
+				const soft = (cached.edges ?? shape.outline).map((line) => simplifyOpen(line as Pt[], mapSpan * 0.00012).map((p) => fromPlane(p)));
 				for (let i = 0; i < 3; i++) {
 					const band = L.polyline(soft, { interactive: false, fill: false, className: `uv-realm-band depth-${depth} layer-${i}`, smoothFactor: 1.5 }).addTo(g);
 					const be = band.getElement() as SVGElement | undefined;
@@ -2645,6 +2799,18 @@ export class MapRenderer {
 			// One line for all of its stretches.
 			const edge = L.polyline((cached.edges ?? shape.outline).map((line) => line.map(fromPlane)), { pane: "uv-realm-edges", interactive: false, fill: false, className: `uv-realm-edge depth-${Math.min(depth, 3)} ${tierClass(node?.rank, node?.nature)}`, smoothFactor: 1 }).addTo(g);
 			(edge.getElement() as HTMLElement | undefined)?.style.setProperty("--terr-color", colour);
+			// A realm made of lands (a duchy of counties) wears its tier's edge, the band or double line, as a realm drawn as one area
+			// does: the lands' own edges are hidden so their borders do not show, and this puts the realm's back along its outline.
+			if (tiers.whole.has(k) && !this.ownLand.has(k)) {
+				const look = styleFor(this.plugin, tierNumber(node?.rank, node?.nature));
+				const clip = look.edge === "band" || look.edge === "double" ? makeClip() : undefined;
+				if (clip) {
+					const line = L.polyline((cached.edges ?? shape.outline).map((l) => l.map(fromPlane)), { interactive: false, fill: false, className: `uv-terr-overlay uv-edge-${look.edge} ${tierClass(node?.rank, node?.nature)}`, smoothFactor: 1.5 }).addTo(g);
+					const el = line.getElement() as SVGElement | undefined;
+					el?.style.setProperty("--terr-color", colour);
+					el?.setAttribute("clip-path", `url(#${clip.id})`);
+				}
+			}
 			if (!tiers.whole.has(k) && !ownShows) continue;
 			let named = shape;
 			if (!tiers.whole.has(k)) {
@@ -6189,15 +6355,24 @@ export class MapRenderer {
 			const p = ref && idx.get(ref.key);
 			return p && this.toLatLng(p) ? p : undefined;
 		};
+		if (person.type === "object") {
+			// An object's journey: where it was kept and where each holder was while holding it, up to the date shown.
+			for (const s of journeyOf(idx, person)) {
+				const p = placed(s.place);
+				const day = s.from?.start ?? -Infinity;
+				if (!p || (at !== undefined && day > at)) continue;
+				stops.push({ ll: this.toLatLng(p)!, label: `${p.name}: ${s.why}${s.from ? ` from ${formatDate(s.from, cal)}` : ""}`, key: p.key, day });
+			}
+		}
 		// Birth and death places bracket the journey when they're known.
-		const birth = placed(person.birthPlace);
+		const birth = person.type === "object" ? undefined : placed(person.birthPlace);
 		if (birth) stops.push({ ll: this.toLatLng(birth)!, label: `Born${person.start ? ` ${formatDate(person.start, cal)}` : ""} in ${birth.name}`, key: birth.key, day: person.start?.start ?? -Infinity });
-		for (const e of idx.events(key)) {
+		for (const e of person.type === "object" ? [] : idx.events(key)) {
 			if (e.type !== "event" || !e.start || (at !== undefined && e.start.start > at)) continue;
 			const place = e.places.map((p) => idx.get(p.key)).find((p) => p && this.toLatLng(p));
 			if (place) stops.push({ ll: this.toLatLng(place)!, label: `${e.name} (${formatDate(e.start, this.plugin.calendars.get(e.calendar))})`, key: e.key, day: e.start.start });
 		}
-		const death = placed(person.deathPlace);
+		const death = person.type === "object" ? undefined : placed(person.deathPlace);
 		if (death && (at === undefined || !person.end || person.end.start <= at)) {
 			stops.push({ ll: this.toLatLng(death)!, label: `Died${person.end ? ` ${formatDate(person.end, cal)}` : ""} in ${death.name}`, key: death.key, day: person.end?.start ?? Infinity });
 		}

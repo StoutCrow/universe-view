@@ -7,6 +7,8 @@ body {
 	--universeview-culture-color: var(--universeview-user-culture, var(--universeview-theme-culture, var(--color-purple)));
 	--universeview-place-color: var(--universeview-user-place, var(--universeview-theme-place, var(--color-orange)));
 	--universeview-map-color: var(--color-cyan);
+	--universeview-object-color: var(--color-yellow);
+	--universeview-creature-color: var(--color-green);
 	--universeview-accent: var(--universeview-user-accent, var(--universeview-theme-accent, var(--interactive-accent)));
 	--universeview-male-tint: var(--color-blue);
 	--universeview-female-tint: var(--color-pink);
@@ -31,10 +33,6 @@ body {
 	--universeview-slow: calc(420ms * var(--universeview-speed));
 	--universeview-density: 1;
 	--universeview-gap: calc(10px * var(--universeview-density));
-}
-body.universeview-flat {
-	--universeview-shadow: none;
-	--universeview-shadow-lift: none;
 }
 @media (prefers-reduced-motion: reduce) {
 	body {
@@ -798,6 +796,11 @@ body.universeview-gender-tint .universeview-card.gender-f {
 	stroke: var(--node-color);
 	stroke-width: 2.5;
 }
+.universeview-net-node.type-creature .universeview-net-shape {
+	stroke: var(--node-color);
+	stroke-width: 2;
+	stroke-dasharray: 3 2;
+}
 .universeview-net-node.is-focus .universeview-net-shape {
 	stroke: var(--interactive-accent);
 	stroke-width: 3;
@@ -1322,6 +1325,17 @@ button.universeview-linkchip-pen {
 	color: inherit;
 	cursor: pointer;
 }
+/* Theme and Tactile button rules (min-width, padding, height) must not stretch it. */
+button.universeview-linkchip-pen:not(#uv-strong) {
+	box-sizing: border-box;
+	width: 20px;
+	min-width: 20px;
+	max-width: 20px;
+	height: 20px;
+	min-height: 20px;
+	padding: 0;
+	line-height: 1;
+}
 button.universeview-linkchip-pen:hover {
 	border-color: currentColor;
 	background: color-mix(in srgb, currentColor 12%, transparent);
@@ -1803,3 +1817,5 @@ button.universeview-ov-tile:focus-visible .universeview-ov-tile-title {
 .uv-map-report-title { font-weight: 600; font-size: var(--font-ui-small); margin-bottom: 6px; }
 .uv-map-report pre { white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; margin: 0 0 8px; padding: 8px; border-radius: var(--uv-r-md); background: var(--background-secondary); font-size: 11px; user-select: text; -webkit-user-select: text; }
 .uv-map-report-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.universeview-linkchip.is-ended { background: transparent; border: 1px dashed var(--text-faint); color: var(--text-muted); }
+.universeview-net-link.kind-deduced { stroke: var(--text-accent); stroke-opacity: 0.6; stroke-dasharray: 2 4; stroke-width: 1.5; }

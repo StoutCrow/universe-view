@@ -154,3 +154,36 @@ export function formatDetails(d: Partial<TieDetails>): string {
 	const bits = [d.kind, ...(d.words ?? []), d.gender === "female" ? "f" : d.gender === "male" ? "m" : undefined, d.span, d.reason ? `ended: ${d.reason}` : undefined, d.label ? `"${d.label.replace(/"/g, "'")}"` : undefined].filter((x): x is string => !!x && !!x.trim());
 	return bits.length ? ` (${bits.join(", ")})` : "";
 }
+
+/** Kinds that are over by their nature. */
+const OVER_KINDS = new Set(["ex", "widowed"]);
+
+/** Whether a partnership is over: it says how it ended, it has an end date, its kind is an ex or a widowing, or its dates are a range. */
+export function tieEnded(t: { kind?: string; span?: string; reason?: string; to?: unknown }): boolean {
+	return !!(t.reason || t.to || (t.kind && OVER_KINDS.has(norm(t.kind))) || (t.span && /\d\s*[–—-]\s*\S*\d/.test(t.span)));
+}
+
+/** What an ended partnership is called: a marriage that ended is a former spouse, a lover an ex-lover. */
+export function endedTieLabel(kind: string | undefined, reason?: string): string {
+	if (reason && /death|died|widow|killed|murder/i.test(reason)) return "Widowed";
+	const k = norm(kind ?? "");
+	if (!k || k === "spouse" || k === "marriage" || k === "married") return "Former spouse";
+	if (k === "ex") return "Ex";
+	if (k === "widowed") return "Widowed";
+	if (k === "betrothed") return "Engagement ended";
+	if (k === "lover") return "Ex-lover";
+	return `Former ${k.replace(/-/g, " ")}`;
+}
+
+/** A person's partners and former partners as one list: the current ones first, then the ended ones in the order they began. */
+export function partnersInOrder<T extends { kind?: string; reason?: string; to?: unknown; span?: string }>(list: T[]): T[] {
+	return list.map((t, i) => ({ t, i, over: tieEnded(t) })).sort((a, b) => Number(a.over) - Number(b.over) || a.i - b.i).map((x) => x.t);
+}
+
+/** What one partner tie is called, current or ended: "Spouse", "Former spouse", "Widowed", "Ex-lover". */
+export function partnerWord(t: { kind?: string; reason?: string; to?: unknown; span?: string; label?: string }): string {
+	if (t.label) return t.label;
+	if (tieEnded(t)) return endedTieLabel(t.kind, t.reason);
+	const k = (t.kind ?? "").replace(/-/g, " ");
+	return k ? k.charAt(0).toUpperCase() + k.slice(1) : "Partner";
+}

@@ -8,7 +8,7 @@ import { normaliseKind } from "./placekinds";
  *   What it belongs to:      #Type_Kind_Name         #Group_Nation_United_States  #Place_Continent_North_America
  *   A fact about it:         #Type_Field_Value       #Character_Status_Dead  #Character_Gender_Female  #Place_Size_Small
  *
- * - Type is one of TYPE_WORDS: Character, Group, Place, Event, Map. The same words in every vault.
+ * - Type is one of TYPE_WORDS: Character, Group, Place, Event, Map, Object, Creature. The same words in every vault.
  * - Kind is one word; a kind of more words is written joined (space station → SpaceStation).
  * - In a belonging tag, Type_Kind is the other note's own kind tag and Name is that note's name.
  * - In a fact tag, Field is one of FACT_FIELDS (Gender, Status, Role, Class, Size), so a fact never
@@ -21,11 +21,11 @@ import { normaliseKind } from "./placekinds";
  * `migrateTags` rewrites those into this scheme.
  */
 
-export const TYPE_WORDS: Record<EntityType, string> = { person: "Character", culture: "Group", place: "Place", event: "Event", map: "Map" };
+export const TYPE_WORDS: Record<EntityType, string> = { person: "Character", culture: "Group", place: "Place", event: "Event", map: "Map", object: "Object", creature: "Creature" };
 const WORD_TYPE = new Map(Object.entries(TYPE_WORDS).map(([t, w]) => [w.toLowerCase(), t as EntityType]));
 
 /** The kind a note gets before anyone says one. */
-export const DEFAULT_KINDS: Record<EntityType, string> = { person: "person", culture: "other", place: "other", event: "other", map: "other" };
+export const DEFAULT_KINDS: Record<EntityType, string> = { person: "person", culture: "other", place: "other", event: "other", map: "other", object: "item", creature: "beast" };
 
 export const FACT_FIELDS = ["gender", "status", "role", "class", "size"] as const;
 export type FactField = (typeof FACT_FIELDS)[number];
@@ -198,7 +198,7 @@ const isPlaceName = (word: string, n: MigrateNote) => key(word) === key(n.world 
 
 /**
  * What it takes to bring one note's tags into the scheme. `find` looks up a note by name (for
- * #Nation_United_States, #Character_Vael). Tags it can't place are left as they are.
+ * #Nation_United_States, #Character_England). Tags it can't place are left as they are.
  */
 export function migrateTags(n: MigrateNote, find: (name: string) => MigrateTarget | undefined, w: MigrateWords): Migration {
 	// 3.3: an older place kind that is really a role (capital, port) or a spelling (fortress) moves to the catalogue's shape.

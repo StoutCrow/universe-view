@@ -4,7 +4,7 @@ import type { EntityType } from "../types";
 import { formatDate } from "../dates/parser";
 import { EVENT_KINDS } from "../index/eventkinds";
 import { namesOf } from "../index/aliases";
-import { CREATOR_FIELDS, parseQuickAdd, quickAddFrontmatter, withFields, type CreatorField, type QuickAdd } from "../import/quickadd";
+import { creatorFieldsFor, parseQuickAdd, quickAddFrontmatter, withFields, type CreatorField, type QuickAdd } from "../import/quickadd";
 import { factsFromPath, standardTag, standardTagsFor, type TagSample } from "../index/tagrules";
 import { factTag, kindTag, parseTag, tidyKinds } from "../index/tagscheme";
 import { TYPE_ICONS, TYPE_LABELS, el, icon } from "../render/common";
@@ -29,7 +29,13 @@ const CHOICES: [string, string, string, EntityType | undefined, string | undefin
 	["place", TYPE_ICONS.place, "Place", "place", undefined],
 	["realm", GROUP_KINDS.realm.icon, "Realm", "culture", "realm"],
 	["house", GROUP_KINDS.house.icon, "House", "culture", "house"],
-	["group", GROUP_KINDS.group.icon, "Group", "culture", undefined],
+	["faith", GROUP_KINDS.faith.icon, "Faith", "culture", "faith"],
+	["language", GROUP_KINDS.language.icon, "Language", "culture", "language"],
+	["culture", GROUP_KINDS.culture.icon, "People", "culture", "culture"],
+	["organisation", GROUP_KINDS.organisation.icon, "Organisation", "culture", "organisation"],
+	["group", GROUP_KINDS.group.icon, "Society", "culture", undefined],
+	["object", TYPE_ICONS.object, "Object", "object", undefined],
+	["creature", TYPE_ICONS.creature, "Creature", "creature", undefined],
 ];
 
 const fileName = (name: string) => name.replace(/[\\/:*?"<>|#^[\]]/g, "-");
@@ -311,7 +317,7 @@ export class QuickCreator {
 			checkName(nameInput.value);
 			this.refresh();
 		});
-		const fields = CREATOR_FIELDS[q.type];
+		const fields = creatorFieldsFor(q.type, kind);
 		for (const f of fields.filter((x) => !x.more)) this.field(f, q, grid);
 		const extra = fields.filter((x) => x.more);
 		if (extra.length) {
@@ -495,7 +501,7 @@ export class QuickCreator {
 		const batch = new Set(parsed.filter((x) => !this.skipped.has(x.line)).map((x) => x.q.name.toLowerCase()));
 		const kept = parsed.filter((x) => !this.skipped.has(x.line)).length;
 		el("div", { cls: "uv-quickadd-head", text: `${kept} of ${many.length} notes` }, box);
-		const TYPES: EntityType[] = ["person", "place", "event", "culture"];
+		const TYPES: EntityType[] = ["person", "place", "event", "culture", "object", "creature"];
 		for (const { line, q, kind } of parsed) {
 			const off = this.skipped.has(line);
 			const row = el("div", { cls: "uv-quickadd-many" + (off ? " is-off" : "") }, box);
@@ -569,7 +575,8 @@ export class QuickCreator {
 		if (all.length > 1) return this.makeMany(all);
 		for (const [key, list] of this.lists) {
 			const typedIn = list.collect();
-			const many = CREATOR_FIELDS[this.current().q.type].find((f) => f.key === key)?.input === "links";
+			const cur = this.current();
+			const many = creatorFieldsFor(cur.q.type, cur.kind).find((f) => f.key === key)?.input === "links";
 			if (typedIn.length) this.fields[key] = many ? [...typedIn] : typedIn[0];
 		}
 		const { q, kind } = this.current();

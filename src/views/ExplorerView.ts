@@ -1,3 +1,8 @@
+import { societySpec } from "../index/societies";
+import { GROUP_KINDS, groupKind } from "../render/houses";
+import { journeyOf } from "../index/journey";
+import { partnersInOrder, partnerWord } from "../index/ties";
+import { whyNote } from "../index/deduce";
 import { Keymap, Notice, Setting, TFile, ViewStateResult, debounce } from "obsidian";
 import { ENTITY_TYPES, PIN_SIZES, type ChronDate, type Entity, type EntityType } from "../types";
 import { buildFieldAliases, findMapping, setMapping, type FieldName } from "../settings";
@@ -17,7 +22,7 @@ import { renderWorldStats } from "../render/stats";
 import { totalPopulation } from "../index/tidy";
 import { KnowledgeModal } from "../ui/people";
 import { renderCompleteness } from "../ui/tidying";
-import { AddRelationModal, removeLink, type LinkSpec, type Unlink } from "../ui/relations";
+import { AddRelationModal, addLink, keepEndedTie, removeLink, type LinkSpec, type Unlink } from "../ui/relations";
 import { relInverse } from "../index/relkinds";
 import { CardLayout } from "../ui/cardlayout";
 import { UniverseViewBase } from "./base";
@@ -41,6 +46,8 @@ interface RelItem {
 	note?: string;
 	/** Where the link is written, so × can remove it. */
 	remove?: Unlink[];
+	/** A tie that was only worked out: this writes it into the note, so it stays whatever the other notes say. */
+	keep?: { path: string; name: string; kind: string; ended?: { span: string; reason: string } };
 }
 interface RelGroup {
 	label: string;
@@ -55,6 +62,7 @@ const DATE_FIELDS: Partial<Record<EntityType, [FieldName, string, FieldName, str
 	event: ["date", "Date", "end", "Ended"],
 	culture: ["founded", "Founded", "dissolved", "Dissolved"],
 	place: ["founded", "Founded", "dissolved", "Abandoned"],
+	object: ["founded", "Made", "dissolved", "Lost"],
 };
 
 /**
@@ -65,7 +73,9 @@ const DATE_FIELDS: Partial<Record<EntityType, [FieldName, string, FieldName, str
  * settings and what needs attention.
  */
 export class ExplorerView extends UniverseViewBase {
-	private state: ExplorerState = { expanded: [], onlyNotes: true, search: "" };
+	protected state: ExplorerState = { expanded: [], onlyNotes: true, search: "" };
+	/** In the sidebar the same view is the files panel: the tree alone, a click opens the note. */
+	protected panel = false;
 	private statsEl!: HTMLElement;
 	private treeEl!: HTMLElement;
 	private tree!: FileTree;
@@ -100,8 +110,9 @@ export class ExplorerView extends UniverseViewBase {
 
 	protected build() {
 		this.contentEl.addClass("universeview-explorer-view");
+		if (this.panel) this.contentEl.addClass("uv-files-view");
 		this.fillToolbar();
-		const root = el("div", { cls: "universeview-dash" }, this.body);
+		const root = el("div", { cls: "universeview-dash" + (this.panel ? " uv-files" : "") }, this.body);
 		this.statsEl = el("div", { cls: "universeview-dash-stats" }, root);
 		const main = (this.mainEl = el("div", { cls: "universeview-dash-main" }, root));
 		this.treeEl = el("div", { cls: "universeview-dash-tree" }, main);
@@ -113,10 +124,26 @@ export class ExplorerView extends UniverseViewBase {
 		});
 		const list = el("div", { cls: "universeview-dash-list" }, this.treeEl);
 		this.tree = new FileTree(this.plugin, list, () => this.state, {
+			foldOnClick: this.panel,
 			changed: () => this.save(),
 			select: (path, isFolder, evt) => {
-				if (this.state.hideDetail && !isFolder) openEntity(this.plugin, path, evt);
-				this.select(path, isFolder);
+				if (isFolder) {
+					if (!(this.panel && this.state.hideDetail)) this.select(path, true);
+					return;
+				}
+				const mode = (this.panel ? this.plugin.settings.panelClick : this.plugin.settings.libraryClick) ?? (this.panel ? "note" : "dashboard");
+				// With the tree alone there is no dashboard page beside it, so that choice opens the note.
+				const note = mode.startsWith("note") || (mode.startsWith("dashboard") && !this.panel && !!this.state.hideDetail);
+				if (note) openEntity(this.plugin, path, evt);
+				if (mode.endsWith("inspector")) void this.plugin.inspect(path);
+				if (mode.startsWith("dashboard") && this.panel) void this.plugin.activateView(VIEW_EXPLORER, { select: path });
+				if (mode.startsWith("dashboard") && !this.state.hideDetail) this.select(path, false);
+				else {
+					// No page to fill: only mark the row.
+					this.tree.pick(path, false);
+					this.tree.render();
+					this.save();
+				}
 			},
 		});
 		this.dragTree(el("div", { cls: "universeview-dash-grip", attr: { role: "separator", "aria-label": "Resize the file tree" } }, main));
@@ -141,6 +168,13 @@ export class ExplorerView extends UniverseViewBase {
 		this.registerEvent(this.app.workspace.on("universeview:history-changed" as "quit", () => this.syncUndo()));
 		this.registerEvent(this.app.workspace.on(TREE_OPTIONS_CHANGED as "quit", () => this.tree.render()));
 		this.registerEvent(this.app.vault.on("rename", (f, old) => this.tree.followRename(f.path, old)));
+		// Tree alone: it follows the open note, however it was opened.
+		this.registerEvent(this.app.workspace.on("file-open", (f: TFile | null) => {
+			if (!this.state.hideDetail || !f || f.path === this.state.selected) return;
+			this.tree.pick(f.path, false);
+			this.tree.render();
+			this.tree.scrollToPicked();
+		}));
 	}
 
 	private undoBtn?: HTMLElement;
@@ -246,9 +280,11 @@ export class ExplorerView extends UniverseViewBase {
 				this.tree.render();
 				this.save();
 			});
-			iconButton(left, "sliders-horizontal", "How the tree looks", (evt) => treeOptionsMenu(this.plugin, evt));
+			iconButton(left, "sliders-horizontal", "How the tree looks", (evt) => treeOptionsMenu(this.plugin, evt, { state: this.state, redraw: () => { this.tree.render(); this.save(); this.fillToolbar(); } }));
 			iconButton(left, "chevrons-down-up", "Collapse all folders", () => this.tree.collapseAll());
 			iconButton(left, "chevrons-up-down", "Expand all folders", () => this.tree.expandAll());
+			if (this.panel) iconButton(left, "maximize-2", "Open the Library in a tab", () => void this.plugin.activateView(VIEW_EXPLORER, {}));
+			else iconButton(left, "panel-left", "Show this tree in the side panel too", () => void this.plugin.openFilesPanel());
 			setPressed(iconButton(left, "bar-chart-3", "Show the summary", () => this.toggleLayout("hideStats")), !this.state.hideStats);
 			setPressed(iconButton(left, "panel-right", "Show details beside the tree", () => this.toggleLayout("hideDetail")), !this.state.hideDetail);
 			setPressed(iconButton(left, "layout-grid", "Customise this page: hide, move and resize its cards", () => this.layout.toggle()), this.layout.editing);
@@ -309,6 +345,13 @@ export class ExplorerView extends UniverseViewBase {
 			if (!n && t === "map") continue;
 			tile(TYPE_ICONS[t], plural(TYPE_LABELS[t].toLowerCase(), n), n, typeColorVar(t), () => this.setTypeFilter(this.state.typeFilter === t ? undefined : t), this.state.typeFilter === t);
 		}
+		// The kinds of group, one tile each: peoples, languages and faiths (and the like), each a filter on the tree.
+		const kindCounts = new Map<string, number>();
+		for (const c of idx.all("culture")) kindCounts.set(groupKind(this.plugin, c), (kindCounts.get(groupKind(this.plugin, c)) ?? 0) + 1);
+		for (const k of ["culture", "language", "faith"] as const) {
+			const n = kindCounts.get(k) ?? 0;
+			if (n) tile(GROUP_KINDS[k].icon, plural(GROUP_KINDS[k].label.toLowerCase(), n), n, "var(--text-muted)", () => this.setKindFilter(this.state.kindFilter === k ? undefined : k), this.state.kindFilter === k);
+		}
 		const problems = validate(idx).filter((i) => i.severity !== "info").length;
 		tile("shield-alert", plural("problem", problems), problems, problems ? "var(--text-error)" : "var(--text-success)", () => {
 			this.state.selected = undefined;
@@ -316,8 +359,17 @@ export class ExplorerView extends UniverseViewBase {
 		});
 	}
 
+	private setKindFilter(k: string | undefined) {
+		this.state.kindFilter = k;
+		this.state.typeFilter = k ? "culture" : undefined;
+		this.renderStats();
+		this.tree.render();
+		this.save();
+	}
+
 	private setTypeFilter(t: EntityType | undefined) {
 		this.state.typeFilter = t;
+		this.state.kindFilter = undefined;
 		this.renderStats();
 		this.tree.render();
 		this.save();
@@ -464,6 +516,15 @@ export class ExplorerView extends UniverseViewBase {
 				const gi = el("span", {}, h);
 				icon(gi, g.icon);
 				el("span", { text: g.items.length ? `${g.label} (${g.items.length})` : g.label }, h);
+				// Everything in the list that was only worked out, written into the note in one step (Undo puts it back).
+				const worked = g.items.filter((i) => i.keep);
+				if (worked.length) {
+					iconButton(h, "check-check", `Keep all ${worked.length} worked-out ties in ${g.label.toLowerCase()}`, () => {
+						void this.plugin.undoGroup(`Keep ${worked.length} worked-out ties`, async () => {
+							for (const it of worked) await this.keepTie(it);
+						}).then(() => new Notice(`Kept ${worked.length} worked-out ${worked.length === 1 ? "tie" : "ties"} as written`));
+					}, "universeview-dash-rel-add");
+				}
 				if (g.add) {
 					const spec = g.add;
 					iconButton(h, "plus", `Add to ${g.label.toLowerCase()}`, () => new AddRelationModal(this.plugin, e, spec).open(), "universeview-dash-rel-add");
@@ -518,7 +579,7 @@ export class ExplorerView extends UniverseViewBase {
 			input.addEventListener("change", () => save(input.value));
 		}
 
-		const dates = DATE_FIELDS[e.type];
+		const dates = e.type === "culture" ? (["founded", societySpec(groupKind(this.plugin, e)).dates[0], "dissolved", societySpec(groupKind(this.plugin, e)).dates[1]] as [FieldName, string, FieldName, string]) : DATE_FIELDS[e.type];
 		if (dates) {
 			const cal = this.plugin.calendars.get(e.calendar);
 			const dateRow = (field: FieldName, label: string) => {
@@ -595,6 +656,16 @@ export class ExplorerView extends UniverseViewBase {
 		}
 	}
 
+	/** Writes one worked-out tie into the note it was worked out for. */
+	private async keepTie(it: RelItem): Promise<boolean> {
+		const k = it.keep;
+		const file = k && this.app.vault.getFileByPath(k.path);
+		if (!k || !file) return false;
+		if (k.ended) return keepEndedTie(this.plugin, file, k.name, { kind: k.kind, span: k.ended.span, reason: k.ended.reason });
+		await addLink(this.plugin, file, { field: "relations", objKey: "link" }, k.name, k.kind ? { kind: k.kind } : {});
+		return true;
+	}
+
 	private relRow(parent: HTMLElement, it: RelItem) {
 		const e = this.plugin.index.get(it.key);
 		const row = el("button", { cls: "universeview-dash-rel" + (e ? "" : " is-missing") }, parent);
@@ -603,6 +674,15 @@ export class ExplorerView extends UniverseViewBase {
 		icon(ic, e ? TYPE_ICONS[e.type] : "file-plus");
 		el("span", { cls: "universeview-dash-rel-name", text: it.name }, row);
 		if (it.note) el("span", { cls: "universeview-dash-rel-note", text: it.note }, row);
+		if (it.keep) {
+			row.addClass("is-deduced");
+			const k = el("span", { cls: "universeview-dash-rel-keep clickable-icon", attr: { "aria-label": `Write ${it.name} into this note`, title: "Keep: write this tie into the note, so it stays even if the notes it was worked out from change" } }, row);
+			icon(k, "check");
+			k.addEventListener("click", (evt) => {
+				evt.stopPropagation();
+				void this.keepTie(it).then((done) => new Notice(done ? `Kept ${it.name} as written` : `Couldn't write ${it.name} into the note.`));
+			});
+		}
 		if (it.remove?.length) {
 			const x = el("span", { cls: "universeview-dash-rel-remove clickable-icon", attr: { "aria-label": `Remove ${it.name}`, title: "Remove this relationship (Undo puts it back)" } }, row);
 			icon(x, "x");
@@ -656,7 +736,7 @@ export class ExplorerView extends UniverseViewBase {
 		const join = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(" · ") || undefined;
 		const nameOf = (key: string, name?: string) => idx.get(key)?.name ?? name ?? key.replace(/^\?/, "").split("/").pop()!.replace(/\.md$/, "");
 		// `self`: the link is written on this note (remove it here); `other`: on the linked note (remove it there).
-		const ref = (key: string, name?: string, note?: string, removable?: { self?: FieldName[]; other?: FieldName[]; kind?: string }): RelItem => {
+		const ref = (key: string, name?: string, note?: string, removable?: { self?: FieldName[]; other?: FieldName[]; kind?: string; keep?: string; ended?: { span: string; reason: string } }): RelItem => {
 			const n = nameOf(key, name);
 			// A relation written on the other note is stored there as the inverse kind (their "vassals" is our "liege").
 			const kind = removable?.kind;
@@ -664,7 +744,7 @@ export class ExplorerView extends UniverseViewBase {
 				...(removable?.self ?? []).map((field) => ({ path: e.path, field, name: n, kind })),
 				...(removable?.other ?? []).filter(() => idx.get(key)).map((field) => ({ path: key, field, name: e.name, kind: kind === undefined ? undefined : relInverse(kind) ?? "" })),
 			];
-			return { key, name: n, note, remove: remove.length ? remove : undefined };
+			return { key, name: n, note, remove: remove.length ? remove : undefined, keep: removable?.keep !== undefined ? { path: e.path, name: n, kind: removable.keep, ended: removable.ended } : undefined };
 		};
 		const keys = (list: Iterable<string>, note?: (k: string) => string | undefined, removable?: { self?: FieldName[]; other?: FieldName[] }) =>
 			[...list].map((k) => ref(k, undefined, note?.(k), removable));
@@ -678,7 +758,7 @@ export class ExplorerView extends UniverseViewBase {
 					...e.parents.map((p) => ref(p.key, p.name, undefined, { self: ["parents"], other: ["children"] })),
 					...e.adoptiveParents.map((p) => ref(p.key, p.name, "adoptive", { self: ["adoptiveParents"] })),
 				], { field: "parents", on: "self", types: ["person"] });
-				add("Partners", "heart", idx.partners(e.key).map((p) => ref(p.ref.key, p.ref.name, join(p.kind, span(p.from, p.to)), { self: ["partners"], other: ["partners"] })),
+				add("Partners", "heart", partnersInOrder(idx.partners(e.key)).map((p) => ref(p.ref.key, p.ref.name, join(partnerWord(p), span(p.from, p.to), whyNote(p)), p.why && p.reason ? { keep: p.kind ?? "", ended: { span: formatSpan(p.from, p.to, cal), reason: p.reason }, self: ["partners"], other: ["partners"] } : { self: ["partners"], other: ["partners"] })),
 					{ field: "partners", on: "self", types: ["person"], dates: true, objKey: "person" });
 				add("Children", "baby", keys(idx.children(e.key), (k) => formatSpan(idx.get(k)?.start, idx.get(k)?.end, cal), { self: ["children"], other: ["parents", "adoptiveParents"] }),
 					{ field: "parents", on: "other", types: ["person"] });
@@ -686,20 +766,21 @@ export class ExplorerView extends UniverseViewBase {
 				add("Member of", "flag", e.cultures.map((c) => ref(c.ref.key, c.ref.name, join(c.role, span(c.from, c.to)), { self: ["cultures"] })),
 					{ field: "cultures", on: "self", types: ["culture"], ask: "role", dates: true, objKey: "culture" });
 				break;
-			case "culture":
-				add("Part of / descends from", "arrow-up-right", [
-					...e.parentCultures.map((p) => ref(p.key, p.name, undefined, { self: ["parentCultures"], other: ["childCultures"] })),
-					...e.cultures.map((c) => ref(c.ref.key, c.ref.name, join(c.role, span(c.from, c.to)), { self: ["cultures"] })),
-				], { field: "parentCultures", on: "self", types: ["culture"] });
-				add("Sub-organisations", "network", subOrgs(this.plugin, e.key).map((c) => ref(c.key, undefined, undefined, { self: ["childCultures"], other: ["parentCultures", "cultures"] })),
+			case "culture": {
+				// What a society descends from (its line). Who it answers to is its liege, set under Relationships. Each kind has its own words.
+				const spec = societySpec(groupKind(this.plugin, e));
+				add(spec.parent, "arrow-up-right", e.parentCultures.map((p) => ref(p.key, p.name, undefined, { self: ["parentCultures"], other: ["childCultures"] })),
+					{ field: "parentCultures", on: "self", types: ["culture"] });
+				add(spec.branches, "network", subOrgs(this.plugin, e.key).map((c) => ref(c.key, undefined, undefined, { self: ["childCultures"], other: ["parentCultures", "cultures"] })),
 					{ field: "parentCultures", on: "other", types: ["culture"] });
-				add("Members", "users", idx.members(e.key).filter((m) => idx.get(m.key)?.type === "person").map((m) => ref(m.key, undefined, join(m.link.role, span(m.link.from, m.link.to)), { other: ["cultures"] })),
+				add(spec.members[1], "users", idx.members(e.key).filter((m) => idx.get(m.key)?.type === "person").map((m) => ref(m.key, undefined, join(m.link.role, span(m.link.from, m.link.to)), { other: ["cultures"] })),
 					{ field: "cultures", on: "other", types: ["person"], ask: "role", dates: true, objKey: "culture" });
-				add("Holds", "map-pin", idx.members(e.key).filter((m) => idx.get(m.key)?.type === "place").map((m) => ref(m.key, undefined, span(m.link.from, m.link.to), { other: ["cultures"] })),
+				add(spec.places, "map-pin", idx.members(e.key).filter((m) => idx.get(m.key)?.type === "place").map((m) => ref(m.key, undefined, span(m.link.from, m.link.to), { other: ["cultures"] })),
 					{ field: "cultures", on: "other", types: ["place"], dates: true, objKey: "culture" });
-				add("Related groups", "link", e.relatedCultures.map((r) => ref(r.ref.key, r.ref.name, join(r.kind, span(r.from, r.to)), { self: ["relatedCultures"] })),
+				add("Related societies", "link", e.relatedCultures.map((r) => ref(r.ref.key, r.ref.name, join(r.kind, span(r.from, r.to)), { self: ["relatedCultures"] })),
 					{ field: "relatedCultures", on: "self", types: ["culture"], ask: "kind", dates: true, objKey: "culture" });
 				break;
+			}
 			case "place": {
 				const chain: RelItem[] = [];
 				for (let cur = e.locatedIn, i = 0; cur && i < 12; cur = idx.get(cur.key)?.locatedIn, i++) chain.push(ref(cur.key, cur.name, i ? "further up" : undefined, i ? undefined : { self: ["locatedIn"] }));
@@ -719,11 +800,31 @@ export class ExplorerView extends UniverseViewBase {
 				add("Sides & groups", "flag", e.cultures.map((c) => ref(c.ref.key, c.ref.name, c.role ?? c.kind, { self: ["cultures"] })),
 					{ field: "cultures", on: "self", types: ["culture"], ask: "role", objKey: "culture" });
 				break;
+			case "object":
+				add("Held by", "hand", e.cultures.map((c) => ref(c.ref.key, c.ref.name, span(c.from, c.to), { self: ["cultures"] })),
+					{ field: "cultures", on: "self", types: ["person", "culture"], dates: true, objKey: "culture" });
+				add("Kept at", "map-pin", e.places.map((p) => ref(p.key, p.name, undefined, { self: ["places"] })),
+					{ field: "places", on: "self", types: ["place"], dates: true, objKey: "place" });
+				// Where it has been: where it was kept, and where each holder was while holding it.
+				add("Journey", "route", journeyOf(idx, e).map((s) => ref(s.place.key, s.place.name, join(s.why, span(s.from, s.to)))));
+				break;
+			case "creature":
+				add("Found in", "map-pin", e.places.map((p) => ref(p.key, p.name, undefined, { self: ["places"] })),
+					{ field: "places", on: "self", types: ["place"] });
+				add("Belongs to", "flag", e.cultures.map((c) => ref(c.ref.key, c.ref.name, span(c.from, c.to), { self: ["cultures"] })),
+					{ field: "cultures", on: "self", types: ["culture"], dates: true, objKey: "culture" });
+				break;
 			case "map":
 				add("Places on this map", "map-pin", keys(idx.placesOnMap.get(e.key) ?? [], (k) => idx.get(k)?.category));
 				break;
 		}
-		add("Relations", "link-2", (idx.relationsOf.get(e.key) ?? []).map((r) => ref(r.ref.key, r.ref.name, join(r.kind, span(r.from, r.to)), { self: ["relations"], other: ["relations"], kind: r.kind ?? "" })),
+		// Objects held by, kept at, and creatures found in or belonging to this note.
+		if (e.type !== "object" && e.type !== "creature" && e.type !== "map") {
+			const here = (t: "object" | "creature") => idx.all(t).filter((o) => o.cultures.some((c) => c.ref.key === e.key) || o.places.some((p) => p.key === e.key));
+			add("Objects", "gem", here("object").map((o) => ref(o.key, o.name, o.category)));
+			add("Creatures", "paw-print", here("creature").map((o) => ref(o.key, o.name, o.category)));
+		}
+		add("Relations", "link-2", (idx.relationsOf.get(e.key) ?? []).map((r) => ref(r.ref.key, r.ref.name, join(r.kind, span(r.from, r.to), whyNote(r)), (r.via === "deduced" || r.via === "succession") ? { keep: r.kind ?? "" } : { self: ["relations"], other: ["relations"], kind: r.kind ?? "" })),
 			e.type === "map" ? undefined : { field: "relations", on: "self", types: ["person", "culture", "place", "event"], ask: "kind", dates: true, objKey: "person" });
 		// Secrets: what this person or group knows, and who knows about this note.
 		if (e.type === "person" || e.type === "culture") {

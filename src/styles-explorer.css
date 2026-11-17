@@ -30,6 +30,15 @@
 .is-active > .uv-file-icons {
 	color: var(--text-muted);
 }
+/* Clicking the icons changes them: the pointer says so, and the icons darken under it. */
+.uv-file-icons {
+	cursor: pointer;
+	border-radius: var(--uv-r-sm);
+}
+.uv-file-icons:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
 .uv-icon-option {
 	display: flex;
 	align-items: center;
@@ -184,3 +193,8 @@
 .uv-fo-link { text-decoration: none; }
 .uv-fo-meta { color: var(--text-faint); font-size: var(--font-ui-smaller); }
 .uv-fo-where { margin-left: auto; color: var(--text-faint); font-size: var(--font-ui-smaller); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+
+/* A tie that was only worked out: dotted, with a tick that writes it into the note. */
+.universeview-dash-rel.is-deduced { border-style: dashed; }
+.universeview-dash-rel-keep { margin-left: auto; color: var(--text-muted); }
+.universeview-dash-rel-keep:hover { color: var(--interactive-accent); }

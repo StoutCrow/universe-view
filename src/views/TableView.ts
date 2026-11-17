@@ -27,7 +27,7 @@ const COLUMNS: Record<Exclude<EntityType, never>, Column[]> = {
 		{ id: "born", label: "Born", kind: "date", field: "born" },
 		{ id: "died", label: "Died", kind: "date", field: "died" },
 		{ id: "gender", label: "Gender", kind: "text", field: "gender", width: 90 },
-		{ id: "cultures", label: "Groups", kind: "links", field: "cultures" },
+		{ id: "cultures", label: "Societies", kind: "links", field: "cultures" },
 		{ id: "parents", label: "Parents", kind: "links", field: "parents" },
 		{ id: "partners", label: "Partners", kind: "links", field: "partners" },
 		{ id: "kind", label: "Kind", kind: "text", prop: "kind", also: ["category", "role"], width: 110 },
@@ -48,7 +48,7 @@ const COLUMNS: Record<Exclude<EntityType, never>, Column[]> = {
 		{ id: "kind", label: "Kind", kind: "text", prop: "kind", also: ["category"], width: 110 },
 		{ id: "places", label: "Places", kind: "links", field: "places" },
 		{ id: "participants", label: "People", kind: "links", field: "participants" },
-		{ id: "cultures", label: "Groups", kind: "links", field: "cultures" },
+		{ id: "cultures", label: "Societies", kind: "links", field: "cultures" },
 		{ id: "importance", label: "Importance", kind: "number", field: "importance", width: 90 },
 		{ id: "summary", label: "Summary", kind: "text", field: "summary", width: 260 },
 	],
@@ -56,11 +56,25 @@ const COLUMNS: Record<Exclude<EntityType, never>, Column[]> = {
 		{ id: "founded", label: "Founded", kind: "date", field: "founded" },
 		{ id: "dissolved", label: "Dissolved", kind: "date", field: "dissolved" },
 		{ id: "kind", label: "Kind", kind: "text", prop: "kind", also: ["category"], width: 110 },
-		{ id: "parentCultures", label: "Part of", kind: "links", field: "parentCultures" },
+		{ id: "parentCultures", label: "Descends from", kind: "links", field: "parentCultures" },
 		{ id: "leader", label: "Leader", kind: "links", prop: "leader", also: ["ruler", "head"] },
 		{ id: "allies", label: "Allies", kind: "links", prop: "allies" },
 		{ id: "enemies", label: "Enemies", kind: "links", prop: "enemies" },
 		{ id: "color", label: "Colour", kind: "text", field: "color", width: 90 },
+		{ id: "summary", label: "Summary", kind: "text", field: "summary", width: 260 },
+	],
+	object: [
+		{ id: "kind", label: "Kind", kind: "text", prop: "kind", also: ["category"], width: 110 },
+		{ id: "founded", label: "Made", kind: "date", field: "founded" },
+		{ id: "dissolved", label: "Lost", kind: "date", field: "dissolved" },
+		{ id: "cultures", label: "Held by", kind: "links", field: "cultures" },
+		{ id: "places", label: "Kept at", kind: "links", field: "places" },
+		{ id: "summary", label: "Summary", kind: "text", field: "summary", width: 260 },
+	],
+	creature: [
+		{ id: "kind", label: "Kind", kind: "text", prop: "kind", also: ["category"], width: 110 },
+		{ id: "places", label: "Found in", kind: "links", field: "places" },
+		{ id: "cultures", label: "Societies", kind: "links", field: "cultures" },
 		{ id: "summary", label: "Summary", kind: "text", field: "summary", width: 260 },
 	],
 	map: [
@@ -144,7 +158,7 @@ export class TableView extends UniverseViewBase {
 		this.rebuildToolbar(() => {
 			const s = this.state;
 			const left = this.group();
-			dropdown(left, [["person", "People"], ["place", "Places"], ["event", "Events"], ["culture", "Groups"], ["map", "Maps"]], s.type, (v) => {
+			dropdown(left, [["person", "People"], ["place", "Places"], ["event", "Events"], ["culture", "Societies"], ["map", "Maps"]], s.type, (v) => {
 				s.type = v as EntityType;
 				s.sort = undefined;
 				(this.leaf as unknown as { updateHeader?: () => void }).updateHeader?.();

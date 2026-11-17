@@ -16,9 +16,9 @@ import { DEFAULT_TIER_WORDS } from "./realms";
  * everything in this file is testable.
  */
 
-export type GroupRow = "realm" | "house" | "culture" | "faith" | "organisation" | "group";
+export type GroupRow = "realm" | "house" | "culture" | "language" | "faith" | "organisation" | "group";
 
-export const ROW_ORDER: GroupRow[] = ["realm", "house", "culture", "faith", "organisation", "group"];
+export const ROW_ORDER: GroupRow[] = ["realm", "house", "culture", "language", "faith", "organisation", "group"];
 
 /**
  * What each question means, for a person (`asks`) and for a place (`asksPlace`). A realm is a title, a land and a
@@ -38,18 +38,20 @@ export const ROW_INFO: Record<GroupRow, { label: string; plural: string; asks: s
 		asks: "The people they are of, by language and custom (English, Welsh). It can differ from their realm: a Welsh subject of England.",
 		asksPlace: "The people who live here, by language and custom.",
 	},
+	language: { label: "Language", plural: "Languages", asks: "The languages they speak (Welsh, Latin). A language is a note of its own, so its speakers, its places and its history can be followed.", asksPlace: "The languages spoken here." },
 	faith: { label: "Faith", plural: "Faiths", asks: "What they believe.", asksPlace: "What is believed here." },
 	organisation: { label: "Organisation", plural: "Organisations", asks: "Guilds, orders, armies and companies they belong to." },
 	group: { label: "Other group", plural: "Other groups", asks: "Anything that is none of those." },
 };
 
 /** The property each question is written in when a note has none yet. */
-export const ROW_PROPERTY: Record<GroupRow, string> = { realm: "allegiance", house: "family", culture: "culture", faith: "faith", organisation: "organisations", group: "cultures" };
+export const ROW_PROPERTY: Record<GroupRow, string> = { realm: "allegiance", house: "family", culture: "culture", language: "language", faith: "faith", organisation: "organisations", group: "cultures" };
 
 const PROPERTY_ROW: Record<string, GroupRow> = {
 	allegiance: "realm", allegience: "realm", allegiances: "realm", nation: "realm", nations: "realm", realm: "realm", realms: "realm",
 	family: "house", families: "house", house: "house", houses: "house", dynasty: "house", dynasties: "house", clan: "house", clans: "house",
 	culture: "culture", ethnicity: "culture",
+	language: "language", languages: "language", speaks: "language", tongue: "language", tongues: "language",
 	faith: "faith", faiths: "faith", religion: "faith", religions: "faith",
 	organisation: "organisation", organisations: "organisation", organization: "organisation", organizations: "organisation",
 	faction: "organisation", factions: "organisation", affiliations: "organisation", guild: "organisation", guilds: "organisation",
@@ -62,7 +64,8 @@ export function rowOfProperty(property: string): GroupRow | undefined {
 
 const HOUSE = /\b(house|houses|family|families|dynasty|dynasties|clan|clans|lineage|bloodline)\b/i;
 const FAITH = /\b(faith|religion|church|creed|cult|pantheon|temple|sect|belief|god|gods|deity|monastic|clergy)\b/i;
-const PEOPLE = /\b(culture|people|peoples|ethnicity|ethnic|race|species|folk|tribe|tribes|language|tongue|nationality|heritage)\b/i;
+const LANGUAGE = /\b(language|languages|tongue|dialect|script|alphabet|speech)\b/i;
+const PEOPLE = /\b(culture|people|peoples|ethnicity|ethnic|race|species|folk|tribe|tribes|nationality|heritage)\b/i;
 const ORG = /\b(guild|company|order|army|navy|fleet|council|league|society|bank|school|academy|college|university|faction|party|band|crew|brotherhood|sisterhood|circle|cabal|union|alliance|corporation|firm|mercenar\w*|knights?|organisation|organization)\b/i;
 
 /**
@@ -75,6 +78,7 @@ export function rowOfKind(word: string | undefined): GroupRow | undefined {
 	if (w === "realm" || DEFAULT_TIER_WORDS[w] !== undefined) return "realm";
 	if (HOUSE.test(word ?? "")) return "house";
 	if (FAITH.test(word ?? "")) return "faith";
+	if (LANGUAGE.test(word ?? "")) return "language";
 	if (PEOPLE.test(word ?? "")) return "culture";
 	if (ORG.test(word ?? "")) return "organisation";
 	if (w === "group" || w === "other") return "group";

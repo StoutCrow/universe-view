@@ -270,7 +270,7 @@ export function renderFacts(plugin: UniverseViewPlugin, host: HTMLElement, key: 
 			row("Led by", ...leaders.slice(-4).map((m) => ({ key: m.key, name: idx.get(m.key)?.name ?? m.key, note: [m.link.role, formatSpan(m.link.from, m.link.to, cal)].filter(Boolean).join(", ") })));
 			row("Members", String(idx.members(e.key).filter((m) => idx.get(m.key)?.type === "person").length));
 			row("Holds", ...idx.members(e.key).filter((m) => idx.get(m.key)?.type === "place").slice(0, 8).map((m) => ({ key: m.key, name: idx.get(m.key)!.name })));
-			row("Part of", ...e.parentCultures.map((r) => ref(r)));
+			row("Descends from", ...e.parentCultures.map((r) => ref(r)));
 			break;
 		}
 		case "place": {

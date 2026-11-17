@@ -100,7 +100,15 @@ export function tintRow(plugin: UniverseViewPlugin, row: HTMLElement, path: stri
 export function fileIconBox(plugin: UniverseViewPlugin, path: string): HTMLElement | undefined {
 	const { type, kind } = noteIcons(plugin, path);
 	if (!type && !kind) return undefined;
-	const box = el("span", { cls: "uv-file-icons", attr: { "data-sig": `${type ?? ""}|${kind ?? ""}` } });
+	const box = el("span", { cls: "uv-file-icons", attr: { "data-sig": `${type ?? ""}|${kind ?? ""}`, title: "Change icon" } });
+	// Click the icon to change it (the row's own click, which opens or picks the note, is left out of it).
+	box.addEventListener("click", (evt) => {
+		const file = plugin.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile)) return;
+		evt.preventDefault();
+		evt.stopPropagation();
+		changeNoteIcon(plugin, file);
+	});
 	if (type) icon(el("span", { cls: "uv-file-icon is-type" }, box), type);
 	if (kind) glyph(el("span", { cls: "uv-file-icon is-kind" }, box), kind);
 	return box;

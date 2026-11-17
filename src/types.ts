@@ -1,6 +1,6 @@
 import type { TFile } from "obsidian";
 
-export const ENTITY_TYPES = ["event", "person", "culture", "place", "map"] as const;
+export const ENTITY_TYPES = ["event", "person", "culture", "place", "map", "object", "creature"] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 
 export type Precision = "day" | "month" | "year" | "range";
@@ -79,6 +79,10 @@ export interface TimedRef {
 	label?: string;
 	/** How it ended, when it did (eason: divorce). */
 	reason?: string;
+	/** For a deduced tie: what it was worked out from ("the sides of the Wars of the Roses"). */
+	why?: string;
+	/** For a deduced tie that is only a good guess. */
+	maybe?: boolean;
 	/** The property it was written under (family, allegiance, cultures…). */
 	via?: string;
 }
@@ -196,6 +200,8 @@ export interface Entity {
 	// people
 	/** Where a person lives by default (`residences:`), with dates when they moved. */
 	residences: TimedRef[];
+	/** An object's kept-at places with the dates it was there (`places:` with from and to). */
+	placeHistory?: TimedRef[];
 	parents: Ref[];
 	adoptiveParents: Ref[];
 	/** How a parent who is not one by birth is one (`step`, `foster`, `guardian`), by their key. */

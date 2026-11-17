@@ -7,6 +7,41 @@ type P2 = [number, number];
 
 const keyOf = (p: P2) => `${Math.round(p[0] * 10)},${Math.round(p[1] * 10)}`;
 
+/**
+ * Small spikes and hooks taken off a border: a corner where the border turns sharply (under 75°) and comes back
+ * within `maxLen` on both sides, a slip of the mouse or a snapped corner gone astray. A corner a neighbour shares
+ * (within `tol`) stays, because then both borders were drawn that way. With `onBorder`, only a spike whose two base
+ * corners lie on a shared border goes: a jagged coast keeps its detail. A shared corner goes too when the spike is
+ * no longer than `sharedMax` on either side (a tiny hook both borders took on together); the neighbours must then
+ * lose that corner as well (`at` lists it), so the border stays shared. Returns the ring and the corners taken off.
+ */
+export function dropSpikes(ring: P2[], others: P2[][], maxLen: number, tol: number, onBorder?: (p: P2) => boolean, sharedMax = 0): { ring: P2[]; dropped: number; at: P2[] } {
+	const at: P2[] = [];
+	const r = ring.map((p) => [p[0], p[1]] as P2);
+	const shared = (b: P2) => others.some((o) => o.some((q) => Math.hypot(q[0] - b[0], q[1] - b[1]) <= tol));
+	let dropped = 0;
+	for (let changed = true; changed && r.length > 3; ) {
+		changed = false;
+		for (let i = 0; i < r.length && r.length > 3; i++) {
+			const a = r[(i - 1 + r.length) % r.length];
+			const b = r[i];
+			const c = r[(i + 1) % r.length];
+			const la = Math.hypot(a[0] - b[0], a[1] - b[1]);
+			const lc = Math.hypot(c[0] - b[0], c[1] - b[1]);
+			if (!la || !lc || Math.max(la, lc) > maxLen) continue;
+			// The angle at the corner: under 75° is a point sticking out (or in).
+			const cos = ((a[0] - b[0]) * (c[0] - b[0]) + (a[1] - b[1]) * (c[1] - b[1])) / (la * lc);
+			if (cos <= 0.26 || (shared(b) && Math.max(la, lc) > sharedMax) || (onBorder && !(onBorder(a) && onBorder(c)))) continue;
+			r.splice(i, 1);
+			at.push(b);
+			dropped++;
+			changed = true;
+			i = Math.max(-1, i - 2);
+		}
+	}
+	return { ring: r, dropped, at };
+}
+
 export interface Simplified {
 	ring: P2[];
 	/** Each neighbour's new border, or null where it's unchanged. */

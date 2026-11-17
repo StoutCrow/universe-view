@@ -29,6 +29,8 @@ const TYPE_SYNONYMS: Record<EntityType, string[]> = {
 		"mountains", "archipelago", "peninsula", "highlands", "plains", "plain", "coast", "marsh", "crater", "canyon", "nebula",
 	],
 	map: ["map", "atlas"],
+	object: ["object", "objects", "item", "items", "artifact", "artefact", "relic", "weapon", "treasure", "heirloom"],
+	creature: ["creature", "creatures", "species", "animal", "beast", "monster", "bestiary"],
 };
 
 /**
@@ -53,6 +55,8 @@ export const TAG_TYPES: Record<string, EntityType> = {
 	// Lands within a realm (the realm itself is a group).
 	province: "place", duchy: "place", county: "place", barony: "place", shire: "place", march: "place", district: "place", territory: "place",
 	map: "map",
+	object: "object", item: "object", artifact: "object", artefact: "object", relic: "object", weapon: "object",
+	creature: "creature", species: "creature", beast: "creature", monster: "creature", animal: "creature",
 };
 
 export function normalizeType(value: unknown): EntityType | null {
@@ -392,7 +396,7 @@ export function readCategory(fm: Record<string, unknown>, tags: string[], type: 
 		if (normalizeType(low) === type && !GENERIC_TAGS.has(low) && !TYPE_SYNONYMS[type].slice(0, 2).includes(low)) return low;
 	}
 	// The scheme's kind tag (#Place_County), when there's one: older vaults may have several Type_Word
-	// tags (#Character_Male, #Character_Vael), which say nothing certain.
+	// tags (#Character_Male, #Character_England), which say nothing certain.
 	const kinds = tags.map((t) => parseTag(t)).filter((p): p is SchemeTag & { role: "kind" } => p?.role === "kind" && p.type === type && !factOnly(p.kind) && !GENERIC_TAGS.has(p.kind) && !isDefaultKind(type, p.kind));
 	if (kinds.length === 1) return kinds[0].kind;
 	// The most telling tag: #Region on a continent says less than #Continent.

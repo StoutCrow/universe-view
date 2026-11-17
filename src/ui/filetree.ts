@@ -1,11 +1,14 @@
+import { groupKind } from "../render/houses";
 import { FuzzySuggestModal, Keymap, Menu, Notice, TFile, TFolder, type App } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import { ENTITY_TYPES, type EntityType } from "../types";
 import type { UniverseViewSettings } from "../settings";
 import { followPath, moveTarget } from "../index/moves";
 import { kindLabel } from "../index/reader";
-import { TYPE_ICONS, TYPE_LABELS, clickNotice, el, icon, openEntity, showEntityMenu, typeColorVar } from "../render/common";
-import { fileIconBox, tintRow } from "./icons";
+import { TYPE_ICONS, TYPE_LABELS, addSubmenu, clickNotice, copyLink, el, icon, openEntity, showEntityMenu, typeColorVar, warningItem } from "../render/common";
+import { changeNoteIcon, fileIconBox, tintRow } from "./icons";
+import { relativeMenu } from "./AddRelatives";
+import { ConfirmPrompt, TextPrompt } from "./TextPrompt";
 
 /** What a tree shows and what's picked in it, kept by the view that hosts it. */
 export interface TreeState {
@@ -16,6 +19,8 @@ export interface TreeState {
 	onlyNotes: boolean;
 	search: string;
 	typeFilter?: EntityType;
+	/** Only groups of this kind (language, faith, culture…): the Library's kind tiles. */
+	kindFilter?: string;
 }
 
 export interface TreeHooks {
@@ -40,14 +45,24 @@ interface FolderNode {
 type TreeOptions = Required<NonNullable<UniverseViewSettings["fileTree"]>>;
 
 function treeOptions(plugin: UniverseViewPlugin): TreeOptions {
-	return { colors: "both", folderNotes: true, kinds: true, counts: true, compact: false, ...plugin.settings.fileTree };
+	return { colors: "both", folderNotes: true, kinds: true, counts: true, compact: false, others: true, ...plugin.settings.fileTree };
+}
+
+/** An icon for a file that is not a note. */
+function otherIcon(ext: string): string {
+	if (ext === "base") return "database";
+	if (ext === "canvas") return "layout-dashboard";
+	if (/^(png|jpe?g|gif|svg|webp|avif|bmp)$/.test(ext)) return "image";
+	if (/^(mp3|wav|m4a|ogg|flac|3gp|webm)$/.test(ext)) return "music";
+	if (/^(mp4|mov|ogv|mkv)$/.test(ext)) return "video";
+	return "file";
 }
 
 /** The event open trees redraw on when their options change. */
 export const TREE_OPTIONS_CHANGED = "universeview:tree-options";
 
 /** How the file trees look, one click from either tree. */
-export function treeOptionsMenu(plugin: UniverseViewPlugin, evt: MouseEvent) {
+export function treeOptionsMenu(plugin: UniverseViewPlugin, evt: MouseEvent, shown?: { state: TreeState; redraw: () => void }) {
 	const o = treeOptions(plugin);
 	const set = (change: Partial<TreeOptions>) => {
 		plugin.settings.fileTree = { ...o, ...change };
@@ -55,6 +70,15 @@ export function treeOptionsMenu(plugin: UniverseViewPlugin, evt: MouseEvent) {
 		plugin.app.workspace.trigger(TREE_OPTIONS_CHANGED);
 	};
 	const menu = new Menu();
+	if (shown) {
+		const { state, redraw } = shown;
+		menu.addItem((i) => i.setTitle("Show notes UniverseView doesn't use").setChecked(!state.onlyNotes).onClick(() => {
+			state.onlyNotes = !state.onlyNotes;
+			redraw();
+		}));
+		menu.addItem((i) => i.setTitle("Show other files (.base, .canvas, images, PDFs)").setChecked(o.others).onClick(() => set({ others: !o.others })));
+		menu.addSeparator();
+	}
 	const styles: [TreeOptions["colors"], string][] = [["both", "Colour names and bars"], ["text", "Colour names only"], ["bar", "Colour bars only"], ["none", "No colours"]];
 	for (const [colors, title] of styles) menu.addItem((i) => i.setTitle(title).setChecked(o.colors === colors).onClick(() => set({ colors })));
 	menu.addSeparator();
@@ -249,10 +273,12 @@ export class FileTree {
 		const idx = this.plugin.index;
 		const q = s.search.trim().toLowerCase();
 		const root: FolderNode = { path: "", name: "", folders: new Map(), files: [], counts: {}, total: 0, issues: 0 };
-		for (const f of this.plugin.app.vault.getMarkdownFiles()) {
+		const others = treeOptions(this.plugin).others && !s.onlyNotes && !s.typeFilter && !s.kindFilter;
+		for (const f of others ? this.plugin.app.vault.getFiles() : this.plugin.app.vault.getMarkdownFiles()) {
 			const e = idx.get(f.path);
 			if (s.onlyNotes && !e) continue;
 			if (s.typeFilter && e?.type !== s.typeFilter) continue;
+			if (s.kindFilter && (e?.type !== "culture" || groupKind(this.plugin, e) !== s.kindFilter)) continue;
 			if (q && !f.path.toLowerCase().includes(q) && !(e?.category ?? "").includes(q)) continue;
 			const bump = (n: FolderNode) => {
 				n.total++;
@@ -287,11 +313,11 @@ export class FileTree {
 		const o = (this.options = treeOptions(this.plugin));
 		list.toggleClass("is-compact", o.compact);
 		const expanded = new Set(s.expanded);
-		const searching = !!s.search.trim() || !!s.typeFilter;
+		const searching = !!s.search.trim() || !!s.typeFilter || !!s.kindFilter;
 		const children = (n: FolderNode, depth: number, own?: TFile) => {
 			for (const c of [...n.folders.values()].sort((a, b) => a.name.localeCompare(b.name))) {
 				const open = searching || expanded.has(c.path);
-				const note = o.folderNotes ? c.files.find((f) => f.basename === c.name) : undefined;
+				const note = o.folderNotes ? c.files.find((f) => f.extension === "md" && f.basename === c.name) : undefined;
 				this.folderRow(c, depth, open, note);
 				if (open) children(c, depth + 1, note);
 			}
@@ -357,13 +383,40 @@ export class FileTree {
 		});
 		row.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
-			if (entity) showEntityMenu(this.plugin, entity.key, evt, { top: (m) => this.moveItem(m, n.path, true) });
+			// A folder with a folder note is its note: the note's menu, with moving the folder and the note's icon. Renaming and
+			// deleting it are left to the file explorer, where they keep the folder and its note in step.
+			if (entity && note) showEntityMenu(this.plugin, entity.key, evt, { top: (m) => this.editItems(m, n.path, true, note), extra: (m) => this.entityTools(m, entity) });
 			else this.folderMenu(n.path, evt);
 		});
 		if (entity) row.dataset.hover = entity.key;
 	}
 
+	/** A file that is not a note opens in Obsidian; the inspector has nothing to say about it. */
+	private otherRow(f: TFile, depth: number) {
+		const row = this.row(f.path, "is-file is-plain is-other", depth, false);
+		this.dress(row, f.path, otherIcon(f.extension));
+		el("span", { cls: "universeview-dash-row-name", text: f.name }, row);
+		row.addEventListener("click", (evt) => this.openOther(f, evt));
+		row.addEventListener("contextmenu", (evt) => {
+			evt.preventDefault();
+			const menu = new Menu();
+			menu.addItem((it) => it.setTitle("Open").setIcon("file").onClick(() => void this.plugin.app.workspace.getLeaf(false).openFile(f)));
+			menu.addItem((it) => it.setTitle("Open beside").setIcon("columns-2").onClick(() => void this.plugin.app.workspace.getLeaf("split").openFile(f)));
+			menu.addSeparator();
+			this.editItems(menu, f.path, false, undefined, true);
+			addSubmenu(menu, "More", "ellipsis", (m) => this.moreItems(m, f, false));
+			menu.addSeparator();
+			warningItem(menu, "Delete…", "trash-2", () => this.remove(f.path));
+			menu.showAtMouseEvent(evt);
+		});
+	}
+
+	private openOther(f: TFile, evt: MouseEvent | KeyboardEvent) {
+		void this.plugin.app.workspace.getLeaf(Keymap.isModEvent(evt) ? "tab" : false).openFile(f);
+	}
+
 	private fileRow(f: TFile, depth: number) {
+		if (f.extension !== "md") return this.otherRow(f, depth);
 		const s = this.state();
 		const e = this.plugin.index.get(f.path);
 		const row = this.row(f.path, "is-file" + (e ? "" : " is-plain"), depth, !s.isFolder && s.selected === f.path);
@@ -378,11 +431,23 @@ export class FileTree {
 		row.addEventListener("dblclick", (evt) => openEntity(this.plugin, f.path, evt));
 		row.addEventListener("contextmenu", (evt) => {
 			evt.preventDefault();
-			if (e) showEntityMenu(this.plugin, f.path, evt, { top: (m) => this.moveItem(m, f.path, false) });
+			// Three groups, in this order: open it; do something to it (rename, move, icon); look at it in other views. What is used
+			// now and then is folded into More, and removing it is last, in red.
+			if (e) showEntityMenu(this.plugin, f.path, evt, {
+				top: (m) => this.editItems(m, f.path, false, f, true),
+				more: (m) => this.moreItems(m, f, false),
+				extra: (m) => this.entityTools(m, e),
+				danger: (m) => warningItem(m, "Delete…", "trash-2", () => this.remove(f.path)),
+			});
 			else {
 				const menu = new Menu();
-				menu.addItem((it) => it.setTitle("Open").setIcon("file").onClick(() => openEntity(this.plugin, f.path)));
-				this.moveItem(menu, f.path, false);
+				menu.addItem((it) => it.setTitle("Open note").setIcon("file-text").onClick(() => openEntity(this.plugin, f.path)));
+				menu.addItem((it) => it.setTitle("Open beside").setIcon("columns-2").onClick(() => void this.plugin.app.workspace.getLeaf("split").openFile(f)));
+				menu.addSeparator();
+				this.editItems(menu, f.path, false, undefined, true);
+				addSubmenu(menu, "More", "ellipsis", (m) => this.moreItems(m, f));
+				menu.addSeparator();
+				warningItem(menu, "Delete…", "trash-2", () => this.remove(f.path));
 				menu.showAtMouseEvent(evt);
 			}
 		});
@@ -393,14 +458,69 @@ export class FileTree {
 		menu.addItem((i) => i.setTitle("Move to…").setIcon("folder-input").onClick(() => this.chooseMove(path, isFolder)));
 	}
 
+	/** What is done to a note or folder here: rename (not a folder note's folder), move, and change its icon. */
+	private editItems(menu: Menu, path: string, isFolder: boolean, iconOf?: TFile, rename = false) {
+		if (rename) menu.addItem((i) => i.setTitle("Rename…").setIcon("pencil").onClick(() => this.rename(path)));
+		this.moveItem(menu, path, isFolder);
+		if (iconOf) menu.addItem((i) => i.setTitle("Change icon…").setIcon("smile-plus").onClick(() => changeNoteIcon(this.plugin, iconOf)));
+	}
+
+	/** Making things for a note: relatives for a person, an event for a place. */
+	private entityTools(menu: Menu, e: { key: string; name: string; type: EntityType }) {
+		const entity = this.plugin.index.get(e.key);
+		if (entity?.type === "person") relativeMenu(menu, this.plugin, entity);
+		else if (e.type === "place") menu.addItem((i) => i.setTitle("Add event here…").setIcon("calendar-plus").onClick(() => this.plugin.createEntityPrompt({ type: "event", places: [e.name] })));
+	}
+
+	/** The rarer things: another tab, the path, a copy. */
+	private moreItems(menu: Menu, f: TFile, withLink = true) {
+		menu.addItem((i) => i.setTitle("Open in new tab").setIcon("file-plus").onClick(() => void this.plugin.app.workspace.getLeaf("tab").openFile(f)));
+		// A note's own menu already has Copy link.
+		if (withLink) menu.addItem((i) => i.setTitle("Copy link").setIcon("link").onClick(() => copyLink(this.plugin, f.path)));
+		menu.addItem((i) => i.setTitle("Copy path").setIcon("clipboard-copy").onClick(() => void navigator.clipboard?.writeText(f.path).then(() => new Notice(`Copied ${f.path}`))));
+		menu.addItem((i) => i.setTitle("Make a copy").setIcon("copy").onClick(() => void this.duplicate(f)));
+	}
+
+	private rename(path: string) {
+		const target = this.plugin.app.vault.getAbstractFileByPath(path);
+		if (!target) return;
+		const base = target instanceof TFile ? target.basename : target.name;
+		new TextPrompt(this.plugin, `Rename ${base}`, base, (value) => {
+			const name = value.trim().replace(/[\\/:*?"<>|#^[\]]/g, "-");
+			if (!name || name === base) return;
+			const dir = target.parent && !target.parent.isRoot() ? `${target.parent.path}/` : "";
+			void this.plugin.app.fileManager.renameFile(target, `${dir}${name}${target instanceof TFile ? `.${target.extension}` : ""}`);
+		}).open();
+	}
+
+	private async duplicate(f: TFile) {
+		const dir = f.parent && !f.parent.isRoot() ? `${f.parent.path}/` : "";
+		let n = 1;
+		let path = `${dir}${f.basename} copy.${f.extension}`;
+		while (this.plugin.app.vault.getAbstractFileByPath(path)) path = `${dir}${f.basename} copy ${++n}.${f.extension}`;
+		await this.plugin.app.vault.copy(f, path);
+		new Notice(`Made ${path.split("/").pop()}`);
+	}
+
+	/** Deleting asks first, and goes to the trash the way Obsidian is set to (so it can be got back). */
+	private remove(path: string) {
+		const target = this.plugin.app.vault.getAbstractFileByPath(path);
+		if (!target) return;
+		const what = target instanceof TFile ? target.basename : target.name;
+		new ConfirmPrompt(this.plugin, `Delete ${what}?`, target instanceof TFolder ? "The folder and everything in it goes to the trash." : "It goes to the trash.", "Delete", () => void this.plugin.app.fileManager.trashFile(target)).open();
+	}
+
 	private folderMenu(path: string, evt: MouseEvent) {
 		const menu = new Menu();
-		menu.addItem((i) => i.setTitle("Folder settings and notes").setIcon("folder-cog").onClick(() => void this.plugin.activateView("chronicle-explorer", { select: path, isFolder: true })));
-		this.moveItem(menu, path, true);
-		menu.addSeparator();
-		for (const [view, label, iconName, state] of folderViews(path)) menu.addItem((i) => i.setTitle(label).setIcon(iconName).onClick(() => void this.plugin.activateView(view, state)));
-		menu.addSeparator();
 		menu.addItem((i) => i.setTitle("New note here…").setIcon("plus").onClick(() => this.plugin.createEntityPrompt({ scope: path.split("/")[0] })));
+		menu.addItem((i) => i.setTitle("Folder settings and notes").setIcon("folder-cog").onClick(() => void this.plugin.activateView("chronicle-explorer", { select: path, isFolder: true })));
+		menu.addSeparator();
+		this.editItems(menu, path, true, undefined, true);
+		addSubmenu(menu, "Show this folder in", "eye", (m) => {
+			for (const [view, label, iconName, state] of folderViews(path)) m.addItem((i) => i.setTitle(label).setIcon(iconName).onClick(() => void this.plugin.activateView(view, state)));
+		}, "Show in");
+		menu.addSeparator();
+		warningItem(menu, "Delete folder…", "trash-2", () => this.remove(path));
 		menu.showAtMouseEvent(evt);
 	}
 
@@ -410,7 +530,26 @@ export class FileTree {
 		if (!set.delete(path)) set.add(path);
 		s.expanded = [...set];
 		this.render();
+		if (set.has(path)) this.unfold(path);
 		this.hooks.changed();
+	}
+
+	/** The notes of a folder that was just opened drop open one after another, like a folder being opened (see the hand-writing animations in styles-ink.css). */
+	private unfold(path: string) {
+		const rows = Array.from(this.list.querySelectorAll<HTMLElement>(".universeview-dash-row"));
+		const at = rows.findIndex((r) => r.dataset.path === path && r.hasClass("is-folder"));
+		if (at < 0) return;
+		const depth = Number(rows[at].style.getPropertyValue("--depth"));
+		rows[at].addClass("is-opening");
+		let n = 0;
+		for (let i = at + 1; i < rows.length && Number(rows[i].style.getPropertyValue("--depth")) > depth; i++) {
+			rows[i].addClass("uv-unfold");
+			rows[i].style.setProperty("--i", String(Math.min(n++, 18)));
+		}
+		window.setTimeout(() => {
+			rows[at].removeClass("is-opening");
+			for (const r of rows) r.removeClass("uv-unfold");
+		}, 1200);
 	}
 
 	collapseAll() {
@@ -471,7 +610,10 @@ export class FileTree {
 		else if (evt.key === "ArrowUp") rows[at - 1]?.focus();
 		else if (evt.key === "ArrowRight" && folder && !open) this.toggle(path);
 		else if (evt.key === "ArrowLeft" && folder && open) this.toggle(path);
-		else if (evt.key === "Enter") this.hooks.select(row.dataset.note ?? path, folder && !row.dataset.note, evt);
+		else if (evt.key === "Enter" && row.classList.contains("is-other")) {
+			const f = this.plugin.app.vault.getAbstractFileByPath(path);
+			if (f instanceof TFile) this.openOther(f, evt);
+		} else if (evt.key === "Enter") this.hooks.select(row.dataset.note ?? path, folder && !row.dataset.note, evt);
 		else return;
 		evt.preventDefault();
 	}

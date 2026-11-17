@@ -1,3 +1,4 @@
+import { whyNote } from "../index/deduce";
 import { Component, MarkdownRenderer, Notice, TFile, normalizePath } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, EntityType } from "../types";
@@ -185,7 +186,7 @@ export async function buildWebsite(plugin: UniverseViewPlugin, world: string | u
 		add("Partners", idx.partners(e.key).map((p) => link(p.ref.key, p.ref.name)));
 		add("Members", idx.members(e.key).map((m) => link(m.key) + (m.link.role ? ` <span class="lede">(${esc(m.link.role)})</span>` : "")));
 		add("Belongs to", e.cultures.map((c) => link(c.ref.key, c.ref.name) + (c.role ? ` <span class="lede">(${esc(c.role)})</span>` : "")));
-		add("Relationships", (idx.relationsOf.get(e.key) ?? []).map((r) => `${link(r.ref.key, r.ref.name)} <span class="lede">(${esc(relOne(r.kind))})</span>`));
+		add("Relationships", (idx.relationsOf.get(e.key) ?? []).map((r) => `${link(r.ref.key, r.ref.name)} <span class="lede">(${esc([relOne(r.kind), whyNote(r)].filter(Boolean).join(", "))})</span>`));
 		add("Events", idx.events(e.key).filter(inScope).sort((a, b) => (a.start?.start ?? 0) - (b.start?.start ?? 0)).map((x) => `${link(x.key)} <span class="lede">${esc(when(x))}</span>`));
 		add("Led to it", [...(idx.causesOf.get(e.key) ?? [])].map((k) => link(k)));
 		add("What it led to", [...(idx.effectsOf.get(e.key) ?? [])].map((k) => link(k)));

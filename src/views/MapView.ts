@@ -387,12 +387,12 @@ export class MapView extends UniverseViewBase {
 			if (o.trace && o.pov) el("span", { cls: "universeview-chip-count", text: `seen by ${nameOf(o.pov)}` }, lens);
 			lens.addEventListener("click", (evt) => {
 				const menu = new Menu();
-				const pick = (title: string, set: (k: string) => void) => new EntityPickerModal(this.plugin, ["person"], (p) => {
+				const pick = (title: string, set: (k: string) => void) => new EntityPickerModal(this.plugin, title.includes("journey") ? ["person", "object"] : ["person"], (p) => {
 					set(p.key);
 					this.fillToolbar();
 					this.update();
 				}, title).open();
-				menu.addItem((i) => i.setTitle(o.trace ? `Trace another journey (now ${nameOf(o.trace)})…` : "Trace a journey…").setIcon("footprints").onClick(() => pick("Whose journey?", (k) => (o.trace = k))));
+				menu.addItem((i) => i.setTitle(o.trace ? `Trace another journey (now ${nameOf(o.trace)})…` : "Trace a journey (a person or an object)…").setIcon("footprints").onClick(() => pick("Whose or which object's journey?", (k) => (o.trace = k))));
 				menu.addItem((i) => i.setTitle(o.pov ? `Seen by someone else (now ${nameOf(o.pov)})…` : "Seen by… (only what they know)").setIcon("eye").onClick(() => pick("The map as who knows it?", (k) => (o.pov = k))));
 				if (o.trace || o.pov) {
 					menu.addSeparator();

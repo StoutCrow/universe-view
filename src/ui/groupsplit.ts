@@ -23,7 +23,7 @@ export type CardGroups = "both" | "realm" | "house" | "culture" | "faith" | "org
 export const CARD_GROUP_CHOICES: [CardGroups, string][] = [["both", "Realm and house"], ["realm", "Realm"], ["house", "House"], ["culture", "Culture"], ["faith", "Faith"], ["organisation", "Organisation"], ["none", "Nothing"]];
 
 /**
- * The line under a name: the realm, then the house ("Vael · House Vane"), or one kind of group alone. Realm and
+ * The line under a name: the realm, then the house ("England · House Vane"), or one kind of group alone. Realm and
  * house together fall back to the first group they have when they have neither.
  */
 export function groupLine(plugin: UniverseViewPlugin, refs: TimedRef[], mode: CardGroups = "both"): string {

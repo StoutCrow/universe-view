@@ -3,118 +3,16 @@
    inside UniverseView surfaces (.universeview-scope: views, boards, embeds, hover cards, dialogs), so the
    rest of the app keeps its theme. The "Obsidian" theme defines nothing here. */
 
-/* ---- Parchment: fantasy worldbuilding ---- */
-body.universeview-theme-parchment {
-	--universeview-theme-accent: #9a2f1d;
-	--universeview-theme-event: #9a2f1d;
-	--universeview-theme-person: #3f6b3a;
-	--universeview-theme-culture: #6c3f86;
-	--universeview-theme-place: #a5671e;
-	--universeview-theme-radius: 4px;
-	--universeview-font-display: "Cinzel", "Trajan Pro", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-}
-body.universeview-theme-parchment .universeview-scope {
-	--background-primary: #f3e8cf;
-	--background-primary-alt: #efe2c4;
-	--background-secondary: #e7d6b0;
-	--background-secondary-alt: #e0cca1;
-	--background-modifier-border: #cdb68a;
-	--background-modifier-border-hover: #b89c6b;
-	--background-modifier-hover: rgba(120, 80, 30, 0.1);
-	--background-modifier-form-field: #fbf4e2;
-	--interactive-normal: #efe2c3;
-	--interactive-hover: #e5d3aa;
-	--text-normal: #3b2c1a;
-	--text-muted: #6b573a;
-	--text-faint: #988462;
-	--text-on-accent: #fff6e6;
-	--universeview-grid: rgba(110, 80, 40, 0.2);
-	--universeview-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 2px 8px rgba(80, 50, 10, 0.16);
-	--universeview-shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 10px 24px rgba(80, 50, 10, 0.25);
-	--font-interface: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-	--universeview-backdrop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .28 0 0 0 0 .1 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-		radial-gradient(ellipse at center, transparent 55%, rgba(110, 70, 20, 0.22) 100%),
-		radial-gradient(circle at 18% 28%, rgba(160, 110, 40, 0.09), transparent 40%),
-		radial-gradient(circle at 82% 72%, rgba(120, 70, 20, 0.08), transparent 45%);
-	color-scheme: light;
-	color: var(--text-normal);
-	font-family: var(--font-interface);
-}
-body.theme-dark.universeview-theme-parchment {
-	--universeview-theme-accent: #d68a48;
-	--universeview-theme-event: #e07a5a;
-	--universeview-theme-person: #8fbf7a;
-	--universeview-theme-culture: #b48ad6;
-	--universeview-theme-place: #e0a556;
-}
-body.theme-dark.universeview-theme-parchment .universeview-scope {
-	--background-primary: #1e1812;
-	--background-primary-alt: #241d15;
-	--background-secondary: #2a2219;
-	--background-secondary-alt: #30271c;
-	--background-modifier-border: #4a3c2a;
-	--background-modifier-border-hover: #5e4c35;
-	--background-modifier-hover: rgba(230, 180, 110, 0.08);
-	--background-modifier-form-field: #2a2219;
-	--interactive-normal: #2e2519;
-	--interactive-hover: #3a2f20;
-	--text-normal: #ecdcbc;
-	--text-muted: #bba67f;
-	--text-faint: #8c7a5a;
-	--text-on-accent: #1e1812;
-	--universeview-grid: rgba(230, 190, 130, 0.12);
-	--universeview-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-	--universeview-shadow-lift: 0 12px 28px rgba(0, 0, 0, 0.6);
-	--universeview-backdrop: radial-gradient(ellipse at 50% 40%, rgba(214, 138, 72, 0.08), transparent 60%),
-		radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
-	color-scheme: dark;
-}
-body.universeview-theme-parchment .universeview-card {
-	box-shadow: var(--universeview-shadow), inset 0 0 0 3px var(--background-primary), inset 0 0 0 4px color-mix(in srgb, var(--card-accent) 30%, transparent);
-}
-body.universeview-theme-parchment .universeview-ov-title,
-body.universeview-theme-parchment .universeview-module-title,
-body.universeview-theme-parchment .universeview-ov-panel-head h3 {
-	letter-spacing: 0.04em;
-}
-body.universeview-theme-parchment .universeview-ov-hero {
-	text-align: center;
-	padding-bottom: 16px;
-	background: linear-gradient(90deg, transparent, var(--background-modifier-border-hover), transparent) bottom / 100% 1px no-repeat;
-}
-body.universeview-theme-parchment .universeview-map .leaflet-tile-pane {
-	filter: sepia(0.45) saturate(0.8) brightness(0.97);
-}
-
-/* Parchment finish: a flourish under the title, ink-red rules, a deckled hero. */
-body.universeview-theme-parchment .universeview-ov-hero::after {
-	content: "";
-	display: block;
-	height: 12px;
-	margin: 10px auto 0;
-	width: 180px;
-	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 12'%3E%3Cpath d='M0 6H72M108 6H180' stroke='%239a2f1d' stroke-width='1'/%3E%3Cpath d='M90 1L96 6L90 11L84 6Z' fill='%239a2f1d'/%3E%3Ccircle cx='78' cy='6' r='1.5' fill='%239a2f1d'/%3E%3Ccircle cx='102' cy='6' r='1.5' fill='%239a2f1d'/%3E%3C/svg%3E") center / contain no-repeat;
-}
-body.theme-dark.universeview-theme-parchment .universeview-ov-hero::after {
-	filter: brightness(1.6) saturate(0.8);
-}
-body.universeview-theme-parchment .universeview-module-title,
-body.universeview-theme-parchment .universeview-ov-panel-head h3 {
-	padding-bottom: 4px;
-	background: linear-gradient(90deg, var(--universeview-accent), transparent 70%) bottom / 100% 1px no-repeat;
-}
-
 /* ---- Archive: genealogy & family history ---- */
 body.universeview-theme-archive {
+	--uv-t-folder: #8aa68f;
 	--universeview-theme-accent: #2f6b57;
 	--universeview-theme-event: #356f9c;
 	--universeview-theme-person: #2f6b57;
 	--universeview-theme-culture: #8a5a2b;
 	--universeview-theme-place: #a2493b;
-	--universeview-theme-radius: 12px;
-	--universeview-font-display: "Libre Baskerville", "Baskerville", Georgia, "Times New Roman", serif;
 }
-body.universeview-theme-archive .universeview-scope {
+body.universeview-theme-archive .universeview-scope, body.universeview-theme-archive.uv-scope-app {
 	--background-primary: #fbf9f4;
 	--background-primary-alt: #f7f3ea;
 	--background-secondary: #f1ece1;
@@ -143,7 +41,7 @@ body.theme-dark.universeview-theme-archive {
 	--universeview-theme-culture: #d3a26c;
 	--universeview-theme-place: #e08a7a;
 }
-body.theme-dark.universeview-theme-archive .universeview-scope {
+body.theme-dark.universeview-theme-archive .universeview-scope, body.theme-dark.universeview-theme-archive.uv-scope-app {
 	--background-primary: #1b1e1d;
 	--background-primary-alt: #202423;
 	--background-secondary: #232827;
@@ -184,15 +82,14 @@ body.universeview-theme-archive .universeview-hc-thumb {
 
 /* ---- Starfield: science fiction (always dark) ---- */
 body.universeview-theme-starfield {
+	--uv-t-folder: #38d1ff;
 	--universeview-theme-accent: #38d1ff;
 	--universeview-theme-event: #38d1ff;
 	--universeview-theme-person: #73f7b4;
 	--universeview-theme-culture: #c48bff;
 	--universeview-theme-place: #ffb547;
-	--universeview-theme-radius: 3px;
-	--universeview-font-display: "Orbitron", "Eurostile", "Bank Gothic", "Rajdhani", "Segoe UI", sans-serif;
 }
-body.universeview-theme-starfield .universeview-scope {
+body.universeview-theme-starfield .universeview-scope, body.universeview-theme-starfield.uv-scope-app {
 	--background-primary: #060a14;
 	--background-primary-alt: #0a1020;
 	--background-secondary: #0c1426;
@@ -256,7 +153,7 @@ body.universeview-theme-starfield .universeview-card:hover,
 body.universeview-theme-starfield .universeview-module:hover {
 	box-shadow: var(--universeview-shadow-lift);
 }
-body.universeview-theme-starfield .universeview-map .leaflet-tile-pane {
+body.universeview-theme-starfield:not(.uv-map-plain) .universeview-map .leaflet-tile-pane {
 	filter: invert(1) hue-rotate(185deg) brightness(0.85) contrast(1.1) saturate(0.6);
 }
 body.universeview-theme-starfield .universeview-net-link {
@@ -265,15 +162,14 @@ body.universeview-theme-starfield .universeview-net-link {
 
 /* ---- Scholar: history & academic research ---- */
 body.universeview-theme-scholar {
+	--uv-t-folder: #7d8aa6;
 	--universeview-theme-accent: #1f4e8c;
 	--universeview-theme-event: #1f4e8c;
 	--universeview-theme-person: #3b7a57;
 	--universeview-theme-culture: #8b2e3c;
 	--universeview-theme-place: #b06f1b;
-	--universeview-theme-radius: 2px;
-	--universeview-font-display: "Iowan Old Style", "Charter", "Sitka Text", Georgia, serif;
 }
-body.universeview-theme-scholar .universeview-scope {
+body.universeview-theme-scholar .universeview-scope, body.universeview-theme-scholar.uv-scope-app {
 	--background-primary: #ffffff;
 	--background-primary-alt: #fafbfc;
 	--background-secondary: #f4f5f7;
@@ -301,7 +197,7 @@ body.theme-dark.universeview-theme-scholar {
 	--universeview-theme-culture: #e0808f;
 	--universeview-theme-place: #e3a65a;
 }
-body.theme-dark.universeview-theme-scholar .universeview-scope {
+body.theme-dark.universeview-theme-scholar .universeview-scope, body.theme-dark.universeview-theme-scholar.uv-scope-app {
 	--background-primary: #14181f;
 	--background-primary-alt: #181d25;
 	--background-secondary: #1b2029;
@@ -318,6 +214,8 @@ body.theme-dark.universeview-theme-scholar .universeview-scope {
 	--text-on-accent: #0c1420;
 	--universeview-grid: rgba(226, 231, 239, 0.1);
 	color-scheme: dark;
+	--universeview-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+	--universeview-shadow-lift: 0 10px 24px rgba(0, 0, 0, 0.6);
 }
 body.universeview-theme-scholar .universeview-ov-panel-head h3,
 body.universeview-theme-scholar .universeview-ov-eyebrow,
@@ -345,21 +243,20 @@ body.universeview-theme-scholar button.universeview-ov-tile:hover,
 body.universeview-theme-scholar .universeview-card:hover {
 	transform: none;
 }
-body.universeview-theme-scholar .universeview-map .leaflet-tile-pane {
+body.universeview-theme-scholar:not(.uv-map-plain) .universeview-map .leaflet-tile-pane {
 	filter: grayscale(0.85) contrast(1.05);
 }
 
 /* ---- Atelier: novels, scripts & story planning ---- */
 body.universeview-theme-atelier {
+	--uv-t-folder: #b39bff;
 	--universeview-theme-accent: #7c5cff;
 	--universeview-theme-event: #7c5cff;
 	--universeview-theme-person: #21a67a;
 	--universeview-theme-culture: #e0569a;
 	--universeview-theme-place: #f08a3c;
-	--universeview-theme-radius: 16px;
-	--universeview-font-display: "Inter", "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
 }
-body.universeview-theme-atelier .universeview-scope {
+body.universeview-theme-atelier .universeview-scope, body.universeview-theme-atelier.uv-scope-app {
 	--background-primary: #f8f6fd;
 	--background-primary-alt: #f3f0fb;
 	--background-secondary: #ece8f6;
@@ -390,7 +287,7 @@ body.theme-dark.universeview-theme-atelier {
 	--universeview-theme-culture: #f27fb6;
 	--universeview-theme-place: #ffab6b;
 }
-body.theme-dark.universeview-theme-atelier .universeview-scope {
+body.theme-dark.universeview-theme-atelier .universeview-scope, body.theme-dark.universeview-theme-atelier.uv-scope-app {
 	--background-primary: #17151f;
 	--background-primary-alt: #1c1a26;
 	--background-secondary: #211e2d;

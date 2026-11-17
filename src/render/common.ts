@@ -120,14 +120,18 @@ export const TYPE_ICONS: Record<EntityType, string> = {
 	culture: "flag",
 	place: "map-pin",
 	map: "map",
+	object: "gem",
+	creature: "paw-print",
 };
 
 export const TYPE_LABELS: Record<EntityType, string> = {
 	event: "Event",
 	person: "Person",
-	culture: "Group",
+	culture: "Society",
 	place: "Place",
 	map: "Map",
+	object: "Object",
+	creature: "Creature",
 };
 
 /** Default color per type: a CSS variable Style Settings can override. */
@@ -323,6 +327,8 @@ export interface EntityMenuOptions {
 	top?: (menu: Menu) => void;
 	/** Tools for it in this view (plan a journey, paint a territory…), after the other views. */
 	extra?: (menu: Menu) => void;
+	/** What is used now and then, folded into one "More" entry after Show in and Find out. */
+	more?: (menu: Menu) => void;
 	/** Removing things: always last, set apart, in red. */
 	danger?: (menu: Menu) => void;
 }
@@ -460,6 +466,7 @@ export function showEntityMenu(plugin: UniverseViewPlugin, key: string, evt: Mou
 		}
 		menu.addSeparator();
 		addShortcutMenus(menu, plugin, e);
+		if (opts.more) addSubmenu(menu, "More", "ellipsis", opts.more);
 	} else {
 		const name = plugin.index.ghostName(key) ?? (key.startsWith("?") ? key.slice(1) : key);
 		menu.addItem((i) =>

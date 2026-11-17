@@ -1,3 +1,4 @@
+import { partnersInOrder } from "../index/ties";
 import { Notice, TFile, TFolder } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, Territory } from "../types";
@@ -225,7 +226,7 @@ export function linksTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ct
 	if (e.type === "person") {
 		group("Parents", "arrow-up", keys(e.parents));
 		group("Children", "baby", idx.children(e.key));
-		group("Partners", "heart", keys(idx.partners(e.key).map((x) => x.ref)));
+		group("Partners", "heart", keys(partnersInOrder(idx.partners(e.key)).map((x) => x.ref)));
 		group("Siblings", "users", idx.siblings(e.key));
 	}
 	for (const [row, refs] of groupsByRow(p, e.cultures)) group(ROW_INFO[row].plural, GROUP_KINDS[row].icon, keys(refs.map((c) => c.ref)));
@@ -248,6 +249,19 @@ export function linksTab(p: UniverseViewPlugin, body: HTMLElement, e: Entity, ct
 		const list = el("div", { cls: "uv-insp-plain" }, s);
 		for (const k of other.slice(0, 40)) {
 			const a = el("a", { text: k.replace(/\.md$/, "").split("/").pop() ?? k, attr: { title: k } }, list);
+			a.addEventListener("click", () => {
+				const f = p.app.vault.getAbstractFileByPath(k);
+				if (f instanceof TFile) void p.app.workspace.getLeaf(false).openFile(f);
+			});
+		}
+	}
+	// Files that are not notes (.base, .canvas, images, PDFs) this note links to.
+	const files = Object.keys((p.app.metadataCache.resolvedLinks ?? {})[e.path] ?? {}).filter((k) => !k.endsWith(".md"));
+	if (files.length) {
+		const s = section(body, `Linked files (${files.length})`, "paperclip");
+		const list = el("div", { cls: "uv-insp-plain" }, s);
+		for (const k of files.slice(0, 40)) {
+			const a = el("a", { text: k.split("/").pop() ?? k, attr: { title: k } }, list);
 			a.addEventListener("click", () => {
 				const f = p.app.vault.getAbstractFileByPath(k);
 				if (f instanceof TFile) void p.app.workspace.getLeaf(false).openFile(f);

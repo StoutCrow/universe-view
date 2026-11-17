@@ -274,7 +274,6 @@ function boot() {
 		navButton("Dashboard", "panels-top-left", () => void showView("chronicle-explorer"));
 		navButton("Map", "map", () => void showView("chronicle-map"));
 		navButton("Embeds: Tudors", "file-text", () => showEmbeds("Tudors/Tudors overview.md"));
-		navButton("Embeds: Vael", "file-text", () => showEmbeds("Vael/Vael overview.md"));
 		navButton("New note…", "plus", () => plugin.createEntityPrompt({ type: "event" }));
 		navButton("Check data", "shield-check", () => app._commands.find((c: any) => c.id === "check-data").callback());
 		navButton("Detect types…", "wand-2", () => app._commands.find((c: any) => c.id === "detect-types").callback());

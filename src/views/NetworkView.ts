@@ -10,9 +10,11 @@ export const VIEW_NETWORK = "chronicle-network";
 
 const TYPE_CHIPS: [EntityType, string, string][] = [
 	["person", "People", "user-round"],
-	["culture", "Groups", "flag"],
+	["culture", "Societies", "flag"],
 	["place", "Places", "map-pin"],
 	["event", "Events", "calendar-clock"],
+	["object", "Objects", "gem"],
+	["creature", "Creatures", "paw-print"],
 ];
 
 export class NetworkView extends UniverseViewBase {
@@ -68,6 +70,7 @@ export class NetworkView extends UniverseViewBase {
 		this.rebuildToolbar(() => {
 			const o = this.options;
 				const left = this.group();
+				this.modeSwitch(left, VIEW_NETWORK);
 				this.searchBox(left, o.filter.search ?? "", "Filter…", (v) => {
 					o.filter.search = v || undefined;
 					this.update();

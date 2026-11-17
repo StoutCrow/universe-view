@@ -68,6 +68,7 @@ export class OrgChartView extends UniverseViewBase {
 		this.rebuildToolbar(() => {
 			const o = this.options;
 			const left = this.group();
+			this.modeSwitch(left, VIEW_ORG);
 			this.scopePicker(left, o.folder, (v) => {
 				o.folder = v;
 				this.slider?.updateRange();

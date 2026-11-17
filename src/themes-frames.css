@@ -1,0 +1,274 @@
+/* ==== Theme stage dressing =========================================================================
+   Every theme gets a signature frame around each view in the main area (the side panels stay clear), drawn on top of it (two pseudo-elements that never
+   take clicks) and, where it needs room, a little padding. Colours and patterns come from the theme's own
+   variables, so light and dark follow. This is what makes the themes read as different worlds. */
+
+.mod-root .workspace-leaf-content .view-content.universeview-view::before,
+.mod-root .workspace-leaf-content .view-content.universeview-view::after {
+	content: none;
+	position: absolute;
+	box-sizing: border-box;
+	pointer-events: none;
+	z-index: 9;
+}
+.mod-root .workspace-leaf-content .view-content.universeview-view { position: relative; }
+
+/* ---- Desktop: a dithered desk showing past a framed window ---- */
+body.universeview-theme-desktop .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 12px; }
+body.universeview-theme-desktop .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="desktop"]::after {
+	content: "";
+	inset: 0;
+	padding: 12px;
+	background: conic-gradient(var(--text-normal) 25%, var(--background-primary) 0 50%, var(--text-normal) 0 75%, var(--background-primary) 0) 0 0 / 4px 4px;
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+body.universeview-theme-desktop .mod-root .workspace-leaf-content .view-content.universeview-view::before, .uv-tc-frame[data-uvt="desktop"]::before {
+	content: "";
+	inset: 10px;
+	border: 2px solid var(--text-normal);
+	box-shadow: 3px 3px 0 var(--text-normal);
+}
+
+/* ---- Notebook: a spiral binding down the left, holes punched through ---- */
+body.universeview-theme-notebook .mod-root .workspace-leaf-content .view-content.universeview-view { padding-left: 30px; }
+body.universeview-theme-notebook .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="notebook"]::after {
+	content: "";
+	inset: 0 auto 0 0;
+	width: 30px;
+	background:
+		radial-gradient(ellipse 9px 4px at 15px 14px, var(--background-secondary) 0 3px, transparent 3.5px) 0 0 / 30px 28px repeat-y,
+		linear-gradient(90deg, rgba(0, 0, 0, 0.14), transparent 70%);
+	border-right: 1px solid var(--background-modifier-border);
+}
+body.universeview-theme-notebook .mod-root .workspace-leaf-content .view-content.universeview-view::before, .uv-tc-frame[data-uvt="notebook"]::before {
+	content: "";
+	inset: 0 auto 0 0;
+	width: 30px;
+	background: repeating-linear-gradient(to bottom, transparent 0 8px, var(--text-muted) 8px 10px, transparent 10px 28px);
+	-webkit-mask: linear-gradient(90deg, #000 0 0) left / 22px 100% no-repeat;
+	mask: linear-gradient(90deg, #000 0 0) left / 22px 100% no-repeat;
+	opacity: 0.85;
+}
+
+/* ---- Journal: a leather cover with a gilt line and a stitched seam ---- */
+body.universeview-theme-journal .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 14px; }
+body.universeview-theme-journal .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="journal"]::after {
+	content: "";
+	inset: 0;
+	border: 14px solid #4a2f1c;
+	border-radius: 6px;
+	box-shadow: inset 0 0 0 1px #c8963e, inset 0 0 12px rgba(0, 0, 0, 0.7);
+}
+body.universeview-theme-journal .mod-root .workspace-leaf-content .view-content.universeview-view::before, .uv-tc-frame[data-uvt="journal"]::before {
+	content: "";
+	inset: 5px;
+	border: 2px dashed rgba(224, 179, 102, 0.8);
+	border-radius: 4px;
+}
+
+/* ---- Manuscript: an illuminated border, gold and oxblood, with corner jewels ---- */
+body.universeview-theme-manuscript .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 16px; }
+body.universeview-theme-manuscript .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="manuscript"]::after {
+	content: "";
+	inset: 0;
+	border: 6px double #7a1f1f;
+	outline: 1px solid #a97a1c;
+	outline-offset: -9px;
+	background:
+		radial-gradient(circle at 8px 8px, #a97a1c 0 4px, #7a1f1f 4.5px 6px, transparent 6.5px),
+		radial-gradient(circle at calc(100% - 8px) 8px, #a97a1c 0 4px, #7a1f1f 4.5px 6px, transparent 6.5px),
+		radial-gradient(circle at 8px calc(100% - 8px), #a97a1c 0 4px, #7a1f1f 4.5px 6px, transparent 6.5px),
+		radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), #a97a1c 0 4px, #7a1f1f 4.5px 6px, transparent 6.5px);
+}
+body.theme-dark.universeview-theme-manuscript .mod-root .workspace-leaf-content .view-content.universeview-view::after { border-color: #a97a1c; outline-color: #d9a441; }
+
+/* ---- Typewriter: continuous paper with tractor-feed holes down both sides ---- */
+body.universeview-theme-typewriter .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 0 24px; }
+body.universeview-theme-typewriter .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="typewriter"]::after {
+	content: "";
+	inset: 0;
+	border-left: 24px solid var(--background-secondary);
+	border-right: 24px solid var(--background-secondary);
+	background:
+		radial-gradient(circle at 12px 12px, var(--background-primary) 0 4px, var(--background-modifier-border) 4.5px 5.5px, transparent 6px) left top / 24px 24px repeat-y,
+		radial-gradient(circle at 12px 12px, var(--background-primary) 0 4px, var(--background-modifier-border) 4.5px 5.5px, transparent 6px) right top / 24px 24px repeat-y;
+	border-image: none;
+}
+body.universeview-theme-typewriter .mod-root .workspace-leaf-content .view-content.universeview-view::before, .uv-tc-frame[data-uvt="typewriter"]::before {
+	content: "";
+	inset: 0 24px;
+	border-left: 1px dashed var(--background-modifier-border-hover);
+	border-right: 1px dashed var(--background-modifier-border-hover);
+}
+
+/* ---- Woodcut: a heavy black border with a thin line inside it, like a printed plate ---- */
+body.universeview-theme-woodcut .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 12px; }
+body.universeview-theme-woodcut .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="woodcut"]::after {
+	content: "";
+	inset: 0;
+	border: 8px solid var(--text-normal);
+}
+body.universeview-theme-woodcut .mod-root .workspace-leaf-content .view-content.universeview-view::before, .uv-tc-frame[data-uvt="woodcut"]::before {
+	content: "";
+	inset: 10px;
+	border: 1px solid var(--text-normal);
+}
+
+/* ---- Watercolor: paint bleeding in from the edges, over a rounded sheet ---- */
+body.universeview-theme-watercolor .mod-root .workspace-leaf-content .view-content.universeview-view { border-radius: 22px; overflow: hidden; }
+body.universeview-theme-watercolor .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="watercolor"]::after {
+	content: "";
+	inset: 0;
+	border-radius: 22px;
+	box-shadow: inset 0 0 40px 10px rgba(79, 143, 196, 0.28), inset 0 0 80px 24px rgba(217, 104, 79, 0.14), inset 0 0 0 2px rgba(111, 174, 106, 0.35);
+}
+
+/* ---- Glass: a lit rounded pane ---- */
+body.universeview-theme-glass .mod-root .workspace-leaf-content .view-content.universeview-view { border-radius: 20px; overflow: hidden; }
+body.universeview-theme-glass .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="glass"]::after {
+	content: "";
+	inset: 0;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.28);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 0 40px rgba(124, 196, 255, 0.12);
+}
+
+/* ---- Soft: a pressed-in well ---- */
+body.universeview-theme-neumorph .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 10px; }
+body.universeview-theme-neumorph .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="neumorph"]::after {
+	content: "";
+	inset: 0;
+	border-radius: 26px;
+	box-shadow: inset 6px 6px 12px var(--neu-d), inset -6px -6px 12px var(--neu-l);
+}
+
+/* ---- Brutal: a thick black frame with a hard block of the accent colour offset behind its corner ---- */
+body.universeview-theme-brutalist .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 6px; }
+body.universeview-theme-brutalist .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="brutalist"]::after {
+	content: "";
+	inset: 0;
+	border: 6px solid var(--text-normal);
+	box-shadow: inset -10px -10px 0 var(--universeview-accent);
+}
+/* ---- Starfield: HUD corner brackets and a faint scan line ---- */
+body.universeview-theme-starfield .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="starfield"]::after {
+	content: "";
+	inset: 0;
+	background:
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) left top / 22px 2px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) left top / 2px 22px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) right top / 22px 2px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) right top / 2px 22px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) left bottom / 22px 2px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) left bottom / 2px 22px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) right bottom / 22px 2px no-repeat,
+		linear-gradient(var(--universeview-accent), var(--universeview-accent)) right bottom / 2px 22px no-repeat,
+		repeating-linear-gradient(0deg, rgba(120, 200, 255, 0.04) 0 1px, transparent 1px 3px);
+}
+
+/* ---- Neon: a glowing tube frame; the heading flickers like a sign ---- */
+body.universeview-theme-neon .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="neon"]::after {
+	content: "";
+	inset: 0;
+	border: 2px solid #ff3fb4;
+	box-shadow: inset 0 0 14px rgba(255, 63, 180, 0.55), 0 0 14px rgba(255, 63, 180, 0.55);
+}
+@keyframes uv-neon-flicker {
+	0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; }
+	20%, 63% { opacity: 0.55; }
+}
+body.universeview-theme-neon:not(.universeview-motion-off) .universeview-ov-title { animation: uv-neon-flicker 5s linear infinite; }
+
+/* ---- Synth: wooden cheek panels either side, a row of LEDs along the top ---- */
+body.universeview-theme-synth .mod-root .workspace-leaf-content .view-content.universeview-view { padding: 14px 20px 0; }
+body.universeview-theme-synth .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="synth"]::after {
+	content: "";
+	inset: 0;
+	border-left: 20px solid #6b3f1d;
+	border-right: 20px solid #6b3f1d;
+	box-shadow: inset 2px 0 0 rgba(0, 0, 0, 0.5), inset -2px 0 0 rgba(0, 0, 0, 0.5);
+	background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 6px) left / 20px 100% no-repeat, repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 6px) right / 20px 100% no-repeat;
+}
+body.universeview-theme-synth .mod-root .workspace-leaf-content .view-content.universeview-view::before, .uv-tc-frame[data-uvt="synth"]::before {
+	content: "";
+	inset: 4px 20px auto 20px;
+	height: 6px;
+	background: radial-gradient(circle at 3px 3px, #ffb020 0 2px, transparent 2.5px) 0 0 / 14px 6px repeat-x;
+	filter: drop-shadow(0 0 3px #ffb020);
+}
+
+/* ---- Archive: photo corners at each corner of the page ---- */
+body.universeview-theme-archive .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="archive"]::after {
+	content: "";
+	inset: 0;
+	background:
+		linear-gradient(135deg, var(--universeview-accent) 0 50%, transparent 50%) left top / 26px 26px no-repeat,
+		linear-gradient(225deg, var(--universeview-accent) 0 50%, transparent 50%) right top / 26px 26px no-repeat,
+		linear-gradient(45deg, var(--universeview-accent) 0 50%, transparent 50%) left bottom / 26px 26px no-repeat,
+		linear-gradient(315deg, var(--universeview-accent) 0 50%, transparent 50%) right bottom / 26px 26px no-repeat;
+	opacity: 0.85;
+}
+
+/* ---- Scholar: a double rule above and below, margins ruled either side ---- */
+body.universeview-theme-scholar .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="scholar"]::after {
+	content: "";
+	inset: 0;
+	border-top: 4px double var(--text-normal);
+	border-bottom: 4px double var(--text-normal);
+}
+
+/* ---- Atelier: a confetti-dotted frame in the theme's colours ---- */
+body.universeview-theme-atelier .mod-root .workspace-leaf-content .view-content.universeview-view::after, .uv-tc-frame[data-uvt="atelier"]::after {
+	content: "";
+	inset: 0;
+	border: 4px dotted var(--universeview-accent);
+	border-radius: 14px;
+	opacity: 0.8;
+}
+
+/* ---- The same frames on the theme cards: a copy of the frame layer drawn 2.5 times larger and scaled down to 40%, so every
+   width and pattern above shrinks with it and the preview matches the real view. ---- */
+.uv-tc-frame {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 250%;
+	height: 250%;
+	transform: scale(0.4);
+	transform-origin: 0 0;
+	pointer-events: none;
+	color: var(--text-normal);
+}
+
+/* ==== Apply the theme to all of Obsidian (opt-in: body.uv-scope-app) ============================
+   The theme's variables are also set on <body> (see the theme files), so Obsidian's own surfaces take its colours. Below:
+   the backdrop behind notes, the theme's heading font in notes, and quieter app chrome. */
+body.uv-scope-app { background: var(--background-primary); color: var(--text-normal); }
+body.uv-scope-app .workspace-leaf-content[data-type="markdown"] .view-content {
+	background: var(--universeview-backdrop, linear-gradient(transparent, transparent)), var(--background-primary);
+}
+body.uv-scope-app :is(.markdown-rendered, .markdown-source-view.mod-cm6) :is(h1, h2, h3, h4, h5, h6, .cm-header) {
+	font-family: var(--universeview-font-display, var(--font-interface));
+	color: var(--text-normal);
+}
+body.uv-scope-app :is(.markdown-rendered, .markdown-source-view.mod-cm6) :is(h1, .HyperMD-header-1) { color: var(--universeview-accent); }
+body.uv-scope-app .markdown-rendered a, body.uv-scope-app .cm-hmd-internal-link { color: var(--universeview-accent); }
+body.uv-scope-app .markdown-rendered blockquote { border-left-color: var(--universeview-accent); }
+body.uv-scope-app .markdown-rendered hr { border-color: var(--background-modifier-border-hover); }
+body.uv-scope-app :is(.workspace-tab-header.is-active, .nav-file-title.is-active) { color: var(--universeview-accent); }
+body.uv-scope-app .status-bar { background: var(--background-secondary); border-color: var(--background-modifier-border); }
+
+/* ---- Selection: the theme's own way of marking the chosen row (set from THEME_SELECT in appearance.ts) ---- */
+body:not(.universeview-theme-obsidian) .universeview-dash-row.is-selected:not(#uv-strong):not(#uv-strong) {
+	background: var(--uv-select-bg, var(--background-modifier-hover));
+	color: var(--uv-select-fg, inherit);
+	box-shadow: var(--uv-select-sh, none);
+}
+
+/* Rounded themes (Glass, Soft, Soft round): panels get room inside their corners, so rows and tiles never poke past a 20px curve. */
+body:is(.uv-edge-glass, .uv-edge-neu, .uv-edge-round):not(#uv-strong) :is(.universeview-ov-panel, .universeview-dash-card):not(.uv-pv *) {
+	padding-inline: 16px;
+}
+body:is(.uv-edge-glass, .uv-edge-neu, .uv-edge-round):not(#uv-strong) .universeview-ov-panel-head:not(.uv-pv *) { padding-inline: 2px; }

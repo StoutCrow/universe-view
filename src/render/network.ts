@@ -1,3 +1,5 @@
+import { relLabel } from "../index/relkinds";
+import { whyNote } from "../index/deduce";
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY, Simulation, SimulationLinkDatum, SimulationNodeDatum } from "d3-force";
 import { Menu, Notice } from "obsidian";
 import type UniverseViewPlugin from "../main";
@@ -27,11 +29,12 @@ export interface NetworkOptions {
 }
 
 /** Links grouped the way people think of them, for the filter. */
-export type LinkGroup = "family" | "relationships" | "membership" | "events" | "places";
+export type LinkGroup = "family" | "relationships" | "deduced" | "membership" | "events" | "places";
 export const LINK_GROUPS: [LinkGroup, string, string][] = [
 	["family", "Family", "git-fork"],
 	["relationships", "Relationships", "heart-handshake"],
-	["membership", "Groups and branches", "flag"],
+	["deduced", "Worked out", "sparkles"],
+	["membership", "Societies and branches", "flag"],
 	["events", "Took part in", "calendar-clock"],
 	["places", "Where", "map-pin"],
 ];
@@ -41,15 +44,18 @@ export const DEFAULT_NETWORK_OPTIONS: NetworkOptions = {
 	types: ["person", "culture", "place", "event"],
 	depth: 2,
 	labels: true,
+	// Worked-out ties (siblings, successors, enemies from wars…) start hidden: they are many, and the graph reads better without them.
+	hiddenLinks: ["deduced"],
 };
 
-type EdgeKind = "parent" | "partner" | "relation" | "member" | "participant" | "at" | "in" | "descends" | "culture-relation";
+type EdgeKind = "parent" | "partner" | "relation" | "deduced" | "member" | "participant" | "at" | "in" | "descends" | "culture-relation";
 
 const GROUP_OF: Record<EdgeKind, LinkGroup> = {
 	parent: "family",
 	partner: "family",
 	relation: "relationships",
 	"culture-relation": "relationships",
+	deduced: "deduced",
 	member: "membership",
 	descends: "membership",
 	participant: "events",
@@ -196,6 +202,8 @@ export class NetworkRenderer {
 			for (const p of e.adoptiveParents) link(p.key, e.key, "parent", "adoptive");
 			for (const p of e.partners) link(e.key, p.ref.key, "partner", p.kind, p);
 			for (const r of e.relations) link(e.key, r.ref.key, "relation", r.kind, r);
+			// Ties the app worked out (not written in a note): drawn dotted, each saying what it came from.
+			for (const r of idx.relationsOf.get(e.key) ?? []) if (r.via === "deduced" || r.via === "succession") link(e.key, r.ref.key, "deduced", [relLabel(r.kind), whyNote(r)].filter(Boolean).join(" · "), r);
 			for (const c of e.cultures) link(e.key, c.ref.key, e.type === "event" ? "participant" : "member", c.role, c);
 			for (const p of e.participants) link(e.key, p.key, "participant");
 			for (const p of e.places) link(e.key, p.key, "at");
@@ -274,7 +282,10 @@ export class NetworkRenderer {
 				? svg("rect", { x: -n.r, y: -n.r, width: n.r * 2, height: n.r * 2, rx: 2, transform: "rotate(45)" }, g)
 				: n.entity.type === "place"
 					? svg("rect", { x: -n.r, y: -n.r, width: n.r * 2, height: n.r * 2, rx: n.r * 0.35 }, g)
-					: svg("circle", { r: n.r }, g);
+					: n.entity.type === "object"
+						// A hexagon, so an object is not mistaken for a person (circle), a place (square) or an event (diamond).
+						? svg("polygon", { points: [0, 1, 2, 3, 4, 5].map((i) => `${(n.r * 1.1 * Math.cos(Math.PI / 3 * i)).toFixed(1)},${(n.r * 1.1 * Math.sin(Math.PI / 3 * i)).toFixed(1)}`).join(" ") }, g)
+						: svg("circle", { r: n.r }, g);
 			shape.setAttribute("class", "universeview-net-shape");
 			shape.setAttribute("style", `--node-color: ${entityColor(this.plugin, n.entity)}`);
 			if (this.options.labels || n.degree > 3 || n.entity.type === "culture") {

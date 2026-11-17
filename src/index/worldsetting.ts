@@ -20,7 +20,7 @@ export interface SettingWords {
 	tiers: string;
 	mapLook: string;
 	/** Examples shown in the new-note form, by type. */
-	hints: Record<"person" | "event" | "culture" | "map", string>;
+	hints: Record<"person" | "event" | "culture" | "map" | "object" | "creature", string>;
 	/** The fortified places offered in the kind-of-place picker. */
 	defences: string[];
 }
@@ -35,7 +35,7 @@ const MEDIEVAL: SettingWords = {
 	liege: "Liege", vassals: "Vassals", liegeOne: "liege", vassalOne: "vassal",
 	house: "House", houses: "Houses", houseIcon: "castle",
 	tiers: "medieval", mapLook: "standard",
-	hints: { person: "Knight, merchant, deity…", event: "Battle, treaty, birth…", culture: "Realm, house, culture, faith, organisation…", map: "World, region, city plan…" },
+	hints: { person: "Knight, merchant, deity…", event: "Battle, treaty, birth…", culture: "Realm, house, culture, faith, organisation…", map: "World, region, city plan…", object: "Sword, crown, relic, book…", creature: "Dragon, wolf, species…" },
 	defences: ["castle", "fort"],
 };
 
@@ -45,12 +45,12 @@ const WORDS: Record<WorldSetting, SettingWords> = {
 	medieval: MEDIEVAL,
 	modern: {
 		...LATER, tiers: "modern", mapLook: "clean-political",
-		hints: { person: "Senator, engineer, spy…", event: "Election, treaty, crash…", culture: "Country, family, culture, religion, company…", map: "World, country, city plan…" },
+		hints: { person: "Senator, engineer, spy…", event: "Election, treaty, crash…", culture: "Country, family, culture, religion, company…", map: "World, country, city plan…", object: "Vehicle, weapon, document, artwork…", creature: "Animal, breed, species…" },
 		defences: ["base", "fort"],
 	},
 	futuristic: {
 		...LATER, tiers: "galactic", mapLook: "star-chart",
-		hints: { person: "Captain, pilot, android…", event: "Landing, accord, uprising…", culture: "Federation, family, culture, faith, corporation…", map: "Galaxy, star system, station plan…" },
+		hints: { person: "Captain, pilot, android…", event: "Landing, accord, uprising…", culture: "Federation, family, culture, faith, corporation…", map: "Galaxy, star system, station plan…", object: "Ship, device, relic, weapon…", creature: "Alien species, animal, android model…" },
 		defences: ["base", "outpost"],
 	},
 };

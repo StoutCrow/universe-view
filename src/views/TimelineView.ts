@@ -131,8 +131,9 @@ export class TimelineView extends UniverseViewBase {
 			const layers: Layer[] = [
 				["lifespans", "Lifespans", "user-round", "Each person's life as a bar", false],
 				["lifeEvents", "Births & deaths", "baby", "Births and deaths as points (when lifespans are off)", false],
-				["cultures", "Groups", "flag", "Realms, houses and other groups, from their founding to their end (or today)", false],
+				["cultures", "Societies", "flag", "Realms, houses, languages and other societies, from their founding to their end (or today)", false],
 				["places", "Places", "map-pin", "Provinces, towns and forts with a founding date, from then to their end (or today)", false],
+				["objects", "Objects", "gem", "Objects with a made date (and a lost or destroyed date), as bars. Creatures have no dates and stay off the timeline", false],
 				["reigns", "Reigns", "crown", "Who held each title when (holders:), as bars", true],
 				["occupations", "Occupations", "swords", "Lands held for a while by someone else (occupied:), as bars", true],
 				["renames", "Renamings", "history", "When a land or group took a new name (names:)", true],

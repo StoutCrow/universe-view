@@ -23,13 +23,16 @@ function buildInfo() {
 function looks() {
 	const src = fs.readFileSync("src/styles-looks.css", "utf8").replace(/^\uFEFF/, "");
 	const forBody = src;
-	const forPreview = src.replace(/:not\(\.uv-pv \*\)/g, "").replace(/^body/gm, ".uv-pv");
-	return `\n\n${forBody}\n\n${forPreview}`;
+	// Previews also outrank the tactile rules (which beat the looks on the page), so a sample never takes on the page's tactile surface.
+	const forPreview = src.replace(/:not\(\.uv-pv \*\)/g, "").replace(/:not\(#uv-strong\)/g, ":not(#uv-strong):not(#uv-strong):not(#uv-strong)").replace(/^body/gm, ".uv-pv");
+	// The button and edge variables are also set on every UniverseView surface, so a theme's own colours (var(--text-normal) and the like) resolve there, not on <body>.
+	const onScope = (src.match(/^body\.uv-(?:btn|edge)-\w+ \{[\s\S]*?\}[ \t]*$/gm) ?? []).map((b) => b.replace(/^(body\.uv-(?:btn|edge)-\w+) \{/, "$1 .universeview-scope {")).join("\n");
+	return `\n\n${forBody}\n\n${onScope}\n\n${forPreview}`;
 }
 function buildStyles() {
 	const leaflet = fs.readFileSync("node_modules/leaflet/dist/leaflet.css", "utf8");
 	// Base styles, then the modern layer (motion, boards, hover cards, map tools) and the themes.
-	const own = ["src/styles.css", "src/styles-ui.css", "src/styles-views.css", "src/styles-tools.css", "src/styles-calendar.css", "src/styles-calendar-extra.css", "src/styles-panels.css", "src/styles-map.css", "src/styles-realms.css", "src/styles-explorer.css", "src/styles-notes.css", "src/styles-settings.css", "src/styles-hub.css", "src/styles-tactile.css", "src/themes.css"].map((f) => fs.readFileSync(f, "utf8").replace(/^\uFEFF/, "")).join("\n\n") + looks();
+	const own = ["src/styles.css", "src/styles-ui.css", "src/styles-views.css", "src/styles-tools.css", "src/styles-calendar.css", "src/styles-calendar-extra.css", "src/styles-panels.css", "src/styles-map.css", "src/styles-realms.css", "src/styles-explorer.css", "src/styles-notes.css", "src/styles-settings.css", "src/styles-hub.css", "src/styles-tactile.css", "src/themes.css", "src/themes-paper.css", "src/themes-more.css", "src/themes-modern.css", "src/themes-frames.css", "src/styles-ink.css"].map((f) => fs.readFileSync(f, "utf8").replace(/^\uFEFF/, "")).join("\n\n") + looks();
 	// Style Settings requires its @settings block to be the first comment it finds, so it stays on top.
 	const marker = "/* @settings";
 	const start = own.indexOf(marker);

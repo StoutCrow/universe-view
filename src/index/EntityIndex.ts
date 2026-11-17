@@ -5,6 +5,8 @@ import { UniverseViewSettings, FieldName, buildFieldAliases, parseMappingLines }
 import { CalendarRegistry, type Calendar } from "../dates/calendars";
 import { parseDate, parseSpan } from "../dates/parser";
 import { relInverse } from "./relkinds";
+import { RULE_NAMES, lineOfSuccession, type SuccessionRule } from "./succession";
+import { SOLE_ROLE } from "./validate";
 import { readNames } from "./renames";
 import { holdersProperty, readHolders, readOccupied, readSides, readTransfers } from "./periods";
 import { readWorld, type WorldSettings } from "./world";
@@ -52,6 +54,8 @@ export class EntityIndex extends Events {
 	/** Which keys each note's `relatives:` lines talk about. */
 	private kinKeys = new Map<string, Set<string>>();
 	relationsOf = new Map<string, TimedRef[]>();
+	/** More relationships worked out from the rest (set by the plugin: deduce.ts), run at the end of each derive. */
+	deducer?: (index: EntityIndex) => void;
 	eventsOf = new Map<string, Set<string>>();
 	membersOf = new Map<string, { key: string; link: TimedRef }[]>();
 	subPlacesOf = new Map<string, Set<string>>();
@@ -505,7 +509,7 @@ export class EntityIndex extends Events {
 		// Typed relations ("ruler: [[X]]", "mentor: [[Y]]") apply to every kind of note.
 		e.relations = timed("relations");
 
-		// A group named in a belonging tag (#Group_Realm_Vael, #Group_House_Tudor) is a membership too, shown with the
+		// A group named in a belonging tag (#Group_Realm_England, #Group_House_Tudor) is a membership too, shown with the
 		// others; one the note already lists is not added twice. Only groups that exist.
 		const tagGroups = (list: TimedRef[]): TimedRef[] => {
 			const out = [...list];
@@ -588,6 +592,19 @@ export class EntityIndex extends Events {
 				e.cultures = tagGroups(timed("cultures"));
 				break;
 			}
+			case "object":
+				// What was made and lost, who holds it (a person or a group, with dates), and where it is kept.
+				e.start = date("founded");
+				e.end = date("dissolved");
+				e.cultures = timed("cultures");
+				e.placeHistory = timed("places");
+				e.places = e.placeHistory.map((t) => t.ref);
+				break;
+			case "creature":
+				// Creatures have no timeline: where they live, and the people or groups they belong to.
+				e.places = refs("places");
+				e.cultures = timed("cultures");
+				break;
 			case "map":
 				e.mapImage = this.resolveImage(reader.get("image"), file.path);
 				e.image = undefined;
@@ -786,6 +803,60 @@ export class EntityIndex extends Events {
 			// Knowledge, written on either side.
 			for (const k of e.knows) pushTimed(this.knowledgeOf, e.key, k);
 			for (const w of e.knownBy) pushTimed(this.knowledgeOf, w.ref.key, { ...w, ref: selfRef(e) });
+		}
+		this.deriveHeirs();
+		this.deducer?.(this);
+	}
+
+	/**
+	 * Heirs follow from the family tree and the realm's succession law: the first in line after whoever holds a group's top role
+	 * already is that holder's heir, and the holder is who they are heir to. A `heirs:` or `heir-to:` written in a note wins.
+	 */
+	private deriveHeirs() {
+		const stated = (key: string) => (this.relationsOf.get(key) ?? []).some((r) => (r.kind === "heirs" || r.kind === "heir-to") && r.via !== "succession");
+		const gender = (k: string) => {
+			const g = this.entities.get(k)?.gender ?? "";
+			return /^m/i.test(g) ? ("m" as const) : /^f/i.test(g) ? ("f" as const) : undefined;
+		};
+		const done = new Set<string>();
+		for (const culture of this.entities.values()) {
+			if (culture.type !== "culture") continue;
+			const members = this.membersOf.get(culture.key) ?? [];
+			const day = Math.max(...members.map((m) => m.link.from?.start ?? -Infinity), culture.start?.start ?? -Infinity);
+			if (!Number.isFinite(day)) continue;
+			let holder: Entity | undefined;
+			let since = -Infinity;
+			for (const m of members) {
+				const p = this.entities.get(m.key);
+				if (!p || p.type !== "person" || !SOLE_ROLE.test((m.link.role ?? "").trim()) || !activeAt(m.link, day) || !this.existsAt(p, day)) continue;
+				const from = m.link.from?.start ?? -Infinity;
+				if (!holder || from > since) {
+					holder = p;
+					since = from;
+				}
+			}
+			if (!holder || done.has(holder.key) || stated(holder.key)) continue;
+			done.add(holder.key);
+			const written = asText(culture.props.succession ?? "").toLowerCase();
+			const rule: SuccessionRule = (Object.keys(RULE_NAMES) as SuccessionRule[]).find((r) => written.includes(r.split("-")[0])) ?? this.worldFor(holder.path)?.succession ?? this.getSettings().successionRule;
+			const first = lineOfSuccession({
+				children: (k) => this.children(k, false),
+				parents: (k) => (this.entities.get(k)?.parents ?? []).map((r) => r.key),
+				born: (k) => this.entities.get(k)?.start?.start,
+				died: (k) => this.entities.get(k)?.end?.end,
+				gender,
+			}, holder.key, day, rule, 1)[0];
+			const heir = first ? this.entities.get(first.key) : undefined;
+			if (!heir || stated(heir.key)) continue;
+			const ref = (e: Entity): Ref => ({ key: e.key, name: e.name, resolved: true, inferred: true });
+			const add = (key: string, link: TimedRef) => {
+				const list = this.relationsOf.get(key) ?? [];
+				if (!list.some((l) => l.ref.key === link.ref.key && l.kind === link.kind)) list.push(link);
+				this.relationsOf.set(key, list);
+			};
+			const why = `the family tree and ${RULE_NAMES[rule].toLowerCase()} succession in ${culture.name}`;
+			add(holder.key, { ref: ref(heir), kind: "heirs", via: "succession", why });
+			add(heir.key, { ref: ref(holder), kind: "heir-to", via: "succession", why });
 		}
 	}
 

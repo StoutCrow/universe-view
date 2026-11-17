@@ -100,6 +100,30 @@ export async function removeLink(plugin: UniverseViewPlugin, u: Unlink): Promise
 	return found;
 }
 
+/** Writes a partnership that was only worked out to have ended (a death) into the note, so it stays whatever the other notes say. */
+export async function keepEndedTie(plugin: UniverseViewPlugin, file: TFile, name: string, tie: { kind?: string; span?: string; reason: string }): Promise<boolean> {
+	const aliases = buildFieldAliases(plugin.settings.fieldAliases).partners;
+	let done = false;
+	await plugin.editFrontmatter(file, (front) => {
+		for (const key of aliases) {
+			const cur = front[key];
+			if (cur === undefined) continue;
+			const list = ([] as unknown[]).concat(cur);
+			const next = list.map((v) => {
+				if (linkTarget(v)?.toLowerCase() !== name.toLowerCase()) return v;
+				done = true;
+				if (v && typeof v === "object") return { ...(v as Record<string, unknown>), reason: tie.reason };
+				// Keeps what a bracket already said, adding how it ended.
+				const old = /\((.*)\)\s*$/.exec(typeof v === "string" ? v : "")?.[1];
+				const bits = old ? [old, `ended: ${tie.reason}`] : [tie.kind, tie.span, `ended: ${tie.reason}`];
+				return `[[${name}]] (${bits.filter(Boolean).join(", ")})`;
+			});
+			if (done) front[key] = Array.isArray(cur) ? next : next[0];
+		}
+	}, `Keep ${name} as written`);
+	return done;
+}
+
 /** Adds a link to a plain list property (`led-to:`, `founder:`…), keeping what's there. */
 async function addToList(plugin: UniverseViewPlugin, file: TFile, prop: string, name: string, label: string) {
 	await plugin.editFrontmatter(file, (f) => {

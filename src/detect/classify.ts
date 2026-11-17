@@ -75,7 +75,7 @@ export function guessType(n: NoteInfo, incoming: IncomingLinks = {}): TypeGuess 
 	});
 	for (const [t, [s, f]] of folderBest) add(t as EntityType | "concept", s, `in “${f}” folder`);
 	for (const [re, t, s, why] of NAME_RULES) if (re.test(n.name)) add(t, s, why);
-	const nouns: Record<EntityType, string> = { place: "a place", culture: "a group", person: "a person", event: "an event", map: "a map" };
+	const nouns: Record<EntityType, string> = { place: "a place", culture: "a group", person: "a person", event: "an event", map: "a map", object: "an object", creature: "a creature" };
 	for (const [t, count] of Object.entries(incoming) as [EntityType, number][]) {
 		if (count > 0) add(t, Math.min(4, 2 + count), `linked as ${nouns[t]} from ${count} note${count === 1 ? "" : "s"}`);
 	}

@@ -115,31 +115,31 @@ The dashboard opens by itself after installing. In a vault with nothing for it y
 2. Add a few properties:
 
 ```yaml
-# Events/Battle of Greyford.md
+# Events/Battle of Bosworth Field.md
 type: event
-date: 14 Highsun SE 3      # or 1243-05-14, May 1243, c. 1240, 350 BCE, 1240..1245
-end: 16 Highsun SE 3
-participants: ["[[Aldric Vane]]"]
-places: ["[[Greyford]]"]
-cultures: ["[[Kingdom of Vael]]"]
+date: 22 August 1485      # or 1485-08-22, August 1485, c. 1485, 350 BCE, 1480..1485
+end: 22 August 1485
+participants: ["[[Henry VII]]"]
+places: ["[[Bosworth Field]]"]
+cultures: ["[[House of Tudor]]"]
 importance: 5               # 1â€“5
 ```
 
 ```yaml
-# People/Aldric Vane.md
+# People/Henry VII.md
 type: person
-born: FE 790
-died: c. SE 40
-parents: ["[[Edric Vane]]", "[[Lysa Marrow]]"]
+born: 1457-01-28
+died: 1509-04-21
+parents: ["[[Edmund Tudor]]", "[[Margaret Beaufort]]"]
 partners:
-  - person: "[[Mira Thorne]]"
-    from: SE 1
+  - person: "[[Elizabeth of York]]"
+    from: 1486-01-18
 cultures:
-  - culture: "[[Order of the Ash]]"
-    from: SE 12
-    role: Knight-Commander
+  - culture: "[[House of Tudor]]"
+    from: 1485-08-22
+    role: Founder
 relations:
-  - person: "[[Corin Hale]]"
+  - person: "[[Margaret Beaufort]]"
     kind: mentor
 ```
 
@@ -159,16 +159,16 @@ faith: "[[Church of England]]"
 *Fix kinds and tags* proposes a kind for groups that have none, worked out from their name and tags, for you to review.
 
 ```yaml
-# Places/London.md                     # Places/Greyford.md (on an image map)
+# Places/London.md                     # Places/Hampton Court Palace.md (on an image map)
 type: place                            type: place
-coordinates: [51.507, -0.128]          map: "[[Vael Map]]"
+coordinates: [51.507, -0.128]          map: "[[Tudor Map]]"
 located-in: "[[England]]"              position: [330, 520]   # pixels from top-left
 ```
 
 ```yaml
-# Vael Map.md
+# Tudor Map.md
 type: map
-image: "[[vael-map.png]]"
+image: "[[tudor-map.png]]"
 ```
 
 Only write each relationship once â€” UniverseView infers children, siblings, the other side of a partnership, members of a culture and events at a place.
@@ -229,7 +229,7 @@ On/off buttons show their state: a toggle that's on has a soft fill and a colour
 The **Board** (Ctrl+Alt+B) is a dashboard of modules you arrange yourself: timelines, family trees, connection graphs, lineages, maps, â€œat a glanceâ€ numbers, lists of key events/people/places/groups, recent edits, or any note rendered in place.
 
 - **Move** a module by dragging its header; the others flow out of the way. **Resize** it from its bottom-right corner.
-- A module's **options** (slider icon) take the same `key: value` lines as embedded code blocks (`group: culture`, `root: Henry VIII`, `map: Vael Map`, `trace: Aldric Vane`â€¦), plus a picker for its main subject.
+- A module's **options** (slider icon) take the same `key: value` lines as embedded code blocks (`group: culture`, `root: Henry VIII`, `map: Tudor Map`, `trace: Henry VIII`â€¦), plus a picker for its main subject.
 - The **expand** icon opens the module as a full view. Right-click a header to duplicate or remove it.
 - Keep several boards (one per world or project), or start one from a template: *World overview*, *Genealogy desk*, *Atlas*, *Chronology* or *Story board*. *Lock layout* stops accidental drags.
 - On narrow panes modules stack in one column. UniverseView views can still be dragged into Obsidian splits as usual.
@@ -270,7 +270,7 @@ Rest the pointer on anything in a UniverseView view (timeline items, tree cards,
 - **Territories:** *Draw â†’ Paint* (or right-click a pin) paints an area for a nation, house, faith or region: click corners, or hold and drag to draw freehand; Enter or double-click finishes. **Click a territory** and its editing panel opens along the bottom of the map with every tool for it (Reshape, Simplify, Expand, Brush, Grow, New area, Fill, Dates, New borders, Split, New land, Route, Map notes, Import, Check, Erase, Delete), each with a one-key shortcut. *Reshape* drags corners (click a midpoint to add one, right-click a corner to remove it). Areas follow the time slider and are saved in the note:
   ```yaml
   territory:
-    - map: "[[Vael Map]]"
+    - map: "[[Tudor Map]]"
       points: "120,330 300,180 520,120 760,150 790,330"
   ```
 - **Fill a territory** (*Draw â†’ Fill*, or *Fill* on a territory's panel; image maps only): by default it fills like a paint bucket by ground (see *Fill land / sea* below). Choose *Fill same colour* to spread over similar colours instead, stopping at coasts, rivers, the border lines drawn in your map image, and other territories. Filled land that overlaps one of the note's areas joins that area. Each click adds another area (islands become extra areas of the same note). *Tolerance* sets how different a colour may be and still count; *Close small/wide gaps* seals dotted or broken border lines; icons and labels inside the area are included. The outline is traced, smoothed and snapped onto neighbouring territories so borders line up. Backspace undoes the last click.
@@ -289,7 +289,7 @@ Rest the pointer on anything in a UniverseView view (timeline items, tree cards,
 - **Routes:** the route button draws a road, path, river, sea lane, trade route, railway or border line for any note (a realm's road, a company's trade route, a journey). Hover a route for its length and travel time; right-click to edit or delete it. They're saved like territories:
   ```yaml
   routes:
-    - map: "[[Vael Map]]"
+    - map: "[[Tudor Map]]"
       kind: road
       name: The King's Road
       points: "330,520 420,450 520,360"
@@ -337,18 +337,18 @@ down: 2
 ```
 
 ```universeview-graph
-focus: Aldric Vane
+focus: Henry VIII
 depth: 2
 types: people, cultures
 ```
 
 ```universeview-lineage
-folder: Vael
+folder: Tudors
 ```
 
 ```universeview-org
-root: Order of the Ash   # defaults to the current note (or every top-level group in `folder:`)
-at: SE 30                # the organisation on that date
+root: House of Tudor   # defaults to the current note (or every top-level group in `folder:`)
+at: 1500                 # the organisation on that date
 timeline: true
 relations: true          # alliances, rivalries, vassalsâ€¦ between the groups
 ties: true               # relationships between the people on the cards
@@ -364,12 +364,12 @@ person: Henry VIII       # a life on one strip: roles, partners, children, place
 ```
 
 ```universeview-stats
-folder: Vael             # people alive over time, balance of groups, lifespans, names
+folder: Tudors             # people alive over time, balance of groups, lifespans, names
 ```
 
 ```universeview-map
-map: Vael Map         # or "world"
-trace: Aldric Vane
+map: Tudor Map         # or "world"
+trace: Henry VIII
 color-by: category    # culture | category | region | type
 territories: true
 ```
@@ -379,7 +379,7 @@ Embedded views scroll with the note; hold Ctrl/Cmd to zoom with the wheel. Use t
 
 ## Relationships
 
-People and groups are joined by properties that list links. Write one side and the other note shows the inverse (vassals â†” liege, mentors â†” students); add dates with `- { name: "[[House Vane]]", from: SE 12, to: SE 40 }`.
+People and groups are joined by properties that list links. Write one side and the other note shows the inverse (vassals â†” liege, mentors â†” students); add dates with `- { name: "[[House of Tudor]]", from: 1485, to: 1603 }`.
 
 | Property | For | Meaning | Also accepted |
 |---|---|---|---|
@@ -398,10 +398,10 @@ Any other property listing links (`sworn-brother: "[[X]]"`) is a relationship of
 
 ## Writing and story tools
 
-- **Quick creator** (Ctrl+Alt+Q): one line like â€œBattle of Thornwood, SE 22, at Thornwood, Aldric Vane vs Mira Thorneâ€ becomes a note.
+- **Quick creator** (Ctrl+Alt+Q): one line like â€œBattle of Bosworth Field, 1485, at Bosworth Field, Henry VII vs Richard IIIâ€ becomes a note.
 - **Story continuity:** chapters with `story-date:` and `characters:` are checked for people moving impossibly fast, the dead appearing and ages that don't add up. They also show on the timeline (*Story* chip).
 - **Who knows what** (`knows:` / `known-by:` with dates), **lines of succession** (eldest child first, sons before daughters, or sons only; *Remember for this group* saves the rule as `succession:`), **name ideas** learned from one world's names (near copies like â€œArgaretâ€ are left out), and **story ideas** drawn from your world's own rivalries, successions and gaps.
-- **Inline helpers** in reading view: `` `age: Aldric Vane @ SE 30` ``, `` `born: Mira Thorne` ``, `` `span: Battle of Greyford` ``.
+- **Inline helpers** in reading view: `` `age: Henry VIII @ 1520` ``, `` `born: Elizabeth I` ``, `` `span: Battle of Bosworth Field` ``.
 - **Tidying:** possible duplicates (with merge), loose ends, kinds and tags clean-up, how complete a world is, and text that contradicts the properties.
 - **World book:** exports a world's maps, timeline and entries as one HTML page.
 
@@ -416,7 +416,7 @@ Settings â†’ UniverseView â†’ Calendars lets you define calendars for 
 - **Seasons** (`Spring = Thaw 1`) and yearly **holidays** (`Lantern Night = Highsun 15`, or `every 4` for every few years).
 - **Eras** (`FE`, `SE`), written before or after the year, and an **epoch** that lines it up with real dates and your other calendars.
 
-A note uses its `calendar:`, then its world's calendar, then the per-folder mapping (`Vael = vaelic`), then the default. The real-world calendar has proper weekdays, the real moon and the solstices and equinoxes.
+A note uses its `calendar:`, then its world's calendar, then the per-folder mapping (`Tudors = julian`), then the default. The real-world calendar has proper weekdays, the real moon and the solstices and equinoxes.
 
 **The Calendar view** (Ctrl+Alt+C) shows a month as weeks (festival days on their own), a whole year at a glance, or what's *coming up*. Every day shows its moons' phases. Days also show events, events that repeat (give an event `repeat: yearly`, or monthly or weekly), holidays, the start of each season, birthdays (with ages) and story chapters. Click a day for everything on it, double-click to add an event there, and drag an event to another day to move it. **Today** in the world is kept on the world note (or in the settings); the â­ and â© buttons move it on by a day or a week, as a campaign goes on. The **converter** shows any date in every calendar, with weekday, season and moons. Embed a calendar with ```` ```universeview-calendar ```` (`folder:`, `mode: month | year | agenda`, `date:`).
 
@@ -426,9 +426,9 @@ A note with `type: world` sets up everything in its folder in one place. The *Wo
 
 ```yaml
 type: world
-calendar: vaelic
+calendar: julian
 today: 16 Highsun SE 3       # today in the story: the calendar's Today
-map: "[[Vael Map]]"          # the map that opens first
+map: "[[Tudor Map]]"          # the map that opens first
 travel: foot 30, horse 60, wagon 35, boat 60, ship 150   # km a day, for journeys and travel rings
 succession: male-preference  # absolute, male-preference or agnatic
 person-relations: allies, rivals, mentors   # what new people start with
@@ -451,10 +451,10 @@ Each calendar has a **Current year** (Settings â†’ Calendars; a world note'
 - **Maps through time:** give a map note a list of images with the dates they apply, and the time slider shows each era's map:
   ```yaml
   images:
-    - image: "[[vael-old.png]]"
+    - image: "[[tudor-old.png]]"
       name: The First Era
       to: FE 811
-    - image: "[[vael.png]]"
+    - image: "[[tudor.png]]"
       from: SE 1
   ```
   Each image is stretched over the same area, so pins and borders stay where they are.
@@ -514,7 +514,7 @@ npm run harness        # browser harness with the example vault at http://localh
 npm run install-example  # copy the build into example-vault/ to try it in Obsidian
 ```
 
-The `example-vault/` folder contains two worlds: the Tudors (Gregorian dates, real map) and Vael (custom calendar, image map).
+The `example-vault/` folder contains one world, the Tudors (Gregorian dates, real map), with people, places, events, groups, three languages, a creature (the red dragon) and an object (a crown whose holders and places make its journey).
 
 `dev/install.ps1` (Windows) type-checks, tests, builds and copies the plugin into the vaults listed one per line in `dev/vaults.local.txt`, a file of your own that git ignores.
 

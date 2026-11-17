@@ -15,7 +15,7 @@ export interface TagSample {
 const plain = (t: string) => t.replace(/^#/, "").trim();
 const key = (t: string) => plain(t).toLowerCase().replace(/[\s_-]+/g, "_");
 const word = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-/** What a tag states: the scheme's kind, fact or name (#Group_Nation_Vael → vael), else what follows the first underscore. */
+/** What a tag states: the scheme's kind, fact or name (#Group_Nation_England → england), else what follows the first underscore. */
 const valueOf = (t: string) => {
 	const v = tagValue(plain(t));
 	if (v !== undefined) return key(v);
@@ -31,7 +31,7 @@ export function standardTag(raw: string, known: string[]): string {
 	return capitals > known.length / 2 ? t.split("_").map(word).join("_") : t;
 }
 
-/** What a note's folders say about it: "The World/Vael/Greyford/Keep.md" is in Vael and Greyford. */
+/** What a note's folders say about it: "The World/England/Greyford/Keep.md" is in England and Greyford. */
 export function factsFromPath(path: string): string[] {
 	return path.split("/").slice(0, -1);
 }
@@ -102,7 +102,7 @@ export function tagFixes(notes: TagNote[], required: Partial<Record<string, stri
 
 /**
  * The tags a new note of this type should have: plain ones most notes of its type share, and any that
- * state one of its facts ("war" → #Event_War, "Vael" → #Nation_Vael). A `kind` the vault has
+ * state one of its facts ("war" → #Event_War, "England" → #Nation_England). A `kind` the vault has
  * no tag for yet is written in the pattern its type uses, once that pattern is established.
  */
 export function standardTagsFor(type: string, facts: string[], kind: string | undefined, notes: TagSample[]): string[] {
@@ -117,7 +117,7 @@ export function standardTagsFor(type: string, facts: string[], kind: string | un
 		const value = valueOf(t);
 		if (value ? wanted.has(value) : wanted.has(key(t)) || (same.length >= 3 && n > same.length / 2)) add(t);
 	}
-	// A fact's tag may only be used on other kinds of note so far: #Nation_Vael on the realm's own lands.
+	// A fact's tag may only be used on other kinds of note so far: #Nation_England on the realm's own lands.
 	for (const n of notes) {
 		for (const t of n.tags.map(plain)) {
 			if (t.includes("_") && wanted.has(valueOf(t)) && !(parseTag(t) && parseTag(t)?.role !== "member" && parseTag(t)?.type !== type)) add(t);

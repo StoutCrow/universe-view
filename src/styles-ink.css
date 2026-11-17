@@ -1,0 +1,249 @@
+/* ==== Hand-writing animations (Settings → Theme settings → Motion and density) ==========================
+   All of it sits behind body.uv-ink, which is off when Motion is Off or the system asks for reduced motion.
+   Titles are written out (pen, pencil, brush) or typed out (typewriter, terminals); buttons are outlined by hand
+   as you point at them and coloured in as you press them; and a folder unfolds to show its notes. Nothing here
+   touches the sample cards in Settings (.uv-pv): they show their own theme only. */
+
+@property --uv-p {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 0%;
+}
+@keyframes uv-write {
+	from { clip-path: inset(-8px 100% -8px 0); }
+	to { clip-path: inset(-8px -8px -8px 0); }
+}
+@keyframes uv-caret {
+	0%, 49% { border-right-color: currentcolor; }
+	50%, 100% { border-right-color: transparent; }
+}
+@keyframes uv-caret-gone {
+	to { border-right-color: transparent; }
+}
+@keyframes uv-blur-in {
+	from { opacity: 0; filter: blur(8px); transform: translateY(4px); }
+	to { opacity: 1; filter: none; transform: none; }
+}
+@keyframes uv-press-in {
+	from { opacity: 0; transform: scale(1.06); }
+	to { opacity: 1; transform: none; }
+}
+
+/* ---- Titles written out by hand: a pen, pencil or brush drawing left to right ---- */
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-journal, .universeview-theme-atelier, .universeview-theme-woodcut, .universeview-theme-archive, .universeview-theme-scholar) :is(.universeview-ov-title, .universeview-ov-panel-head h3, .universeview-module-title, .uv-id-name, .universeview-ov-tile-title, .universeview-tl-lane-label, .universeview-insp-section-head span:last-child, .universeview-ep-section-head span:last-child):not(.uv-pv *) {
+	animation: uv-write 1.6s cubic-bezier(0.45, 0.05, 0.35, 1) backwards;
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-journal, .universeview-theme-atelier, .universeview-theme-woodcut, .universeview-theme-archive, .universeview-theme-scholar) :is(.universeview-ov-panel-head h3, .universeview-module-title, .universeview-insp-section-head span:last-child, .universeview-ep-section-head span:last-child):not(.uv-pv *) {
+	animation-duration: 1.1s;
+	animation-delay: 0.35s;
+}
+
+/* ---- Titles typed out, with a caret that blinks a few times and goes ---- */
+body.uv-ink:is(.universeview-theme-typewriter, .universeview-theme-desktop, .universeview-theme-neon, .universeview-theme-starfield, .universeview-theme-synth, .universeview-theme-brutalist) :is(.universeview-ov-title, .universeview-ov-panel-head h3, .universeview-module-title, .uv-id-name, .universeview-ov-tile-title, .universeview-tl-lane-label, .universeview-insp-section-head span:last-child, .universeview-ep-section-head span:last-child):not(.uv-pv *) {
+	width: fit-content;
+	max-width: 100%;
+	border-right: 3px solid currentcolor;
+	animation: uv-write 1.3s steps(22, end) backwards, uv-caret 0.5s steps(1) 0s 4, uv-caret-gone 0.01s 2s forwards;
+}
+body.uv-ink:is(.universeview-theme-typewriter, .universeview-theme-desktop, .universeview-theme-neon, .universeview-theme-starfield, .universeview-theme-synth, .universeview-theme-brutalist) :is(.universeview-ov-panel-head h3, .universeview-module-title, .universeview-insp-section-head span:last-child, .universeview-ep-section-head span:last-child):not(.uv-pv *) {
+	animation-duration: 0.9s, 0.5s, 0.01s;
+	animation-delay: 0.3s, 0.3s, 2.3s;
+}
+body.uv-ink.universeview-theme-glass :is(.universeview-ov-title, .universeview-ov-panel-head h3, .universeview-module-title, .uv-id-name, .universeview-ov-tile-title, .universeview-tl-lane-label, .universeview-insp-section-head span:last-child, .universeview-ep-section-head span:last-child):not(.uv-pv *) { animation: uv-blur-in 0.9s ease-out backwards; }
+body.uv-ink.universeview-theme-neumorph :is(.universeview-ov-title, .universeview-ov-panel-head h3, .universeview-module-title, .uv-id-name, .universeview-ov-tile-title, .universeview-tl-lane-label, .universeview-insp-section-head span:last-child, .universeview-ep-section-head span:last-child):not(.uv-pv *) { animation: uv-press-in 0.7s ease-out backwards; }
+
+/* ---- Buttons: outlined by hand as you point, coloured in as you press ----
+   The outline is the button's own border drawn round its own shape (radius and border width included), revealed
+   clockwise from the top. Each theme names its ink (the outline) and its fill: pencil hatching, solid black ink,
+   a brush wash, gold leaf, marker strokes. */
+body.uv-ink.universeview-theme-notebook { --uv-ink: #3a5f9a; --uv-fill: repeating-linear-gradient(135deg, rgba(58, 95, 154, 0.5) 0 2px, transparent 2px 5px); }
+body.uv-ink.universeview-theme-woodcut { --uv-ink: var(--text-normal); --uv-fill: var(--text-normal); --uv-fill-fg: var(--background-primary); }
+body.uv-ink.universeview-theme-watercolor { --uv-ink: #3f8f9e; --uv-fill: radial-gradient(circle at 50% 60%, rgba(63, 143, 158, 0.55), rgba(63, 143, 158, 0.16) 75%); }
+body.uv-ink.universeview-theme-manuscript { --uv-ink: #7a1f1f; --uv-fill: linear-gradient(135deg, rgba(169, 122, 28, 0.65), rgba(255, 226, 140, 0.5), rgba(169, 122, 28, 0.65)); }
+body.uv-ink.universeview-theme-atelier { --uv-ink: #7c5cff; --uv-fill: repeating-linear-gradient(100deg, rgba(124, 92, 255, 0.45) 0 4px, transparent 4px 7px); }
+body.uv-ink.universeview-theme-journal { --uv-ink: #e0b366; --uv-fill: linear-gradient(135deg, rgba(200, 150, 62, 0.55), rgba(240, 210, 140, 0.35)); }
+body.uv-ink.universeview-theme-typewriter { --uv-ink: #b3261e; --uv-fill: repeating-linear-gradient(0deg, rgba(179, 38, 30, 0.35) 0 1px, transparent 1px 3px); }
+
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action):not(.uv-pv *) {
+	position: relative;
+	isolation: isolate;
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action):not(.uv-pv *)::before {
+	content: "";
+	position: absolute;
+	inset: calc(var(--uvb-bw, 1px) * -1);
+	box-sizing: border-box;
+	border: var(--uvb-bw, 1px) var(--uvb-bs, solid) var(--uv-ink);
+	border-radius: inherit;
+	pointer-events: none;
+	opacity: 0;
+	-webkit-mask: conic-gradient(#000 var(--uv-p), transparent 0);
+	mask: conic-gradient(#000 var(--uv-p), transparent 0);
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action):not(.uv-pv *):is(:hover, :focus-visible)::before {
+	opacity: 1;
+	animation: uv-draw 0.9s ease-in-out forwards;
+}
+@keyframes uv-draw {
+	from { --uv-p: 0%; }
+	to { --uv-p: 100%; }
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action):not(.uv-pv *)::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	border-radius: inherit;
+	pointer-events: none;
+	background: var(--uv-fill);
+	opacity: 0;
+	clip-path: inset(0 100% 0 0);
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action):not(.uv-pv *):active::after {
+	animation: uv-fill 0.35s ease-out forwards;
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip, .universeview-icon-btn).is-active:not(.uv-pv *)::after {
+	opacity: 0.85;
+	clip-path: none;
+}
+@keyframes uv-fill {
+	from { opacity: 1; clip-path: inset(0 100% 0 0); }
+	to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+body.uv-ink.universeview-theme-woodcut :is(.universeview-chip, .universeview-icon-btn):is(.is-active, :active):not(.uv-pv *):not(#uv-strong):not(#uv-strong) { color: var(--uv-fill-fg); }
+
+/* ---- Folders: the notes of a folder that was just opened unfold one after another, hinged at the top ---- */
+@keyframes uv-unfold {
+	from { opacity: 0; transform: perspective(520px) rotateX(-78deg) translateY(-10px); }
+	60% { opacity: 1; }
+	to { opacity: 1; transform: none; }
+}
+@keyframes uv-flap {
+	from { transform: perspective(160px) rotateX(60deg); }
+	to { transform: none; }
+}
+body.uv-ink .universeview-dash-row.uv-unfold {
+	transform-origin: top center;
+	animation: uv-unfold 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+	animation-delay: calc(var(--i, 0) * 45ms);
+}
+body.uv-ink .universeview-dash-row.is-opening .universeview-dash-row-icon {
+	transform-origin: bottom left;
+	animation: uv-flap 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---- A title that was just written stays written when its view redraws (see inkonce.ts) ---- */
+body.uv-ink .uv-seen:not(#uv-strong):not(#uv-strong):not(#uv-strong) { animation: none; clip-path: none; border-right: 0; }
+
+/* ---- Tabs: the open tab is written in, typed in or blurred in as you switch ---- */
+@keyframes uv-tab-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@keyframes uv-tab-in {
+	from { clip-path: inset(-6px 100% -6px 0); }
+	to { clip-path: inset(-6px -6px -6px 0); }
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-journal, .universeview-theme-atelier, .universeview-theme-woodcut, .universeview-theme-archive, .universeview-theme-scholar) :is(.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+	animation: uv-tab-in 0.22s ease-out backwards;
+}
+body.uv-ink:is(.universeview-theme-typewriter, .universeview-theme-desktop, .universeview-theme-neon, .universeview-theme-starfield, .universeview-theme-synth, .universeview-theme-brutalist) :is(.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
+	animation: uv-tab-in 0.22s ease-out backwards;
+}
+body.uv-ink.universeview-theme-glass :is(.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) { animation: uv-tab-fade 0.22s ease-out backwards; }
+body.uv-ink.universeview-theme-neumorph :is(.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) { animation: uv-tab-fade 0.22s ease-out backwards; }
+
+/* ---- The chosen row in a list is marked in, left to right ---- */
+body.uv-ink .universeview-dash-row.is-selected:not(.uv-pv *) { animation: uv-tab-in 0.4s ease-out backwards; }
+
+/* ---- Cards are dealt: they land one after another, a little crooked on paper themes ---- */
+@keyframes uv-deal {
+	from { opacity: 0; transform: translateY(-34px) rotate(-7deg) scale(0.92); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes uv-deal-flat {
+	from { opacity: 0; transform: translateY(14px); }
+	to { opacity: 1; transform: none; }
+}
+body.uv-ink .universeview-card:not(.uv-pv *) { animation: uv-deal-flat 0.45s ease-out backwards; }
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-journal, .universeview-theme-manuscript, .universeview-theme-typewriter, .universeview-theme-woodcut) .universeview-card:not(.uv-pv *) {
+	animation: uv-deal 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+}
+body.uv-ink .universeview-card:not(.uv-pv *):nth-child(4n + 2) { animation-delay: 0.07s; }
+body.uv-ink .universeview-card:not(.uv-pv *):nth-child(4n + 3) { animation-delay: 0.14s; }
+body.uv-ink .universeview-card:not(.uv-pv *):nth-child(4n + 4) { animation-delay: 0.21s; }
+
+/* ---- Connection lines draw themselves along their length ---- */
+@keyframes uv-line {
+	from { stroke-dashoffset: 1; }
+	to { stroke-dashoffset: 0; }
+}
+body.uv-ink .uv-draw:not(.uv-pv *) {
+	stroke-dasharray: 1;
+	animation: uv-line 1.1s ease-out backwards;
+}
+
+/* ---- Maps are drawn in: borders and routes bloom in, pins drop ---- */
+@keyframes uv-map-in {
+	from { opacity: 0; filter: blur(5px); }
+	to { opacity: 1; filter: none; }
+}
+@keyframes uv-pin-drop {
+	from { opacity: 0; translate: 0 -16px; }
+	to { opacity: 1; translate: 0 0; }
+}
+body.uv-ink .universeview-map .leaflet-overlay-pane { animation: uv-map-in 1.3s ease-out 0.15s backwards; }
+body.uv-ink .universeview-map .leaflet-marker-pane > * { animation: uv-pin-drop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) backwards; }
+body.uv-ink .universeview-map .leaflet-marker-pane > *:nth-child(3n + 2) { animation-delay: 0.08s; }
+body.uv-ink .universeview-map .leaflet-marker-pane > *:nth-child(3n + 3) { animation-delay: 0.16s; }
+
+/* ---- Dialogs open the way the theme's world would: a page turned, paper fed in, a window popped up ---- */
+@keyframes uv-page {
+	from { opacity: 0; transform: perspective(900px) rotateY(-55deg); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes uv-feed {
+	from { opacity: 0; transform: translateY(-40px); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes uv-window {
+	from { opacity: 0; transform: scale(0.88); }
+	to { opacity: 1; transform: none; }
+}
+body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-journal, .universeview-theme-manuscript, .universeview-theme-archive, .universeview-theme-scholar, .universeview-theme-watercolor, .universeview-theme-woodcut, .universeview-theme-atelier) .modal.universeview-scope {
+	transform-origin: left center;
+	animation: uv-page 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+body.uv-ink.universeview-theme-typewriter .modal.universeview-scope { animation: uv-feed 0.5s steps(6, end) backwards; }
+body.uv-ink:is(.universeview-theme-desktop, .universeview-theme-brutalist, .universeview-theme-synth, .universeview-theme-starfield) .modal.universeview-scope { animation: uv-window 0.3s steps(4, end) backwards; }
+body.uv-ink:is(.universeview-theme-glass, .universeview-theme-neumorph, .universeview-theme-neon) .modal.universeview-scope { animation: uv-blur-in 0.4s ease-out backwards; }
+
+/* ---- Everything else that appears comes in too (opacity, blur and the separate scale and translate properties,
+   so the positions the views set with transform stay as they are) ---- */
+@keyframes uv-appear {
+	from { opacity: 0; filter: blur(3px); translate: 0 8px; }
+	to { opacity: 1; filter: none; translate: 0 0; }
+}
+@keyframes uv-pop {
+	from { opacity: 0; scale: 0.94; }
+	to { opacity: 1; scale: 1; }
+}
+body.uv-ink :is(.universeview-ov-panel, .universeview-ov-tile, .universeview-dash-card, .universeview-lineage-item, .universeview-tl-bar, .universeview-net-node, .universeview-org-card, .universeview-map-note-wrap, .universeview-map-crumbs):not(.uv-pv *) {
+	animation: uv-appear 0.45s ease-out backwards;
+}
+body.uv-ink :is(.universeview-ov-panel, .universeview-ov-tile, .universeview-dash-card, .universeview-lineage-item, .universeview-tl-bar, .universeview-net-node, .universeview-org-card):not(.uv-pv *):nth-child(4n + 2) { animation-delay: 0.05s; }
+body.uv-ink :is(.universeview-ov-panel, .universeview-ov-tile, .universeview-dash-card, .universeview-lineage-item, .universeview-tl-bar, .universeview-net-node, .universeview-org-card):not(.uv-pv *):nth-child(4n + 3) { animation-delay: 0.1s; }
+body.uv-ink :is(.universeview-ov-panel, .universeview-ov-tile, .universeview-dash-card, .universeview-lineage-item, .universeview-tl-bar, .universeview-net-node, .universeview-org-card):not(.uv-pv *):nth-child(4n + 4) { animation-delay: 0.15s; }
+/* Hover cards, menus, notices and suggestion lists pop open. */
+body.uv-ink :is(.universeview-hovercard.is-visible, .menu, .notice, .suggestion-container, .universeview-popover):not(.uv-pv *) {
+	animation: uv-pop 0.16s ease-out backwards;
+}
+/* Settings pages and the dashboard's tab pages fade in when switched to. */
+body.uv-ink :is(.uv-hub-page, .uv-subtab-body):not(.uv-pv *) { animation: uv-appear 0.35s ease-out backwards; }
+/* The theme cards are laid out one after another. */
+body.uv-ink .uv-tc:not(.uv-pv *) { animation: uv-pop 0.3s ease-out backwards; }
+body.uv-ink .uv-tc:not(.uv-pv *):nth-child(3n + 2) { animation-delay: 0.04s; }
+body.uv-ink .uv-tc:not(.uv-pv *):nth-child(3n + 3) { animation-delay: 0.08s; }
+
+/* Every other theme's tabs fade in at the same speed as the written ones, so no theme's tabs lag behind. */
+body.uv-ink :is(.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) { animation: uv-tab-fade 0.22s ease-out backwards; }

@@ -1,23 +1,28 @@
+import { societySpec } from "../src/index/societies";
+import { creatorFieldsFor } from "../src/import/quickadd";
+import { journeyOf, whereAt } from "../src/index/journey";
 import { findColourAreas } from "../src/render/colours";
 import { kindFix, knownKindWords } from "../src/index/kindcheck";
-import { fitTie, formatDetails, parseDetails, splitDetails, splitParts, tieKindInfo } from "../src/index/ties";
+import { endedTieLabel, fitTie, formatDetails, parseDetails, splitDetails, splitParts, tieEnded, tieKindInfo } from "../src/index/ties";
 import { ROW_ORDER, fitsRow, readMembers, rebuildMembers, rowOfKind, rowOfProperty, splitMembers, type GroupRow } from "../src/index/membership";
-import { REL_KINDS } from "../src/index/relkinds";
+import { REL_KINDS, REL_GROUP_ORDER, relGroup, relKind } from "../src/index/relkinds";
+import { deduceTies } from "../src/index/deduce";
 import { holderTitle, rankTitle, styleFor, titleFor } from "../src/index/titles";
 import { realmWords, rulerWord } from "../src/index/realmwords";
 import { withFactTag } from "../src/index/tagscheme";
+import { baseFor } from "../src/index/bases";
 import { PLACE_KINDS, PLACE_ROLES, PLACE_STATUSES, STATUS_ICONS, defaultKindsText, setPlaceTraits, groupOfKind, knownKindsText, normaliseKind, resolvePlace, styleKeyOf, usualSize } from "../src/index/placekinds";
 import { ROW_FORMATS, holdersProperty, readHolders, readOccupied, readSides, readTransfers, victorsOf } from "../src/index/periods";
-import { checkBorders } from "../src/index/bordercheck";
+import { checkBorders, withoutCorners } from "../src/index/bordercheck";
 import { boxOf, labelSpot, mainAxis, snapToNeighbour, unionOutline } from "../src/index/geometry";
 import { nameSize, realmShape } from "../src/render/strategy";
 import { touchHelp } from "../src/render/touchhelp";
 import { everyoneLayout, generationName } from "../src/index/kinlayout";
 import { categoryColor, categoryOf } from "../src/render/categories";
-import { absorbGaps, brushShape, cutFrom, mergeInto, pocketsBetween, tidyRing, untangle } from "../src/index/merge";
+import { absorbGaps, brushShape, cutFrom, mergeInto, pocketsBetween, tidyRing, touchesItself, untangle } from "../src/index/merge";
 import { alongRing, traceMask } from "../src/render/follow";
 import { ROUGHNESS, cornerDistance, holdRadius, roughenRing } from "../src/index/rough";
-import { simplifyShared } from "../src/index/simplify";
+import { dropSpikes, simplifyShared } from "../src/index/simplify";
 import { ribbon, smoothLine } from "../src/index/ribbon";
 import { landFill } from "../src/render/landfill";
 import { compareVersions, parseChangelog } from "../src/index/changelog";
@@ -41,6 +46,8 @@ import { causePath, packRows, rowLayout, stackLevels } from "../src/render/timel
 import { factsFromPath, standardTag, standardTagsFor, tagFixes } from "../src/index/tagrules";
 import { dropEmptyProperties, parseQuickAdd, quickAddFrontmatter, withFields } from "../src/import/quickadd";
 import { aliasCandidate, readAliases } from "../src/index/aliases";
+import { weldBorders } from "../src/index/weld";
+import { eventsOfGroup, groupChain, membersWithin } from "../src/index/grouppath";
 import { addKinChildren, addKinPartner, addLinks, forgetKin, kinLines, parseKin, parseNames } from "../src/index/relatives";
 import { dropEmpty, emptyKeys } from "../src/index/emptyprops";
 import { cleanBody, readNote, sentencesOf, type ReadField } from "../src/detect/reader";
@@ -99,8 +106,8 @@ function eq(actual: unknown, expected: unknown, label: string) {
 
 const reg = new CalendarRegistry([
 	{
-		id: "vaelic",
-		name: "Vaelic",
+		id: "mycal",
+		name: "Mycal",
 		epoch: 0,
 		months: [
 			{ name: "Frostwane", days: 36 }, { name: "Thawmoon", days: 36 }, { name: "Seedrise", days: 36 }, { name: "Greenmoot", days: 36 },
@@ -111,7 +118,7 @@ const reg = new CalendarRegistry([
 	},
 ]);
 const g = reg.get("gregorian");
-const v = reg.get("vaelic");
+const v = reg.get("mycal");
 
 // Gregorian round trips
 for (const [y, m, d] of [[1970, 1, 1], [2000, 2, 29], [1, 1, 1], [-349, 3, 15], [1485, 8, 22]]) {
@@ -261,10 +268,10 @@ eq(readCategory({ kind: "City" }, [], "place"), "city", "kind property");
 eq(readCategory({}, ["Fort"], "place"), "fort", "category from tag");
 eq(readCategory({}, ["Place"], "place"), undefined, "generic tag is not a category");
 // A realm's own words: its people and its ruler's title, in any of their spellings.
-eq([realmWords({ Demonym: "English", "ruler-title": "King, Queen" }), realmWords({ nationality: "[[Vaelish]]", ruler_title: "Grand Prince / Grand Princess" }), realmWords({ "ruler-title": "Doge" }), realmWords({})],
-	[{ demonym: "English", ruler: { m: "King", f: "Queen" } }, { demonym: "Vaelish", ruler: { m: "Grand Prince", f: "Grand Princess" } }, { ruler: { m: "Doge", f: "Doge" } }, {}], "realms: people and ruler words");
+eq([realmWords({ Demonym: "English", "ruler-title": "King, Queen" }), realmWords({ nationality: "[[English]]", ruler_title: "Grand Prince / Grand Princess" }), realmWords({ "ruler-title": "Doge" }), realmWords({})],
+	[{ demonym: "English", ruler: { m: "King", f: "Queen" } }, { demonym: "English", ruler: { m: "Grand Prince", f: "Grand Princess" } }, { ruler: { m: "Doge", f: "Doge" } }, {}], "realms: people and ruler words");
 eq([rulerWord(realmWords({ "ruler-title": "King or Queen" }), "female"), rulerWord({}, "male")], ["Queen", undefined], "realms: the ruler's word by gender");
-eq([holderTitle("medieval", [{ tier: 1, name: "Vael", own: "Doge" }]), holderTitle("medieval", [{ tier: 1, name: "England" }], "female")], ["Doge of Vael", "Empress of England"], "realms: a realm's own ruler title wins over its tier's");
+eq([holderTitle("medieval", [{ tier: 1, name: "England", own: "Doge" }]), holderTitle("medieval", [{ tier: 1, name: "England" }], "female")], ["Doge of England", "Empress of England"], "realms: a realm's own ruler title wins over its tier's");
 // A realm's people made into a culture note get the kind "nationality", which is a culture; "culture" itself is no kind.
 eq([rowOfKind("nationality"), readCategory({ kind: "nationality" }, [], "culture"), readCategory({ kind: "culture" }, [], "culture")], ["culture", "nationality", undefined], "realms: a nationality is a culture");
 // Which rows of the edit form offer a group: its own kind's row; a group of no particular kind only as an organisation.
@@ -344,10 +351,10 @@ eq(readLayer({ "map-layer": "layer 9" }), 5, "layer is clamped to 1–5");
 eq(readLayer({}), undefined, "no layer");
 eq(parseMapCategories("village = #8e6b3a, home, tiny, layer 4").get("village"), { color: "#8e6b3a", icon: "home", size: "tiny", layer: 4 }, "map categories with size and layer");
 eq(parseMapCategories("region = layer: 1, huge").get("region"), { layer: 1, size: "huge" }, "size and layer only");
-eq(setMapping("# comment\nPeople/ = person\nVael/ = place", "Vael", "event"), "# comment\nPeople/ = person\nVael/ = event", "replace a folder mapping");
-eq(setMapping("People/ = person\nVael/ = place", "vael/", null), "People/ = person", "remove a folder mapping");
+eq(setMapping("# comment\nPeople/ = person\nEngland/ = place", "England", "event"), "# comment\nPeople/ = person\nEngland/ = event", "replace a folder mapping");
+eq(setMapping("People/ = person\nEngland/ = place", "england/", null), "People/ = person", "remove a folder mapping");
 eq(setMapping("", "Worlds/America", "america"), "Worlds/America/ = america", "add a folder mapping");
-eq(findMapping("People/ = person\n/Vael = vaelic", "Vael"), "vaelic", "find a folder mapping");
+eq(findMapping("People/ = person\n/England = mycal", "England"), "mycal", "find a folder mapping");
 
 // ---- GEDCOM export ----
 {
@@ -385,7 +392,7 @@ eq(findMapping("People/ = person\n/Vael = vaelic", "Vael"), "vaelic", "find a fo
 {
 	const ticks = [{ x: 0, label: "FE 700" }, { x: 60, label: "FE 800" }, { x: 72, label: "SE 1", era: true }, { x: 160, label: "SE 100", major: true }];
 	eq([...spacedLabels(ticks)].map((t) => t.label).sort(), ["FE 700", "SE 1", "SE 100"], "era start wins an overlapping axis label");
-	eq(linkTarget("[[Vael/People/Aldric Vane|Aldric]]"), "Aldric Vane", "link target with folder and alias");
+	eq(linkTarget("[[England/People/Aldric Vane|Aldric]]"), "Aldric Vane", "link target with folder and alias");
 	eq(linkTarget({ culture: "[[Order of the Ash]]", role: "Knight" }), "Order of the Ash", "link target in an object");
 	eq(linkTarget("plain text"), "plain text", "plain name");
 	eq(days(0.25), "about 6 hours", "travel: hours");
@@ -831,6 +838,28 @@ eq(["Province", "Duchy", "Region_Medium", "Realm", "Nation_United_States"].map((
 	eq([at(120).under, at(160).under, at(undefined).under], ["United States.md", "Mexico.md", "Mexico.md"], "transfers: a land answers to the old realm before the war and the new one after");
 	eq([at(120).holder?.name, at(250).holder?.name, at(undefined).holder?.name, at(50).holder], ["William", "Henry", "Henry", undefined], "holders: who held it on the day; now; nobody before the first");
 }
+// ---- Welding borders (index/weld.ts) ----
+{
+	// Two squares side by side with 6px between their borders, the smaller one drawn with an extra corner and a spike.
+	const big: [number, number][] = [[0, 0], [1000, 0], [1000, 500], [1000, 1000], [0, 1000]];
+	const small: [number, number][] = [[1006, 100], [1006, 500], [1006.1, 500], [1006, 900], [2000, 900], [2000, 100], [1006, 300], [1006, 100.2]];
+	const out = weldBorders([{ id: "big", ring: big }, { id: "small", ring: small }], 12);
+	const ring = out.get("small")!;
+	eq(ring.filter((p) => p[0] > 990 && p[0] < 1007).every((p) => p[0] === 1000), true, "weld: the smaller land's border lands on the bigger one's");
+	eq(out.get("big"), big, "weld: the bigger land stays as it is");
+	eq(ring.some((p, i) => ring.slice(i + 1).some((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) < 0.25)), false, "weld: no corners left on top of each other");
+	const far = weldBorders([{ id: "a", ring: big }, { id: "b", ring: big.map(([x, y]) => [x + 1500, y] as [number, number]) }], 12);
+	eq(far.get("b")![0], [1500, 0], "weld: borders further apart than the reach are left alone");
+}
+// ---- A land ranks below the one it is under ----
+{
+	const ref = (key: string) => ({ key, name: key.replace(/\.md$/, ""), resolved: true });
+	const mk = (path: string, type: string, extra: Record<string, unknown> = {}) => ({ key: path, path, name: path.replace(/\.md$/, ""), type, folder: "", tags: [], props: {}, cultures: [], relations: [], parentCultures: [], places: [], territories: [], ...extra }) as never;
+	const ents = [mk("Kingdom.md", "culture", { tags: ["Realm"] }), mk("Realm.md", "culture", { tags: ["Realm"], parentCultures: [ref("Kingdom.md")] }), mk("Duchy.md", "place", { tags: ["Province"], locatedIn: ref("Kingdom.md") })];
+	const src = { all: () => ents as never[], get: (k?: string) => ents.find((e) => (e as { key: string }).key === k) as never, findByName: (n: string) => ents.find((e) => (e as { name: string }).name === n) as never };
+	const tree = realmTree(src, () => false);
+	eq(["Kingdom.md", "Realm.md", "Duchy.md"].map((k) => [tree.nodes.get(k)!.under?.replace(".md", ""), tree.nodes.get(k)!.rank]), [[undefined, 2], ["Kingdom", 3], ["Kingdom", 3]], "ranks: a realm under a kingdom is a duchy; a province already is one");
+}
 // ---- Names over time ----
 {
 	const g = new CalendarRegistry([], "gregorian").get("gregorian");
@@ -964,6 +993,42 @@ eq(["Province", "Duchy", "Region_Medium", "Realm", "Nation_United_States"].map((
 	const coast: [number, number][] = [[0, 0], [4, 1], [8, 0], [8, 4], [4, 5], [0, 4]];
 	eq(roughenRing(coast, ROUGHNESS.strong, 10), coast, "roughen: short, already-detailed edges are left alone");
 	eq(roughenRing(a, 0, 10), a, "roughen: off draws the border as stored");
+}
+// ---- A border that touches itself: a small loop off the line goes; two real lobes meeting at a point stay ----
+{
+	// A square whose left side runs down past a corner, out to a point and back to the same corner: a triangle loop.
+	const loop: [number, number][] = [[0, 0], [100, 0], [100, 100], [0, 100], [0, 60], [-12, 55], [0, 50], [0, 60], [0, 50], [0, 40]];
+	eq([touchesItself(loop), touchesItself([[0, 0], [100, 0], [100, 100], [0, 100]])], [true, false], "loops: a border that comes back to a corner it passed touches itself");
+	const fixed = untangle(loop, 0.05);
+	eq([fixed.some((p) => p[0] < 0), Math.round(Math.abs(ringArea(fixed)))], [false, 10000], "loops: untangle takes a small loop off the line");
+	const lobes: [number, number][] = [[0, 0], [50, 50], [100, 0], [100, 100], [50, 50], [0, 100]];
+	eq(untangle(lobes, 0.05).length, lobes.length, "loops: two real lobes meeting at a point are kept");
+	const issues = checkBorders([{ key: "a", name: "England", n: 0, points: loop, chain: ["a"] }], { mapSize: 1000 });
+	eq(issues.some((i) => i.kind === "crossed" && /touches itself/.test(i.title)), true, "loops: the border check finds a border touching itself");
+}
+// ---- Thin overlaps: a border pushed a little into its neighbour shows as two lines; the check finds it ----
+{
+	// West's border bulges 4 px into East along a stretch: too thin for the area check, two lines on the map.
+	const west: [number, number][] = [[0, 0], [1000, 0], [1004, 300], [1004, 600], [1000, 1000], [0, 1000]];
+	const east: [number, number][] = [[1000, 0], [2000, 0], [2000, 1000], [1000, 1000]];
+	const found = checkBorders([{ key: "w", name: "England", n: 0, points: west, chain: ["w"] }, { key: "e", name: "England", n: 0, points: east, chain: ["e"] }], { mapSize: 10000 });
+	const thin = found.find((i) => i.kind === "overlap");
+	eq([!!thin?.thin, thin?.key, Math.round(thin?.width ?? 0)], [true, "e", 4], "overlaps: a border pushed 4 px into a neighbour is a thin overlap; the smaller land gives way");
+}
+// ---- Spikes: a short sharp point off a border goes; a shared one, or a real corner, stays ----
+{
+	// A square with a small spike on its left side (out to x=-15 and back) and a hook at the top right.
+	const sq: [number, number][] = [[0, 0], [100, 0], [100, 100], [0, 100], [0, 60], [-15, 52], [0, 48]];
+	const out = dropSpikes(sq, [], 30, 1);
+	eq([out.dropped, out.ring.some((p) => p[0] === -15), out.ring.length], [1, false, 6], "spikes: a short sharp point off a border is taken off");
+	eq(dropSpikes(sq, [[[-15, 52], [-40, 0], [-40, 100]]], 30, 1).dropped, 0, "spikes: a point a neighbour shares stays");
+	eq(dropSpikes([[0, 0], [100, 0], [100, 100], [0, 100]], [], 30, 1).dropped, 0, "spikes: a square's right angles stay");
+	eq(dropSpikes(sq, [], 5, 1).dropped, 0, "spikes: a point longer than maxLen stays (it may be a peninsula)");
+	// A tiny hook both lands share goes from both, so their border stays one line.
+	const hook: [number, number][] = [[0, 0], [100, 0], [100, 100], [0, 100], [0, 52], [4, 50], [0, 48]];
+	const theirs: [number, number][] = [[0, 48], [4, 50], [0, 52], [0, 100], [-100, 100], [-100, 0], [0, 0]];
+	const res = dropSpikes(hook, [theirs], 30, 0.1, undefined, 6);
+	eq([res.dropped, withoutCorners(theirs, res.at).some((p) => p[0] === 4)], [1, false], "spikes: a tiny shared hook goes from both borders");
 }
 // ---- Simplify: fewer corners, shared borders still shared, real detail kept ----
 {
@@ -1295,7 +1360,7 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	const vaultTags = [
 		{ type: "event", tags: ["Event_War", "Event_Massive", "Nation_Virginia"] },
 		{ type: "event", tags: ["#Event_Treaty", "Event_Massive"] },
-		{ type: "event", tags: ["Event_War", "Nation_Vael"] },
+		{ type: "event", tags: ["Event_War", "Nation_England"] },
 		{ type: "person", tags: ["Character", "Character_Male"] },
 		{ type: "person", tags: ["Character", "Character_Female"] },
 		{ type: "person", tags: ["Character"] },
@@ -1306,7 +1371,7 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(standardTag("my tag", ["lower", "case"]), "my_tag", "tags: a lowercase vault stays lowercase");
 	eq(standardTagsFor("event", ["war"], "war", vaultTags), ["Event_War"], "tags: an event of a kind gets that kind's tag");
 	eq(standardTagsFor("event", ["treaty"], "treaty", vaultTags), ["Event_Treaty"], "tags: a common tag with a value isn't given to what it isn't true of");
-	eq(standardTagsFor("event", ["Vael"], undefined, vaultTags), ["Nation_Vael"], "tags: a fact can name a tag");
+	eq(standardTagsFor("event", ["England"], undefined, vaultTags), ["Nation_England"], "tags: a fact can name a tag");
 	eq(standardTagsFor("person", ["Virginia"], undefined, vaultTags).includes("Nation_Virginia"), true, "tags: a fact's tag can come from another kind of note");
 	eq(standardTagsFor("event", [], "siege", vaultTags).includes("Event_Siege"), true, "tags: a new kind follows the type's pattern");
 	eq(standardTagsFor("person", ["male"], undefined, vaultTags).sort(), ["Character", "Character_Male"], "tags: people get the shared tag and their gender's");
@@ -1322,13 +1387,13 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		const y = (n: number) => parseDate(String(n), cal)!;
 		const r = (key: string) => ({ key, name: key, resolved: true });
 		const base = { calendar: "gregorian", cultures: [], places: [], relations: [], parents: [], props: {}, tags: [] };
-		const nation = { ...base, key: "Vael", name: "Vael", type: "culture", start: y(1000), names: [{ name: "Old Vael", to: y(1100) }, { name: "Vael", from: y(1100) }], holders: [{ ref: r("Ann"), from: y(1200) }] };
-		const war = { ...base, key: "War", name: "The War", type: "event", start: y(1250), end: y(1260), sides: [{ party: r("Vael"), side: "A" }], occupied: [{ land: r("Vael"), by: r("Rome"), from: y(1255), to: y(1256) }] };
-		const treaty = { ...base, key: "Pact", name: "Pact", type: "event", category: "treaty", start: y(900), cultures: [{ ref: r("Vael") }] };
-		const king = { ...base, key: "Bo", name: "Bo", type: "person", start: y(1270), props: { reign: "1300 - 1310" }, cultures: [{ ref: r("Vael") }] };
+		const nation = { ...base, key: "England", name: "England", type: "culture", start: y(1000), names: [{ name: "Old England", to: y(1100) }, { name: "England", from: y(1100) }], holders: [{ ref: r("Ann"), from: y(1200) }] };
+		const war = { ...base, key: "War", name: "The War", type: "event", start: y(1250), end: y(1260), sides: [{ party: r("England"), side: "A" }], occupied: [{ land: r("England"), by: r("Rome"), from: y(1255), to: y(1256) }] };
+		const treaty = { ...base, key: "Pact", name: "Pact", type: "event", category: "treaty", start: y(900), cultures: [{ ref: r("England") }] };
+		const king = { ...base, key: "Bo", name: "Bo", type: "person", start: y(1270), props: { reign: "1300 - 1310" }, cultures: [{ ref: r("England") }] };
 		const notes = [nation, war, treaty, king];
 		const fakeIdx = { version: 1, all: (t?: string) => notes.filter((n) => !t || n.type === t), get: (k: string) => notes.find((n) => n.key === k) };
-		const tree = { nodes: new Map([["Vael", { key: "Vael", holder: r("Bo"), children: [], rank: 2 }]]), roots: ["Vael"], holdings: new Map([["Bo", ["Vael"]]]) };
+		const tree = { nodes: new Map([["England", { key: "England", holder: r("Bo"), children: [], rank: 2 }]]), roots: ["England"], holdings: new Map([["Bo", ["England"]]]) };
 		const plugin = { index: fakeIdx, realms: () => tree, calendars: { get: () => cal }, openEndOf: () => undefined } as never;
 		const marks = historyOf(plugin, nation as never, [y(1000).start, y(1400).end]);
 		eq(marks.map((m) => [m.kind, m.shape]), [["rename", "diamond"], ["reign", "chevron"], ["event", "arrow"], ["occupation", "hatch"]].concat(marks.some((m) => m.key === "Bo") ? [["reign", "chevron"]] : []), "history: renamings, holders, wars and occupations, oldest first");
@@ -1347,10 +1412,10 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	// Normalising: the vault's own scheme, wherever a note's facts justify it.
 	const note = (path: string, type: string, tags: string[], facts: string[] = []) => ({ path, type, tags, facts });
 	const scheme = [
-		note("A.md", "person", ["Character", "Character_Vael", "Character_Dead"]),
-		note("B.md", "person", ["Character", "Character_Vael"]),
-		note("C.md", "person", ["Character"], ["World", "Vael", "dead"]),
-		note("D.md", "person", ["character_vael"], ["Vael"]),
+		note("A.md", "person", ["Character", "Character_England", "Character_Dead"]),
+		note("B.md", "person", ["Character", "Character_England"]),
+		note("C.md", "person", ["Character"], ["World", "England", "dead"]),
+		note("D.md", "person", ["character_england"], ["England"]),
 		note("E.md", "place", ["Title", "Region_Small"]),
 		note("F.md", "place", ["Title"]),
 		note("G.md", "place", ["Region"], ["Small"]),
@@ -1383,19 +1448,19 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(followPath("A/Bee", "A/B", "C/B"), "A/Bee", "move: a similar name stays");
 	const fixed = tagFixes(scheme, { person: "Character", place: "Title" });
 	const fixOf = (p: string) => fixed.find((f) => f.path === p);
-	eq(fixOf("C.md")?.add, ["Character_Dead", "Character_Vael"], "normalise: a note gains its type's tags that its facts justify");
-	eq(fixOf("D.md")?.rename, [["character_vael", "Character_Vael"]], "normalise: a stray spelling becomes the usual one");
+	eq(fixOf("C.md")?.add, ["Character_Dead", "Character_England"], "normalise: a note gains its type's tags that its facts justify");
+	eq(fixOf("D.md")?.rename, [["character_england", "Character_England"]], "normalise: a stray spelling becomes the usual one");
 	eq(fixOf("D.md")?.add, ["Character"], "normalise: the tag that marks a type goes on, once most of the type have it");
 	eq(fixOf("A.md"), undefined, "normalise: a note that follows the scheme is left alone");
 	eq(fixOf("G.md")?.add.includes("Title"), true, "normalise: the required tag is the only plain one spread");
 	eq(fixOf("E.md"), undefined, "normalise: other tags aren't spread by being common");
-	eq(tagFixes([note("X.md", "person", [], ["Vael"]), note("Y.md", "event", ["Event_Vael"])]), [], "normalise: a tag is only given to the type that uses it");
-	const rare = [note("A.md", "place", ["Location_Vael"], ["Vael"]), ...["B", "C", "D", "E"].map((n) => note(`${n}.md`, "place", ["Title"], ["Vael"]))];
+	eq(tagFixes([note("X.md", "person", [], ["England"]), note("Y.md", "event", ["Event_England"])]), [], "normalise: a tag is only given to the type that uses it");
+	const rare = [note("A.md", "place", ["Location_England"], ["England"]), ...["B", "C", "D", "E"].map((n) => note(`${n}.md`, "place", ["Title"], ["England"]))];
 	eq(tagFixes(rare), [], "normalise: a tag only one note in five uses is a leftover, not the scheme");
 	const groups = [note("A.md", "culture", ["Family", "Family_Noble"], ["Noble"]), note("B.md", "culture", ["Family"], ["Noble"]), note("C.md", "culture", ["Faith"], ["Noble"])];
 	eq(tagFixes(groups).map((x) => [x.path, x.add]), [["B.md", ["Family_Noble"]]], "normalise: a family's tags stay within the family");
 	eq(tagFixes([]), [], "normalise: an empty vault has nothing to do");
-	eq(factsFromPath("The World/Vael/Greyford.md"), ["The World", "Vael"], "normalise: folders are facts, the file isn't");
+	eq(factsFromPath("The World/England/Greyford.md"), ["The World", "England"], "normalise: folders are facts, the file isn't");
 
 	// The creator's form lands in the note's properties.
 	const typedLine = { name: "Ann", type: "person" as const, places: [], participants: [], cultures: [], parents: [], leaders: [], tags: [], unknown: [] };
@@ -1614,7 +1679,7 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 }
 {
 	// The tag scheme: Type_Kind, Type_Kind_Name, Type_Field_Value.
-	eq([parseTag("Group_Nation_United_States"), parseTag("Character_Status_Dead"), parseTag("Place_SpaceStation"), parseTag("Nation_Vael"), parseTag("Character"), parseTag("uv/Place_City", "uv")], [
+	eq([parseTag("Group_Nation_United_States"), parseTag("Character_Status_Dead"), parseTag("Place_SpaceStation"), parseTag("Nation_England"), parseTag("Character"), parseTag("uv/Place_City", "uv")], [
 		{ role: "member", type: "culture", kind: "nation", name: "United States" },
 		{ role: "fact", type: "person", field: "status", value: "dead" },
 		{ role: "kind", type: "place", kind: "space station" },
@@ -1624,27 +1689,27 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq([kindTag("place", "space station"), kindTag("person"), memberTag("culture", "nation", "United States"), factTag("person", "status", "dead")], ["Place_SpaceStation", "Character_Person", "Group_Nation_United_States", "Character_Status_Dead"], "scheme: write");
 	eq(tidyKinds(["Character", "Character_Person", "Character_Noble", "Group_Family_Tudors"]), ["Character_Noble", "Group_Family_Tudors"], "scheme: one kind tag");
 	eq([typeFromTag("Place_County", ""), typeFromTag("Character_Status_Dead", ""), typeFromTag("Group_Nation_United_States", "")], ["place", "person", null], "scheme: kind and fact tags mark the type, belonging tags don't");
-	eq([readCategory({}, ["Place_County", "Place_Size_Small"], "place"), readCategory({}, ["Character_Vael", "Character_Tudors"], "person"), readCategory({}, ["Character_Person"], "person"), readCategory({}, ["Character_Gender_Male", "Character_Noble"], "person")], ["county", undefined, undefined, "noble"], "scheme: kind tag read; several older Type_Word tags say nothing");
+	eq([readCategory({}, ["Place_County", "Place_Size_Small"], "place"), readCategory({}, ["Character_England", "Character_Tudors"], "person"), readCategory({}, ["Character_Person"], "person"), readCategory({}, ["Character_Gender_Male", "Character_Noble"], "person")], ["county", undefined, undefined, "noble"], "scheme: kind tag read; several older Type_Word tags say nothing");
 	const words: MigrateWords = { bareType: (w) => (w.includes("_") ? null : typeFromTag(w, "", { place: "Region" })), tiers: SCHEME_TIERS, regions: SCHEME_REGIONS };
-	const base = { folders: ["The World", "Vael"], world: "Vael" };
+	const base = { folders: ["The World", "England"], world: "England" };
 	const targets: Record<string, MigrateTarget> = { tudors: { type: "culture", kind: "family", name: "Tudors" }, "united states": { type: "place", kind: "realm", name: "United States" } };
 	const run = (n: MigrateNote) => applyMigration(n.tags, migrateTags(n, (name) => (name.toLowerCase() === n.name.toLowerCase() ? { type: n.type, kind: "", name: n.name, self: true } : targets[name.toLowerCase()]), words));
-	const person: MigrateNote = { ...base, type: "person", name: "Mary", tags: ["Character", "Character_Vael", "Character_Female", "Character_Dead", "Character_Ruler", "Nation_Tudors", "Character_Noble"] };
+	const person: MigrateNote = { ...base, type: "person", name: "Mary", tags: ["Character", "Character_England", "Character_Female", "Character_Dead", "Character_Ruler", "Nation_Tudors", "Character_Noble"] };
 	const migrated = run(person);
-	eq(migrated, ["Character_Person", "Place_World_Vael", "Character_Gender_Female", "Character_Status_Dead", "Character_Role_Ruler", "Group_Family_Tudors", "Character_Class_Noble"], "scheme: a person's older tags");
+	eq(migrated, ["Character_Person", "Place_World_England", "Character_Gender_Female", "Character_Status_Dead", "Character_Role_Ruler", "Group_Family_Tudors", "Character_Class_Noble"], "scheme: a person's older tags");
 	eq(run({ ...person, tags: migrated }), migrated, "scheme: migrating twice changes nothing");
 	eq(run({ ...person, kind: "noble" }).slice(0, 1), ["Character_Noble"], "scheme: a word that is the note's own kind is its kind tag");
 	eq(run({ ...base, type: "place", name: "United States", tags: ["Title", "Region", "Realm", "Region_Huge", "Nation_United_States"], kind: "region", land: { nature: "realm", tier: "Kingdom" } }), ["Place_Realm", "Place_Size_Huge"], "scheme: a realm drops #Title and tags of itself");
-	eq(run({ ...base, type: "place", name: "Kent", tags: ["Title", "County", "Region_Small", "Nation_United_States", "Location_Vael"], kind: "county", land: { nature: "realm" } }), ["Place_County", "Place_Size_Small", "Place_Realm_United_States", "Place_World_Vael"], "scheme: a county");
+	eq(run({ ...base, type: "place", name: "Kent", tags: ["Title", "County", "Region_Small", "Nation_United_States", "Location_England"], kind: "county", land: { nature: "realm" } }), ["Place_County", "Place_Size_Small", "Place_Realm_United_States", "Place_World_England"], "scheme: a county");
 	eq(run({ ...base, type: "place", name: "Greyford", tags: ["Title", "Region", "Region_Small"], kind: "region", land: { nature: "realm", tier: "Barony" } }), ["Place_Barony", "Place_Size_Small"], "scheme: ruled land with no tier tag takes its tier");
 	eq(run({ ...base, type: "place", name: "North", tags: ["Region", "Region_Enormous", "Continent"], kind: "continent", land: { nature: "region" } }), ["Place_Continent", "Place_Size_Enormous"], "scheme: geography");
-	eq(run({ ...base, type: "place", name: "Port", tags: ["City", "City_Huge", "City_Capital", "Nation_Vael"], kind: "city", land: { nature: "realm" } }), ["Place_City", "Place_Size_Huge", "Place_Role_Capital", "Group_Nation_Vael"], "scheme: a settlement; an unknown realm keeps the old word as its kind");
-	eq(run({ ...base, type: "event", name: "War", tags: ["Event", "Event_War", "Event_Massive", "Event_Vael"] }), ["Event_War", "Event_Size_Massive", "Place_World_Vael"], "scheme: an event");
+	eq(run({ ...base, type: "place", name: "Port", tags: ["City", "City_Huge", "City_Capital", "Nation_England"], kind: "city", land: { nature: "realm" } }), ["Place_City", "Place_Size_Huge", "Place_Role_Capital", "Group_Nation_England"], "scheme: a settlement; an unknown realm keeps the old word as its kind");
+	eq(run({ ...base, type: "event", name: "War", tags: ["Event", "Event_War", "Event_Massive", "Event_England"] }), ["Event_War", "Event_Size_Massive", "Place_World_England"], "scheme: an event");
 	eq(run({ ...base, type: "culture", name: "House", tags: ["Family", "Family_Noble", "Family_Ruler"], kind: "family" }), ["Group_Family", "Group_Class_Noble", "Group_Role_Ruler"], "scheme: a family");
 	eq(run({ ...base, type: "place", name: "Kent", tags: ["Title", "County", "County"], kind: "county", land: { nature: "realm" } }), ["Place_County"], "scheme: a tag written twice");
-	const m = { rename: [["Character_Dead", "Character_Status_Dead"], ["Nation_Vael", "Group_Nation_Vael"]] as [string, string][], drop: ["Title"] };
-	eq(migrateBodyTags("Mary #Character_Dead of #nation_vael, see [[Vael#Title]].\nNot #Character_Deadly. #Title here\n`#Title` stays\n```\n#Title\n```", m),
-		"Mary #Character_Status_Dead of #Group_Nation_Vael, see [[Vael#Title]].\nNot #Character_Deadly. here\n`#Title` stays\n```\n#Title\n```", "scheme: tags in the text, not in links or code");
+	const m = { rename: [["Character_Dead", "Character_Status_Dead"], ["Nation_England", "Group_Nation_England"]] as [string, string][], drop: ["Title"] };
+	eq(migrateBodyTags("Mary #Character_Dead of #nation_england, see [[England#Title]].\nNot #Character_Deadly. #Title here\n`#Title` stays\n```\n#Title\n```", m),
+		"Mary #Character_Status_Dead of #Group_Nation_England, see [[England#Title]].\nNot #Character_Deadly. here\n`#Title` stays\n```\n#Title\n```", "scheme: tags in the text, not in links or code");
 	eq(splitBody("---\ntags: [a]\n---\nText #a"), ["---\ntags: [a]\n---\n", "Text #a"], "undo: text below the properties");
 	const step: UndoStep = { label: "x", at: 1, notes: [] };
 	addBodyToStep(step, "a.md", "one", "two");
@@ -1692,6 +1757,124 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq(formatDetails({ kind: "ex", span: "1230 – 1255", reason: "divorce", label: "no heirs", words: [] }), ' (ex, 1230 – 1255, ended: divorce, "no heirs")', "ties: details written back in brackets");
 	eq(formatDetails({ words: [] }), "", "ties: nothing to say, no brackets");
 	eq(splitDetails("- [[Carol]]"), { name: "Carol", inside: undefined }, "ties: a link is unwrapped");
+	// Partners and ex-partners: when a partnership is over, and what it is then called.
+	eq(tieEnded({ kind: "lover", span: "7/26/25-11/14/26", reason: "Breakup" }), true, "ties: a reason means it ended");
+	eq(tieEnded({ kind: "lover", span: "7/26/25-11/14/26" }), true, "ties: a date range means it ended");
+	eq(tieEnded({ kind: "spouse", span: "1230" }), false, "ties: a single start date is still together");
+	eq(tieEnded({ kind: "ex" }), true, "ties: an ex is over by its kind");
+	eq(tieEnded({ kind: "widowed" }), true, "ties: widowed is over by its kind");
+	eq(tieEnded({ kind: "spouse" }), false, "ties: a plain marriage is not over");
+	eq(endedTieLabel("lover"), "Ex-lover", "ties: an ended lover is an ex-lover");
+	eq(endedTieLabel("spouse"), "Former spouse", "ties: an ended marriage is a former spouse");
+	eq(endedTieLabel(undefined), "Former spouse", "ties: an ended partnership with no kind reads as a former spouse");
+	eq(endedTieLabel("concubine"), "Former concubine", "ties: other kinds get 'Former'");
+	// The relationship list: every kind has a heading, and the new kinds read both ways.
+	eq(REL_KINDS.filter((k) => k.on.length && relGroup(k.key) === "Other").map((k) => k.key), [], "relationships: every offered kind sits under a heading");
+	eq(REL_GROUP_ORDER.every((g) => REL_KINDS.some((k) => relGroup(k.key) === g)), true, "relationships: every heading holds a kind");
+	eq(relKind("heir")?.inverse, "heir-to", "relationships: heirs and heir-to are each other's inverse");
+eq([normalizeType("artifact"), normalizeType("species"), rowOfKind("language"), rowOfKind("religion"), rowOfProperty("languages")], ["object", "creature", "language", "faith", "language"], "new types: objects, creatures and languages are read");
+eq([societySpec("language").members[1], societySpec("house").branches, societySpec("faith").leader, societySpec("language").leader, societySpec("realm").liege, societySpec("nonsense").label], ["Speakers", "Cadet branches", "Head of the faith", undefined, true, "Society"], "societies: each kind has its own words");
+eq([creatorFieldsFor("culture", "language").some((f) => f.key === "leaders"), creatorFieldsFor("culture", "realm").some((f) => f.key === "liege"), creatorFieldsFor("culture", "house").find((f) => f.key === "end")?.label, creatorFieldsFor("person").length > 0], [false, true, "Died out", true], "societies: the quick creator asks what fits the kind");eq([kindTag("object", "sword"), parseTag("Creature_Beast")?.type, kindTag("creature")], ["Object_Sword", "creature", "Creature_Beast"], "new types: their tags");
+{
+	const d = (n: number) => ({ start: n, end: n }) as unknown as ChronDate;
+	const r = (k: string) => ({ key: k, name: k, resolved: true });
+	const will = { key: "will", type: "person", residences: [{ ref: r("rouen"), to: d(1066) }, { ref: r("london"), from: d(1067) }], places: [], birthPlace: undefined } as unknown as Entity;
+	const crown = { key: "crown", type: "object", cultures: [{ ref: r("will"), from: d(1060), to: d(1087) }], places: [], placeHistory: [{ ref: r("abbey"), from: d(1088) }] } as unknown as Entity;
+	const stops = journeyOf({ get: (k: string) => (k === "will" ? will : undefined) }, crown);
+	eq([stops.map((s) => s.place.key), whereAt(stops, 1070)?.place.key, whereAt(stops, 1100)?.place.key], [["rouen", "london", "abbey"], "london", "abbey"], "objects: a journey follows the holder's homes, then where it was kept");
+}
+	eq(relKind("predecessor")?.key, "predecessors", "relationships: predecessor is its own kind");
+	eq(relKind("successor")?.inverse, "predecessors", "relationships: successors and predecessors are each other's inverse");
+	eq(relKind("nemesis")?.key, "nemeses", "relationships: nemesis is a symmetric rivalry");
+
+	// Relationships worked out from the rest.
+	{
+		const day = (n: number) => ({ start: n, end: n, precision: "day", approx: false, calendar: "g", raw: "" }) as unknown as import("../src/types").ChronDate;
+		const R = (k: string) => ({ key: k, name: k, resolved: true });
+		const E = (key: string, type: "person" | "culture" | "event" | "place", extra: Record<string, unknown> = {}) => ({ key, path: key, name: key, type, calendar: "g", parents: [], partners: [], relations: [], cultures: [], props: {}, ...extra }) as unknown as import("../src/types").Entity;
+		const make = (ents: import("../src/types").Entity[], extra: { partners?: [string, string[]][]; members?: [string, { key: string; link: import("../src/types").TimedRef }[]][]; relations?: [string, import("../src/types").TimedRef[]][] } = {}) => {
+			const byKey = new Map(ents.map((e) => [e.key, e]));
+			return {
+				all: (t?: string) => ents.filter((e) => !t || e.type === t),
+				get: (k?: string) => (k ? byKey.get(k) : undefined),
+				existsAt: (e: import("../src/types").Entity, d: number) => !(e.start && e.start.start > d) && !(e.end && e.end.end < d),
+				relationsOf: new Map(extra.relations ?? []),
+				partnersOf: new Map(extra.partners?.map(([k, os]) => [k, os.map((o) => ({ ref: R(o) }))]) ?? []),
+				membersOf: new Map(extra.members ?? []),
+			};
+		};
+		const noTree = { isHouse: () => false, tree: () => ({ nodes: new Map() }) as unknown as import("../src/index/realms").RealmTree };
+		const kindsOf = (ix: ReturnType<typeof make>, k: string) => (ix.relationsOf.get(k) ?? []).map((r) => `${r.kind}:${r.ref.key}`).sort();
+
+		// Widowed: one partner died, the other has no death date.
+		const w = make([E("a", "person", { start: day(-9000), end: day(5000) }), E("b", "person", { start: day(-8000) })], { partners: [["a", ["b"]], ["b", ["a"]]] });
+		deduceTies(w, noTree);
+		eq(w.partnersOf.get("b")?.[0]?.reason, "death", "deduced: a partner who died ended the partnership");
+		eq(w.partnersOf.get("b")?.[0]?.why, "the death of a", "deduced: a widowed tie says what it was worked out from");
+		const noBirth = make([E("a", "person", { end: day(5000) }), E("b", "person")], { partners: [["a", ["b"]], ["b", ["a"]]] });
+		deduceTies(noBirth, noTree);
+		eq(noBirth.partnersOf.get("b")?.[0]?.reason, undefined, "deduced: no widowing when the other has no birth date to show they were alive");
+		const ancient = make([E("a", "person", { start: day(-60000), end: day(5000) }), E("b", "person", { start: day(-50000) })], { partners: [["a", ["b"]], ["b", ["a"]]] });
+		deduceTies(ancient, noTree);
+		eq(ancient.partnersOf.get("b")?.[0]?.reason, undefined, "deduced: no widowing when the other would be over a hundred and ten");
+		const bothDead = make([E("a", "person", { end: day(5000) }), E("b", "person", { end: day(6000) })], { partners: [["a", ["b"]], ["b", ["a"]]] });
+		deduceTies(bothDead, noTree);
+		eq(bothDead.partnersOf.get("b")?.[0]?.reason, undefined, "deduced: two partners who both died were together to the end");
+
+		// Succession in a title, from holders.
+		const s = make([E("t", "place", { holders: [{ ref: R("x"), from: day(1000) }, { ref: R("y"), from: day(2000) }] }), E("x", "person"), E("y", "person")]);
+		deduceTies(s, noTree);
+		eq([kindsOf(s, "x"), kindsOf(s, "y")], [["successors:y"], ["predecessors:x"]], "deduced: whoever held a title after whoever");
+
+		// Siblings, half-siblings, step-siblings, and what a note already says.
+		const fam = make([E("p1", "person"), E("p2", "person"), E("p3", "person"), E("k1", "person", { parents: [R("p1"), R("p2")] }), E("k2", "person", { parents: [R("p1"), R("p2")] }), E("k3", "person", { parents: [R("p1"), R("p3")] })]);
+		deduceTies(fam, noTree);
+		eq(kindsOf(fam, "k1"), ["half-siblings:k3", "siblings:k2"], "deduced: full and half-siblings from shared parents");
+		const step = make([E("m", "person"), E("n", "person"), E("x", "person", { parents: [R("m")] }), E("y", "person", { parents: [R("n")] })], { partners: [["m", ["n"]], ["n", ["m"]]] });
+		deduceTies(step, noTree);
+		eq(kindsOf(step, "x"), ["step-siblings:y"], "deduced: step-siblings through a parent's partner");
+		const said = make([E("p", "person"), E("k1", "person", { parents: [R("p")] }), E("k2", "person", { parents: [R("p")] })], { relations: [["k1", [{ ref: R("k2"), kind: "rivals" }]]] });
+		deduceTies(said, noTree);
+		eq(kindsOf(said, "k1"), ["rivals:k2"], "deduced: a written relationship wins");
+
+		// Wars: the same side allied, the other side enemies.
+		const war = make([E("w", "event", { start: day(100), end: day(200), sides: [{ party: R("a"), side: "x" }, { party: R("b"), side: "y" }, { party: R("c"), side: "x" }] }), E("a", "culture"), E("b", "culture"), E("c", "culture")]);
+		deduceTies(war, noTree);
+		eq(kindsOf(war, "a"), ["allies:c", "enemies:b"], "deduced: allies and enemies from the sides of a war");
+
+		// Liege from the realm tree.
+		const nodes = new Map([["county", { key: "county", under: "duchy", nature: "realm", holder: R("lo") }], ["duchy", { key: "duchy", nature: "realm", holder: R("hi") }]]);
+		const realms = make([E("lo", "person"), E("hi", "person"), E("county", "place"), E("duchy", "place")]);
+		deduceTies(realms, { isHouse: () => false, tree: () => ({ nodes }) as unknown as import("../src/index/realms").RealmTree });
+		eq([kindsOf(realms, "lo"), kindsOf(realms, "hi")], [["liege:hi"], ["vassals:lo"]], "deduced: the holder of a county answers to the holder of the duchy");
+
+		// Colleagues and employer in an organisation.
+		const guild = make([E("g", "culture"), E("p", "person"), E("q", "person"), E("h", "person")], { members: [["g", [{ key: "p", link: { ref: R("g"), role: "Smith", from: day(1) } }, { key: "q", link: { ref: R("g"), role: "smith", from: day(2) } }, { key: "h", link: { ref: R("g"), role: "Chief", from: day(10) } }]]] });
+		deduceTies(guild, noTree);
+		eq(kindsOf(guild, "p"), ["colleagues:q", "employer:h"], "deduced: colleagues share a role; the head is the employer");
+		eq((guild.relationsOf.get("p") ?? []).every((r) => r.maybe && !!r.why), true, "deduced: guesses are flagged and say what they come from");
+
+		// Guardian: orphaned before sixteen, taken in by the eldest grandparent who was alive and grown.
+		const orphan = make([E("gp", "person", { start: day(-30000) }), E("mum", "person", { parents: [R("gp")], start: day(-10000), end: day(3000) }), E("dad", "person", { start: day(-9000), end: day(3100) }), E("kid", "person", { parents: [R("mum"), R("dad")], start: day(1000) })]);
+		deduceTies(orphan, noTree);
+		eq(kindsOf(orphan, "kid"), ["guardians:gp"], "deduced: an orphaned child's guardian");
+		const oneParent = make([E("gp", "person", { start: day(-30000) }), E("mum", "person", { parents: [R("gp")], start: day(-10000), end: day(3000) }), E("kid", "person", { parents: [R("mum")], start: day(1000) })]);
+		deduceTies(oneParent, noTree);
+		eq(kindsOf(oneParent, "kid"), [], "deduced: no guardian when only one parent is known (the other may be alive)");
+		const crowd = make([E("g", "culture"), ...["a", "b", "c", "d", "e", "f", "g2"].map((k) => E(k, "person"))], { members: [["g", ["a", "b", "c", "d", "e", "f", "g2"].map((k, i) => ({ key: k, link: { ref: R("g"), role: "knight", from: day(i + 1) } }))]] });
+		deduceTies(crowd, noTree);
+		eq(kindsOf(crowd, "a"), [], "deduced: a crowd of seven with one role are not each other's colleagues");
+		const divorced = make([E("m", "person"), E("n", "person"), E("x", "person", { parents: [R("m")] }), E("y", "person", { parents: [R("n")] })], { partners: [["m", ["n"]], ["n", ["m"]]] });
+		for (const l of divorced.partnersOf.values()) l[0].reason = "divorce";
+		deduceTies(divorced, noTree);
+		eq(kindsOf(divorced, "x"), [], "deduced: no step-siblings once the parents divorced");
+		const guess = make([E("p", "person"), E("k1", "person", { parents: [R("p"), R("q")] }), E("k2", "person", { parents: [R("p")] })]);
+		deduceTies(guess, noTree);
+		eq((guess.relationsOf.get("k1") ?? [])[0]?.maybe, true, "deduced: siblings with one parent unknown are a guess");
+		const co = make([E("t", "place", { holders: [{ ref: R("x"), from: day(1000), to: day(3000) }, { ref: R("y"), from: day(2000) }] }), E("x", "person"), E("y", "person")]);
+		deduceTies(co, noTree);
+		eq(kindsOf(co, "x"), [], "deduced: co-holders whose terms overlap do not succeed each other");
+	}
 	const kin = parseKin("Bob + Mary (spouse) > Carol (f, 1230 – 1290), Dan (step)");
 	eq(kin.partners, [["Bob", "Mary", "spouse"]], "kin: a kind word after a partner is the tie");
 	eq(kin.parentOf, [["Bob", "Carol"], ["Bob", "Dan", "step"], ["Mary", "Carol"], ["Mary", "Dan", "step"]], "kin: a kind word on a child is how the parent is one");
@@ -1749,17 +1932,35 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 	eq([rankTitle("Knight", "female"), rankTitle("knight", "male"), rankTitle("peasant")], ["Dame", "Sir", undefined], "titles: an honorific for rank without land");
 	eq(holderTitle("medieval", [{ tier: 3, name: "Kent" }, { tier: 2, name: "England" }], "female"), "Queen of England", "titles: the highest land they hold");
 	eq(holderTitle("medieval", [], "male"), "", "titles: nothing held, no title");
+	// ---- Groups as a hierarchy (index/grouppath.ts) ----
+	{
+		const ref = (key: string) => ({ key, name: key, resolved: true });
+		const group = (key: string, parent?: string) => [key, { key, name: key, type: "culture", parentCultures: parent ? [ref(parent)] : [] }] as const;
+		const all = new Map<string, unknown>([group("Realm"), group("Main", "Realm"), group("Cadet", "Main"), group("Loop1", "Loop2"), group("Loop2", "Loop1")]);
+		const get = (k: string) => all.get(k) as never;
+		eq(groupChain(get, "Cadet").map((g) => g.key), ["Cadet", "Main", "Realm"], "group chain: a branch of a branch of a realm");
+		eq(groupChain(get, "Loop1").length, 2, "group chain: a loop ends");
+		const kids = new Map([["Realm", new Set(["Main"])], ["Main", new Set(["Cadet"])]]);
+		const link = { ref: ref("x") } as never;
+		const members: Record<string, { key: string; link: never }[]> = { Main: [{ key: "ann", link }], Cadet: [{ key: "bob", link }, { key: "ann", link }] };
+		const roll = membersWithin({ members: (k) => members[k] ?? [], childCulturesOf: kids }, get, "Main");
+		eq(roll.map((m) => `${m.key}${m.via ? ":" + m.via.key : ""}`), ["ann", "bob:Cadet"], "group members: its own, then its branches', each once");
+		const ev = (n: string) => ({ key: n }) as never;
+		eq(eventsOfGroup({ events: (k) => (k === "Realm" ? [ev("a")] : k === "Cadet" ? [ev("b")] : []), childCulturesOf: kids }, "Realm").length, 2, "group events: of the group and its branches");
+	}
 	// ---- Other names (index/aliases.ts) and the creator's new fields ----
 	{
 		eq(readAliases(["USA", " America ", "united states", "", "USA", 7], "United States"), ["USA", "America", "7"], "aliases: trimmed, no repeats, not the note's own name");
 		eq([readAliases("USA, America", "x"), readAliases(undefined), readAliases("[[Rome]]")], [["USA", "America"], [], ["Rome"]], "aliases: a comma text, nothing, a link");
-		const notes = [{ name: "United States of America" }, { name: "Oklahoma County" }, { name: "Oklahoma City" }, { name: "Tulsa" }, { name: "Vael Mountains" }];
+		const notes = [{ name: "United States of America" }, { name: "Oklahoma County" }, { name: "Oklahoma City" }, { name: "Tulsa" }, { name: "England Mountains" }];
 		eq([aliasCandidate("USA", notes)?.name, aliasCandidate("Oklahoma", notes)?.name, aliasCandidate("Oklahma County", notes)?.name, aliasCandidate("Tulsa", notes), aliasCandidate("Zzz", notes)], ["United States of America", undefined, "Oklahoma County", undefined, undefined], "alias sweep: initials, near spelling; never a guess between two");
-		eq(aliasCandidate("Vael", notes)?.name, "Vael Mountains", "alias sweep: a whole word of one name");
+		eq(aliasCandidate("England", notes)?.name, "England Mountains", "alias sweep: a whole word of one name");
 		const ctx = { find: () => undefined, isDate: () => false };
 		eq(parseQuickAdd("Rome, aka the Eternal City, also called Roma", ctx).aliases, ["the Eternal City", "Roma"], "quick add: aka and also called");
 		const fm = quickAddFrontmatter({ ...parseQuickAdd("Ava", ctx), type: "person", aliases: ["Av", " "], partners: ["Bo"], children: ["Cy"], deathPlace: "Rome", color: "#112233", image: "ava.png" });
 		eq([fm.aliases, fm.partners, fm.children, fm.deathplace, fm.color, fm.image], [["Av"], ["[[Bo]]"], ["[[Cy]]"], "[[Rome]]", "#112233", "[[ava.png]]"], "quick add: the new fields become properties");
+		const house = quickAddFrontmatter({ ...parseQuickAdd("House Ash", ctx), type: "culture", liege: "Realm Oak", cultures: ["House Elm"] });
+		eq([house.liege, house["parent-cultures"]], ["[[Realm Oak]]", ["[[House Elm]]"]], "quick add: a group's liege and what it descends from are separate");
 		const place = quickAddFrontmatter({ ...parseQuickAdd("Rome", ctx), type: "place", population: "1,200", terrain: "Hills" });
 		eq([place.population, place.terrain], [1200, "hills"], "quick add: population and terrain");
 	}
@@ -1800,6 +2001,14 @@ eq(touchHelp("Measuring: click to add points · double-click to finish"), "Measu
 		eq([locate(anna, [siege], 2100)?.why, locate(anna, [siege], 3000)?.why, locate(anna, [siege], 500)?.why, locate({ ...(anna as object), residences: [], birthPlace: undefined } as never, [], 500)], ["event", "home", "born", undefined], "locate: why a person is where they are");
 		eq([locationAt(anna, [siege], 2100)?.key, locationAt(anna, [siege], 3000)?.key, locationAt(anna, [siege], 5000)?.key, locationAt(anna, [siege], 500)?.key], ["calais", "dover", "bath", "york"], "where: an event sets the place that day, else the home then, else birth");
 	}
+}
+{
+	const note = (type: string, props: Record<string, unknown>, tags: string[] = []) => ({ type, props, tags }) as never;
+	const people = [note("person", { type: "character", born: "1200" }), note("person", { born: "1210", died: "1250" }, ["#Character_Person"]), note("place", { type: "place" })];
+	const tagType = (t: string) => (t.replace(/^#/, "").startsWith("Character") ? "person" : null);
+	const out = baseFor("Characters", "person", people, tagType) ?? "";
+	eq(out.includes('- "type == \\"character\\""') && out.includes('- "file.hasTag(\\"Character_Person\\")"') && out.includes("      - note.born"), true, "bases: filter from the notes' own marks, columns from their properties");
+	eq(baseFor("Maps", "map", people, tagType), null, "bases: no notes of a type, no base");
 }
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

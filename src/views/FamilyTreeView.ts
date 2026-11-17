@@ -134,6 +134,7 @@ export class FamilyTreeView extends UniverseViewBase {
 		this.rebuildToolbar(() => {
 			const o = this.options;
 			const left = this.group();
+			this.modeSwitch(left, VIEW_FAMILY);
 			this.picker = this.entityPicker(left, ["person"], o.root, "Choose a person…", (k) => this.setRoot(k));
 			dropdown(left, [["tree", "Family tree"], ["everyone", "Everyone related"], ["fan", "Fan chart (ancestors)"], ["time", "Over time (descendants)"]], o.layout ?? "tree", (v) => {
 				const before = o.layout ?? "tree";

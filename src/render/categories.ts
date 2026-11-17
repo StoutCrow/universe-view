@@ -1,12 +1,14 @@
 /** The timeline's categories: what each thing is filed under, and a colour for each. Pure, so it's testable. */
 
-export type ItemKind = "event" | "person" | "culture" | "place" | "birth" | "death" | "scene" | "rename" | "reign" | "occupation";
+export type ItemKind = "event" | "person" | "culture" | "place" | "object" | "custody" | "birth" | "death" | "scene" | "rename" | "reign" | "occupation";
 
 export const KIND_LABELS: Record<ItemKind, string> = {
 	event: "Events",
 	person: "Lifespans",
-	culture: "Groups",
+	culture: "Societies",
 	place: "Places",
+	object: "Objects",
+	custody: "Holders of objects",
 	birth: "Births & deaths",
 	death: "Births & deaths",
 	scene: "Story",

@@ -1,3 +1,5 @@
+import { keepWrittenOnce } from "./ui/inkonce";
+import { Sounds } from "./ui/sounds";
 import { metadataEvents, templater } from "./internals";
 import { UndoHistoryModal } from "./ui/undohistory";
 import type { DrawHow } from "./views/MapView";
@@ -13,6 +15,7 @@ import { UniverseViewSettings, DEFAULT_SETTINGS, OLD_DEFAULT_MAP_CATEGORIES, Fie
 import { CalendarRegistry, daysFromCivil } from "./dates/calendars";
 import { formatDate, formatDay, parseDate } from "./dates/parser";
 import { EntityIndex } from "./index/EntityIndex";
+import { deduceTies } from "./index/deduce";
 import { presetKinds, relKind } from "./index/relkinds";
 import { knownTo } from "./index/knowledge";
 import { setPlaceTraits } from "./index/placekinds";
@@ -36,7 +39,7 @@ import { styleTerritories } from "./ui/territorystyle";
 import { statusBar } from "./ui/statusbar";
 import { CauseChainModal } from "./ui/causes";
 import { WorldSettingsModal } from "./ui/WorldSettings";
-import { HOVER_SOURCE, TYPE_ICONS, addShortcutMenus, clickNotice } from "./render/common";
+import { HOVER_SOURCE, TYPE_ICONS, addShortcutMenus, addSubmenu, clickNotice } from "./render/common";
 import { WORLD_MAP } from "./render/map";
 import { TimelineView, VIEW_TIMELINE } from "./views/TimelineView";
 import { FamilyTreeView, VIEW_FAMILY } from "./views/FamilyTreeView";
@@ -72,6 +75,9 @@ import { HoverCards } from "./ui/HoverCard";
 import { THEMES, applyAppearance, clearAppearance } from "./appearance";
 import { suggestWorldSetting } from "./ui/worldsettingui";
 import { kindTag, parseTag, tidyKinds } from "./index/tagscheme";
+import { baseFor } from "./index/bases";
+import { ENTITY_TYPES } from "./types";
+import { TYPE_LABELS } from "./render/common";
 import { CATEGORY_KEYS, markedType, normalizeType, readPoints, typeFromTag, writePoints, type TypeMarks } from "./index/reader";
 import type { ModuleKind } from "./settings";
 import { CreateEntityModal, CreatePrefill } from "./ui/CreateEntityModal";
@@ -102,7 +108,7 @@ const VIEWS: { type: string; name: string; icon: string; key: string }[] = [
 	{ type: VIEW_FAMILY, name: "Family tree", icon: "git-fork", key: "F" },
 	{ type: VIEW_NETWORK, name: "Connections graph", icon: "waypoints", key: "G" },
 	{ type: VIEW_LINEAGE, name: "Lineage of groups", icon: "git-branch", key: "L" },
-	{ type: VIEW_REALMS, name: "Realms and cultures", icon: "crown", key: "K" },
+	{ type: VIEW_REALMS, name: "Realms and groups", icon: "crown", key: "K" },
 	{ type: VIEW_ORG, name: "Realm and dynasty chart", icon: "network", key: "R" },
 	{ type: VIEW_MAP, name: "Map", icon: "map", key: "M" },
 	{ type: VIEW_CALENDAR, name: "Calendar", icon: "calendar-days", key: "C" },
@@ -124,6 +130,7 @@ export default class UniverseViewPlugin extends Plugin {
 	settings!: UniverseViewSettings;
 	calendars!: CalendarRegistry;
 	index!: EntityIndex;
+	sounds!: Sounds;
 	hoverCards?: HoverCards;
 
 	async onload() {
@@ -135,6 +142,9 @@ export default class UniverseViewPlugin extends Plugin {
 		this.hoverCards = new HoverCards(this);
 		this.calendars = new CalendarRegistry(this.settings.calendars, this.settings.defaultCalendar);
 		this.index = new EntityIndex(this.app, () => this.settings, this.calendars);
+		this.sounds = new Sounds(this);
+		keepWrittenOnce(this);
+		this.index.deducer = (idx) => deduceTies(idx, { isHouse: (c) => isHouse(this, c), tree: () => realmTree(idx, (c) => isHouse(this, c), undefined, tierWordsWith(this.settings.tierWords), { ...DEFAULT_REGION_WORDS, ...tierWords(this.settings.regionWords ?? "") }) });
 
 		addIcon(LOGO_ICON, LOGO_SVG);
 		this.registerView(VIEW_HUB, (leaf) => new HubView(leaf, this));
@@ -1094,7 +1104,7 @@ export default class UniverseViewPlugin extends Plugin {
 	}
 
 	/**
-	 * Vaults with one folder per world ("Vael/People", "Vael/Places"…) should get new notes in the
+	 * Vaults with one folder per world ("England/People", "England/Places"…) should get new notes in the
 	 * same world as the notes they link to. Type folders at the top level ("People/") are not worlds.
 	 */
 	private inferScope(p: CreatePrefill): string | undefined {
@@ -1541,8 +1551,9 @@ export default class UniverseViewPlugin extends Plugin {
 	 * Adds, replaces (index) or removes (points null) one painted area in a note's `territory` list.
 	 * Areas are stored as `{ map, points: "x,y x,y …" }` so several maps and islands fit in one note.
 	 */
-	async saveTerritory(key: string, mapKey: string, index: number | null, points: [number, number][] | null, more: [number, number][][] = []) {
-		await this.saveShapes("territory", key, mapKey, index, points, more);
+	/** `exact` writes the points as given, without the clean-up a drawn border gets (the weld has already done its own). */
+	async saveTerritory(key: string, mapKey: string, index: number | null, points: [number, number][] | null, more: [number, number][][] = [], exact = false) {
+		await this.saveShapes("territory", key, mapKey, index, points, more, undefined, exact);
 	}
 
 	/**
@@ -1654,7 +1665,7 @@ export default class UniverseViewPlugin extends Plugin {
 	 * `territory` / `routes` list. Shapes are stored as `{ map, points: "x,y x,y …", kind? }` so several
 	 * maps and islands fit in one note.
 	 */
-	async saveShapes(what: "territory" | "route", key: string, mapKey: string, index: number | number[] | null, points: [number, number][] | null, more: [number, number][][] = [], kind?: string) {
+	async saveShapes(what: "territory" | "route", key: string, mapKey: string, index: number | number[] | null, points: [number, number][] | null, more: [number, number][][] = [], kind?: string, exact = false) {
 		const file = this.app.vault.getAbstractFileByPath(key);
 		if (!(file instanceof TFile)) return;
 		const mapRef = mapKey === WORLD_MAP ? "world" : `[[${this.index.get(mapKey)?.name ?? mapKey}]]`;
@@ -1690,7 +1701,7 @@ export default class UniverseViewPlugin extends Plugin {
 			const entry = (pts: [number, number][], keepFrom?: Record<string, unknown>) => {
 				// A territory is always saved sound: whatever drew it, no spikes or loops get written, and no
 				// small gaps left enclosed between it and its neighbours (they join it).
-				const sound = what === "territory" ? absorbGaps(untangle(pts), neighbours, (span * 0.015) ** 2) : pts;
+				const sound = what === "territory" && !exact ? absorbGaps(untangle(pts), neighbours, (span * 0.015) ** 2) : pts;
 				const e: Record<string, unknown> = { map: mapRef, points: writePoints(sound.map(([a, b]) => [round2(a), round2(b)] as [number, number])) };
 				const k = kind ?? keepFrom?.kind;
 				if (k) e.kind = k;
@@ -1794,6 +1805,26 @@ export default class UniverseViewPlugin extends Plugin {
 	private activeEntity() {
 		const f = this.app.workspace.getActiveFile();
 		return f ? this.index.get(f.path) : undefined;
+	}
+
+	/**
+	 * Writes one .base per type (Characters.base, Places.base…) into a "Bases" folder; ones already there are left alone.
+	 */
+	private async makeBases() {
+		const { vault } = this.app;
+		const s = this.settings;
+		const dir = "Bases";
+		if (!vault.getAbstractFileByPath(dir)) await vault.createFolder(dir);
+		const made: string[] = [];
+		for (const type of ENTITY_TYPES) {
+			const name = `${TYPE_LABELS[type]}s`;
+			const text = baseFor(name, type, this.index.entities.values(), (t) => typeFromTag(t, s.tagPrefix, s.typeTags));
+			const path = `${dir}/${name}.base`;
+			if (!text || vault.getAbstractFileByPath(path)) continue;
+			await vault.create(path, text);
+			made.push(name);
+		}
+		new Notice(made.length ? `Made ${made.join(", ")} in ${dir}/` : "No new bases to make.");
 	}
 
 	/**
@@ -1970,7 +2001,7 @@ export default class UniverseViewPlugin extends Plugin {
 		});
 		this.addCommand({
 			id: "new-note",
-			name: "New note (event, person, culture, place or map)",
+			name: "New note (event, person, group, place or map)",
 			icon: "plus",
 			...this.keys(["Mod", "Alt"], "N"),
 			callback: () => this.createEntityPrompt(),
@@ -2140,6 +2171,7 @@ export default class UniverseViewPlugin extends Plugin {
 		// ---- Tidying ----
 		this.addCommand({ id: "find-duplicates", name: "Find duplicate notes", icon: "copy", callback: () => new DuplicatesModal(this).open() });
 		this.addCommand({ id: "loose-ends", name: "Loose ends (unlinked notes, places off the map…)", icon: "unlink", callback: () => this.pickWorld("Loose ends in which world?", (w) => new OrphansModal(this, w).open()) });
+		this.addCommand({ id: "make-bases", name: "Make Obsidian Bases (.base) for each type", icon: "database", callback: () => void this.makeBases() });
 		this.addCommand({ id: "tidy-kinds-tags", name: "Tidy kinds and tags", icon: "tags", callback: () => new CleanupModal(this).open() });
 		this.addCommand({ id: "completeness", name: "How complete is the world?", icon: "gauge", callback: () => this.pickWorld("Which world?", (w) => new CompletenessModal(this, w).open()) });
 		this.addCommand({ id: "contradictions", name: "Find text that disagrees with properties", icon: "scale", callback: () => new ContradictionsModal(this).open() });
@@ -2184,16 +2216,22 @@ export default class UniverseViewPlugin extends Plugin {
 		const e = this.index.get(file.path);
 		const item = (title: string, icon: string, run: () => void) =>
 			menu.addItem((i) => i.setTitle(title).setIcon(icon).setSection(section).onClick(run));
+		// Obsidian's own menu is long already: UniverseView adds Inspect, its two submenus, and one "More" for the rest.
 		if (!e) {
 			item("Inspect", "panel-right", () => void this.inspect(file.path, "about"));
-			item("UniverseView: detect type of this note…", "wand-2", () => new DetectModal(this).open());
-			item("Change icon…", "smile-plus", () => changeNoteIcon(this, file));
+			addSubmenu(menu, "More", "ellipsis", (m) => {
+				m.addItem((i) => i.setTitle("Detect what this note is…").setIcon("wand-2").onClick(() => new DetectModal(this).open()));
+				m.addItem((i) => i.setTitle("Change icon…").setIcon("smile-plus").onClick(() => changeNoteIcon(this, file)));
+			}, "UniverseView", section);
 			return;
 		}
 		item(label ? `Inspect ${label}` : "Inspect", "panel-right", () => void this.inspect(e.key));
 		addShortcutMenus(menu, this, e, section);
-		if (e.type === "person") relativeMenu(menu, this, e, section);
-		if (e.type === "place") item("Add event here…", "calendar-plus", () => this.createEntityPrompt({ type: "event", places: [e.name] }));		item("Change icon…", "smile-plus", () => changeNoteIcon(this, file));
+		addSubmenu(menu, "More", "ellipsis", (m) => {
+			if (e.type === "person") relativeMenu(m, this, e);
+			if (e.type === "place") m.addItem((i) => i.setTitle("Add event here…").setIcon("calendar-plus").onClick(() => this.createEntityPrompt({ type: "event", places: [e.name] })));
+			m.addItem((i) => i.setTitle("Change icon…").setIcon("smile-plus").onClick(() => changeNoteIcon(this, file)));
+		}, "UniverseView", section);
 	}
 
 	/** Right-click items for a folder: open each view limited to it (one folder per world). */
@@ -2201,13 +2239,15 @@ export default class UniverseViewPlugin extends Plugin {
 		const top = folder.path.split("/")[0];
 		const scope = folder.isRoot() ? "" : top;
 		const name = folder.isRoot() ? "the whole vault" : `“${top}”`;
-		const item = (title: string, icon: string, run: () => void) =>
-			menu.addItem((i) => i.setTitle(title).setIcon(icon).setSection(section).onClick(run));
-		item(`UniverseView overview of ${name}`, "library", () => void this.activateView(VIEW_OVERVIEW, { scope }));
-		if (!folder.isRoot()) item("Folder in UniverseView dashboard", "panels-top-left", () => void this.activateView(VIEW_EXPLORER, { explorer: { selected: folder.path, isFolder: true } }));
-		item(`Timeline of ${name}`, "calendar-range", () => void this.activateView(VIEW_TIMELINE, { options: { filter: { folder: scope } } }));
-		item(`Map of ${name}`, "map", () => void this.activateView(VIEW_MAP, { options: { folder: scope } }));
-		item(`Connections in ${name}`, "waypoints", () => void this.activateView(VIEW_NETWORK, { options: { filter: { folder: scope } } }));
+		// One entry for the five views of this folder, so the file explorer's menu stays short.
+		addSubmenu(menu, `${folder.isRoot() ? "Vault" : "Folder"} in UniverseView`, "panels-top-left", (m) => {
+			const item = (title: string, icon: string, run: () => void) => m.addItem((i) => i.setTitle(title).setIcon(icon).onClick(run));
+			item(`Overview of ${name}`, "library", () => void this.activateView(VIEW_OVERVIEW, { scope }));
+			if (!folder.isRoot()) item("Folder in the dashboard", "panels-top-left", () => void this.activateView(VIEW_EXPLORER, { explorer: { selected: folder.path, isFolder: true } }));
+			item("Timeline", "calendar-range", () => void this.activateView(VIEW_TIMELINE, { options: { filter: { folder: scope } } }));
+			item("Map", "map", () => void this.activateView(VIEW_MAP, { options: { folder: scope } }));
+			item("Connections", "waypoints", () => void this.activateView(VIEW_NETWORK, { options: { filter: { folder: scope } } }));
+		}, "UniverseView", section);
 	}
 
 	private registerFileMenu() {

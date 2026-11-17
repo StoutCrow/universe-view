@@ -25,8 +25,8 @@ export const DEFAULT_FIELD_ALIASES: Record<FieldName, string[]> = {
 	end: ["end", "ended", "until", "date-end", "end-date", "date_end", "end_date"],
 	born: ["born", "birth", "birthdate", "birth-date", "date-of-birth", "birth_date"],
 	died: ["died", "death", "deathdate", "death-date", "date-of-death", "death_date"],
-	founded: ["founded", "formed", "established", "start", "from"],
-	dissolved: ["dissolved", "ended", "fell", "end", "until"],
+	founded: ["founded", "formed", "established", "start", "from", "made", "created", "forged", "built", "crafted"],
+	dissolved: ["dissolved", "ended", "fell", "end", "until", "destroyed", "lost"],
 	lifespan: ["lifespan", "life", "years", "span", "active", "dates"],
 	participants: ["participants", "people", "characters", "involved", "who"],
 	places: ["places", "place", "location-name", "where", "locations", "location", "seat"],
@@ -72,6 +72,8 @@ export const DEFAULT_FIELD_ALIASES: Record<FieldName, string[]> = {
 	endPlace: ["end-place", "end_place", "to-place", "arrives-at", "arrival", "destination", "ends-at"],
 };
 
+export type TreeClick = "dashboard" | "note" | "inspector" | "dashboard+inspector" | "note+inspector";
+
 export interface UniverseViewSettings {
 	/** Lines of "Folder/ = type", used when a note has no type property. */
 	folderTypes: string;
@@ -95,6 +97,9 @@ export interface UniverseViewSettings {
 	folderCalendars: string;
 	showLifeEvents: boolean;
 	openInNewTab: boolean;
+	/** What clicking a note in the Library or the Files panel opens: dashboard note, markdown note, inspector, or note/dashboard plus inspector. */
+	libraryClick?: TreeClick;
+	panelClick?: TreeClick;
 	/** A left-sidebar button for every view, not just the overview. */
 	ribbonViews: boolean;
 	/** 1.3.1: the sidebar was cut down to the dashboard's star, once, for everyone. */
@@ -109,6 +114,8 @@ export interface UniverseViewSettings {
 		kinds?: boolean;
 		counts?: boolean;
 		compact?: boolean;
+		/** List files that are not notes (.base, .canvas, images, PDFs…). */
+		others?: boolean;
 	};
 	/** Brushing: take land from neighbours, and keep paint off the sea. */
 	pushBorders?: boolean;
@@ -331,7 +338,6 @@ export interface UniverseViewSettings {
 	tintMale?: string;
 	tintFemale?: string;
 	genderTint?: boolean;
-	flatStyle?: boolean;
 	/** How UniverseView's own tabs, buttons and panels are drawn: flat (the default), or tactile (raised keys, folder tabs, inset fields) so they're easy to tell from Obsidian's. */
 	surfaceStyle?: SurfaceStyle;
 	/** The theme brings its own buttons, tabs, edges, icons and headings (default); off gives the plain ones. */
@@ -354,9 +360,30 @@ export interface UniverseViewSettings {
 	headingStyle?: HeadingStyle;
 	/** Parts of the tactile style switched off (the rest stay on). */
 	tactileOff?: TactilePart[];
+	/** True: your own surface choices apply. False: the theme's. Unset: yours if you ever made any, else the theme's. */
+	tactileOwn?: boolean;
+	/** False: the map keeps its own colours instead of being recoloured to match the theme. */
+	themeMap?: boolean;
+	/** False: none of UniverseView's own animations (writing, tabs, cards dealt, lines and maps drawn, dialogs, buttons outlined). */
+	inkAnimation?: boolean;
+	/** The sound of writing: "theme" (each theme's own), a named set, or unset for silence. */
+	soundSet?: string;
+	/** 0 to 100 (default 40). */
+	soundVolume?: number;
+	/** A sound for every key while you type in a note or a text box. */
+	soundTyping?: boolean;
+	/** A sound as titles are written or typed out. */
+	soundWriting?: boolean;
+	/** A sound when you press a button. */
+	soundClicks?: boolean;
+	/** "app": the theme also colours Obsidian itself (sidebars, tabs, notes). Unset: only UniverseView's own views. */
+	themeScope?: "app";
+	/** Looks you saved from the theme settings: a name and the picks that make the look. */
+	savedThemes?: SavedTheme[];
+	/** The saved theme currently applied, if any. */
+	activeSaved?: string;
 	/** How deep the bevels and shadows are. */
-	tactileDepth?: "subtle" | "normal" | "deep";
-	/** How strong the tactile bevels and shadows are, in percent (replaces tactileDepth when set). */
+	/** How strong the tactile bevels and shadows are, in percent. */
 	tactileStrength?: number;
 	/** The colour of folders in the Library and the Files panel; empty is manila. */
 	tactileFolderColor?: string;
@@ -381,14 +408,14 @@ export interface UniverseViewSettings {
 }
 
 export type SurfaceStyle = "flat" | "tactile";
-export type ButtonStyle = "quiet" | "outlined" | "filled" | "pill" | "stamp" | "glow" | "ruled";
-export type TabStyle = "underline" | "folder" | "segmented" | "plain" | "block" | "glow" | "rule";
-export type EdgeStyle = "clean" | "double" | "ornate" | "stitched" | "sketch" | "chamfer" | "ledger";
+export type ButtonStyle = "quiet" | "outlined" | "filled" | "pill" | "stamp" | "glow" | "ruled" | "dashed" | "solid" | "bracket" | "soft" | "glass" | "neu" | "pixel";
+export type TabStyle = "underline" | "folder" | "segmented" | "plain" | "block" | "glow" | "rule" | "pill" | "tag" | "dashed";
+export type EdgeStyle = "clean" | "double" | "ornate" | "stitched" | "sketch" | "chamfer" | "ledger" | "shadow" | "round" | "dotted" | "bracket" | "glass" | "neu" | "pixel";
 export type FontStyle = "book" | "chancery" | "blackletter" | "humanist" | "modern" | "technical" | "typewriter";
-export type IconStyle = "light" | "regular" | "bold";
-export type HeadingStyle = "plain" | "ruled" | "flourish" | "smallcaps" | "capitals";
+export type IconStyle = "hairline" | "light" | "regular" | "bold" | "heavy";
+export type HeadingStyle = "plain" | "ruled" | "flourish" | "smallcaps" | "capitals" | "boxed" | "brackets" | "wavy";
 export type TactilePart = "keys" | "toolbar" | "fields" | "tabs" | "panels" | "headings" | "icons" | "folders";
-export type ThemeId ="obsidian" | "parchment" | "archive" | "starfield" | "scholar" | "atelier";
+export type ThemeId ="obsidian" | "archive" | "starfield" | "scholar" | "atelier" | "manuscript" | "notebook" | "journal" | "neon" | "typewriter" | "woodcut" | "watercolor" | "glass" | "neumorph" | "brutalist" | "desktop" | "synth";
 export type MotionId = "off" | "snappy" | "smooth" | "relaxed" | "bouncy";
 /** What pin and legend colours mean: the realm on top, the direct liege, the holder's house, a group, the kind of place, or one colour ("region" is the old name for "realm"). */
 export type PinColorBy = "realm" | "liege" | "house" | "culture" | "category" | "region" | "type";
@@ -402,7 +429,7 @@ export interface BoardModule {
 	id: string;
 	kind: ModuleKind;
 	title?: string;
-	/** Options, written like an embedded code block ("folder: Vael\nlifespans: true"). */
+	/** Options, written like an embedded code block ("folder: England\nlifespans: true"). */
 	source: string;
 	x: number;
 	y: number;
@@ -464,9 +491,9 @@ export const DEFAULT_SETTINGS: UniverseViewSettings = {
 	fieldAliases: "",
 	ignoreFolders: "",
 	typeStyle: "property",
-	typeTags: { event: "Event", person: "Character", culture: "Group", place: "Place", map: "Map" },
-	newNoteFolders: { event: "Events", person: "People", culture: "Cultures", place: "Places", map: "Maps" },
-	templates: { event: "", person: "", culture: "", place: "", map: "" },
+	typeTags: { event: "Event", person: "Character", culture: "Group", place: "Place", map: "Map", object: "Object", creature: "Creature" },
+	newNoteFolders: { event: "Events", person: "People", culture: "Societies", place: "Places", map: "Maps", object: "Objects", creature: "Creatures" },
+	templates: { event: "", person: "", culture: "", place: "", map: "", object: "", creature: "" },
 	useDataview: true,
 	defaultCalendar: "gregorian",
 	calendars: [],
@@ -633,4 +660,10 @@ export function buildFieldAliases(extra: string): Record<FieldName, string[]> {
 		out[key] = [...list, ...out[key].filter((a) => !list.includes(a))];
 	}
 	return out;
+}
+/** A look you made and named: the theme it starts from, and every pick that was in force. */
+export interface SavedTheme {
+	id: string;
+	name: string;
+	look: Record<string, unknown>;
 }

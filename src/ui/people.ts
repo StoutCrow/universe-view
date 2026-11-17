@@ -288,7 +288,7 @@ export class NamesModal extends Modal {
 		this.modalEl.addClass("universeview-scope", "universeview-tool-modal");
 		this.titleEl.setText("Name ideas");
 		new Setting(this.contentEl).setName("Names for").addDropdown((d) =>
-			d.addOptions({ person: "People", place: "Places", culture: "Groups" }).setValue(this.type).onChange((v) => {
+			d.addOptions({ person: "People", place: "Places", culture: "Societies" }).setValue(this.type).onChange((v) => {
 				this.type = v as typeof this.type;
 				this.show();
 			}),

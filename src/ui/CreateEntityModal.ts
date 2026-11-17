@@ -1,6 +1,6 @@
 import { Modal, Notice, Setting, TFolder } from "obsidian";
 import { TieModal, type TieEdit } from "./TieModal";
-import type { TieRole } from "../index/ties";
+import { endedTieLabel, tieEnded, type TieRole } from "../index/ties";
 import { makeFolderNote, placementFor, type Placement } from "./foldernotes";
 import { choiceTags, standardFields, type TagChoice } from "./tagstandard";
 import type UniverseViewPlugin from "../main";
@@ -146,7 +146,10 @@ export class LinkList {
 			el("span", { text: v }, chip);
 			const tie = this.ties?.get(v);
 			// What the tie says, short: its kind, dates and custom text.
-			const said = tie ? [tie.kind ? tie.kind.replace(/-/g, " ") : "", tie.span, tie.reason ? `ended: ${tie.reason}` : "", tie.label].filter(Boolean).join(" · ") : "";
+			// An ended partnership reads as one: "Ex-lover · 7/26/25–11/14/26 · Breakup · Ex", not a string of labels.
+			const over = !!tie && this.tieRole === "partner" && tieEnded(tie);
+			if (over) chip.addClass("is-ended");
+			const said = tie ? [over ? endedTieLabel(tie.kind, tie.reason) : tie.kind ? tie.kind.replace(/-/g, " ") : "", tie.span, tie.reason ? (over ? tie.reason : `ended: ${tie.reason}`) : "", tie.label].filter(Boolean).join(" · ") : "";
 			if (said) el("span", { cls: "universeview-linkchip-note", text: ` · ${said}` }, chip);
 			if (this.ties) {
 				// A pencil to edit the tie: its kind, when, how it ended, and text of your own.
@@ -224,7 +227,7 @@ export class CreateEntityModal extends Modal {
 			["region", "place", "region", "mountain", "Region"],
 			["realm", "culture", "realm", GROUP_KINDS.realm.icon, "Realm"],
 			["house", "culture", "house", GROUP_KINDS.house.icon, "House"],
-			["group", "culture", undefined, GROUP_KINDS.group.icon, "Group"],
+			["group", "culture", undefined, GROUP_KINDS.group.icon, "Society"],
 			["map", "map", undefined, TYPE_ICONS.map, TYPE_LABELS.map],
 		];
 		for (const [id, t, kind, ic, label] of choices) {
@@ -450,7 +453,7 @@ export class CreateEntityModal extends Modal {
 				this.listField("leads", "Led by", ["person"], keep("leads"));
 				this.listField("participants", "People", ["person"], keep("participants", p.participants));
 				this.listField("places", "Places", ["place"], keep("places", p.places));
-				this.listField("cultures", "Cultures", ["culture"], keep("cultures", p.cultures));
+				this.listField("cultures", "Societies", ["culture"], keep("cultures", p.cultures));
 				new Setting(this.fieldsEl)
 					.setName("Importance")
 					.setDesc("Higher importance stays visible when you filter the timeline.")
@@ -465,14 +468,14 @@ export class CreateEntityModal extends Modal {
 				this.listField("parents", "Parents", ["person"], keep("parents", p.parents));
 				this.listField("partners", "Partners", ["person"], keep("partners"));
 				this.listField("residences", "Lives at", ["place"], keep("residences"));
-				this.listField("cultures", "Cultures", ["culture"], keep("cultures", p.cultures));
+				this.listField("cultures", "Societies", ["culture"], keep("cultures", p.cultures));
 				this.relationFields("person", keep);
 				break;
 			case "culture":
 				if (this.groupKind === "realm") this.landFields(true);
 				this.dateField("founded", "Founded", "When it began.");
 				this.dateField("dissolved", "Dissolved", "Leave empty if it still exists.");
-				this.listField("parentCultures", "Part of / descends from", ["culture"], keep("parentCultures", p.parentCultures));
+				this.listField("parentCultures", "Descends from", ["culture"], keep("parentCultures", p.parentCultures));
 				new Setting(this.fieldsEl).setName("Color").setDesc("Used on timelines, cards and maps.").addColorPicker((c) =>
 					c.setValue(this.extra.color ?? "#7c5cff").onChange((v) => (this.extra.color = v)),
 				);
@@ -508,7 +511,7 @@ export class CreateEntityModal extends Modal {
 					.setName(imageMap ? "Position (x, y)" : "Coordinates (lat, lng)")
 					.setDesc(imageMap ? "Pixels from the image's top-left. Or leave empty and place it from the map view." : "e.g. 51.507, -0.128. Or leave empty and place it from the map view.")
 					.addText((t) => t.setPlaceholder(imageMap ? "512, 300" : "51.507, -0.128").setValue(this.extra.position ?? "").onChange((v) => (this.extra.position = v)));
-				this.listField("cultures", "Cultures", ["culture"], keep("cultures", p.cultures));
+				this.listField("cultures", "Societies", ["culture"], keep("cultures", p.cultures));
 				break;
 			}
 			case "map":

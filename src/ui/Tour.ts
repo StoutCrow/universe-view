@@ -1,6 +1,6 @@
 import { Modal } from "obsidian";
 import type UniverseViewPlugin from "../main";
-import { applyAppearance } from "../appearance";
+import { applyAppearance, surfaceOf } from "../appearance";
 import type { SurfaceStyle, ThemeId } from "../settings";
 import { el } from "../render/common";
 import { renderThemeCards } from "./themecards";
@@ -27,11 +27,11 @@ const STEPS = ["Welcome", "What you get", "Filling it in", "Pick a look", "Begin
 export class TourModal extends Modal {
 	private step = 0;
 	private kept = false;
-	private readonly original: { theme: ThemeId; surface: SurfaceStyle };
+	private readonly original: { theme: ThemeId; surface: SurfaceStyle | undefined };
 
 	constructor(private plugin: UniverseViewPlugin) {
 		super(plugin.app);
-		this.original = { theme: plugin.settings.theme, surface: plugin.settings.surfaceStyle ?? "flat" };
+		this.original = { theme: plugin.settings.theme, surface: plugin.settings.surfaceStyle };
 	}
 
 	onOpen() {
@@ -125,7 +125,7 @@ export class TourModal extends Modal {
 			["tactile", "Tactile", "Raised keys, folder tabs and inset fields, so UniverseView's own tabs stand out from Obsidian's."],
 		];
 		for (const [id, name, desc] of options) {
-			const card = el("button", { cls: "uv-tour-style" + ((s.surfaceStyle ?? "flat") === id ? " is-active" : "") }, row);
+			const card = el("button", { cls: "uv-tour-style" + ((surfaceOf(s).tactile ? "tactile" : "flat") === id ? " is-active" : "") }, row);
 			const sample = el("div", { cls: `uv-style-sample is-${id}` }, card);
 			el("span", { cls: "uv-style-tab", text: "Tab" }, sample);
 			el("span", { cls: "uv-style-key", text: "Button" }, sample);

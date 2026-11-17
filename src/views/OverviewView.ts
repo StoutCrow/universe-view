@@ -19,7 +19,7 @@ import { VIEW_MAP } from "./MapView";
 
 export const VIEW_OVERVIEW = "chronicle-overview";
 
-const PLURAL: Record<EntityType, string> = { person: "People", event: "Events", culture: "Groups", place: "Places", map: "Maps" };
+const PLURAL: Record<EntityType, string> = { person: "People", event: "Events", culture: "Societies", place: "Places", map: "Maps", object: "Objects", creature: "Creatures" };
 
 /** The UniverseView "main menu": a summary of one world with ways into every view. */
 export class OverviewView extends UniverseViewBase {

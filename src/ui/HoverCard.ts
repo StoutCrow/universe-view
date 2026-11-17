@@ -1,3 +1,5 @@
+import { journeyOf } from "../index/journey";
+import { partnersInOrder } from "../index/ties";
 import { Keymap, TFile } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, Ref } from "../types";
@@ -552,7 +554,7 @@ export class HoverCards {
 				if (e.birthPlace) add("Born in", [e.birthPlace]);
 				if (e.deathPlace) add("Died in", [e.deathPlace]);
 				add("Parents", e.parents);
-				add("Partners", idx.partners(e.key).map((x) => x.ref));
+				add("Partners", partnersInOrder(idx.partners(e.key)).map((x) => x.ref));
 				add("Children", idx.children(e.key).map(ref));
 				add("Siblings", idx.siblings(e.key).map(ref));
 				// What they belong to, by question: realm, house, culture, faith, organisation.
@@ -561,6 +563,15 @@ export class HoverCards {
 				for (const r of rel.slice(0, 2)) add(cap(r.kind!), [r.ref]);
 				break;
 			}
+			case "object":
+				add("Held by", e.cultures.map((c) => c.ref));
+				add("Kept at", e.places);
+				add("Journey", journeyOf(idx, e).map((s) => s.place));
+				break;
+			case "creature":
+				add("Found in", e.places);
+				add("Belongs to", e.cultures.map((c) => c.ref));
+				break;
 			case "event": {
 				if (e.startPlace) add("From", [e.startPlace]);
 				if (e.endPlace) add("To", [e.endPlace]);
@@ -578,10 +589,12 @@ export class HoverCards {
 				const leaders = (idx.relationsOf.get(e.key) ?? []).filter((r) => /ruler|leader|head|monarch|founder|king|queen|lord/i.test(r.kind ?? ""));
 				add("Led by", leaders.map((r) => r.ref));
 				add("Members", members.length ? members.map((m) => ref(m.key)) : undefined);
+				// Who it answers to is its liege; what it descends from is its line. (A group's older `cultures:` list reads as a liege too.)
+				const lieges = (idx.relationsOf.get(e.key) ?? []).filter((r) => r.kind === "liege").map((r) => r.ref);
+				add("Liege", [...lieges, ...cultures.filter((c) => !lieges.some((l) => l.key === c.key))]);
 				add("Descends from", e.parentCultures);
 				add("Branches", [...(idx.childCulturesOf.get(e.key) ?? [])].map(ref));
 				add("Seat", e.places);
-				add("Part of", cultures);
 				add("Occupied by", occupationsByLand(idx).get(e.key)?.map((o) => o.by));
 				break;
 			}

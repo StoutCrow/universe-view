@@ -1,8 +1,11 @@
+import { societySpec } from "../index/societies";
+import { partnersInOrder, partnerWord } from "../index/ties";
 import { TFile } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { Entity, Side, TimedRef } from "../types";
 import { formatDate, formatSpan } from "../dates/parser";
 import { locate, peopleAmong, placesBeen } from "../index/whereabouts";
+import { branchesOf, eventsOfGroup, groupChain, membersWithin } from "../index/grouppath";
 import { ancestorOfKind, eventsWithin, kindsAlong, placeChain, placeLine, placesInside } from "../index/placepath";
 import { isMovement } from "../index/eventkinds";
 import { chainOf, holdingsOf , tierLabel } from "../index/realms";
@@ -48,7 +51,7 @@ const HELP: Record<string, string> = {
 	"Places been":"Where they were born, lived, took part in an event, and died, oldest first.",
 	Inside: "Places directly inside this one (`located-in:` on them), with how many more are inside those.",
 	People: "Everyone born, living, dead or in an event here or in any place inside it.",
-	"Groups here": "Groups that hold or live in this place, from its `cultures:` or `nation:`.",
+	"Societies here": "Groups that hold or live in this place, from its `cultures:` or `nation:`.",
 };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -143,13 +146,29 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		}
 	}
 
+	// ---- Where a group sits: itself, then what it is a branch of ----
+	if (e.type === "culture") {
+		const chain = groupChain((k) => idx.get(k), e.key);
+		if (chain.length > 1) {
+			const line = el("div", { cls: "universeview-ep-crumbs uv-where", attr: { "aria-label": "Descends from: each group descends from the next" } }, root);
+			chain.forEach((group, i) => {
+				if (i) el("span", { cls: "universeview-ep-crumb-sep", text: "," }, line);
+				const b = el("span", { cls: "universeview-ep-crumb" + (i ? "" : " is-here"), text: group.name, attr: i ? { role: "button", tabindex: "0" } : {} }, line);
+				if (!i) return;
+				b.addEventListener("click", (evt) => (evt.ctrlKey || evt.metaKey ? openEntity(p, group.key, evt) : opts.pick(group.key)));
+				bindHover(p, b, group.key, opts.host);
+			});
+		}
+	}
+
 	// ---- Its span, against today ----
 	spanBar(p, root, e);
 
 	// ---- Numbers at a glance ----
 	const tiles: [string, string, string][] = [];
 	// A place's events are those at it and at every place inside it.
-	const events = e.type === "place" ? eventsWithin(idx, e.key) : idx.events(e.key);
+	// A group's are those of the group and of its branches.
+	const events = e.type === "place" ? eventsWithin(idx, e.key) : e.type === "culture" ? eventsOfGroup(idx, e.key) : idx.events(e.key);
 	const people = (keys: string[]) => keys.filter((k) => idx.get(k)?.type === "person").length;
 	if (e.type === "person") {
 		const kids = idx.children(e.key).length;
@@ -221,7 +240,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	}
 	if (e.type === "person") {
 		list("Parents", "users", idx.parentsOf(e.key).map((r) => ({ ...r, sub: span(idx.get(r.key)) })));
-		list("Partners", "heart", idx.partners(e.key).map((t) => ({ ...t.ref, sub: formatSpan(t.from, t.to, cal) || span(idx.get(t.ref.key)) })));
+		list("Partners", "heart", partnersInOrder(idx.partners(e.key)).map((t) => ({ ...t.ref, sub: [partnerWord(t), formatSpan(t.from, t.to, cal) || span(idx.get(t.ref.key))].filter(Boolean).join(" · ") })));
 		list("Children", "baby", idx.children(e.key).map((k) => refOf(k, span(idx.get(k)))));
 		list("Siblings", "users-round", idx.siblings(e.key).map((k) => refOf(k, span(idx.get(k)))), 8);
 		// Where they live by default (folds away in the inspector), then every place they have been.
@@ -291,11 +310,41 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	}
 	if (node) list(relLabel("vassals"), "git-fork", node.children.map((k) => { const n = tree.nodes.get(k); return refOf(k, [n?.holder?.name, n?.house?.name].filter(Boolean).join(" · ")); }));
 	if (e.type === "culture") {
-		const members = idx.members(e.key).filter((m) => idx.get(m.key)?.type === "person");
-		list("Members", "users", members.map((m) => ({ key: m.key, name: idx.get(m.key)!.name, sub: [m.link.role, formatSpan(m.link.from, m.link.to, cal)].filter(Boolean).join(" · ") })), 16);
-		list("Branches", "git-branch", [...(idx.childCulturesOf.get(e.key) ?? [])].map((k) => refOf(k, span(idx.get(k)))));
-		list("Branch of", "git-merge", e.parentCultures.map((r) => ({ ...r })));
-		if (e.type === "culture") list("Places", "map-pin", e.places.map((r) => ({ ...r })));
+		const spec = societySpec(groupKind(p, e));
+		const get = (k: string) => idx.get(k);
+		const branches = branchesOf(idx.childCulturesOf, e.key);
+		const everyone = membersWithin(idx, get, e.key).filter((m) => idx.get(m.key)?.type === "person");
+		const direct = everyone.filter((m) => !m.via);
+		// Members of the group itself, or with everyone in its branches (a button when there are branches).
+		if (everyone.length) {
+			const body = section(spec.members[1], "users");
+			let withBranches = false;
+			const show = () => {
+				body.empty();
+				const rows = withBranches ? everyone : direct;
+				for (const m of rows.slice(0, 16)) person(body, { key: m.key, name: idx.get(m.key)!.name }, [m.via ? `via ${m.via.name}` : "", m.link.role, formatSpan(m.link.from, m.link.to, cal)].filter(Boolean).join(" · "));
+				if (rows.length > 16) el("span", { cls: "universeview-ep-more", text: `+${rows.length - 16} more` }, body);
+			};
+			if (branches.size && everyone.length > direct.length) {
+				const bar = el("div", { cls: "uv-levels", attr: { role: "group", "aria-label": "Show members of" } });
+				body.parentElement?.insertBefore(bar, body);
+				for (const [value, label] of [[false, `This ${spec.label.toLowerCase()} (${direct.length})`], [true, `With branches (${everyone.length})`]] as const) {
+					const b = el("button", { cls: "uv-level", text: label, attr: { "aria-pressed": String(value === withBranches) } }, bar);
+					b.addEventListener("click", () => {
+						withBranches = value;
+						for (const x of Array.from(bar.children)) x.setAttribute("aria-pressed", String(x === b));
+						show();
+					});
+				}
+			}
+			show();
+		}
+		list(spec.branches, "git-branch", [...(idx.childCulturesOf.get(e.key) ?? [])].map((k) => {
+			const n = membersWithin(idx, get, k).filter((m) => idx.get(m.key)?.type === "person").length;
+			return refOf(k, [span(idx.get(k)), n ? `${n} member${n === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · "));
+		}));
+		list(spec.parent, "git-merge", e.parentCultures.map((r) => ({ ...r })));
+		list(spec.places, "map-pin", e.places.map((r) => ({ ...r })));
 	}
 	if (e.type === "event") {
 		list("Led by", "crown", e.leads.map((r) => ({ ...r })));
@@ -329,7 +378,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		const within = new Set([e.key, ...inside]);
 		list("People", "users", peopleAmong(idx.all("person"), (k) => idx.events(k), within).map(({ person: who, why }) => ({ key: who.key, name: who.name, sub: why.length > 2 ? `${why.slice(0, 2).join(", ")} +${why.length - 2}` : why.join(", ") })), 12);
 		const seated = idx.all("culture").filter((c) => !e.cultures.some((x) => x.ref.key === c.key) && c.places.some((r) => within.has(r.key)));
-		list("Groups here", "flag", [...e.cultures.map((c) => ({ ...c.ref, sub: formatSpan(c.from, c.to, cal) })), ...seated.map((c) => ({ key: c.key, name: c.name, sub: `Based at ${c.places.find((r) => within.has(r.key))?.name ?? ""}` }))]);
+		list("Societies here", "flag", [...e.cultures.map((c) => ({ ...c.ref, sub: formatSpan(c.from, c.to, cal) })), ...seated.map((c) => ({ key: c.key, name: c.name, sub: `Based at ${c.places.find((r) => within.has(r.key))?.name ?? ""}` }))]);
 	}
 	// Relationships, coloured by kind (allies green, rivals red, lieges purple…), minus the ones shown above.
 	const shownKinds = new Set(["holder", "owner", "lord", "lady", "ruler"]);
@@ -446,7 +495,8 @@ export function noteChip(p: UniverseViewPlugin, into: HTMLElement, r: { key: str
 	const txt = el("span", { cls: "universeview-ep-person-text" }, c);
 	el("span", { cls: "universeview-ep-person-name", text: target?.name ?? r.name }, txt);
 	// A place with nothing else to say says where it is: "Oklahoma County, Oklahoma".
-	const where = sub ?? (target?.type === "place" ? placeLine(placeChain((k) => p.index.get(k), target.key).slice(1, 3)) : "");
+	const up = target?.type === "culture" ? placeLine(groupChain((k) => p.index.get(k), target.key).slice(1, 3)) : "";
+	const where = sub ?? (target?.type === "place" ? placeLine(placeChain((k) => p.index.get(k), target.key).slice(1, 3)) : up ? `Descends from ${up}` : "");
 	if (where) el("span", { cls: "universeview-ep-person-sub", text: where }, txt);
 	if (!target) {
 		c.title = `${r.name} has no note yet`;

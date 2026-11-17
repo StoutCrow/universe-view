@@ -332,10 +332,11 @@ export class HousesRenderer {
 	}
 }
 
-export type GroupKind = "realm" | "house" | "faith" | "culture" | "organisation" | "group";
+export type GroupKind = "realm" | "house" | "faith" | "culture" | "language" | "organisation" | "group";
 
 const FAITH = /\b(faith|religion|church|creed|cult|pantheon|temple|sect|belief|god|gods|deity|monastic|clergy)\b/i;
-const PEOPLE = /\b(culture|people|peoples|ethnicity|ethnic|race|species|folk|tribe|tribes|language|tongue|nationality|heritage)\b/i;
+const PEOPLE = /\b(culture|people|peoples|ethnicity|ethnic|race|species|folk|tribe|tribes|nationality|heritage)\b/i;
+const LANGUAGE = /\b(language|languages|tongue|dialect|script|alphabet)\b/i;
 const ORG = /\b(guild|company|order|army|navy|fleet|council|league|society|bank|school|academy|college|university|faction|party|band|crew|brotherhood|sisterhood|circle|cabal|union|alliance|corporation|firm|mercenar\w*|knights?)\b/i;
 
 /** What a group note is, for labels and icons: a realm, a house, a faith, a people, an organisation or just a group. */
@@ -349,6 +350,7 @@ export function groupKind(plugin: UniverseViewPlugin, c: Entity): GroupKind {
 	const text = `${c.category ?? ""} ${c.tags.join(" ")}`;
 	if (FAITH.test(text)) return "faith";
 	if (ORG.test(text)) return "organisation";
+	if (LANGUAGE.test(text)) return "language";
 	if (PEOPLE.test(text)) return "culture";
 	const name = c.name;
 	if (FAITH.test(name)) return "faith";
@@ -360,7 +362,8 @@ export const GROUP_KINDS: Record<GroupKind, { label: string; plural: string; ico
 	realm: { label: "Realm", plural: "Realms", icon: "crown" },
 	house: { label: "House", plural: "Houses", icon: "castle" },
 	faith: { label: "Faith", plural: "Faiths", icon: "sparkles" },
-	culture: { label: "Culture", plural: "Cultures and peoples", icon: "languages" },
+	culture: { label: "Culture", plural: "Cultures and peoples", icon: "users-round" },
+	language: { label: "Language", plural: "Languages", icon: "languages" },
 	organisation: { label: "Organisation", plural: "Organisations", icon: "briefcase" },
-	group: { label: "Group", plural: "Other groups", icon: "flag" },
+	group: { label: "Society", plural: "Other societies", icon: "flag" },
 };

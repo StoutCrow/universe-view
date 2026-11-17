@@ -9,6 +9,7 @@ import { personTitle } from "./rulertitle";
 import { groupLine, type CardGroups } from "../ui/groupsplit";
 import { everyoneLayout, generationName, type FamilyGraph } from "../index/kinlayout";
 import { relationship, shortKin, type KinGraph } from "../index/kinship";
+import { endedTieLabel, tieEnded } from "../index/ties";
 
 /** Down from a parent, along the line between the generations and down to a child, with rounded corners. */
 function elbow(x1: number, y1: number, busY: number, x2: number, y2: number, style: "rounded" | "square" | "curved" = "rounded"): string {
@@ -83,6 +84,8 @@ interface Family {
 	/** Custom text for the tie, and how it ended. */
 	label?: string;
 	reason?: string;
+	/** What a deduced tie was worked out from. */
+	why?: string;
 }
 
 /**
@@ -263,7 +266,7 @@ export class FamilyTreeRenderer {
 			if (groupFor.has(p.ref.key)) continue;
 			const dup = this.visited.has(p.ref.key);
 			this.visited.add(p.ref.key);
-			const g = { partner: p.ref.key, partnerDup: dup, kind: p.kind, ended: !!p.to, children: [], adoptive: new Set<string>() };
+			const g = { partner: p.ref.key, partnerDup: dup, kind: p.kind, ended: tieEnded(p), children: [], adoptive: new Set<string>() };
 			groupFor.set(p.ref.key, g);
 			unit.groups.push(g);
 		}
@@ -495,11 +498,11 @@ export class FamilyTreeRenderer {
 			const t = f.parents.length === 2 ? tie(f.parents[0], f.parents[1]) : undefined;
 			const adoptive = new Set<number>();
 			for (const c of f.children) if (idx.get(c)?.adoptiveParents.some((r) => f.parents.includes(r.key))) adoptive.add(id.get(c)!);
-			this.families.push({ parents: f.parents.map((k) => id.get(k)!), children: f.children.map((k) => id.get(k)!), adoptive, kind: t?.kind, ended: !!(t?.to || t?.reason), label: t?.label, reason: t?.reason });
+			this.families.push({ parents: f.parents.map((k) => id.get(k)!), children: f.children.map((k) => id.get(k)!), adoptive, kind: t?.kind, ended: !!t && tieEnded(t), label: t?.label, reason: t?.reason, why: t?.why });
 		}
 		for (const [a, b] of laid.couples) {
 			const t = tie(a, b);
-			this.families.push({ parents: [id.get(a)!, id.get(b)!], children: [], adoptive: new Set(), kind: t?.kind, ended: !!(t?.to || t?.reason), label: t?.label, reason: t?.reason });
+			this.families.push({ parents: [id.get(a)!, id.get(b)!], children: [], adoptive: new Set(), kind: t?.kind, ended: !!t && tieEnded(t), label: t?.label, reason: t?.reason, why: t?.why });
 		}
 	}
 
@@ -540,10 +543,10 @@ export class FamilyTreeRenderer {
 					svg("circle", { cx: (a.x + W + b.x) / 2, cy: y, r: 4.5, class: "uv-couple-ring" + (dashedCouple ? " is-ended" : "") }, edges);
 					const plainKind = !f.kind || ["co-parent", "marriage", "married", "spouse"].includes(f.kind.toLowerCase());
 						// The custom text if there is one, else the kind when it is more than an ordinary marriage; the reason it ended goes in the tooltip.
-						if ((f.label || !plainKind) && b.x - (a.x + W) > 30) {
+						if ((f.label || f.ended || !plainKind) && b.x - (a.x + W) > 30) {
 						const t = svg("text", { x: (a.x + W + b.x) / 2, y: y - 9, class: "universeview-edge-label", "text-anchor": "middle" }, edges);
-						t.textContent = f.label ?? kindWord(f.kind ?? "");
-							if (f.reason) svg("title", {}, t).textContent = f.reason;
+						t.textContent = f.label ?? (f.ended ? endedTieLabel(f.kind, f.reason) : kindWord(f.kind ?? ""));
+							if (f.reason || f.why) svg("title", {}, t).textContent = [f.reason, f.why ? `worked out from ${f.why}` : undefined].filter(Boolean).join(" · ");
 					}
 					ox = (a.x + W + b.x) / 2;
 					oy = y + 4.5;

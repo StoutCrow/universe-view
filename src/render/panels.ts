@@ -17,7 +17,7 @@ export const LIST_INFO: Record<ListKind, { title: string; icon: string }> = {
 	wars: { title: "Wars", icon: "swords" },
 };
 
-const PLURAL: Record<EntityType, string> = { person: "people", event: "events", culture: "cultures", place: "places", map: "maps" };
+const PLURAL: Record<EntityType, string> = { person: "people", event: "events", culture: "societies", place: "places", map: "maps", object: "objects", creature: "creatures" };
 
 export function inScope(e: Entity, scope?: string): boolean {
 	return !scope || e.path.startsWith(scope + "/");

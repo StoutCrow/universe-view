@@ -97,3 +97,14 @@ export const previewHeadings: StylePreview = (box, id) => {
 	el("div", { cls: "universeview-module-title", text: "House of Tudor" }, w);
 	el("div", { cls: "uv-pv-sample", text: "Born 1457" }, w);
 };
+
+/** Corner roundness: a small card holding two buttons, all drawn at the radius the card stands for. */
+export const previewRadius = (pxOf: (id: string) => number): StylePreview => (box, id) => {
+	const px = pxOf(id);
+	const w = el("div", { cls: "uv-pv uv-rad-card" }, box);
+	w.style.setProperty("--uv-r-sm", `${px * 0.65}px`);
+	w.style.setProperty("--uv-r-md", `${px}px`);
+	w.style.setProperty("--uv-r-lg", `${px + 4}px`);
+	el("span", { cls: "universeview-chip", text: "Show" }, w);
+	el("span", { cls: "universeview-chip is-active", text: "On" }, w);
+};

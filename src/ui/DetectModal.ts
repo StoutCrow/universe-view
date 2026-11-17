@@ -23,7 +23,7 @@ interface KinRow {
 	checked: boolean;
 }
 
-const DEFAULT_TAGS: Record<EntityType, string> = { person: "Character", event: "Event", culture: "Group", place: "Place", map: "Map" };
+const DEFAULT_TAGS: Record<EntityType, string> = { person: "Character", event: "Event", culture: "Group", place: "Place", map: "Map", object: "Object", creature: "Creature" };
 
 /**
  * Finds notes that look like people, places, groups or events but have no type yet, and family

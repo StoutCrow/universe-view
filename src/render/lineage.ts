@@ -32,7 +32,7 @@ const ROW = 40;
 const LEFT = 20;
 const AXIS = 38;
 const LANE = 30;
-const KIND_ORDER: GroupKind[] = ["realm", "house", "faith", "culture", "organisation", "group"];
+const KIND_ORDER: GroupKind[] = ["realm", "house", "faith", "culture", "language", "organisation", "group"];
 
 /** What's drawn, worked out once per change of notes or options (the view's zoom and scroll redraw from it). */
 interface Prepared {

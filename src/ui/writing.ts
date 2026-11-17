@@ -1,3 +1,4 @@
+import { societySpec } from "../index/societies";
 import { MarkdownPostProcessorContext, Modal, Notice, Setting, TFile, debounce } from "obsidian";
 import type UniverseViewPlugin from "../main";
 import type { ChronDate, Entity, EntityType } from "../types";
@@ -11,7 +12,7 @@ import { settingWords } from "../index/worldsetting";
 import { KindSuggest, kindsFor } from "./kindpicker";
 import { el, icon, openEntity } from "../render/common";
 import { LinkList } from "./CreateEntityModal";
-import { REL_KINDS, presetKinds, relKind } from "../index/relkinds";
+import { REL_KINDS, presetKinds, relKind, REL_GROUP_ORDER, relGroup } from "../index/relkinds";
 import { DEMONYM_KEYS, RULER_TITLE_KEYS, realmWords } from "../index/realmwords";
 import { ROW_INFO, ROW_ORDER, fitsRow, readMembers, rebuildMembers, splitMembers, type GroupRow, type Wanted } from "../index/membership";
 import { groupKind } from "../render/houses";
@@ -28,6 +29,7 @@ const DATE_FIELDS: Partial<Record<EntityType, [FieldName, string, FieldName, str
 	event: ["date", "Date", "end", "Ended"],
 	culture: ["founded", "Founded", "dissolved", "Dissolved"],
 	place: ["founded", "Founded", "dissolved", "Abandoned"],
+	object: ["founded", "Made", "dissolved", "Lost"],
 };
 
 /**
@@ -63,7 +65,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		};
 
 		// ---- Essentials
-		const dates = DATE_FIELDS[e.type];
+		const dates = e.type === "culture" ? (["founded", societySpec(groupKind(p, e)).dates[0], "dissolved", societySpec(groupKind(p, e)).dates[1]] as [FieldName, string, FieldName, string]) : DATE_FIELDS[e.type];
 		const dateRow = (field: FieldName, label: string) => {
 			const k = keyFor(field);
 			used.add(k);
@@ -240,7 +242,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			chips("Caused by", has(["caused-by", "caused_by"]) ?? "caused-by", ["event"]);
 			chips("Led to", has(["led-to", "led_to"]) ?? "led-to", ["event"]);
 		} else if (e.type === "culture") {
-			field("parentCultures", "Part of", ["culture"]);
+			field("parentCultures", "Descends from", ["culture"]);
 			field("places", "Seats", ["place"]);
 			if (groupKind(p, e) === "realm") {
 				// A realm is a land, a people and a crown: say which word goes with each, so none is mistaken for another.
@@ -305,7 +307,18 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			if (empty.length) {
 				new Setting(box).setName("Add a relationship").setDesc("allies, rivals, mentors, liege… or type your own in More").addDropdown((d) => {
 					d.addOption("", "Choose…");
-					for (const [rk, prop] of empty) d.addOption(prop, relKind(rk)?.label ?? prop);
+					// Sorted under headings (bonds, alliance and rivalry, authority…), not one long list.
+					const grouped = new Map<string, [string, string][]>();
+					for (const item of empty) {
+						const g = relGroup(item[0]);
+						grouped.set(g, [...(grouped.get(g) ?? []), item]);
+					}
+					for (const g of [...REL_GROUP_ORDER, "Other"]) {
+						const items = grouped.get(g);
+						if (!items) continue;
+						const og = d.selectEl.createEl("optgroup", { attr: { label: g } });
+						for (const [rk, prop] of items) og.createEl("option", { value: prop, text: relKind(rk)?.label ?? prop });
+					}
 					d.onChange((prop) => {
 						const hit = empty.find(([, p2]) => p2 === prop);
 						if (!hit) return;

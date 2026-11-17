@@ -460,6 +460,15 @@ export function realmTree(src: RealmSource, isHouse: (e: Entity) => boolean, at?
 		nodes.set(t.key, { key: t.key, under: under.get(t.key), children: [], depth: 0, rank: rank.get(t.key) ?? 9, holder, house: region ? undefined : houseOf(t, holder), nature: nature.get(t.key) ?? "realm", region: regionOf.get(t.key) });
 	}
 	for (const n of nodes.values()) if (n.under) nodes.get(n.under)?.children.push(n.key);
+	// A land never ranks level with the one it is under: a realm inside a kingdom is a duchy, whatever its own word says
+	// (#Group_Realm is a kingdom alone, and a duchy under one). Regions are on their own scale and are left out.
+	const lower = (k: string, above: number, depth: number) => {
+		const n = nodes.get(k);
+		if (!n || depth > 20) return;
+		if (n.nature !== "region" && n.rank < 9 && above < 9 && Math.round(n.rank) <= Math.round(above)) n.rank = Math.min(6, Math.round(above) + 1);
+		for (const c of n.children) lower(c, n.nature === "region" ? 9 : n.rank, depth + 1);
+	};
+	for (const n of nodes.values()) if (!n.under) for (const c of n.children) lower(c, n.nature === "region" ? 9 : n.rank, 0);
 	const byRank = (a: string, b: string) => (nodes.get(a)!.rank - nodes.get(b)!.rank) || src.get(a)!.name.localeCompare(src.get(b)!.name);
 	for (const n of nodes.values()) n.children.sort(byRank);
 	const roots = [...nodes.values()].filter((n) => !n.under).map((n) => n.key).sort(byRank);

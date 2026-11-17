@@ -41,6 +41,6 @@ export function setRoughEdges(on: boolean) {
 	waiting.clear();
 	document.querySelectorAll<HTMLElement>("[data-uv-rough]").forEach((node) => {
 		delete node.dataset.uvRough;
-		node.setCssProps({ "--uve-r": "", "--uve-bw": "" });
+		node.setCssProps({ "--uve-bimg": "" });
 	});
 }

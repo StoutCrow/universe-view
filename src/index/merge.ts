@@ -71,15 +71,64 @@ export function cutFrom(area: P2[], remove: P2[][], minPiece = 0): Merged | null
 	}
 }
 
+/** Whether a border comes back to a corner it has already passed (not its neighbour): a loop that touches, not crosses. */
+export function touchesItself(ring: P2[], eps = 0.05): boolean {
+	return !!firstTouch(ring, eps);
+}
+
+/** The first corner a border comes back to, as [where it was first, where it comes back], or null. */
+function firstTouch(ring: P2[], eps: number): [number, number] | null {
+	const n = ring.length;
+	const cell = Math.max(eps, 1e-6) * 2;
+	const seen = new Map<string, number[]>();
+	for (let i = 0; i < n; i++) {
+		const cx = Math.floor(ring[i][0] / cell);
+		const cy = Math.floor(ring[i][1] / cell);
+		// This cell and the ones around it, so two corners either side of a cell's edge still meet.
+		for (let dx = -1; dx <= 1; dx++)
+			for (let dy = -1; dy <= 1; dy++)
+				for (const j of seen.get(`${cx + dx},${cy + dy}`) ?? []) {
+					if (i - j < 2 || (j === 0 && i === n - 1)) continue;
+					if (Math.hypot(ring[i][0] - ring[j][0], ring[i][1] - ring[j][1]) <= eps) return [j, i];
+				}
+		const key = `${cx},${cy}`;
+		seen.set(key, [...(seen.get(key) ?? []), i]);
+	}
+	return null;
+}
+
+/**
+ * Small loops off a border taken away: where it comes back to a corner it passed, the ring parts into two; the
+ * smaller goes when it is under 2% of the larger (a triangle hanging off the line). Two real lobes stay.
+ */
+function dropLoops(ring: P2[], eps: number): P2[] {
+	let r = ring;
+	for (let guard = 0; guard < 100; guard++) {
+		const t = firstTouch(r, eps);
+		if (!t) break;
+		const [j, i] = t;
+		const inner = r.slice(j, i);
+		// The rest of the ring, still starting where it did.
+		const outer = [...r.slice(0, j), ...r.slice(i)];
+		const [big, small] = Math.abs(ringArea(inner)) >= Math.abs(ringArea(outer)) ? [inner, outer] : [outer, inner];
+		if (big.length < 3 || Math.abs(ringArea(small)) > Math.abs(ringArea(big)) * 0.02) break;
+		r = big;
+	}
+	return r;
+}
+
 /**
  * A border made sound again: repeated corners and spikes (a run of corners that goes out and comes
  * straight back) taken out, and any loop where the border crosses itself undone, keeping the biggest
  * piece. Every other corner stays exactly where it is. `eps` is how close counts as the same point.
  */
 export function untangle(ring: P2[], eps = 0.01): P2[] {
-	let r = ring.filter((p, i) => {
-		const q = ring[(i - 1 + ring.length) % ring.length];
-		return ring.length < 2 || Math.hypot(p[0] - q[0], p[1] - q[1]) > eps;
+	// First, a border that only touches itself (runs along a stretch twice, or comes back to a corner it passed) hangs
+	// a small loop off its line: cut it away where it touches, before the spikes below could fold it into the line.
+	const unlooped = dropLoops(ring, Math.max(eps, 0.05));
+	let r = unlooped.filter((p, i) => {
+		const q = unlooped[(i - 1 + unlooped.length) % unlooped.length];
+		return unlooped.length < 2 || Math.hypot(p[0] - q[0], p[1] - q[1]) > eps;
 	});
 	// Spikes: a corner whose neighbours meet again, or where the border turns (nearly) straight back:
 	// a wedge narrower than about 14° at its tip is a slip of the mouse or a snapped corner gone astray,

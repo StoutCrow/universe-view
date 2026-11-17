@@ -1,3 +1,4 @@
+import { societySpec } from "../index/societies";
 import type { EntityType } from "../types";
 
 /**
@@ -34,6 +35,8 @@ export interface QuickAdd {
 	terrain?: string;
 	/** A colour for its pins, bars and cards ("#8844cc"). */
 	color?: string;
+	/** On a group: who it answers to (written as the `liege:` relationship). */
+	liege?: string;
 	/** A picture from the vault (its file name). */
 	image?: string;
 	tags: string[];
@@ -182,7 +185,7 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "summary", label: "Summary", input: "text", wide: true },
 		{ key: "startPlace", label: "Starts at", input: "link", types: ["place"], more: true },
 		{ key: "endPlace", label: "Ends at", input: "link", types: ["place"], more: true },
-		{ key: "cultures", label: "Groups", input: "links", types: ["culture"], more: true },
+		{ key: "cultures", label: "Societies", input: "links", types: ["culture"], more: true },
 		{ key: "war", label: "Part of", input: "link", types: ["event"], more: true },
 		{ key: "causes", label: "Caused by", input: "links", types: ["event"], more: true },
 		{ key: "effects", label: "Led to", input: "links", types: ["event"], more: true },
@@ -212,7 +215,8 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "date", label: "Founded", input: "date" },
 		{ key: "end", label: "Dissolved", input: "date" },
 		{ key: "leaders", label: "Led by", input: "links", types: ["person"] },
-		{ key: "cultures", label: "Part of", input: "links", types: ["culture"] },
+		{ key: "liege", label: "Liege", input: "link", types: ["culture"] },
+		{ key: "cultures", label: "Descends from", input: "links", types: ["culture"] },
 		{ key: "places", label: "Seat", input: "links", types: ["place"] },
 		{ key: "summary", label: "Summary", input: "text", wide: true },
 		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
@@ -233,7 +237,45 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "color", label: "Colour", input: "color", more: true },
 	],
 	map: [{ key: "summary", label: "Summary", input: "text", wide: true }],
+	object: [
+		{ key: "kind", label: "Kind", input: "text" },
+		{ key: "date", label: "Made", input: "date" },
+		{ key: "end", label: "Lost or destroyed", input: "date" },
+		{ key: "cultures", label: "Held by", input: "links", types: ["person", "culture"] },
+		{ key: "places", label: "Kept at", input: "links", types: ["place"] },
+		{ key: "summary", label: "Summary", input: "text", wide: true },
+		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
+		{ key: "image", label: "Picture", input: "image", more: true },
+		{ key: "color", label: "Colour", input: "color", more: true },
+	],
+	creature: [
+		{ key: "kind", label: "Kind", input: "text" },
+		{ key: "places", label: "Found in", input: "links", types: ["place"] },
+		{ key: "cultures", label: "Kept or feared by", input: "links", types: ["culture"] },
+		{ key: "summary", label: "Summary", input: "text", wide: true },
+		{ key: "aliases", label: "Also called", input: "words", hint: "Other names, separated by commas", more: true },
+		{ key: "image", label: "Picture", input: "image", more: true },
+		{ key: "color", label: "Colour", input: "color", more: true },
+	],
 };
+
+/** The questions for one kind of note; a society's own kind (language, house, faith…) words them, and drops the ones that do not apply (a language has no ruler). */
+export function creatorFieldsFor(type: EntityType, kind?: string): CreatorField[] {
+	const base = CREATOR_FIELDS[type];
+	if (type !== "culture") return base;
+	const s = societySpec(kind);
+	return base.flatMap((f): CreatorField[] => {
+		switch (f.key) {
+			case "date": return [{ ...f, label: s.dates[0] }];
+			case "end": return [{ ...f, label: s.dates[1] }];
+			case "leaders": return s.leader ? [{ ...f, label: s.leader }] : [];
+			case "liege": return s.liege ? [f] : [];
+			case "cultures": return [{ ...f, label: s.parent }];
+			case "places": return [{ ...f, label: s.places }];
+			default: return [f];
+		}
+	});
+}
 
 /** A parsed line with what was set by hand in the form on top of it. */
 export function withFields(q: QuickAdd, fields: Partial<Record<keyof QuickAdd, string | string[]>>): QuickAdd {
@@ -287,6 +329,7 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.end) fm.dissolved = q.end;
 			if (q.places.length) fm.places = list(q.places);
 			if (q.leaders.length) fm.leader = list(q.leaders);
+			if (q.liege) fm.liege = link(q.liege);
 			if (q.cultures.length) fm["parent-cultures"] = list(q.cultures);
 			break;
 		case "place":
@@ -297,6 +340,16 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.population && Number.isFinite(Number(q.population.replace(/[,_\s]/g, "")))) fm.population = Number(q.population.replace(/[,_\s]/g, ""));
 			if (q.terrain) fm.terrain = q.terrain.trim().toLowerCase();
 			break;
+			case "object":
+				if (q.date) fm.made = q.date;
+				if (q.end) fm.destroyed = q.end;
+				if (q.cultures.length) fm.cultures = list(q.cultures);
+				if (q.places.length) fm.places = list(q.places);
+				break;
+			case "creature":
+				if (q.cultures.length) fm.cultures = list(q.cultures);
+				if (q.places.length) fm.places = list(q.places);
+				break;
 	}
 	// What every note can have.
 	if (q.aliases?.length) fm.aliases = [...new Set(q.aliases.map((a) => a.trim()).filter(Boolean))];

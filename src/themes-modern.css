@@ -1,0 +1,254 @@
+/* ==== Modern interface styles: Glass, Soft, Brutal, Desktop, Synth ============================
+   The families of contemporary UI looks: frosted liquid glass, soft extruded shapes, hard brutalism,
+   a 1-bit 1980s desktop and a hardware synth panel. Each redefines variables only inside UniverseView
+   surfaces (.universeview-scope). Fonts, radius and looks come from appearance.ts. Glass and Synth are
+   dark in both Obsidian modes; the others follow it. */
+
+/* ---- Glass: liquid glass over a deep colour mesh ---- */
+body.universeview-theme-glass {
+	--universeview-theme-accent: #7cc4ff;
+	--universeview-theme-event: #ff8fb8;
+	--universeview-theme-person: #7cc4ff;
+	--universeview-theme-culture: #c3a3ff;
+	--universeview-theme-place: #7ee8c0;
+}
+body.universeview-theme-glass .universeview-scope, body.universeview-theme-glass.uv-scope-app {
+	--background-primary: #0d1224;
+	--background-primary-alt: #121a33;
+	--background-secondary: #17213f;
+	--background-secondary-alt: #1d2a4d;
+	--background-modifier-border: rgba(255, 255, 255, 0.16);
+	--background-modifier-border-hover: rgba(255, 255, 255, 0.34);
+	--background-modifier-hover: rgba(255, 255, 255, 0.09);
+	--background-modifier-form-field: rgba(255, 255, 255, 0.07);
+	--interactive-normal: rgba(255, 255, 255, 0.1);
+	--interactive-hover: rgba(255, 255, 255, 0.18);
+	--text-normal: #eef3ff;
+	--text-muted: #b4c0e0;
+	--text-faint: #7d8bb3;
+	--text-on-accent: #07101f;
+	--universeview-grid: rgba(180, 200, 255, 0.12);
+	--universeview-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.6);
+	--universeview-shadow-lift: 0 18px 40px -14px rgba(0, 0, 0, 0.7);
+	--universeview-backdrop: radial-gradient(ellipse 50% 40% at 12% 12%, rgba(124, 196, 255, 0.32), transparent 70%),
+		radial-gradient(ellipse 45% 40% at 88% 20%, rgba(195, 163, 255, 0.28), transparent 70%),
+		radial-gradient(ellipse 50% 40% at 70% 95%, rgba(255, 143, 184, 0.22), transparent 70%),
+		radial-gradient(ellipse 40% 35% at 5% 90%, rgba(126, 232, 192, 0.18), transparent 70%);
+	color-scheme: dark;
+	color: var(--text-normal);
+}
+body.universeview-theme-glass :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) { text-shadow: 0 1px 12px rgba(124, 196, 255, 0.45); }
+body.universeview-theme-glass:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: invert(0.9) hue-rotate(190deg) saturate(0.8) brightness(0.85); }
+
+/* ---- Soft: extruded, neumorphic shapes on one colour ---- */
+body.universeview-theme-neumorph {
+	--universeview-theme-accent: #4f7cff;
+	--universeview-theme-event: #e0617a;
+	--universeview-theme-person: #4f7cff;
+	--universeview-theme-culture: #8a6cff;
+	--universeview-theme-place: #2fa889;
+}
+body.universeview-theme-neumorph .universeview-scope, body.universeview-theme-neumorph.uv-scope-app {
+	--background-primary: #e3e8f0;
+	--background-primary-alt: #dde3ec;
+	--background-secondary: #d7dde8;
+	--background-secondary-alt: #cfd6e2;
+	--background-modifier-border: #c3cbda;
+	--background-modifier-border-hover: #aeb8cb;
+	--background-modifier-hover: rgba(70, 90, 130, 0.08);
+	--background-modifier-form-field: #dde3ec;
+	--interactive-normal: #e3e8f0;
+	--interactive-hover: #dde3ec;
+	--text-normal: #38425a;
+	--text-muted: #636f8c;
+	--text-faint: #8f9ab3;
+	--text-on-accent: #ffffff;
+	--neu-d: rgba(150, 165, 195, 0.55);
+	--neu-l: rgba(255, 255, 255, 0.9);
+	--universeview-grid: rgba(80, 100, 140, 0.14);
+	--universeview-shadow: 6px 6px 12px var(--neu-d), -6px -6px 12px var(--neu-l);
+	--universeview-shadow-lift: 9px 9px 18px var(--neu-d), -9px -9px 18px var(--neu-l);
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.universeview-theme-neumorph { --universeview-theme-accent: #8aa8ff; --universeview-theme-person: #8aa8ff; --universeview-theme-event: #f08aa0; --universeview-theme-culture: #b09cff; --universeview-theme-place: #66d4b4; }
+body.theme-dark.universeview-theme-neumorph .universeview-scope, body.theme-dark.universeview-theme-neumorph.uv-scope-app {
+	--background-primary: #2a2f3a;
+	--background-primary-alt: #272c36;
+	--background-secondary: #242831;
+	--background-secondary-alt: #20242c;
+	--background-modifier-border: #3a4150;
+	--background-modifier-border-hover: #4f586b;
+	--background-modifier-hover: rgba(200, 215, 255, 0.07);
+	--background-modifier-form-field: #272c36;
+	--interactive-normal: #2a2f3a;
+	--interactive-hover: #303644;
+	--text-normal: #e4e9f5;
+	--text-muted: #a3adc4;
+	--text-faint: #6f7a93;
+	--text-on-accent: #10162a;
+	--neu-d: rgba(10, 12, 18, 0.65);
+	--neu-l: rgba(255, 255, 255, 0.06);
+	--universeview-grid: rgba(180, 195, 235, 0.1);
+	color-scheme: dark;
+}
+body.universeview-theme-neumorph:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: grayscale(0.7) brightness(1.02); }
+
+/* ---- Brutal: raw, high contrast, thick lines and hard shadows ---- */
+body.universeview-theme-brutalist {
+	--universeview-theme-accent: #ff4d79;
+	--universeview-theme-event: #ff4d79;
+	--universeview-theme-person: #1f6bff;
+	--universeview-theme-culture: #8a3dff;
+	--universeview-theme-place: #0d9e63;
+}
+body.universeview-theme-brutalist .universeview-scope, body.universeview-theme-brutalist.uv-scope-app {
+	--background-primary: #fff7df;
+	--background-primary-alt: #fff2cc;
+	--background-secondary: #ffe99b;
+	--background-secondary-alt: #ffe07a;
+	--background-modifier-border: #111111;
+	--background-modifier-border-hover: #000000;
+	--background-modifier-hover: rgba(255, 77, 121, 0.16);
+	--background-modifier-form-field: #ffffff;
+	--interactive-normal: #ffe99b;
+	--interactive-hover: #ffe07a;
+	--text-normal: #111111;
+	--text-muted: #3a3a3a;
+	--text-faint: #6a6a6a;
+	--text-on-accent: #111111;
+	--universeview-grid: rgba(0, 0, 0, 0.25);
+	--universeview-shadow: 5px 5px 0 #111111;
+	--universeview-shadow-lift: 8px 8px 0 #111111;
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.universeview-theme-brutalist { --universeview-theme-accent: #ff7a9c; --universeview-theme-person: #6ea0ff; --universeview-theme-culture: #b68aff; --universeview-theme-place: #4fd99b; }
+body.theme-dark.universeview-theme-brutalist .universeview-scope, body.theme-dark.universeview-theme-brutalist.uv-scope-app {
+	--background-primary: #151515;
+	--background-primary-alt: #1b1b1b;
+	--background-secondary: #242424;
+	--background-secondary-alt: #2c2c2c;
+	--background-modifier-border: #f2f2f2;
+	--background-modifier-border-hover: #ffffff;
+	--background-modifier-hover: rgba(255, 122, 156, 0.18);
+	--background-modifier-form-field: #1b1b1b;
+	--text-normal: #f6f6f6;
+	--text-muted: #cfcfcf;
+	--text-faint: #8f8f8f;
+	--text-on-accent: #111111;
+	--universeview-shadow: 5px 5px 0 #f2f2f2;
+	--universeview-shadow-lift: 8px 8px 0 #f2f2f2;
+	color-scheme: dark;
+	--interactive-normal: #242424;
+	--interactive-hover: #2c2c2c;
+	--universeview-grid: rgba(255, 255, 255, 0.22);
+}
+body.universeview-theme-brutalist :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) { text-transform: uppercase; letter-spacing: -0.01em; }
+body.universeview-theme-brutalist :is(.universeview-module, .universeview-ov-panel, button.universeview-ov-tile, .universeview-dash-card, .universeview-card) { border-width: 3px; }
+body.universeview-theme-brutalist:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: grayscale(1) contrast(1.4); }
+
+/* ---- Desktop: a 1-bit, 1980s windowed desktop ---- */
+/* Pure black and white, solid windows with a title bar and a hard shadow, text always on a plain ground.
+   Hover is a mid grey (a true inversion would hide the text on lists). */
+body.universeview-theme-desktop {
+	--universeview-theme-accent: #000000;
+	--universeview-theme-event: #000000;
+	--universeview-theme-person: #000000;
+	--universeview-theme-culture: #000000;
+	--universeview-theme-place: #000000;
+}
+body.universeview-theme-desktop .universeview-scope, body.universeview-theme-desktop.uv-scope-app {
+	--background-primary: #ffffff;
+	--background-primary-alt: #ffffff;
+	--background-secondary: #ffffff;
+	--background-secondary-alt: #f2f2f2;
+	--background-modifier-border: #000000;
+	--background-modifier-border-hover: #000000;
+	--background-modifier-hover: #d9d9d9;
+	--background-modifier-form-field: #ffffff;
+	--interactive-normal: #ffffff;
+	--interactive-hover: #d9d9d9;
+	--text-normal: #000000;
+	--text-muted: #1a1a1a;
+	--text-faint: #4d4d4d;
+	--text-on-accent: #ffffff;
+	--universeview-grid: rgba(0, 0, 0, 0.35);
+	--universeview-shadow: 2px 2px 0 #000000;
+	--universeview-shadow-lift: 3px 3px 0 #000000;
+	--universeview-backdrop: none;
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.universeview-theme-desktop .universeview-scope, body.theme-dark.universeview-theme-desktop.uv-scope-app {
+	--background-primary: #000000;
+	--background-primary-alt: #000000;
+	--background-secondary: #000000;
+	--background-secondary-alt: #0d0d0d;
+	--background-modifier-border: #ffffff;
+	--background-modifier-border-hover: #ffffff;
+	--background-modifier-hover: #333333;
+	--background-modifier-form-field: #000000;
+	--interactive-normal: #000000;
+	--interactive-hover: #333333;
+	--text-normal: #ffffff;
+	--text-muted: #e6e6e6;
+	--text-faint: #b3b3b3;
+	--text-on-accent: #000000;
+	--universeview-grid: rgba(255, 255, 255, 0.35);
+	--universeview-shadow: 2px 2px 0 #ffffff;
+	--universeview-shadow-lift: 3px 3px 0 #ffffff;
+	--universeview-backdrop: none;
+	color-scheme: dark;
+}
+/* Windows are solid: nothing reads over the stipple. */
+body.universeview-theme-desktop :is(.universeview-module, .universeview-ov-panel, button.universeview-ov-tile, .universeview-dash-card, .universeview-card, .universeview-ov-hero, .universeview-toolbar, .uv-hub-bar, .universeview-dash-tree, .universeview-legend, .universeview-hovercard, .uv-options) { background-color: var(--background-primary); }
+body.universeview-theme-desktop .universeview-ov-hero { padding: 8px 14px; margin-bottom: 14px; border: 2px solid var(--text-normal); box-shadow: 2px 2px 0 var(--text-normal); }
+/* The title bar: stripes either side of the name. */
+body.universeview-theme-desktop .universeview-module-head {
+	background: repeating-linear-gradient(to bottom, var(--text-normal) 0 1px, var(--background-primary) 1px 3px);
+	border-bottom: 2px solid var(--text-normal);
+}
+body.universeview-theme-desktop .universeview-module-title { padding: 0 8px; background: var(--background-primary); }
+/* A strip of dither along the top of each view, like the desktop showing past the windows. */
+body.universeview-theme-desktop .universeview-toolbar { background-image: repeating-linear-gradient(90deg, var(--text-normal) 0 1px, transparent 1px 3px); background-size: 100% 4px; background-repeat: no-repeat; background-position: top; padding-top: 8px; }
+body.universeview-theme-desktop :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) { font-weight: 700; letter-spacing: 0; }
+/* The map stays readable: no recolouring beyond plain black and white when the theme's map look is on. */
+body.universeview-theme-desktop:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: grayscale(1) contrast(1.6) brightness(1.08); }
+/* ---- Synth: a hardware panel, brushed metal and amber LEDs ---- */
+body.universeview-theme-synth {
+	--universeview-theme-accent: #ffb020;
+	--universeview-theme-event: #ff5a4d;
+	--universeview-theme-person: #5ad7ff;
+	--universeview-theme-culture: #c58cff;
+	--universeview-theme-place: #7dff9a;
+}
+body.universeview-theme-synth .universeview-scope, body.universeview-theme-synth.uv-scope-app {
+	--background-primary: #1b1d22;
+	--background-primary-alt: #202328;
+	--background-secondary: #2a2d34;
+	--background-secondary-alt: #32363e;
+	--background-modifier-border: #444952;
+	--background-modifier-border-hover: #6a707c;
+	--background-modifier-hover: rgba(255, 176, 32, 0.1);
+	--background-modifier-form-field: #121317;
+	--interactive-normal: #2a2d34;
+	--interactive-hover: #353a43;
+	--text-normal: #f1e8d3;
+	--text-muted: #b9b09a;
+	--text-faint: #7d776a;
+	--text-on-accent: #1b1405;
+	--universeview-grid: rgba(255, 220, 150, 0.1);
+	--universeview-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+	--universeview-shadow-lift: 0 10px 24px rgba(0, 0, 0, 0.7);
+	/* Brushed metal: fine horizontal grain over a soft light from the top. */
+	--universeview-backdrop: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent 40%);
+	color-scheme: dark;
+	color: var(--text-normal);
+}
+body.universeview-theme-synth :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) { text-transform: uppercase; letter-spacing: 0.12em; color: var(--universeview-accent); text-shadow: 0 0 10px rgba(255, 176, 32, 0.5); }
+/* Screws in the corners of every panel. */
+body.universeview-theme-synth :is(.universeview-module, .universeview-ov-panel):not(.uv-pv *) {
+	background-image: radial-gradient(circle at 8px 8px, #8b909a 0 2px, transparent 2.5px), radial-gradient(circle at calc(100% - 8px) 8px, #8b909a 0 2px, transparent 2.5px), radial-gradient(circle at 8px calc(100% - 8px), #8b909a 0 2px, transparent 2.5px), radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), #8b909a 0 2px, transparent 2.5px);
+}
+body.universeview-theme-synth:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: invert(0.9) sepia(0.5) hue-rotate(-10deg) saturate(1.4) brightness(0.8); }

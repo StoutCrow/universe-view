@@ -4,7 +4,7 @@ import { App, Component, Notice, PluginSettingTab, Setting, debounce, type Setti
 import type UniverseViewPlugin from "../main";
 import { ENTITY_TYPES } from "../types";
 import type { CalendarDef } from "../types";
-import { DEFAULT_FIELD_ALIASES, DEFAULT_SETTINGS, parseMapCategories, parseMappingLines } from "../settings";
+import { DEFAULT_FIELD_ALIASES, DEFAULT_SETTINGS, parseMapCategories, parseMappingLines, type TreeClick } from "../settings";
 import { CustomCalendar } from "../dates/calendars";
 import { formatDay } from "../dates/parser";
 import { TYPE_LABELS, el, glyph, helpTip, icon, tuckDescriptions } from "../render/common";
@@ -12,14 +12,13 @@ import { GROUP_KINDS } from "../render/houses";
 import { WORLD_SETTINGS, type WorldSetting } from "../index/worldsetting";
 import { PLACE_GROUPS, defaultRoles, defaultStatuses, groupOfKind, normaliseKind } from "../index/placekinds";
 import { chooseWorldSetting } from "./worldsettingui";
-import { renderThemeCards } from "./themecards";
-import { previewButtons, previewEdges, previewFonts, previewHeadings, previewIcons, previewTabs, stylePicker } from "./stylepicker";
+import { renderThemeCards, type MyThemes } from "./themecards";
+import { SOUND_SETS, themeSoundName } from "./sounds";
+import { previewButtons, previewEdges, previewFonts, previewHeadings, previewIcons, previewRadius, previewTabs, stylePicker } from "./stylepicker";
 import { TourModal } from "./Tour";
 import { DEFAULT_FILE_STRENGTH, DEFAULT_GROUP_ICONS, DEFAULT_TYPE_ICONS, applyIconSettings, fileStrengthNames } from "./icons";
-import { BUTTON_STYLES, EDGE_STYLES, FONT_STYLES, HEADING_STYLES, ICON_STYLES, MOTIONS, looksOf, TAB_STYLES, THEMES, TACTILE_PARTS, TACTILE_PRESETS, applyAppearance } from "../appearance";
+import { BUTTON_STYLES, EDGE_STYLES, FONT_STYLES, HEADING_STYLES, ICON_STYLES, MOTIONS, looksOf, TAB_STYLES, THEMES, TACTILE_PARTS, TACTILE_PRESETS, RADIUS_PRESETS, LOOK_KEYS, adoptTheme, applyAppearance, applyThemeLook, captureLook, personalSurface, surfaceOf, themeRadius } from "../appearance";
 
-/** The settings a copied look carries. */
-const LOOK_KEYS = ["theme", "colors", "fontUi", "fontDisplay", "fontMap", "themeStyles", "buttonStyle", "tabStyle", "edgeStyle", "fontStyle", "iconStyle", "headingStyle", "sketchRandom", "surfaceStyle", "tactileOff", "tactileDepth", "tactileStrength", "motion", "density", "radius"] as const;
 import { BUILT_IN_PRESETS, applyLook, currentLook, matchingPreset } from "./mappresets";
 import { builtInChangelog, renderHistory } from "./WhatsNew";
 import { REL_KINDS, presetKinds, relLabel } from "../index/relkinds";
@@ -48,12 +47,10 @@ function resolveColor(key: string): string {
 
 /** The settings' pages, each holding the sections whose headings start as named here (anything else goes on the first). */
 const PAGES: { id: string; label: string; heads: string[] }[] = [
-	{ id: "appearance", label: "Theme & colours", heads: ["World setting", "Appearance", "Fonts"] },
-	{ id: "surface", label: "Surface & motion", heads: ["Surface", "Tactile style"] },
-	{ id: "views", label: "Views", heads: ["Views"] },
-	{ id: "inspector", label: "Inspector & icons", heads: ["Inspector", "Icons", "Hover cards"] },
-	{ id: "notes", label: "Notes", heads: ["Recognising notes", "New notes", "Folder notes"] },
-	{ id: "families", label: "Families", heads: ["Writing and families", "Relationships"] },
+	{ id: "appearance", label: "Theme & colours", heads: ["World setting", "Appearance"] },
+	{ id: "surface", label: "Theme settings", heads: ["Selected theme", "Buttons, tabs", "Icons and headings", "Fonts", "Roundness", "Surface and tactile", "Motion and density", "Sounds", "My themes"] },
+	{ id: "views", label: "Views & panels", heads: ["Views", "Inspector", "Icons", "Hover cards"] },
+	{ id: "notes", label: "Notes & families", heads: ["Recognising notes", "New notes", "Folder notes", "Writing and families", "Relationships"] },
 	{ id: "time", label: "Time & calendars", heads: ["Timeline", "Calendars"] },
 	{ id: "maps", label: "Maps", heads: ["Maps", "Map look"] },
 	{ id: "realms", label: "Realms & tiers", heads: ["Realms and tiers"] },
@@ -63,8 +60,8 @@ const PAGES: { id: string; label: string; heads: string[] }[] = [
 
 /** The settings in the top tabs and, inside the larger ones, sub-tabs: shared by the settings window and the dashboard. */
 export const SETTINGS_GROUPS: { id: string; label: string; icon: string; pages: string[] }[] = [
-	{ id: "look", label: "Look & cards", icon: "palette", pages: ["appearance", "surface", "views", "inspector"] },
-	{ id: "notes", label: "Notes & families", icon: "file-text", pages: ["notes", "families"] },
+	{ id: "look", label: "Look & cards", icon: "palette", pages: ["appearance", "surface", "views"] },
+	{ id: "notes", label: "Notes & families", icon: "file-text", pages: ["notes"] },
 	{ id: "time", label: "Time & calendars", icon: "calendar-days", pages: ["time"] },
 	{ id: "maps", label: "Maps & realms", icon: "map", pages: ["maps", "realms", "tools"] },
 	{ id: "about", label: "About", icon: "info", pages: ["about"] },
@@ -74,7 +71,7 @@ export const pageLabel = (id: string) => PAGES.find((p) => p.id === id)?.label ?
 
 const PAGE_DESC: Record<string, string> = {
 	appearance: "World setting, theme cards, colours, fonts",
-	surface: "Flat or tactile, its parts and strength, motion, density, corners",
+	surface: "The selected theme's buttons, tabs, edges, icons, headings, surface, motion and density",
 	views: "Timeline and family tree sizes, tints",
 	inspector: "The inspector, icons, hover cards and tips",
 	notes: "How notes are recognised, created and filed",
@@ -89,9 +86,12 @@ const PAGE_DESC: Record<string, string> = {
 /** What a page's entry shows beside its name, so the current choice is visible without opening it. */
 const PAGE_VALUES: Record<string, (p: UniverseViewPlugin) => string> = {
 	appearance: (p) => THEMES.find((t) => t.id === p.settings.theme)?.name ?? "",
-	surface: (p) => (p.settings.surfaceStyle === "tactile" ? "Tactile" : "Flat"),
+	surface: (p) => THEMES.find((t) => t.id === p.settings.theme)?.name ?? "",
 	about: (p) => buildLabel(p.manifest.version).short,
 };
+
+/** Sections that fold shut under their heading (shut until opened). */
+const FOLD_SECTIONS = ["Buttons, tabs and edges", "Icons and headings", "Fonts", "Roundness", "Surface and tactile", "Motion and density", "Sounds", "My themes"];
 
 /** A built row (or block), the blocks that go with it, and whether it has been shown yet. */
 interface Entry {
@@ -121,6 +121,18 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 	/** Owns the rendered version history while the settings are open. */
 	private history = new Component();
 
+	/** The folding sections that are open right now. */
+	private open = new Set<string>();
+
+	private toggleFold(name: string) {
+		if (!this.open.delete(name)) this.open.add(name);
+		this.update();
+	}
+
+	/** A heading with a button that folds or opens the rows under it (the dashboard draws these headings itself; Obsidian's page adds its own button). */
+	private foldHeading(containerEl: HTMLElement, name: string) {
+		new Setting(containerEl).setName(name).setHeading().addExtraButton((b) => b.setIcon(this.open.has(name) ? "chevron-down" : "chevron-right").setTooltip(this.open.has(name) ? "Fold up" : "Open").onClick(() => this.toggleFold(name)));
+	}
 	/** The rows built for the current definitions, each shown once (see show()). */
 	private entries: Entry[] = [];
 
@@ -176,12 +188,20 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			copy.querySelectorAll(".universeview-help").forEach((x) => x.remove());
 			return (copy.textContent ?? "").trim();
 		};
+		let fold: string | undefined;
 		const section = (heading: string, help?: string) => {
 			items = [];
 			last = undefined;
+			fold = FOLD_SECTIONS.includes(heading) ? heading : undefined;
+			const buttons: NonNullable<SettingDefinitionGroup["extraButtons"]> = [];
+			if (help) buttons.push((b) => b.setIcon("info").setTooltip(help));
+			if (fold) {
+				const name = fold;
+				buttons.push((b) => b.setIcon(this.open.has(name) ? "chevron-down" : "chevron-right").setTooltip(this.open.has(name) ? "Fold up" : "Open").onClick(() => this.toggleFold(name)));
+			}
 			sections.push({
 				heading,
-				group: { type: "group", heading: heading || undefined, cls: "universeview-settings", items, extraButtons: help ? [(b) => b.setIcon("info").setTooltip(help)] : undefined, visible: heading === "Tactile style" ? () => this.plugin.settings.surfaceStyle === "tactile" : undefined },
+				group: { type: "group", heading: heading || undefined, cls: "universeview-settings", items, extraButtons: buttons.length ? buttons : undefined },
 			});
 		};
 		for (const child of Array.from(box.children) as HTMLElement[]) {
@@ -199,7 +219,9 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			const i = entries.length;
 			last = { el: child, extras: [] };
 			entries.push(last);
+			const foldName = fold;
 			items!.push({
+				visible: foldName ? () => this.open.has(foldName) : undefined,
 				name: text(row?.querySelector(".setting-item-name")),
 				desc: text(row?.querySelector(".setting-item-description")) || undefined,
 				searchable: !!row,
@@ -304,12 +326,18 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		this.build(box);
 		let page = PAGES[0].id;
 		let hidden = false;
+		let folded = false;
 		for (const child of Array.from(box.children)) {
 			if (child.hasClass("setting-item-heading")) {
 				const name = child.querySelector(".setting-item-name")?.textContent ?? "";
 				page = (PAGES.find((p) => p.heads.some((h) => name.startsWith(h))) ?? PAGES[0]).id;
 				// The tactile section only shows while Tactile is on.
-				hidden = name === "Tactile style" && this.plugin.settings.surfaceStyle !== "tactile";
+				hidden = false;
+				folded = FOLD_SECTIONS.includes(name) && !this.open.has(name);
+			} else if (!child.hasClass("setting-item-heading") && folded) {
+				// A folded section keeps only its heading.
+				child.remove();
+				continue;
 			}
 			if (page !== id || hidden) child.remove();
 		}
@@ -451,6 +479,21 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			.setDesc("When clicking items in UniverseView views. Ctrl/Cmd-click always opens a new tab.")
 			.addToggle((t) => t.setValue(s.openInNewTab).onChange(async (v) => {
 				s.openInNewTab = v;
+				await this.save(false);
+			}));
+		const clickOptions = { dashboard: "Dashboard note", note: "Markdown note", inspector: "Inspector", "dashboard+inspector": "Dashboard note and inspector", "note+inspector": "Markdown note and inspector" };
+		new Setting(containerEl)
+			.setName("Clicking a note in the Library")
+			.setDesc("What opens. The dashboard note is the page beside the tree (with the tree alone, it opens the markdown note).")
+			.addDropdown((d) => d.addOptions(clickOptions).setValue(s.libraryClick ?? "dashboard").onChange(async (v) => {
+				s.libraryClick = v as TreeClick;
+				await this.save(false);
+			}));
+		new Setting(containerEl)
+			.setName("Clicking a note in the Files panel")
+			.setDesc("What opens. The dashboard note opens in the Library tab.")
+			.addDropdown((d) => d.addOptions(clickOptions).setValue(s.panelClick ?? "note").onChange(async (v) => {
+				s.panelClick = v as TreeClick;
 				await this.save(false);
 			}));
 
@@ -620,7 +663,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			});
 		});
 		this.rows(containerEl, "Calendar by folder", "Notes in a folder use its calendar (a note's own `calendar:` and a world note win).", [
-			{ key: "folder", label: "Folder", kind: "text", list: "folders", width: "2fr", placeholder: "Vael" },
+			{ key: "folder", label: "Folder", kind: "text", list: "folders", width: "2fr", placeholder: "England" },
 			{ key: "calendar", label: "Calendar", kind: "select", options: () => this.plugin.calendars.all().map((c) => [c.id, c.name] as [string, string]) },
 		], parseMappingLines(s.folderCalendars).map(([folder, calendar]) => ({ folder: folder.replace(/\/$/, ""), calendar })), async (rows) => {
 			s.folderCalendars = rows.filter((r) => r.folder).map((r) => `${r.folder} = ${r.calendar || "gregorian"}`).join("\n");
@@ -1036,21 +1079,35 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		const save = () => this.save(false);
 		new Setting(containerEl).setName("Appearance").setHeading();
 		el("p", { cls: "setting-item-description", text: "Themes restyle only UniverseView's views, boards, embeds and cards. Everything else in Obsidian keeps your theme." }, containerEl);
-		renderThemeCards(containerEl, s.theme, (id) => void (async () => {
-			s.theme = id;
-			await save();
-		})());
-		new Setting(containerEl)
-			.setName("Themes set buttons, tabs, edges, icons and headings")
-			.setDesc("On: each theme brings its own button, tab, edge, icon and heading styles (listed on its card). Off: they stay plain, and only your own picks below apply.")
-			.addToggle((tg) => tg.setValue(s.themeStyles !== false).onChange(async (v) => {
-				s.themeStyles = v ? undefined : false;
+		const mineThemes: MyThemes = {
+			themes: s.savedThemes ?? [],
+			active: s.activeSaved,
+			onPick: (id) => void (async () => {
+				const t = (s.savedThemes ?? []).find((v) => v.id === id);
+				if (!t) return;
+				applyThemeLook(s, t.look);
+				s.activeSaved = id;
 				await save();
-				this.update();
-			}));		new Setting(containerEl)
-			.setName("Tour")
-			.setDesc("A short walk through what UniverseView does, where you can try on the themes and surface styles.")
-			.addButton((b) => b.setButtonText("Take the tour").onClick(() => new TourModal(this.plugin).open()));
+				new Notice(`${t.name} applied.`);
+			})(),
+			onDelete: (id) => {
+				const t = (s.savedThemes ?? []).find((v) => v.id === id);
+				if (!t) return;
+				new ConfirmPrompt(this.plugin, "Delete this theme?", `“${t.name}” will be removed from My themes. The looks it saved can't be brought back.`, "Delete", () => void (async () => {
+					s.savedThemes = (s.savedThemes ?? []).filter((v) => v.id !== id);
+					if (s.activeSaved === id) s.activeSaved = undefined;
+					await save();
+					this.update();
+				})()).open();
+			},
+		};
+		renderThemeCards(containerEl, s.activeSaved ? "" : s.theme, (id) => void (async () => {
+			s.theme = id;
+			const cleared = adoptTheme(s);
+			await save();
+			if (cleared) new Notice(`${THEMES.find((t) => t.id === id)?.name ?? "Theme"} applied. ${cleared} of your own style ${cleared === 1 ? "pick was" : "picks were"} cleared so the theme shows as on its card.`);
+	})(), s.themeStyles === false, mineThemes);
+				
 
 		const colors = new Setting(containerEl)
 			.setName("Colors")
@@ -1079,15 +1136,74 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			})(evt));
 		}
 
-		new Setting(containerEl).setName("Surface").setHeading();
+		new Setting(containerEl).setName("Selected theme").setHeading();
+		const picked = looksOf(s);
 		new Setting(containerEl)
-			.setName("Surface style")
-			.setDesc("Flat is quiet and follows your Obsidian theme. Tactile gives UniverseView's own tabs, buttons and panels raised keys, folder tabs and inset fields, so they're easy to tell from Obsidian's. It works with every theme, and its parts are set under Tactile style.")
-			.addDropdown((d) => d.addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "flat").onChange(async (v) => {
-				s.surfaceStyle = v === "tactile" ? "tactile" : "flat";
+			.setName(picked.name)
+			.setDesc(`${picked.description} Pick another on Theme & colours.`);
+		
+		
+				new Setting(containerEl)
+			.setName("How much the theme does")
+			.setDesc("Views and maps: the theme styles UniverseView and tints its maps. Views only: maps keep their own colours. All of Obsidian: sidebars, tabs and your notes take the theme too (undo by choosing another). Plain: only the theme's colours, backdrop and fonts, with Obsidian's own buttons, tabs and surface.")
+			.addDropdown((d) => {
+				const now = s.themeStyles === false ? "plain" : s.themeScope === "app" ? "app" : s.themeMap === false ? "views" : "maps";
+				d.addOptions({ maps: "Views and maps", views: "Views only (maps keep their colours)", app: "All of Obsidian too", plain: "Plain (colours, backdrop and fonts only)" }).setValue(now).onChange(async (v) => {
+					s.themeStyles = v === "plain" ? false : undefined;
+					s.tactileOwn = v === "plain";
+					s.themeMap = v === "views" || v === "plain" ? false : undefined;
+					s.themeScope = v === "app" ? "app" : undefined;
+					await save();
+					this.update();
+				});
+			});
+		new Setting(containerEl)
+			.setName("Theme colours the maps")
+			.setDesc("On: the theme tints land, water and lettering on every map. Off: maps keep their own colours whatever the theme.")
+			.addToggle((t) => t.setValue(s.themeMap !== false && s.themeStyles !== false).setDisabled(s.themeStyles === false).onChange(async (v) => {
+				s.themeMap = v ? undefined : false;
 				await save();
 				this.update();
 			}));
+		const OVERRIDES = ["themeScope", "themeMap", "buttonStyle", "tabStyle", "edgeStyle", "fontStyle", "iconStyle", "headingStyle", "sketchRandom", "surfaceStyle", "tactileOff", "tactileOwn", "tactileStrength", "tactileFolderColor"];
+		const raw = s as unknown as Record<string, unknown>;
+		const changed = OVERRIDES.filter((k) => raw[k] !== undefined && raw[k] !== "").length + (s.radius >= 0 ? 1 : 0);
+		new Setting(containerEl)
+			.setName("Back to the theme's own")
+			.setDesc(changed ? `${changed} ${changed === 1 ? "choice differs" : "choices differ"} from ${picked.name}'s own: buttons, tabs, edges, icons, headings, fonts, roundness and surface go back to what it brings.` : `Nothing differs from ${picked.name}'s own.`)
+			.addButton((b) => b.setButtonText("Reset").setDisabled(!changed).onClick(async () => {
+				for (const k of OVERRIDES) delete raw[k];
+				s.radius = -1;
+				await save();
+				this.update();
+			}));
+		new Setting(containerEl)
+			.setName("Share this look")
+			.setDesc("Copy the theme, colors, fonts, buttons, tabs, surface, motion and density as text, or paste a look copied from another vault.")
+			.addButton((b) => b.setButtonText("Copy look").onClick(async () => {
+				const look: Record<string, unknown> = {};
+				for (const k of LOOK_KEYS) if (s[k] !== undefined) look[k] = s[k];
+				await navigator.clipboard.writeText(JSON.stringify({ universeviewLook: 1, ...look }));
+				new Notice("Look copied.");
+			}))
+			.addButton((b) => b.setButtonText("Paste look").onClick(async () => {
+				try {
+					const look = JSON.parse(await navigator.clipboard.readText()) as Record<string, unknown>;
+					if (look.universeviewLook !== 1) throw new Error("not a look");
+					const all = s as unknown as Record<string, unknown>;
+					for (const k of LOOK_KEYS) {
+						if (k in look) all[k] = look[k];
+						else if (k === "buttonStyle" || k === "tabStyle" || k === "edgeStyle" || k === "fontStyle" || k === "iconStyle" || k === "headingStyle" || k === "sketchRandom" || k === "surfaceStyle" || k === "tactileOff" || k === "tactileOwn" || k === "tactileStrength" || k === "themeMap" || k === "themeScope") delete all[k];
+					}
+					if (!THEMES.some((t) => t.id === s.theme)) s.theme = "obsidian";
+					await save();
+					this.update();
+					new Notice("Look applied.");
+				} catch {
+					new Notice("The clipboard doesn't hold a copied look.");
+				}
+			}));
+		this.foldHeading(containerEl, "Buttons, tabs and edges");
 		const th = looksOf(s);
 		const own = s.themeStyles === false ? "Plain set" : `${th.name}'s own`;
 		const pick = (title: string, desc: string, build: () => void) => {
@@ -1106,13 +1222,17 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			choices: EDGE_STYLES, value: s.edgeStyle, themeChoice: { id: th.edges, name: "Theme", note: own }, preview: previewEdges,
 			onPick: (id) => void (async () => { s.edgeStyle = id as typeof s.edgeStyle; await save(); })(),
 		}));
-		new Setting(containerEl)
+		if ((s.edgeStyle ?? th.edges) === "sketch") {
+			new Setting(containerEl)
 			.setName("Vary the hand-drawn edge")
-			.setDesc("Every frame gets its own random wobble, so no two are alike (new ones too). Applies when the edge is Hand-drawn; off keeps one shared wobble.")
+			.setDesc("Every frame is drawn with its own outline, so no two are alike. Off: they all share one.")
 			.addToggle((tg) => tg.setValue(s.sketchRandom === true).onChange(async (v) => {
 				s.sketchRandom = v ? true : undefined;
 				await save();
-			}));		pick("Icons", "The stroke weight of UniverseView's icons.", () => stylePicker(containerEl, {
+			}));
+		}
+		this.foldHeading(containerEl, "Icons and headings");
+		pick("Icons","The stroke weight of UniverseView's icons.", () => stylePicker(containerEl, {
 			choices: ICON_STYLES, value: s.iconStyle, themeChoice: { id: th.icons, name: "Theme", note: own }, preview: previewIcons,
 			onPick: (id) => void (async () => { s.iconStyle = id as typeof s.iconStyle; await save(); })(),
 		}));
@@ -1122,67 +1242,76 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		}));		pick("Fonts", "A heading and body pair from fonts already on your device. “Theme” keeps the theme's fonts; the boxes under Fonts below still override.", () => stylePicker(containerEl, {
 			choices: FONT_STYLES, value: s.fontStyle, themeChoice: { id: "theme", name: "Theme", note: "The theme's own fonts" }, preview: previewFonts,
 			onPick: (id) => void (async () => { s.fontStyle = id as typeof s.fontStyle; await save(); })(),
-		}));		new Setting(containerEl)
-			.setName("Share this look")
-			.setDesc("Copy the theme, colors, fonts, buttons, tabs, surface, motion and density as text, or paste a look copied from another vault.")
-			.addButton((b) => b.setButtonText("Copy look").onClick(async () => {
-				const look: Record<string, unknown> = {};
-				for (const k of LOOK_KEYS) if (s[k] !== undefined) look[k] = s[k];
-				await navigator.clipboard.writeText(JSON.stringify({ universeviewLook: 1, ...look }));
-				new Notice("Look copied.");
-			}))
-			.addButton((b) => b.setButtonText("Paste look").onClick(async () => {
-				try {
-					const look = JSON.parse(await navigator.clipboard.readText()) as Record<string, unknown>;
-					if (look.universeviewLook !== 1) throw new Error("not a look");
-					const all = s as unknown as Record<string, unknown>;
-					for (const k of LOOK_KEYS) {
-						if (k in look) all[k] = look[k];
-						else if (k === "buttonStyle" || k === "tabStyle" || k === "edgeStyle" || k === "fontStyle" || k === "iconStyle" || k === "headingStyle" || k === "sketchRandom") delete all[k];
-					}
-					if (!THEMES.some((t) => t.id === s.theme)) s.theme = "obsidian";
+		}));		// Fonts: any font installed on your computer, or one of the suggestions; empty keeps the theme's.
+		this.foldHeading(containerEl, "Fonts");
+		const fontList = "universeview-font-suggestions";
+		if (!document.getElementById(fontList)) {
+			const dl = document.body.createEl("datalist", { attr: { id: fontList } });
+			for (const f of ["Cinzel", "Garamond", "EB Garamond", "Palatino Linotype", "Book Antiqua", "Georgia", "Libre Baskerville", "Cormorant Garamond", "Merriweather", "Inter", "Segoe UI", "Roboto", "Open Sans", "Lato", "Trebuchet MS", "Verdana", "Consolas", "Cascadia Code", "Orbitron", "Uncial Antiqua", "MedievalSharp", "IM Fell English"]) dl.createEl("option", { attr: { value: f } });
+		}
+		const fontField = (name: string, desc: string, get: () => string | undefined, put: (v: string) => void) =>
+			new Setting(containerEl).setName(name).setDesc(desc).addText((t) => {
+				t.setPlaceholder("Theme default").setValue(get() ?? "");
+				t.inputEl.setAttribute("list", fontList);
+				t.inputEl.addEventListener("change", () => void (async () => {
+					put(t.getValue().trim());
 					await save();
-					this.update();
-					new Notice("Look applied.");
-				} catch {
-					new Notice("The clipboard doesn't hold a copied look.");
-				}
-			}));
-		new Setting(containerEl)
-			.setName("Motion")
-			.setDesc("How quickly panels, cards, pins and the map animate. “Off” also applies when your system asks for reduced motion.")
-			.addDropdown((d) => {
-				for (const m of MOTIONS) d.addOption(m.id, `${m.name} — ${m.desc}`);
-				d.setValue(s.motion).onChange(async (v) => {
-					s.motion = v as typeof s.motion;
-					await save();
-				});
+				})());
 			});
-		new Setting(containerEl)
-			.setName("Density")
-			.setDesc("Spacing of toolbars, lists and cards.")
-			.addDropdown((d) => d.addOptions({ compact: "Compact", cozy: "Cozy", roomy: "Roomy" }).setValue(s.density).onChange(async (v) => {
-				s.density = v as typeof s.density;
+		fontField("Text", "UniverseView's views, panels and cards.", () => s.fontUi, (v) => (s.fontUi = v));
+		fontField("Headings and names", "Titles, names on cards, realm names on the map.", () => s.fontDisplay, (v) => (s.fontDisplay = v));
+		fontField("Map labels", "Place and territory names on maps (empty: the headings font for territories).", () => s.fontMap, (v) => (s.fontMap = v));
+		this.foldHeading(containerEl, "Roundness");
+		const themeR = themeRadius(s.theme);
+		const nowR = s.radius >= 0 ? s.radius : themeR;
+		new Setting(containerEl).setName("Corner style").setDesc(`How round cards, panels, buttons and tabs are. ${picked.name} is ${themeR}px. A preset or the slider overrides that for every theme; picking another theme puts it back to its own.`);
+		stylePicker(containerEl, {
+			choices: RADIUS_PRESETS.map((r) => ({ id: r.id, name: r.name, note: `${r.px}px` })),
+			value: s.radius < 0 ? undefined : RADIUS_PRESETS.find((r) => r.px === s.radius)?.id,
+			themeChoice: { id: "theme", name: "Theme's own", note: `${themeR}px` },
+			preview: previewRadius((id) => (id === "theme" ? themeR : (RADIUS_PRESETS.find((r) => r.id === id)?.px ?? themeR))),
+			onPick: (id) => void (async () => {
+				s.radius = id === undefined ? -1 : (RADIUS_PRESETS.find((r) => r.id === id)?.px ?? -1);
 				await save();
-			}));
+				this.update();
+			})(),
+		});
 		new Setting(containerEl)
-			.setName("Corner radius")
-			.setDesc("Roundness of cards and panels. All the way left uses the theme's.")
-			.addSlider((sl) => sl.setLimits(-1, 20, 1).setValue(s.radius).onChange(async (v) => {
+			.setName("Fine tune")
+			.setDesc("Any radius from square (0) to very round (28px).")
+			.addSlider((sl) => sl.setLimits(0, 28, 1).setValue(nowR).onChange(async (v) => {
 				s.radius = v;
 				await save();
-			}));
-		new Setting(containerEl)
-			.setName("Flat style")
-			.setDesc("No shadows on cards and panels.")
-			.addToggle((t) => t.setValue(!!s.flatStyle).onChange(async (v) => {
-				s.flatStyle = v;
+			}))
+			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to the theme's own").onClick(async () => {
+				s.radius = -1;
 				await save();
+				this.update();
 			}));
-
 		// The tactile style is made of parts, each its own switch; this section only shows while Tactile is on.
-		new Setting(containerEl).setName("Tactile style").setHeading();
-		const offNow = () => s.tactileOff ?? [];
+		this.foldHeading(containerEl, "Surface and tactile");
+		new Setting(containerEl)
+			.setName("Use my own surface")
+			.setDesc(`Off: ${picked.name}'s own (${picked.surface.tactile ? "tactile" : "flat"}${picked.surface.tactile && picked.surface.off?.length ? `, without ${picked.surface.off.length} of its parts` : ""}). On: the surface, parts, strength and folder colour you set here apply instead, with any theme. Your choices are kept either way.`)
+			.addToggle((tg) => tg.setValue(personalSurface(s)).onChange(async (on) => {
+				s.tactileOwn = on;
+				// Switching mine on starts tactile, so there is something to customise.
+				if (on && s.surfaceStyle === undefined) s.surfaceStyle = "tactile";
+				await save();
+				this.update();
+			}));
+		if (personalSurface(s)) {
+			new Setting(containerEl)
+				.setName("Surface")
+				.setDesc("Tactile gives UniverseView's own tabs, buttons and panels raised keys, folder tabs and inset fields; flat is quiet and follows your Obsidian theme.")
+				.addDropdown((d) => d.addOption("theme", "Theme's own").addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "theme").onChange(async (v) => {
+					s.surfaceStyle = v === "tactile" || v === "flat" ? v : undefined;
+					await save();
+					this.update();
+				}));
+		}
+		if (personalSurface(s) && surfaceOf(s).tactile) {
+		const offNow = () => surfaceOf(s).off;
 		const presetNow = () => TACTILE_PRESETS.find((p) => p.off.length === offNow().length && p.off.every((x) => offNow().includes(x)))?.id ?? "custom";
 		new Setting(containerEl)
 			.setName("Parts")
@@ -1210,14 +1339,13 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		}
 		new Setting(containerEl)
 			.setName("Strength")
-			.setDesc("How deep the bevels and shadows are. 100% is the default.")
-			.addSlider((sl) => sl.setLimits(20, 220, 5).setValue(s.tactileStrength ?? ({ subtle: 55, normal: 100, deep: 160 }[s.tactileDepth ?? "normal"])).onChange(async (v) => {
+			.setDesc("How deep the bevels and shadows are. The theme starts at its own strength.")
+			.addSlider((sl) => sl.setLimits(20, 220, 5).setValue(surfaceOf(s).strength).onChange(async (v) => {
 				s.tactileStrength = v;
 				await save();
 			}))
-			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to 100%").onClick(async () => {
+			.addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Back to the theme's strength").onClick(async () => {
 				s.tactileStrength = undefined;
-				s.tactileDepth = undefined;
 				await save();
 				this.update();
 			}));
@@ -1234,6 +1362,113 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 				this.update();
 			}));
 
+				}
+
+		this.foldHeading(containerEl, "Motion and density");
+		new Setting(containerEl)
+			.setName("Motion")
+			.setDesc("How quickly panels, cards, pins and the map animate. “Off” also applies when your system asks for reduced motion.")
+			.addDropdown((d) => {
+				for (const m of MOTIONS) d.addOption(m.id, `${m.name} — ${m.desc}`);
+				d.setValue(s.motion).onChange(async (v) => {
+					s.motion = v as typeof s.motion;
+					await save();
+				});
+			});
+		new Setting(containerEl)
+			.setName("Density")
+			.setDesc("Spacing of toolbars, lists and cards.")
+			.addDropdown((d) => d.addOptions({ compact: "Compact", cozy: "Cozy", roomy: "Roomy" }).setValue(s.density).onChange(async (v) => {
+				s.density = v as typeof s.density;
+				await save();
+			}));
+
+		new Setting(containerEl)
+			.setName("Animations")
+			.setDesc("Everything UniverseView animates: titles written or typed out, buttons outlined and coloured in, tabs and rows drawn in, cards dealt, lines and maps drawn, pins dropped, dialogs and cards opening. Turn it off on a large vault or a slow device. It is also off when Motion is Off or your system asks for reduced motion.")
+			.addToggle((tg) => tg.setValue(s.inkAnimation !== false).onChange(async (v) => {
+				s.inkAnimation = v ? undefined : false;
+				await save();
+			}));
+		
+		
+
+				// The theme maker: save the looks in force as a theme of your own, with its own preview card.
+		this.foldHeading(containerEl, "Sounds");
+		const sounds = this.plugin.sounds;
+		new Setting(containerEl)
+			.setName("Writing sounds")
+			.setDesc("The noise of a pencil, pen, typewriter or keyboard, made in your device (nothing is downloaded). Silent until you choose a set. “Theme's own” gives each theme its own: pencil for Notebook, typewriter for Typewriter, retro beeps for Desktop.")
+			.addDropdown((d) => {
+				d.addOption("off", "Off").addOption("theme", `Theme's own (${themeSoundName(s.theme)})`);
+				for (const set of SOUND_SETS) d.addOption(set.id, `${set.name}: ${set.note}`);
+				d.setValue(s.soundSet ?? "off").onChange(async (v) => {
+					s.soundSet = v === "off" ? undefined : v;
+					await save();
+					sounds.play("key", true);
+				});
+			});
+		new Setting(containerEl)
+			.setName("Volume")
+			.addSlider((sl) => sl.setLimits(0, 100, 5).setValue(s.soundVolume ?? 40).onChange(async (v) => {
+				s.soundVolume = v;
+				await save();
+				sounds.play("key", true);
+			}));
+		const sw = (name: string, desc: string, get: () => boolean | undefined, put: (v: boolean) => void) =>
+			new Setting(containerEl).setName(name).setDesc(desc).addToggle((tg) => tg.setValue(!!get()).onChange(async (v) => {
+				put(v);
+				await save();
+			}));
+		sw("While I type", "A sound for each key in notes and text boxes (a bell on Enter with the typewriter).", () => s.soundTyping, (v) => (s.soundTyping = v || undefined));
+		sw("As titles are written", "A scratch as a title is written out by hand, and a tick for each letter as one is typed.", () => s.soundWriting, (v) => (s.soundWriting = v || undefined));
+		sw("When I press a button", "A tap on buttons, tabs and theme cards.", () => s.soundClicks, (v) => (s.soundClicks = v || undefined));
+		new Setting(containerEl)
+			.setName("Try it")
+			.setDesc("Type here to hear the set.")
+			.addText((tx) => {
+				tx.setPlaceholder("Type something…");
+				tx.inputEl.addEventListener("keydown", (e) => sounds.play(e.key === " " ? "space" : e.key === "Enter" ? "enter" : e.key === "Backspace" ? "back" : "key", true));
+			})
+			.addButton((b) => b.setButtonText("Write").onClick(() => {
+				for (let i = 0; i < 6; i++) window.setTimeout(() => sounds.play("stroke", true), i * 200);
+			}));
+		this.foldHeading(containerEl, "My themes");
+		const mine = s.savedThemes ?? [];
+		const activeTheme = mine.find((t) => t.id === s.activeSaved);
+		let makerName = activeTheme?.name ?? "";
+		new Setting(containerEl)
+			.setName("Theme maker")
+			.setDesc(`Choose the looks you want in the sections above (buttons, tabs, edges, icons, headings, fonts, roundness, surface, motion, colours), with ${picked.name} giving the palette and backdrop. Then save them as a theme of your own: it gets a preview card under My themes on Theme & colours.`);
+		new Setting(containerEl)
+			.setName("Name")
+			.addText((t) => t.setPlaceholder("My theme").setValue(makerName).onChange((v) => (makerName = v)));
+		new Setting(containerEl)
+			.setName("Save as a new theme")
+			.addButton((b) => b.setButtonText("Save").setCta().onClick(async () => {
+				const name = makerName.trim();
+				if (!name) {
+					new Notice("Give the theme a name first.");
+					return;
+				}
+				const id = `t${Date.now().toString(36)}`;
+				s.savedThemes = [...mine, { id, name, look: captureLook(s) }];
+				s.activeSaved = id;
+				await save();
+				this.update();
+				new Notice(`Saved “${name}” under My themes.`);
+			}));
+		if (activeTheme) {
+			new Setting(containerEl)
+				.setName(`Update “${activeTheme.name}”`)
+				.setDesc("Replace its saved looks with the ones in force now.")
+				.addButton((b) => b.onClick(async () => {
+					activeTheme.look = captureLook(s);
+					await save();
+					this.update();
+					new Notice(`Updated “${activeTheme.name}”.`);
+				}).setButtonText("Update"));
+		}
 		// Views: sizes in the timeline and family tree (what the Style Settings plugin used to offer).
 		const viewsHead = new Setting(containerEl).setName("Views").setHeading();
 		helpTip(viewsHead.nameEl, "Sizes and tints in the timeline and family tree. These used to need the Style Settings plugin; they're all here now.");
@@ -1295,34 +1530,24 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 				s.showWhatsNew = v;
 				await save();
 			}));
+		new Setting(containerEl)
+			.setName("Tour")
+			.setDesc("A short walk through what UniverseView does, where you can try on the themes and surface styles.")
+			.addButton((b) => b.setButtonText("Take the tour").onClick(() => new TourModal(this.plugin).open()));
 		// Every version, newest first, right here (there is nothing else on this page to click through to).
-		el("h4", { cls: "uv-history-head", text: `Version ${buildLabel(this.plugin.manifest.version).long}: what changed in every version` }, containerEl);
+		const historyHead = el("h4", { cls: "uv-history-head", text: `Version ${buildLabel(this.plugin.manifest.version).long}: what changed in every version` }, containerEl);
 		const history = el("div", { cls: "uv-whatsnew-list" }, containerEl);
 		this.history.unload();
 		this.history = new Component();
 		this.history.load();
-		renderHistory(this.app, history, builtInChangelog(), this.history, 1);
-		// Fonts: any font installed on your computer, or one of the suggestions; empty keeps the theme's.
-		const fontsHead = new Setting(containerEl).setName("Fonts").setHeading();
-		helpTip(fontsHead.nameEl, "Type a font's name (any font installed on your computer) or pick a suggestion. Leave it empty to use the UniverseView theme's font, or Obsidian's.");
-		const fontList = "universeview-font-suggestions";
-		if (!document.getElementById(fontList)) {
-			const dl = document.body.createEl("datalist", { attr: { id: fontList } });
-			for (const f of ["Cinzel", "Garamond", "EB Garamond", "Palatino Linotype", "Book Antiqua", "Georgia", "Libre Baskerville", "Cormorant Garamond", "Merriweather", "Inter", "Segoe UI", "Roboto", "Open Sans", "Lato", "Trebuchet MS", "Verdana", "Consolas", "Cascadia Code", "Orbitron", "Uncial Antiqua", "MedievalSharp", "IM Fell English"]) dl.createEl("option", { attr: { value: f } });
-		}
-		const fontField = (name: string, desc: string, get: () => string | undefined, put: (v: string) => void) =>
-			new Setting(containerEl).setName(name).setDesc(desc).addText((t) => {
-				t.setPlaceholder("Theme default").setValue(get() ?? "");
-				t.inputEl.setAttribute("list", fontList);
-				t.inputEl.addEventListener("change", () => void (async () => {
-					put(t.getValue().trim());
-					await save();
-				})());
-			});
-		fontField("Text", "UniverseView's views, panels and cards.", () => s.fontUi, (v) => (s.fontUi = v));
-		fontField("Headings and names", "Titles, names on cards, realm names on the map.", () => s.fontDisplay, (v) => (s.fontDisplay = v));
-		fontField("Map labels", "Place and territory names on maps (empty: the headings font for territories).", () => s.fontMap, (v) => (s.fontMap = v));
-
+		// Drawing every version's notes is slow and the settings are rebuilt on every change: draw them only once the About page is on screen.
+		const owner = this.history;
+		const seen = new IntersectionObserver((hits) => {
+			if (!hits.some((h) => h.isIntersecting)) return;
+			seen.disconnect();
+			renderHistory(this.app, history, builtInChangelog(), owner, 1);
+		});
+		seen.observe(historyHead);
 		// ---- Inspector, and what hover cards show ----------------------------------------------
 		const inspHead = new Setting(containerEl).setName("Inspector").setHeading();
 		helpTip(inspHead.nameEl, "The side panel for the note you're on (Ctrl/Cmd+Alt+I). Click any section's heading there to fold it; folded sections stay folded for every note until you open them again.");

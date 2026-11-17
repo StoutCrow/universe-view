@@ -28,6 +28,8 @@ export interface TimelineOptions {
 	cultures: boolean;
 	/** Places and titles with a founding date (provinces, towns, forts), as spans. */
 	places?: boolean;
+	/** Objects with a made and lost date, as bars. */
+	objects?: boolean;
 	calendar?: string;
 	focus?: string;
 	/** Story notes (with a story-date:) as points among the events. */
@@ -305,6 +307,25 @@ export class TimelineRenderer {
 				markOpen(pl, to);
 			}
 		}
+		if (options.objects) {
+			for (const ob of idx.all("object")) {
+				if (!idx.matches(ob, personFilter)) continue;
+				// Who held it when: each holder's time with it, as a span in the object's lane.
+				ob.cultures.forEach((h, i) => {
+					const a = h.from?.start ?? ob.start?.start;
+					const next = ob.cultures[i + 1]?.from?.start;
+					const b = h.to?.end ?? (next !== undefined ? next - 1 : plugin.openEndOf(ob) ?? ob.end?.end ?? a);
+					if (a === undefined || b === undefined) return;
+					add(ob, "custody", a, Math.max(a, b), a === b, false, `${h.ref.name} holds ${ob.name}: ${formatSpan(h.from, h.to, cal)}`, `${h.ref.name} · ${ob.name}`);
+					out[out.length - 1].context = ob.key;
+				});
+				if (!(ob.start || ob.end)) continue;
+				const r = rangeOf(ob)!;
+				const to = openTo(ob);
+				add(ob, "object", r[0], to ?? r[1], to === undefined && r[0] === r[1], !!(ob.start?.approx || ob.end?.approx), formatSpan(ob.start, ob.end, cal) + (to !== undefined ? " – now" : ""));
+				markOpen(ob, to);
+			}
+		}
 		// Holders of titles (`holders:`): each one's time holding it, as a span.
 		for (const e of options.reigns === false ? [] : idx.all()) {
 			if (!e.holders?.length || !idx.matches(e, personFilter)) continue;
@@ -554,7 +575,7 @@ export class TimelineRenderer {
 			["From", e.startPlace ? [{ key: e.startPlace.key, name: e.startPlace.name }] : []],
 			["To", e.endPlace ? [{ key: e.endPlace.key, name: e.endPlace.name }] : []],
 			["Where", e.places.filter((r) => r.key !== e.startPlace?.key && r.key !== e.endPlace?.key).map((r) => ({ key: r.key, name: r.name }))],
-			["Groups", e.cultures.map((c) => ({ key: c.ref.key, name: c.ref.name }))],
+			["Societies", e.cultures.map((c) => ({ key: c.ref.key, name: c.ref.name }))],
 			["Sides", sidesOf(idx, e).map((s) => ({ key: s.party.key, name: `${s.party.name}${s.outcome ? ` (${s.outcome})` : ""}` }))],
 		];
 		const war = warOf(idx, e);

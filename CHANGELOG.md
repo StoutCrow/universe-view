@@ -2,6 +2,73 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.6.0 — not released yet
+
+### Library clicks and hover card
+- **Choose what a click opens** in the Library and in the Files panel (Settings): the dashboard note, the markdown note, the inspector, or the note or dashboard together with the inspector.
+- **Hover card with the Hand-drawn edge** no longer shows bumps and broken frames down its sides.
+
+### New kinds of note
+- **Objects** (a crown, a sword, a relic): `made:`/`destroyed:` dates, who held it (`cultures:` entries with `from:` and `to:`) and where it was kept (`places:` entries with dates). A **Journey** list follows the places it was kept and where each holder lived while holding it. The map's *Trace a journey* draws that path, numbered, up to the date shown. The timeline's *Show > Objects* layer draws the object and one bar for each holder.
+- **Creatures**: no dates, so they never appear on the timeline. They list where they are found and who they belong to. A place's map popup lists its **Creatures** (those found in it or in any place inside it) beside its Cultures, Languages and Faiths.
+- **Languages** are a kind of group with a row of their own next to Culture and Faith: `language:`, `languages:` or `speaks:` on a person or place, or a group of kind "language" in `cultures:`.
+- The **quick creator** has Language, Object and Creature, and the batch list cycles through them.
+- The **Library** has a tile for each kind of group (peoples, languages, faiths) that filters the tree. **Connections** has Objects (hexagons) and Creatures (dashed circles) chips.
+- Everything above is in the example vault: English, Latin and Welsh, the red dragon, and the Bosworth Crown.
+
+- **"Group" is now "Society"** everywhere you read it (the type, tiles, tabs, columns, the default folder for new vaults). The saved names do not change: `type: culture`, `#Group_...` tags and your folders keep working.
+- **Each kind of society has its own words and questions**, because a spoken language is used and joined differently from a family, a culture, a faith, a realm or an organisation. Members are *Subjects*, *Members* of a house, *People*, *Speakers*, *Followers* or *Members*. Places are *Lands*, *Seats*, *Homeland*, *Spoken in*, *Holy places* or *Based at*. Branches are *Divisions*, *Cadet branches*, *Dialects and descendants*, *Denominations* or *Sub-organisations*. Dates read *Founded / Fell*, *Founded / Died out*, *Emerged / Faded*, *First spoken / Last spoken*, *Founded / Ended* or *Founded / Disbanded*.
+- **The quick creator asks what fits the kind**: a language has no "Led by" and no liege, a realm has both, a house has a *Head of the house*, a faith a *Head of the faith*.
+### Relationships
+- **Connections, Family tree and Organisation are one view** with a mode switch; the dashboard tab is *Relationships*.
+- **Partners and former partners are one list**, current first, each with the same wording (Spouse, Former spouse, Widowed, Ex-lover), in the Library, the inspector, the hover card and the links tab.
+- **Worked-out ties** are dashed, say what they were worked out from, and have a tick to **Keep** them (write them into the note). A header button keeps every worked-out tie in a list at once, and Undo reverses it. This covers heirs, siblings and the like, and partnerships ended by a death.
+
+### Files panel and Library
+- **One view in two places.** The files panel in the sidebar is the Library, opened as the tree alone. Turn on the summary or details and it is the whole Library, in the sidebar. Each has a button to open the other.
+
+### Themes, animations and sounds
+- **New themes and a theme maker**, each theme with its own buttons, tabs, edges, icons, headings, fonts, roundness, selection colour and frame. Hover a theme card to preview its backdrop and button style. Save your own mix as a theme.
+- **How much the theme does**: the whole of Obsidian too, UniverseView only, or colours and fonts only. **Theme colours the maps** is its own switch.
+- **Animations** (one switch): titles written or typed out, buttons outlined and coloured in, tabs and rows drawn in, cards dealt, family and connection lines drawing themselves, maps fading in with pins dropping, and dialogs opening the way the theme would. Off when Motion is Off or your system asks for reduced motion.
+- **Sounds** (Settings > Theme settings): typewriter, keyboard, retro, synth, bubble and thud sets for typing, written titles and button presses, with a volume and a place to try them. Silent until you pick one.
+- **Settings are regrouped**: Views and panels is one page, Notes and families is one page.
+
+### Example vault
+- The example vault is the Tudors alone. The invented world is gone.
+
+### Groups
+- **A group knows what it is a branch of.** A group's panel shows its chain under the name, the group first and then each group it is a branch of (Cadet house, Main house, Realm), each a link. Under any group chip with nothing else to say, the groups above it are named.
+- **Members roll up from branches.** *Members* has a button to show this group alone or with everyone in its branches, each marked "via" the branch they came from. Each branch lists its own member count, and a group's events include those of its branches.
+- **A seat is a seat**: a group's `places:` is listed as *Seat*, with each place's address.
+- **The quick creator makes every kind of group** with one click: Realm, House, Faith, People, Organisation or Group.
+- **"Cultures" no longer names groups.** The full creator, the dashboard, the command list and new vaults' default folder say *Groups*. *Culture* is now only one kind of group (a people), as *House* and *Faith* are. Your notes and settings are untouched: `type: culture` and `cultures:` still read and write as before.
+
+### Map
+- **A realm shown whole looks like a realm.** Zooming out used to change the names but leave the look as the smallest division's. A duchy made of counties lost its tier's edge (the band or double line) when its counties merged, while a duchy drawn as one area kept it. A merged realm now gets its tier's edge along its whole outline, and its fill and line follow the tier it shows as, on every zoom.
+- **A land ranks below the one it is under.** A realm tagged `#Group_Realm` under a kingdom counted as a kingdom itself (and wore the kingdom look); it is now a duchy, one tier below the title above it. Titles on the regions' own scale are left alone.
+- **The picked-land panel says what its buttons do**: *Zoom in* (into the land's divisions), *Zoom out to* the realm above, *Edit borders*, *Inspect* and *Open note*. The old *Split* clashed with the *Split* tool that cuts a land along a line.
+
+### Right-click menus
+- **The file explorer's menu is shorter.** Obsidian's own menu is long, so UniverseView now adds only *Inspect*, *Show in*, *Find out* and one *More* (relatives, an event for a place, change icon). A folder gets one *Folder in UniverseView* entry holding its five views instead of five lines.
+- **The Files panel and Library menu is fuller, in order**: open it (Inspect, Open note, Open beside, Copy link); do something to it (*Rename…*, *Move to…*, *Change icon…*); look at it elsewhere (*Show in*, *Find out*, relatives or *Add event here…*); *More* (open in a new tab, copy path, make a copy); and *Delete…* last, in red, asking first and going to the trash. Plain notes and folders get the same shape.
+- **Click a note's icon to change it**, in the Files panel and in Obsidian's file explorer. The icon darkens when the pointer is on it, and the rest of the row still opens or picks the note.
+
+### Border check
+- **Fix all goes round again** while that helps (up to four rounds), because fixing one border can show the next: a closed gap leaves a neighbour's crossing, or a pocket. On a map with 21 findings one click now leaves 3 (the ones that need a decision) instead of 12. The notice says how many rounds it took, and Undo still puts each fix back one at a time.
+
+- **Weld shared borders** (a button in the border check): where two lands' borders run side by side a few pixels apart, which draws as a doubled line, it moves the smaller land's border onto the bigger one's, snapping corners and following the neighbour's corners between them. Bigger lands stay as they are, duplicate corners and one-corner spikes are taken out, a land that would change more than 4% is left alone, and the whole weld is one Undo step. Run it first, then *Fix all*: that leaves only the tiny slivers to delete.
+
+- **The border check finds what it missed**, and *Fix all* fixes it:
+  - *A border that touches itself*: one that runs along a stretch twice, or comes back to a corner it passed, hangs a small triangle off its line. It is found as *Crossed*, and untangling cuts the loop away (two real lobes meeting at a point stay).
+  - *Thin overlaps*: a stretch of border pushed a few pixels into its neighbour, too narrow for the old check, drawn as two lines. *Trim to one border* cuts the smaller land back to the bigger one's line.
+  - *Spikes*: short, sharp points and hooks on a border where it meets a neighbour (coasts keep their detail). *Simplify* takes them off; a tiny hook both lands share goes from both, so they stay on one line.
+- **A realm's soft band follows its border.** The band of colour just inside a realm's border was drawn from an outline smoothed by about 13 pixels on a big map, so along a gently curving border (a river bank) it cut straight across and left a strip that looked as if the land stopped short of its border. It now stays within about 2 pixels of the border.
+- **Fix all welds as it goes**, then tidies what welding leaves, so one click leaves only what needs a decision.
+
+### Liege and descent
+- **"Part of" and "Descends from" were two meanings in one place.** A group's line of descent is now only ever *Descends from* (the Library, the table, the creators, the hover card and the panel), and who it answers to is its **liege**: the quick creator has a Liege field, and the hover card shows *Liege* (a group's older `cultures:` list reads as a liege too). The Library no longer mixes group memberships into the descent row; the notes themselves are untouched.
+
 ## 4.5.0 — 2026-11-13
 
 ### Places have an address
@@ -71,7 +138,7 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 - A realm with no tier and a title of its own no longer gives its ruler the lowest tier's form of address: there is none to go by, so none is shown.
 - **A realm's edit form has a section of its own** that says what a realm is: its land (seat and borders), its people, and its crown (its ruler and the ruler's title).
 - **Its people** (`demonym:`, or `nationality:`): what its people are called, as England's are English.
-- **Ruler's title** (`ruler-title: King, Queen`): what its ruler is called, for a man and a woman. Family tree cards use it ("Doge of Vael"), so a realm of a kind of its own, with no tier word for its ruler, still gives its ruler a title. Empty uses the tier's title as before.
+- **Ruler's title** (`ruler-title: King, Queen`): what its ruler is called, for a man and a woman. Family tree cards use it ("Doge of England"), so a realm of a kind of its own, with no tier word for its ruler, still gives its ruler a title. Empty uses the tier's title as before.
 - **The Realm, Culture and Faith boxes say what they mean**, for people and for places: a person's Realm is the realm they are a subject of (their nationality), a place's is the realm that rules the land, and Culture is a people by language and custom, which can differ from the realm. Each says where the other meanings go (titles on the realm, a region under Located in).
 
 ### Inspector
@@ -122,7 +189,7 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 ## 4.0.1 — 2026-11-12
 
 ### Family tree
-- **A realm named in a belonging tag counts.** A group named in a tag such as `#Group_Realm_Vael` or `#Group_House_Tudor` is now one of the person's or place's groups, shown with the ones written in properties, so two people of the same realm no longer look as if one has none.
+- **A realm named in a belonging tag counts.** A group named in a tag such as `#Group_Realm_England` or `#Group_House_Tudor` is now one of the person's or place's groups, shown with the ones written in properties, so two people of the same realm no longer look as if one has none.
 - **Choose what shows under the name** (Options → *Under the name*): realm and house together (the new default, realm first), or the realm, house, culture, faith or organisation alone, or nothing. It is saved with the view.
 
 ## 4.0.0 — 2026-11-12

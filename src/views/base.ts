@@ -126,9 +126,13 @@ export abstract class UniverseViewBase extends ItemView {
 	 * from one to the other keeps the same years in view.
 	 */
 	protected modeSwitch(parent: HTMLElement, current: string) {
-		const modes: [string, string, string][] = [["chronicle-timeline", "Events", "calendar-range"], ["chronicle-lineage", "Lineage", "git-branch"]];
+		const SETS: [string, string, string][][] = [
+			[["chronicle-timeline", "Events", "calendar-range"], ["chronicle-lineage", "Lineage", "git-branch"]],
+			[["chronicle-network", "Connections", "waypoints"], ["chronicle-family", "Family tree", "git-fork"], ["chronicle-orgchart", "Organisation", "network"]],
+		];
+		const modes = SETS.find((s) => s.some(([id]) => id === current)) ?? SETS[0];
 		if (!modes.every(([id]) => this.plugin.moduleOn(id))) return;
-		const box = el("div", { cls: "universeview-segmented", attr: { role: "group", "aria-label": "Timeline mode" } }, parent);
+		const box = el("div", { cls: "universeview-segmented", attr: { role: "group", "aria-label": "View mode" } }, parent);
 		for (const [id, label, ic] of modes) {
 			const b = el("button", { cls: "universeview-segment" + (id === current ? " is-active" : ""), attr: { "aria-pressed": String(id === current) } }, box);
 			icon(el("span", { cls: "universeview-chip-icon" }, b), ic);

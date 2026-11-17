@@ -19,7 +19,15 @@ export function renderHistory(app: App, host: HTMLElement, entries: ChangelogEnt
 		sum.createSpan({ cls: "uv-whatsnew-version", text: e.version });
 		if (e.date) sum.createSpan({ cls: "uv-whatsnew-date", text: e.date });
 		const body = sec.createDiv({ cls: "uv-whatsnew-body markdown-rendered" });
-		void MarkdownRenderer.render(app, e.body, body, "", component);
+		// Only the open version is drawn now; the others when opened (rendering every version's notes is slow).
+		let drawn = false;
+		const draw = () => {
+			if (drawn) return;
+			drawn = true;
+			void MarkdownRenderer.render(app, e.body, body, "", component);
+		};
+		if (sec.open) draw();
+		else sec.addEventListener("toggle", draw, { once: true });
 	});
 }
 

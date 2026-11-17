@@ -81,7 +81,7 @@ export function splitNameSheet(p: UniverseViewPlugin, owner: Entity, done: (name
 		title: `The land split off ${owner.name}`,
 		icon: "scissors",
 		intro: `The part you picked becomes a land of its own, under ${owner.name}, which keeps the rest.`,
-		fields: [{ key: "name", kind: "text", label: "Name", placeholder: "e.g. the March of Vael" }],
+		fields: [{ key: "name", kind: "text", label: "Name", placeholder: "e.g. the March of England" }],
 		check: (v) => (!v.name.trim() ? "Name the land." : p.index.findByName(v.name.trim()) ? `There's already a note called ${v.name.trim()}.` : undefined),
 		preview: (v) => `${v.name.trim()} takes the picked part; ${owner.name} keeps the other.`,
 		submit: "Split it",

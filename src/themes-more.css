@@ -1,0 +1,333 @@
+/* ==== More themes: Journal, Neon, Typewriter, Woodcut, Watercolor ================================
+   Same method as themes.css: variables are redefined only inside UniverseView surfaces. Fonts are the
+   ones already on the machine. Journal and Neon are dark in both Obsidian modes (that is their look). */
+
+/* Kerning and ligatures on for every theme here, and the capital-letter looks keep big titles big. */
+body:is(.universeview-theme-journal, .universeview-theme-neon, .universeview-theme-typewriter, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-notebook) .universeview-scope {
+	font-kerning: normal;
+	font-variant-ligatures: common-ligatures;
+}
+body:is(.universeview-theme-neon, .universeview-theme-typewriter, .universeview-theme-woodcut):not(#uv-strong) .universeview-ov-title {
+	font-size: 2.2em;
+	text-decoration: none;
+}
+body:is(.universeview-theme-woodcut, .universeview-theme-neon):not(#uv-strong) :is(.universeview-module-title, .universeview-ov-panel-head h3) { text-decoration: none; }
+body.universeview-theme-neon .universeview-ov-title { letter-spacing: 0.06em; }
+body.universeview-theme-typewriter .universeview-ov-title { letter-spacing: 0.08em; }
+
+/* ---- Journal: tooled leather with brass, cream pages in the cards ---- */
+body.universeview-theme-journal {
+	--uv-t-folder: #a8743a;
+	--universeview-theme-accent: #c8963e;
+	--universeview-theme-event: #d9734f;
+	--universeview-theme-person: #9cc27f;
+	--universeview-theme-culture: #b99ad6;
+	--universeview-theme-place: #d9b25c;
+}
+body.universeview-theme-journal .universeview-scope, body.universeview-theme-journal.uv-scope-app {
+	--background-primary: #2a1d14;
+	--background-primary-alt: #301f15;
+	--background-secondary: #382619;
+	--background-secondary-alt: #402c1d;
+	--background-modifier-border: #5a4128;
+	--background-modifier-border-hover: #7b5a36;
+	--background-modifier-hover: rgba(230, 180, 110, 0.1);
+	--background-modifier-form-field: #21160f;
+	--interactive-normal: #3a291b;
+	--interactive-hover: #46321f;
+	--text-normal: #f0e2c0;
+	--text-muted: #c9b48a;
+	--text-faint: #937f58;
+	--text-on-accent: #2a1d14;
+	--universeview-grid: rgba(240, 200, 130, 0.12);
+	--universeview-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+	--universeview-shadow-lift: 0 12px 26px rgba(0, 0, 0, 0.7);
+	--font-interface: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+	/* Leather grain: pebbled noise under a soft vignette. */
+	--universeview-backdrop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='turbulence' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+		radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+	color-scheme: dark;
+	color: var(--text-normal);
+	font-family: var(--font-interface);
+}
+/* Cards are cream pages stitched into the cover, with brass corners. */
+body.universeview-theme-journal .universeview-card {
+	--background-primary: #f1e6c8;
+	--text-normal: #33261a;
+	--text-muted: #6a553a;
+	background: #f1e6c8;
+	color: #33261a;
+	box-shadow: var(--universeview-shadow), inset 0 0 0 4px #f1e6c8, inset 0 0 0 5px rgba(120, 80, 30, 0.35);
+}
+body.universeview-theme-journal :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) {
+	color: #e0b366;
+	text-shadow: 0 1px 0 #000, 0 -1px 0 rgba(255, 220, 150, 0.18);
+	letter-spacing: 0.05em;
+}
+/* Blind-stamped (debossed) titles and a brass rule. */
+body.universeview-theme-journal :is(.universeview-module-title, .universeview-ov-panel-head h3) {
+	padding-bottom: 5px;
+	background: linear-gradient(90deg, #c8963e, #8b6420 50%, transparent) bottom / 100% 2px no-repeat;
+}
+body.universeview-theme-journal:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: sepia(0.6) saturate(0.8) brightness(0.9); }
+
+/* ---- Neon: black glass, magenta and cyan tubes ---- */
+body.universeview-theme-neon {
+	--uv-t-folder: #ff3fb4;
+	--universeview-theme-accent: #ff3fb4;
+	--universeview-theme-event: #ff3fb4;
+	--universeview-theme-person: #36e6ff;
+	--universeview-theme-culture: #a98bff;
+	--universeview-theme-place: #ffe14d;
+}
+body.universeview-theme-neon .universeview-scope, body.universeview-theme-neon.uv-scope-app {
+	--background-primary: #08070f;
+	--background-primary-alt: #0d0b18;
+	--background-secondary: #120f22;
+	--background-secondary-alt: #19152e;
+	--background-modifier-border: #3a2a5c;
+	--background-modifier-border-hover: #6a3f9a;
+	--background-modifier-hover: rgba(255, 63, 180, 0.12);
+	--background-modifier-form-field: #0d0b18;
+	--interactive-normal: #150f2a;
+	--interactive-hover: #1f1640;
+	--text-normal: #f3ecff;
+	--text-muted: #b7a8d8;
+	--text-faint: #7d6ea0;
+	--text-on-accent: #08070f;
+	--universeview-grid: rgba(54, 230, 255, 0.14);
+	--universeview-shadow: 0 0 0 1px rgba(255, 63, 180, 0.35), 0 0 14px rgba(255, 63, 180, 0.2);
+	--universeview-shadow-lift: 0 0 0 1px rgba(54, 230, 255, 0.5), 0 0 28px rgba(54, 230, 255, 0.35);
+	--font-interface: "Rajdhani", "Bahnschrift", "Segoe UI", system-ui, sans-serif;
+	/* A perspective grid fading into a magenta horizon. */
+	--universeview-backdrop: linear-gradient(to top, rgba(255, 63, 180, 0.18), transparent 35%),
+		repeating-linear-gradient(90deg, rgba(54, 230, 255, 0.07) 0 1px, transparent 1px 48px),
+		repeating-linear-gradient(0deg, rgba(54, 230, 255, 0.07) 0 1px, transparent 1px 48px);
+	color-scheme: dark;
+	color: var(--text-normal);
+	font-family: var(--font-interface);
+}
+body.universeview-theme-neon :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) {
+	color: #ffd9f3;
+	text-shadow: 0 0 6px #ff3fb4, 0 0 18px rgba(255, 63, 180, 0.7);
+}
+body.universeview-theme-neon .universeview-card { box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent, #36e6ff) 60%, transparent), 0 0 12px color-mix(in srgb, var(--card-accent, #36e6ff) 35%, transparent); }
+body.universeview-theme-neon:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: invert(0.92) hue-rotate(250deg) saturate(1.6) brightness(0.8); }
+
+/* ---- Typewriter: a case file, yellowed paper and a ribbon of ink ---- */
+body.universeview-theme-typewriter {
+	--uv-t-folder: #b3a574;
+	--universeview-theme-accent: #b3261e;
+	--universeview-theme-event: #b3261e;
+	--universeview-theme-person: #2d3a4f;
+	--universeview-theme-culture: #5a4a6a;
+	--universeview-theme-place: #6b5a2a;
+}
+body.universeview-theme-typewriter .universeview-scope, body.universeview-theme-typewriter.uv-scope-app {
+	--background-primary: #f1e9cf;
+	--background-primary-alt: #ece3c5;
+	--background-secondary: #e3d9b6;
+	--background-secondary-alt: #dacfa8;
+	--background-modifier-border: #bfb386;
+	--background-modifier-border-hover: #9b8f63;
+	--background-modifier-hover: rgba(70, 60, 30, 0.1);
+	--background-modifier-form-field: #f8f2de;
+	--interactive-normal: #e8dfbd;
+	--interactive-hover: #ddd2a9;
+	--text-normal: #22221f;
+	--text-muted: #55533f;
+	--text-faint: #8a8665;
+	--text-on-accent: #f8f2de;
+	--universeview-grid: rgba(60, 55, 30, 0.2);
+	--universeview-shadow: 1px 1px 0 rgba(60, 55, 30, 0.35);
+	--universeview-shadow-lift: 3px 4px 0 rgba(60, 55, 30, 0.35);
+	--font-interface: "Courier New", Courier, "Cascadia Mono", monospace;
+	--universeview-backdrop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .32 0 0 0 0 .12 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+		radial-gradient(ellipse at center, transparent 60%, rgba(120, 90, 20, 0.2) 100%);
+	color-scheme: light;
+	color: var(--text-normal);
+	font-family: var(--font-interface);
+}
+body.theme-dark.universeview-theme-typewriter .universeview-scope, body.theme-dark.universeview-theme-typewriter.uv-scope-app {
+	--background-primary: #1f1f1c;
+	--background-primary-alt: #252521;
+	--background-secondary: #2b2b26;
+	--background-secondary-alt: #32322c;
+	--background-modifier-border: #4b4b42;
+	--background-modifier-border-hover: #6a6a5c;
+	--background-modifier-hover: rgba(240, 235, 200, 0.08);
+	--background-modifier-form-field: #2b2b26;
+	--interactive-normal: #2f2f29;
+	--interactive-hover: #3a3a33;
+	--text-normal: #e8e4cc;
+	--text-muted: #b2ae92;
+	--text-faint: #7f7c66;
+	--text-on-accent: #1f1f1c;
+	--universeview-backdrop: none;
+	color-scheme: dark;
+	--universeview-grid: rgba(240, 235, 200, 0.12);
+	--universeview-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+	--universeview-shadow-lift: 3px 4px 0 rgba(0, 0, 0, 0.6);
+}
+body.theme-dark.universeview-theme-typewriter { --universeview-theme-accent: #ef6a5e; --universeview-theme-person: #9fb4d6; --universeview-theme-culture: #bba6d4; --universeview-theme-place: #d4bd78; --universeview-theme-event: #ef6a5e; }
+/* Headings are rubber-stamped in red, slightly tilted; cards carry a strip of tape. */
+body.universeview-theme-typewriter :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) {
+	color: var(--universeview-accent);
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+	font-weight: 700;
+}
+body.universeview-theme-typewriter .universeview-card { position: relative; }
+body.universeview-theme-typewriter .universeview-card::before {
+	content: "";
+	position: absolute;
+	top: -5px;
+	left: 50%;
+	width: 44px;
+	height: 12px;
+	margin-left: -22px;
+	background: rgba(215, 195, 120, 0.7);
+	box-shadow: 0 0 0 1px rgba(120, 100, 40, 0.18);
+	transform: rotate(-2deg);
+	pointer-events: none;
+}
+body.universeview-theme-typewriter:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: grayscale(0.9) sepia(0.3) contrast(1.05); }
+
+/* ---- Woodcut: black ink, cream paper, hatched shading ---- */
+body.universeview-theme-woodcut {
+	--uv-t-folder: #9a927a;
+	--universeview-theme-accent: #1b1b1b;
+	--universeview-theme-event: #8c2a1a;
+	--universeview-theme-person: #1b1b1b;
+	--universeview-theme-culture: #4a3a2a;
+	--universeview-theme-place: #5a4a2a;
+}
+body.universeview-theme-woodcut .universeview-scope, body.universeview-theme-woodcut.uv-scope-app {
+	--background-primary: #f2ead6;
+	--background-primary-alt: #ece3cb;
+	--background-secondary: #e4dabd;
+	--background-secondary-alt: #dcd1b0;
+	--background-modifier-border: #b3a888;
+	--background-modifier-border-hover: #141414;
+	--background-modifier-hover: rgba(0, 0, 0, 0.08);
+	--background-modifier-form-field: #f8f2e2;
+	--interactive-normal: #e8dfc4;
+	--interactive-hover: #ddd2b0;
+	--text-normal: #141414;
+	--text-muted: #3a3a36;
+	--text-faint: #6f6c60;
+	--text-on-accent: #f2ead6;
+	--universeview-grid: rgba(20, 20, 20, 0.25);
+	--universeview-shadow: 3px 3px 0 #141414;
+	--universeview-shadow-lift: 5px 5px 0 #141414;
+	/* Fine diagonal hatching, as if the page had been cross-shaded with a gouge. */
+	--universeview-backdrop: repeating-linear-gradient(45deg, rgba(20, 20, 20, 0.05) 0 1px, transparent 1px 5px), radial-gradient(ellipse at center, transparent 60%, rgba(60, 40, 10, 0.18));
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.universeview-theme-woodcut { --universeview-theme-accent: #f2ead6; --universeview-theme-person: #f2ead6; --universeview-theme-event: #e07a5a; --universeview-theme-culture: #d4c4a0; --universeview-theme-place: #cdb882; }
+body.theme-dark.universeview-theme-woodcut .universeview-scope, body.theme-dark.universeview-theme-woodcut.uv-scope-app {
+	--background-primary: #121212;
+	--background-primary-alt: #171717;
+	--background-secondary: #1d1d1d;
+	--background-secondary-alt: #242424;
+	--background-modifier-border: #4d4b44;
+	--background-modifier-border-hover: #f2ead6;
+	--background-modifier-hover: rgba(255, 255, 255, 0.1);
+	--background-modifier-form-field: #1d1d1d;
+	--interactive-normal: #1d1d1d;
+	--interactive-hover: #2a2a2a;
+	--text-normal: #f2ead6;
+	--text-muted: #cfc7b0;
+	--text-faint: #8d8776;
+	--text-on-accent: #121212;
+	--universeview-shadow: 3px 3px 0 #f2ead6;
+	--universeview-shadow-lift: 5px 5px 0 #f2ead6;
+	--universeview-backdrop: repeating-linear-gradient(45deg, rgba(242, 234, 214, 0.06) 0 1px, transparent 1px 5px);
+	color-scheme: dark;
+	--universeview-grid: rgba(242, 234, 214, 0.22);
+}
+body.universeview-theme-woodcut :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) {
+	font-weight: 900;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	/* A thick rule and a thin one: the woodcut's block lettering over a cut line. */
+	padding-bottom: 5px;
+	border-bottom: 4px double var(--text-normal);
+}
+body.universeview-theme-woodcut .universeview-card { box-shadow: var(--universeview-shadow); border: 2px solid var(--text-normal); }
+body.universeview-theme-woodcut .universeview-scope svg.svg-icon {
+	stroke-linecap: square;
+}
+body.universeview-theme-woodcut:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: grayscale(1) contrast(1.35) sepia(0.2); }
+
+/* ---- Watercolor: wet washes of colour on cold-pressed paper ---- */
+body.universeview-theme-watercolor {
+	--uv-t-folder: #7fb3c8;
+	--universeview-theme-accent: #3f8f9e;
+	--universeview-theme-event: #d9684f;
+	--universeview-theme-person: #4f8fc4;
+	--universeview-theme-culture: #9a6fbd;
+	--universeview-theme-place: #6fae6a;
+}
+body.universeview-theme-watercolor .universeview-scope, body.universeview-theme-watercolor.uv-scope-app {
+	--background-primary: #fbf8f1;
+	--background-primary-alt: #f6f2e8;
+	--background-secondary: #eee9dc;
+	--background-secondary-alt: #e6e0d0;
+	--background-modifier-border: #d9d2c0;
+	--background-modifier-border-hover: #bdb59f;
+	--background-modifier-hover: rgba(80, 120, 150, 0.1);
+	--background-modifier-form-field: #fffdf8;
+	--interactive-normal: #f1ece0;
+	--interactive-hover: #e8e2d2;
+	--text-normal: #2f3640;
+	--text-muted: #5d6671;
+	--text-faint: #8f97a0;
+	--text-on-accent: #ffffff;
+	--universeview-grid: rgba(70, 100, 130, 0.14);
+	--universeview-shadow: 0 2px 12px rgba(70, 90, 120, 0.14);
+	--universeview-shadow-lift: 0 12px 30px rgba(70, 90, 120, 0.22);
+	/* Wet washes bleeding across paper grain. */
+	--universeview-backdrop: radial-gradient(ellipse 45% 35% at 12% 15%, rgba(79, 143, 196, 0.2), transparent 70%),
+		radial-gradient(ellipse 40% 30% at 88% 22%, rgba(217, 104, 79, 0.15), transparent 70%),
+		radial-gradient(ellipse 50% 35% at 70% 92%, rgba(111, 174, 106, 0.18), transparent 70%),
+		radial-gradient(ellipse 35% 30% at 8% 85%, rgba(154, 111, 189, 0.14), transparent 70%),
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .4 0 0 0 0 .45 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	color-scheme: light;
+	color: var(--text-normal);
+}
+body.theme-dark.universeview-theme-watercolor { --universeview-theme-accent: #6cc3d1; --universeview-theme-person: #8bbbe6; --universeview-theme-event: #f08a73; --universeview-theme-culture: #bf9ae0; --universeview-theme-place: #94d08f; }
+body.theme-dark.universeview-theme-watercolor .universeview-scope, body.theme-dark.universeview-theme-watercolor.uv-scope-app {
+	--background-primary: #1c2128;
+	--background-primary-alt: #212730;
+	--background-secondary: #272e38;
+	--background-secondary-alt: #2e3642;
+	--background-modifier-border: #3d4756;
+	--background-modifier-border-hover: #566377;
+	--background-modifier-hover: rgba(160, 200, 230, 0.08);
+	--background-modifier-form-field: #272e38;
+	--interactive-normal: #2a313c;
+	--interactive-hover: #343d4a;
+	--text-normal: #e6eaf0;
+	--text-muted: #aab3c0;
+	--text-faint: #77818f;
+	--text-on-accent: #1c2128;
+	--universeview-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+	--universeview-shadow-lift: 0 12px 30px rgba(0, 0, 0, 0.55);
+	--universeview-backdrop: radial-gradient(ellipse 45% 35% at 12% 15%, rgba(79, 143, 196, 0.16), transparent 70%),
+		radial-gradient(ellipse 40% 30% at 88% 22%, rgba(217, 104, 79, 0.1), transparent 70%),
+		radial-gradient(ellipse 50% 35% at 70% 92%, rgba(111, 174, 106, 0.12), transparent 70%);
+	color-scheme: dark;
+	--universeview-grid: rgba(200, 220, 255, 0.12);
+}
+/* Cards are washes with feathered edges: soft tint, no hard line. */
+body.universeview-theme-watercolor .universeview-card {
+	box-shadow: var(--universeview-shadow);
+	background: color-mix(in srgb, var(--card-accent, var(--universeview-accent)) 8%, var(--background-primary));
+}
+body.universeview-theme-watercolor :is(.universeview-ov-title, .universeview-module-title, .universeview-ov-panel-head h3) {
+	color: var(--universeview-accent);
+	font-weight: 600;
+}
+body.universeview-theme-watercolor:not(.uv-map-plain) .universeview-map .leaflet-tile-pane { filter: saturate(0.6) brightness(1.06) contrast(0.92) blur(0.4px); }

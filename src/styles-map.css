@@ -357,6 +357,8 @@ body.is-mobile .universeview-map-banner.has-actions .universeview-banner-text { 
 /* ---- Border check panel ---- */
 .uv-check-panel { position: absolute; top: 52px; right: 12px; z-index: 900; width: 330px; max-width: calc(100% - 24px); max-height: calc(100% - 80px); display: flex; flex-direction: column; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); overflow: hidden; }
 .uv-check-head { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 8px 12px; border-bottom: 1px solid var(--background-modifier-border); }
+.uv-check-tools { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--background-modifier-border); }
+.uv-check-weld { flex: none; height: 26px; padding: 0 10px; }
 /* The title says what this is; the tinted icon square is dropped. */
 .uv-check-head-icon { display: none; }
 .uv-check-title { font-weight: 600; font-size: var(--font-ui-medium); }

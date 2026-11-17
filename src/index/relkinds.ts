@@ -47,6 +47,16 @@ export const REL_KINDS: RelKind[] = [
 	{ key: "trade-partners", label: "Trade partners", aliases: ["trade_partners", "trading-partners", "trades-with"], inverse: "trade-partners", tone: "trade", on: ["culture"], desc: "Trade and commerce" },
 	{ key: "founder", label: "Founder", aliases: ["founders", "founded-by"], inverse: "founded", tone: "rank", on: ["culture"], desc: "Who founded it" },
 	{ key: "founded", label: "Founded", aliases: [], inverse: "founder", tone: "rank", on: [], desc: "" },
+	{ key: "relatives", label: "Relatives", aliases: ["relative", "kin", "kinsmen", "kinsman", "cousins", "cousin"], inverse: "relatives", tone: "bond", on: ["person"], desc: "Family beyond parents, partners and children" },
+	{ key: "nemeses", label: "Nemeses", aliases: ["nemesis", "archenemy", "archenemies", "arch-enemy"], inverse: "nemeses", tone: "hostile", on: ["person"], desc: "A rivalry that defines them" },
+	{ key: "business-partners", label: "Business partners", aliases: ["business-partner", "partners-in-business", "co-owners", "co-owner"], inverse: "business-partners", tone: "trade", on: ["person"], desc: "Share a business or venture" },
+	{ key: "heirs", label: "Heirs", aliases: ["heir", "inheritors", "inheritor"], inverse: "heir-to", tone: "rank", on: ["person", "culture"], desc: "Who comes after them in a title or role (worked out from the family tree and the realm's succession law, unless written here)" },
+	{ key: "heir-to", label: "Heir to", aliases: ["heir-of"], inverse: "heirs", tone: "rank", on: ["person", "culture"], desc: "Whose heir they are, or who held the title before" },
+	{ key: "successors", label: "Successors", aliases: ["successor", "succeeded-by", "succeeded"], inverse: "predecessors", tone: "rank", on: ["person", "culture"], desc: "Who held the title or role after them (worked out from `holders:`)" },
+	{ key: "predecessors", label: "Predecessors", aliases: ["predecessor", "preceded-by"], inverse: "successors", tone: "rank", on: ["person", "culture"], desc: "Who held the title or role before them" },
+	{ key: "siblings", label: "Siblings", aliases: ["sibling", "brothers", "brother", "sisters", "sister"], inverse: "siblings", tone: "bond", on: ["person"], desc: "Share parents (worked out from the family tree)" },
+	{ key: "half-siblings", label: "Half-siblings", aliases: ["half-sibling", "half-brothers", "half-brother", "half-sisters", "half-sister"], inverse: "half-siblings", tone: "bond", on: ["person"], desc: "Share one parent" },
+	{ key: "step-siblings", label: "Step-siblings", aliases: ["step-sibling", "stepbrothers", "stepbrother", "stepsisters", "stepsister"], inverse: "step-siblings", tone: "bond", on: ["person"], desc: "Their parents are partners" },
 ];
 
 const BY_NAME = new Map<string, RelKind>();
@@ -88,6 +98,7 @@ export function relLabel(kind: string | undefined, fromOtherSide = false): strin
 const ONE: Record<string, string> = {
 	allies: "ally", friends: "friend", confidants: "confidant", sworn: "sworn kin", colleagues: "colleague", acquaintances: "acquaintance", godparents: "godparent", godchildren: "godchild", guardians: "guardian", wards: "ward", rivals: "rival", enemies: "enemy", mentors: "mentor", students: "student", liege: "liege", vassals: "vassal",
 	employer: "employer", employees: "employee", leader: "leader", leads: "leads", "trade-partners": "trade partner", founder: "founder", founded: "founded",
+	siblings: "sibling", "half-siblings": "half-sibling", "step-siblings": "step-sibling", successors: "successor", predecessors: "predecessor", relatives: "relative", nemeses: "nemesis", "business-partners": "business partner", heirs: "heir", "heir-to": "heir to",
 };
 
 /** The setting's words for `liege:` and `vassals:` (Superior and Subordinates in a modern world). The property names stay. */
@@ -130,4 +141,22 @@ export function presetKinds(type: "person" | "culture", setting?: string): strin
 	const fromSetting = (setting ?? "").split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
 	if (fromSetting.length) return fromSetting;
 	return REL_KINDS.filter((k) => k.on.includes(type)).map((k) => k.key);
+}
+
+/** The headings the relationship menu sorts kinds under, in order. */
+export const REL_GROUP_ORDER = ["Family", "Bonds", "Alliance and rivalry", "Authority and care", "Work and trade", "Teaching and faith", "Succession", "Founding"];
+const REL_GROUPS: Record<string, string> = {
+	relatives: "Family", siblings: "Family", "half-siblings": "Family", "step-siblings": "Family",
+	friends: "Bonds", confidants: "Bonds", sworn: "Bonds", acquaintances: "Bonds",
+	allies: "Alliance and rivalry", rivals: "Alliance and rivalry", enemies: "Alliance and rivalry", nemeses: "Alliance and rivalry",
+	liege: "Authority and care", vassals: "Authority and care", leader: "Authority and care", leads: "Authority and care", guardians: "Authority and care", wards: "Authority and care",
+	colleagues: "Work and trade", employer: "Work and trade", employees: "Work and trade", "business-partners": "Work and trade", "trade-partners": "Work and trade",
+	mentors: "Teaching and faith", students: "Teaching and faith", godparents: "Teaching and faith", godchildren: "Teaching and faith",
+	heirs: "Succession", "heir-to": "Succession", successors: "Succession", predecessors: "Succession",
+	founder: "Founding", founded: "Founding",
+};
+
+/** The menu heading a relationship belongs under. */
+export function relGroup(kind: string | undefined): string {
+	return REL_GROUPS[relKind(kind)?.key ?? ""] ?? "Other";
 }

@@ -101,14 +101,14 @@ export const HUB_SECTIONS: HubSection[] = [
 	},
 	{
 		id: "people", name: "People", icon: "users", modules: [
-			{ id: VIEW_FAMILY, name: "Family tree", icon: "git-fork", desc: "Ancestors and descendants of anyone.", view: (l, p) => new FamilyTreeView(l, p) },
-			{ id: VIEW_NETWORK, name: "Connections", icon: "waypoints", desc: "How people, groups, places and events link.", view: (l, p) => new NetworkView(l, p) },
+			{ id: VIEW_FAMILY, name: "Family tree", icon: "git-fork", desc: "Ancestors and descendants of anyone.", view: (l, p) => new FamilyTreeView(l, p), modeOf: VIEW_NETWORK },
+			{ id: VIEW_NETWORK, name: "Relationships", icon: "waypoints", desc: "How people, groups, places and events link.", view: (l, p) => new NetworkView(l, p) },
 		],
 	},
 	{
-		id: "groups", name: "Groups", icon: "crown", modules: [
-			{ id: VIEW_REALMS, name: "Realms", icon: "crown", desc: "Realms and cultures, tier by tier.", view: (l, p) => new RealmsView(l, p) },
-			{ id: VIEW_ORG, name: "Organisation", icon: "network", desc: "Who leads and serves, over time.", view: (l, p) => new OrgChartView(l, p) },
+		id: "groups", name: "Societies", icon: "crown", modules: [
+			{ id: VIEW_REALMS, name: "Realms", icon: "crown", desc: "Realms and groups, tier by tier.", view: (l, p) => new RealmsView(l, p) },
+			{ id: VIEW_ORG, name: "Organisation", icon: "network", desc: "Who leads and serves, over time.", view: (l, p) => new OrgChartView(l, p), modeOf: VIEW_NETWORK },
 			{ id: VIEW_HOUSES, get name() { return GROUP_KINDS.house.plural; }, get icon() { return GROUP_KINDS.house.icon; }, get desc() { return `${GROUP_KINDS.house.plural} as bands over the generations.`; }, view: (l, p) => new HousesView(l, p) },
 		],
 	},

@@ -80,6 +80,12 @@
 .universeview-territory-label,
 .universeview-lineage-label,
 .universeview-stat-value,
+.uv-theme-group-name { margin: 14px 0 6px; font-size: var(--font-ui-smaller); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.universeview-theme-preview.preview-glass { background: radial-gradient(ellipse at 15% 20%, rgba(124, 196, 255, 0.5), transparent 60%), radial-gradient(ellipse at 85% 80%, rgba(195, 163, 255, 0.45), transparent 60%), var(--pv-bg); }
+.universeview-theme-preview.preview-neumorph { box-shadow: 3px 3px 6px rgba(150, 165, 195, 0.7), -3px -3px 6px #fff; }
+.universeview-theme-preview.preview-brutalist { box-shadow: 3px 3px 0 #111; }
+.universeview-theme-preview.preview-desktop { background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 / 4px 4px; }
+.universeview-theme-preview.preview-synth { background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px), var(--pv-bg); }
 .universeview-theme-name {
 	font-family: var(--universeview-font-display);
 }
@@ -1237,7 +1243,7 @@ button.universeview-theme-card {
 	flex-direction: column;
 	gap: 3px;
 	padding: 8px 8px 10px;
-	border-radius: var(--uv-r-lg);
+	border-radius: var(--uv-tc-r, var(--uv-r-lg));
 	border: 1px solid var(--background-modifier-border);
 	background: var(--background-primary);
 	cursor: pointer;
@@ -1248,14 +1254,15 @@ button.universeview-theme-card:hover {
 	box-shadow: var(--universeview-shadow-lift);
 }
 button.universeview-theme-card.is-active {
-	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 45%, transparent);
+	border-color: var(--uv-tc-accent, var(--interactive-accent));
+	background: color-mix(in srgb, var(--uv-tc-accent, var(--interactive-accent)) 10%, var(--background-primary));
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--uv-tc-accent, var(--interactive-accent)) 45%, transparent);
 }
 .universeview-theme-preview {
 	position: relative;
 	height: 82px;
 	margin-bottom: 4px;
-	border-radius: var(--uv-r-md);
+	border-radius: var(--uv-tc-rs, var(--uv-r-md));
 	overflow: hidden;
 	background: var(--pv-bg);
 	border: 1px solid rgba(128, 128, 128, 0.22);
@@ -1298,16 +1305,79 @@ button.universeview-theme-card.is-active {
 		radial-gradient(1px 1px at 40% 80%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 65%, #fff, transparent),
 		radial-gradient(60% 80% at 80% 100%, rgba(120, 80, 255, 0.35), transparent), var(--pv-bg);
 }
-.universeview-theme-preview.preview-parchment {
-	background: radial-gradient(ellipse at center, transparent 50%, rgba(110, 70, 20, 0.25)), var(--pv-bg);
+.universeview-theme-preview.preview-manuscript {
+	background: radial-gradient(ellipse at center, transparent 45%, rgba(100, 60, 15, 0.3)), var(--pv-bg);
+	box-shadow: inset 0 0 0 3px var(--pv-bg), inset 0 0 0 4px #a97a1c;
+}
+.universeview-theme-preview.preview-notebook {
+	background: linear-gradient(90deg, transparent 14px, rgba(190, 70, 70, 0.45) 14px 15px, transparent 15px),
+		repeating-linear-gradient(to bottom, transparent 0 9px, rgba(80, 120, 180, 0.3) 9px 10px), var(--pv-bg);
+}
+.universeview-theme-preview.preview-journal { box-shadow: inset 0 0 0 3px var(--pv-bg), inset 0 0 0 4px #c8963e; }
+.universeview-theme-preview.preview-neon {
+	background: linear-gradient(to top, rgba(255, 63, 180, 0.3), transparent 45%), repeating-linear-gradient(90deg, rgba(54, 230, 255, 0.12) 0 1px, transparent 1px 12px), var(--pv-bg);
+	box-shadow: 0 0 10px rgba(255, 63, 180, 0.45);
+}
+.universeview-theme-preview.preview-typewriter { box-shadow: 2px 2px 0 rgba(60, 55, 30, 0.45); }
+.universeview-theme-preview.preview-woodcut {
+	background: repeating-linear-gradient(45deg, rgba(20, 20, 20, 0.12) 0 1px, transparent 1px 5px), var(--pv-bg);
+	box-shadow: 3px 3px 0 #141414;
+}
+.universeview-theme-preview.preview-watercolor {
+	background: radial-gradient(ellipse at 15% 20%, rgba(79, 143, 196, 0.4), transparent 60%), radial-gradient(ellipse at 85% 80%, rgba(217, 104, 79, 0.3), transparent 60%), var(--pv-bg);
 }
 .universeview-theme-preview.preview-atelier {
 	background: radial-gradient(80% 90% at 0% 0%, rgba(124, 92, 255, 0.22), transparent),
 		radial-gradient(70% 80% at 100% 100%, rgba(240, 138, 60, 0.18), transparent), var(--pv-bg);
 }
+.uv-theme-group-name { margin: 14px 0 6px; font-size: var(--font-ui-smaller); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.universeview-theme-preview.preview-glass { background: radial-gradient(ellipse at 15% 20%, rgba(124, 196, 255, 0.5), transparent 60%), radial-gradient(ellipse at 85% 80%, rgba(195, 163, 255, 0.45), transparent 60%), var(--pv-bg); }
+.universeview-theme-preview.preview-neumorph { box-shadow: 3px 3px 6px rgba(150, 165, 195, 0.7), -3px -3px 6px #fff; }
+.universeview-theme-preview.preview-brutalist { box-shadow: 3px 3px 0 #111; }
+.universeview-theme-preview.preview-desktop { background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 / 4px 4px; }
+.universeview-theme-preview.preview-synth { background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px), var(--pv-bg); }
 .universeview-theme-name {
+	font-family: var(--uv-tc-font, inherit);
 	font-weight: var(--font-semibold);
+	font-kerning: normal;
 }
+/* The sample on a theme card: the theme's own colours, heading font, tab, buttons and edge. */
+.uv-tc-sample {
+	align-items: stretch;
+	gap: 6px;
+	margin: 6px 0;
+	padding: 8px;
+	border-radius: var(--uv-r-sm);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-kerning: normal;
+	overflow: hidden;
+	pointer-events: none;
+}
+.uv-tc-sample .uv-hub-tabs { flex: 0 1 auto; flex-wrap: nowrap; align-self: flex-start; }
+.uv-tc-sample button.uv-hub-tab { height: 26px; padding: 0 8px; font-size: var(--font-ui-smaller); }
+.uv-tc-panel { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: var(--background-secondary); }
+.uv-tc-title { font-family: var(--uv-tc-font, inherit); font-size: 1.15em; line-height: 1.15; color: var(--text-normal); }
+/* A sample belongs to its own theme only: whatever the active theme does to titles, buttons and tabs must not reach it. */
+.uv-tc-sample .uv-tc-title:not(#uv-strong) {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--text-normal);
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+	text-shadow: none;
+	text-decoration: none;
+	font-variant: normal;
+}
+.uv-tc-sample .uv-tc-title:not(#uv-strong)::first-letter { font-size: inherit; color: inherit; text-shadow: none; }
+.uv-tc-sample .uv-tc-title:not(#uv-strong)::after { display: none; }
+.uv-tc-sample.uv-head-brackets .uv-tc-title:not(#uv-strong)::after { display: inline; }
+.uv-tc-sample.uv-head-boxed .uv-tc-title:not(#uv-strong) { display: inline-block; align-self: flex-start; }
+.uv-tc-sample .uv-tc-title:not(#uv-strong) { font-size: 1.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uv-tc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.uv-tc-sample .universeview-chip { height: 24px; font-size: var(--font-ui-smaller); }
 .universeview-theme-for {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
@@ -1582,7 +1652,6 @@ body.uv-t-panels .uv-options {
 	font-kerning: normal;
 	font-variant-numeric: tabular-nums;
 	font-feature-settings: "kern" 1, "tnum" 1;
-	text-rendering: optimizeLegibility;
 }
 .universeview-toolbar .dropdown {
 	box-sizing: border-box;
@@ -1605,6 +1674,14 @@ body.uv-t-panels .uv-options {
 .universeview-toolbar .universeview-chip,
 .universeview-toolbar .universeview-icon-btn {
 	flex: none;
+	/* One box for every icon, so a look that adds a border never shifts the glyph. */
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 28px;
+	padding: 0;
 }
 .universeview-chip > span:not(.universeview-chip-icon):not(.universeview-chip-check):not(.universeview-chip-count) {
 	overflow: hidden;
@@ -1680,4 +1757,71 @@ body.uv-t-panels .uv-options {
 }
 .universeview-qe-more .setting-item.is-removed {
 	opacity: 0.4;
+}
+.uv-rad-card { width: 100%; padding: 8px; background: var(--background-primary); border: 1px solid var(--background-modifier-border-hover); border-radius: var(--uv-r-lg); }
+.uv-rad-card .universeview-chip { height: 24px; font-size: var(--font-ui-smaller); border: 1px solid var(--background-modifier-border); }
+button.universeview-theme-card { position: relative; }
+.uv-tc-del { position: absolute; top: 6px; right: 6px; display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 999px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); color: var(--text-muted); opacity: 0; z-index: 2; }
+.uv-tc-del svg { width: 12px; height: 12px; }
+button.universeview-theme-card:hover .uv-tc-del, .uv-tc-del:focus-visible { opacity: 1; }
+.uv-tc-del:hover { color: var(--text-normal); border-color: var(--background-modifier-border-hover); }
+/* Hover or focus a theme card: its buttons play their own states. "Show" is hovered, then pressed (the look's "on" state), then released; the open tab and the other tabs follow with their own hover. */
+@keyframes uv-tc-click {
+	0%, 38% {
+		background: var(--uvb-hbg, var(--background-modifier-hover));
+		border-color: var(--uvb-hbd, transparent);
+		color: var(--uvb-hfg, var(--text-normal));
+		box-shadow: var(--uvb-hsh, var(--uvb-sh, none));
+		transform: none;
+	}
+	48%, 72% {
+		background: var(--uvb-obg, var(--background-modifier-hover));
+		border-color: var(--uvb-obd, transparent);
+		color: var(--uvb-ofg, var(--text-normal));
+		box-shadow: var(--uvb-osh, var(--uvb-sh, none));
+		transform: var(--uvb-ot, none);
+	}
+	84%, 100% {
+		background: var(--uvb-hbg, var(--background-modifier-hover));
+		border-color: var(--uvb-hbd, transparent);
+		color: var(--uvb-hfg, var(--text-normal));
+		box-shadow: var(--uvb-hsh, var(--uvb-sh, none));
+		transform: none;
+	}
+}
+button.universeview-theme-card:is(:hover, :focus-visible) .uv-tc-sample .universeview-chip:not(.is-active) { animation: uv-tc-click 1.8s ease-in-out infinite; }
+button.universeview-theme-card:is(:hover, :focus-visible) .uv-tc-sample .uv-hub-tab:not(.is-active) { background: var(--background-modifier-hover); color: var(--text-normal); }
+@media (prefers-reduced-motion: reduce) {
+	button.universeview-theme-card:is(:hover, :focus-visible) .uv-tc-sample .universeview-chip:not(.is-active) { animation: none; background: var(--uvb-hbg, var(--background-modifier-hover)); border-color: var(--uvb-hbd, transparent); }
+}
+.uv-tc-sample { position: relative; }
+/* The layer behind a theme card shows the theme's own button states: hover look on hover, pressed look while pressed, and the theme's selection style on the chosen card. */
+.uv-tc-back {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	border-radius: inherit;
+	border: 1px solid transparent;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--universeview-fast) var(--universeview-ease), transform var(--universeview-fast) var(--universeview-ease);
+}
+button.universeview-theme-card > :not(.uv-tc-back):not(.uv-tc-del) { position: relative; z-index: 1; }
+button.universeview-theme-card:is(:hover, :focus-visible) > .uv-tc-back {
+	opacity: 1;
+	background: var(--uvb-hbg, var(--background-modifier-hover));
+	border-color: var(--uvb-hbd, var(--background-modifier-border-hover));
+	box-shadow: var(--uvb-hsh, var(--uvb-sh, none));
+}
+button.universeview-theme-card:active > .uv-tc-back {
+	opacity: 1;
+	background: var(--uvb-obg, var(--background-modifier-hover));
+	border-color: var(--uvb-obd, var(--background-modifier-border-hover));
+	box-shadow: var(--uvb-osh, var(--uvb-sh, none));
+	transform: var(--uvb-ot, none);
+}
+button.universeview-theme-card.is-active > .uv-tc-back {
+	opacity: 1;
+	background: var(--uv-sel-bg);
+	box-shadow: var(--uv-sel-sh);
 }

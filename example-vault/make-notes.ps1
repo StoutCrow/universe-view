@@ -174,7 +174,7 @@ born: 1533-09-07
 died: 1603-03-24
 gender: female
 parents: ["[[Henry VIII]]", "[[Anne Boleyn]]"]
-cultures: ["[[House of Tudor]]", "[[Church of England]]"]
+cultures: ["[[House of Tudor]]", "[[Church of England]]", "[[Latin]]"]
 "@
 Note "$T/People/Edward VI.md" @"
 type: person
@@ -188,6 +188,7 @@ cultures: ["[[House of Tudor]]", "[[Church of England]]"]
 Note "$T/Places/England.md" @"
 type: place
 coordinates: [52.6, -1.5]
+cultures: ["[[English]]"]
 "@
 Note "$T/Places/London.md" @"
 type: place
@@ -313,6 +314,57 @@ importance: 5
 tags: [war]
 "@
 
+# Languages are groups of kind "language": they appear under Language on the people and places that use them.
+Note "$T/Cultures/English.md" @"
+type: culture
+kind: language
+"@ "The language of the court and the country."
+Note "$T/Cultures/Latin.md" @"
+type: culture
+kind: language
+"@ "The language of the Church, the law and diplomacy. Elizabeth I read and spoke it well."
+Note "$T/Cultures/Welsh.md" @"
+type: culture
+kind: language
+"@ "The language of Wales, where the Tudor family came from."
+
+# A creature: it has no dates, so it stays off the timeline, and is listed under the places it is found in.
+Note "$T/Creatures/Red Dragon.md" @"
+type: creature
+kind: dragon
+places: ["[[Bosworth Field]]"]
+cultures: ["[[House of Tudor]]"]
+"@ "The red dragon of Wales, carried on Henry Tudor's banner at [[Battle of Bosworth Field]] and later a royal badge of the Tudors."
+
+# An object: its holders and the places it was kept, each with dates, make its journey (the map's Trace a journey) and its bars on the timeline.
+Note "$T/Objects/Bosworth Crown.md" @"
+type: object
+kind: crown
+destroyed: 1649
+cultures:
+  - person: "[[Henry VII]]"
+    from: 1485-08-22
+    to: 1509-04-21
+  - person: "[[Henry VIII]]"
+    from: 1509-04-22
+    to: 1547-01-28
+  - person: "[[Edward VI]]"
+    from: 1547-01-28
+    to: 1553-07-06
+  - person: "[[Mary I]]"
+    from: 1553-07-19
+    to: 1558-11-17
+  - person: "[[Elizabeth I]]"
+    from: 1558-11-17
+    to: 1603-03-24
+places:
+  - place: "[[Bosworth Field]]"
+    from: 1485-08-22
+    to: 1485-08-23
+  - place: "[[Westminster Abbey]]"
+    from: 1485-10-30
+    to: 1649-01-30
+"@ "Tradition says Richard III's crown was found on the field at Bosworth and set on Henry's head. A legend; the royal regalia was sold or melted down in 1649."
 Note "$T/Tudors overview.md" "tags: [overview]" @"
 
 # The Tudors
@@ -339,256 +391,11 @@ trace: Henry VIII
 ``````chronicle-lineage
 folder: Tudors
 ``````
-"@
-
-# ---------------- Vael (custom calendar, image map) ----------------
-$V = "Vael"
-Note "$V/Vael Map.md" @"
-type: map
-image: "[[vael-map.svg]]"
-"@ "The known lands of Vael, drawn by the cartographers of the Order of the Ash."
-
-Note "$V/Cultures/Old Vaelic Peoples.md" @"
-type: culture
-founded: FE 40
-dissolved: FE 610
-color: "#a0785a"
-"@
-Note "$V/Cultures/Kingdom of Vael.md" @"
-type: culture
-founded: FE 600
-parent-cultures: ["[[Old Vaelic Peoples]]"]
-color: "#3b6fd4"
-related-cultures:
-  - culture: "[[Eastmarch]]"
-    kind: rival
-"@
-Note "$V/Cultures/Eastmarch.md" @"
-type: culture
-founded: FE 655
-parent-cultures: ["[[Old Vaelic Peoples]]"]
-color: "#c4453a"
-"@
-Note "$V/Cultures/Order of the Ash.md" @"
-type: culture
-founded: SE 12
-parent-cultures: ["[[Kingdom of Vael]]"]
-color: "#6b7280"
-"@
-Note "$V/Cultures/Free City of Greyford.md" @"
-type: culture
-founded: SE 140
-parent-cultures: ["[[Kingdom of Vael]]"]
-color: "#16a085"
-"@
-
-Note "$V/People/Edric Vane.md" @"
-type: person
-born: FE 760
-died: FE 811
-gender: male
-cultures: ["[[Kingdom of Vael]]"]
-partners:
-  - person: "[[Lysa Marrow]]"
-    from: FE 785
-"@
-Note "$V/People/Lysa Marrow.md" @"
-type: person
-born: FE 765
-died: SE 30
-gender: female
-parents: ["[[Oswin Marrow]]"]
-cultures: ["[[Kingdom of Vael]]"]
-"@
-Note "$V/People/Aldric Vane.md" @"
-type: person
-born: FE 790
-died: c. SE 40
-gender: male
-parents: ["[[Edric Vane]]", "[[Lysa Marrow]]"]
-cultures:
-  - culture: "[[Kingdom of Vael]]"
-  - culture: "[[Order of the Ash]]"
-    from: SE 12
-    role: Knight-Commander
-partners:
-  - person: "[[Mira Thorne]]"
-    from: SE 1
-relations:
-  - person: "[[Corin Hale]]"
-    kind: mentor
-"@ "Knight-Commander of the Order of the Ash. Use **Trace a journey** on the map to follow him."
-Note "$V/People/Bran Vane.md" @"
-type: person
-born: FE 794
-died: SE 3
-gender: male
-parents: ["[[Edric Vane]]", "[[Lysa Marrow]]"]
-cultures: ["[[Kingdom of Vael]]"]
-"@
-Note "$V/People/Mira Thorne.md" @"
-type: person
-born: FE 795
-died: SE 52
-gender: female
-cultures: ["[[Eastmarch]]"]
-"@
-Note "$V/People/Corin Hale.md" @"
-type: person
-born: FE 770
-died: SE 20
-gender: male
-cultures: ["[[Order of the Ash]]"]
-"@
-Note "$V/People/Tamsin Vane.md" @"
-type: person
-born: SE 3
-died: SE 70
-gender: female
-parents: ["[[Aldric Vane]]", "[[Mira Thorne]]"]
-cultures: ["[[Free City of Greyford]]"]
-partners: ["[[Jory Bell]]"]
-"@
-Note "$V/People/Rowan Vane.md" @"
-type: person
-born: 14 Thawmoon SE 6
-died: SE 31
-gender: male
-parents: ["[[Aldric Vane]]", "[[Mira Thorne]]"]
-cultures: ["[[Order of the Ash]]"]
-"@
-Note "$V/People/Wren Bell.md" @"
-type: person
-born: SE 30
-gender: female
-parents: ["[[Tamsin Vane]]", "[[Jory Bell]]"]
-"@
-
-Note "$V/Places/Vael Crown.md" @"
-type: place
-map: "[[Vael Map]]"
-position: [520, 360]
-cultures: ["[[Kingdom of Vael]]"]
-summary: Royal seat of the Kingdom of Vael.
-importance: 5
-"@
-Note "$V/Places/Greyford.md" @"
-type: place
-map: "[[Vael Map]]"
-position: [330, 520]
-cultures: ["[[Free City of Greyford]]"]
-"@
-Note "$V/Places/Eastmarch Keep.md" @"
-type: place
-map: "[[Vael Map]]"
-position: [905, 300]
-cultures: ["[[Eastmarch]]"]
-"@
-Note "$V/Places/Ashen Abbey.md" @"
-type: place
-map: "[[Vael Map]]"
-position: [640, 175]
-cultures: ["[[Order of the Ash]]"]
-"@
-Note "$V/Places/Thornwood.md" @"
-type: place
-map: "[[Vael Map]]"
-position: [760, 560]
-"@
-
-Note "$V/Events/Founding of Vael.md" @"
-type: event
-date: FE 600
-places: ["[[Vael Crown]]"]
-cultures: ["[[Kingdom of Vael]]"]
-importance: 5
-"@
-Note "$V/Events/Sundering of the East.md" @"
-type: event
-date: c. FE 655
-places: ["[[Eastmarch Keep]]"]
-cultures: ["[[Eastmarch]]", "[[Old Vaelic Peoples]]"]
-importance: 4
-tags: [war]
-"@
-Note "$V/Events/Coronation of Edric.md" @"
-type: event
-date: 12 Seedrise FE 790
-participants: ["[[Edric Vane]]", "[[Lysa Marrow]]"]
-places: ["[[Vael Crown]]"]
-cultures: ["[[Kingdom of Vael]]"]
-importance: 4
-"@
-Note "$V/Events/Marriage of Aldric and Mira.md" @"
-type: event
-date: 3 Greenmoot SE 1
-participants: ["[[Aldric Vane]]", "[[Mira Thorne]]"]
-places: ["[[Vael Crown]]"]
-cultures: ["[[Kingdom of Vael]]", "[[Eastmarch]]"]
-"@
-Note "$V/Events/Battle of Greyford.md" @"
-type: event
-date: 14 Highsun SE 3
-end: 16 Highsun SE 3
-participants: ["[[Aldric Vane]]", "[[Bran Vane]]", "[[Corin Hale]]"]
-places: ["[[Greyford]]"]
-cultures: ["[[Kingdom of Vael]]", "[[Eastmarch]]"]
-importance: 5
-tags: [war]
-"@
-Note "$V/Events/Founding of the Order of the Ash.md" @"
-type: event
-date: SE 12
-participants: ["[[Aldric Vane]]", "[[Corin Hale]]"]
-places: ["[[Ashen Abbey]]"]
-cultures: ["[[Order of the Ash]]"]
-importance: 4
-"@
-Note "$V/Events/Siege of Eastmarch Keep.md" @"
-type: event
-date: SE 20
-end: SE 22
-participants: ["[[Aldric Vane]]", "[[Rowan Vane]]", "[[Corin Hale]]"]
-places: ["[[Eastmarch Keep]]"]
-cultures: ["[[Order of the Ash]]", "[[Eastmarch]]"]
-importance: 4
-tags: [war]
-"@
-Note "$V/Events/Death of Aldric.md" @"
-type: event
-date: c. SE 40
-participants: ["[[Aldric Vane]]"]
-places: ["[[Thornwood]]"]
-importance: 3
-"@
-Note "$V/Events/Greyford Charter.md" @"
-type: event
-date: SE 140
-places: ["[[Greyford]]"]
-cultures: ["[[Free City of Greyford]]", "[[Kingdom of Vael]]"]
-importance: 4
-tags: [politics]
-"@
-
-Note "$V/Vael overview.md" "tags: [overview]" @"
-
-# The world of Vael
-
-Dates here use the **Vaelic Reckoning** (see Settings → Chronicle → Calendars).
-
-``````chronicle-timeline
-folder: Vael
-group: culture
-``````
 
 ``````chronicle-map
-map: Vael Map
-trace: Aldric Vane
-``````
-
-``````chronicle-graph
-focus: Aldric Vane
-depth: 2
+folder: Tudors
+trace: Bosworth Crown
 ``````
 "@
+
 Write-Host "Example notes written."
