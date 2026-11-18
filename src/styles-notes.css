@@ -3,6 +3,13 @@
 /* ---- Where a new note goes ---- */
 .uv-create-placement { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 6px 0 2px; }
 .uv-create-placement svg { width: 14px; height: 14px; color: var(--interactive-accent); }
+.universeview-name-suggest { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; padding: 4px 0; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.universeview-name-forms-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 2px; }
+.universeview-name-forms-result { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.universeview-name-forms-alias { display: flex; align-items: center; gap: 6px; }
+.uv-create-link { margin-left: auto; cursor: pointer; font-size: var(--font-ui-smaller); color: var(--text-muted); text-decoration: underline; text-decoration-color: var(--background-modifier-border); }
+.uv-create-link:hover { color: var(--text-normal); }
+.uv-create-placement .uv-create-link { margin-left: 12px; }
 .uv-create-placement-reset { margin-left: auto; cursor: pointer; font-size: var(--font-ui-smaller); }
 
 /* ---- Quick creator, in the inspector ---- */

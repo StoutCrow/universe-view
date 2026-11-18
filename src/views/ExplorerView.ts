@@ -90,7 +90,7 @@ export class ExplorerView extends UniverseViewBase {
 		return VIEW_EXPLORER;
 	}
 	getDisplayText() {
-		return "UniverseView library";
+		return "Universeview library";
 	}
 	getIcon() {
 		return "panels-top-left";
@@ -557,7 +557,7 @@ export class ExplorerView extends UniverseViewBase {
 		const typeBox = el("label", { cls: "uv-identity-field" }, what);
 		el("span", { cls: "uv-identity-label", text: "Type" }, typeBox);
 		const typeSel = el("select", { cls: "dropdown", attr: { "aria-label": "Type" } }, typeBox);
-		typeSel.createEl("option", { value: "", text: "Not a UniverseView note" });
+		typeSel.createEl("option", { value: "", text: "Not a universeview note" });
 		for (const t of ENTITY_TYPES) typeSel.createEl("option", { value: t, text: TYPE_LABELS[t] });
 		typeSel.value = e?.type ?? "";
 		typeSel.addEventListener("change", () => void this.plugin.editFrontmatter(file, (f) => this.plugin.setTypeMark(f, (typeSel.value || null) as EntityType | null), "Change type"));
@@ -629,7 +629,7 @@ export class ExplorerView extends UniverseViewBase {
 			c.setValue(toHex(e.color) ?? "#888888");
 			c.onChange((v) => void write(keyFor("color"), v));
 		}).addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Automatic color").onClick(() => void write(keyFor("color"), null)));
-		new Setting(body).setName("Icon").setDesc("A Lucide icon name or an emoji, for map pins and cards.").addText((t) => {
+		new Setting(body).setName("Icon").setDesc("A lucide icon name or an emoji, for map pins and cards.").addText((t) => {
 			t.setValue(typeof fm.icon === "string" ? fm.icon : "");
 			t.inputEl.addEventListener("change", () => void write("icon", t.getValue().trim() || null));
 		});
@@ -948,7 +948,7 @@ export class ExplorerView extends UniverseViewBase {
 			d.onChange((v) => void this.setSetting(() => (s.folderCalendars = setMapping(s.folderCalendars, path, v || null)), true));
 		});
 		const ignored = s.ignoreFolders.split(/[\n,]/).map((f) => f.trim().replace(/^\/|\/$/g, "")).filter(Boolean);
-		new Setting(fs).setName("Leave this folder out").setDesc("UniverseView ignores its notes (like a templates folder).").addToggle((t) =>
+		new Setting(fs).setName("Leave this folder out").setDesc("Universeview ignores its notes (like a templates folder).").addToggle((t) =>
 			t.setValue(ignored.includes(path)).onChange((v) =>
 				void this.setSetting(() => {
 					const next = ignored.filter((f) => f !== path);

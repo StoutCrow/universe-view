@@ -38,7 +38,7 @@ export class FilesPanelView extends ExplorerView {
 		return VIEW_FILES;
 	}
 	getDisplayText() {
-		return "UniverseView files";
+		return "Universeview files";
 	}
 	getIcon() {
 		return "folder-tree";

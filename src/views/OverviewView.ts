@@ -147,7 +147,7 @@ export class OverviewView extends UniverseViewBase {
 		}
 		if (!all.length) {
 			const empty = el("div", { cls: "universeview-ov-emptynote" }, page);
-			empty.setText("No people, places, events, realms or houses here yet. Create one, or let UniverseView detect them in your existing notes.");
+			empty.setText("No people, places, events, realms or houses here yet. Create one, or let universeview detect them in your existing notes.");
 		}
 
 		// ---- Views ----

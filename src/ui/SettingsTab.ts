@@ -372,7 +372,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		}, containerEl);
 		new Setting(containerEl)
 			.setName("Use tags as types")
-			.setDesc("Treat tags as types: the tag scheme's (#Character_Person, #Place_County) and older ones (#person, #character, #event, #faction, #place, #location, #map).")
+			.setDesc("Treat tags as types: the tag scheme's (#character_person, #place_county) and older ones (#person, #character, #event, #faction, #place, #location, #map).")
 			.addToggle((t) => t.setValue(s.tagTypes).onChange(async (v) => {
 				s.tagTypes = v;
 				await this.save();
@@ -399,7 +399,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			await this.save();
 		}, { blank: () => ({ folder: "" }), addLabel: "Add a folder", empty: "None." });
 		new Setting(containerEl)
-			.setName("Read Dataview inline fields")
+			.setName("Read dataview inline fields")
 			.setDesc("With Dataview installed, fields like `born:: 1210` in the note body count too.")
 			.addToggle((t) => t.setValue(s.useDataview).onChange(async (v) => {
 				s.useDataview = v;
@@ -431,10 +431,10 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		if (s.typeStyle === "tag") {
 			new Setting(containerEl)
 				.setName("Tag scheme")
-				.setDesc("One tag for what a note is (#Character_Person), one per thing it belongs to, one per fact. Older tags still work; this moves them over after a review.")
+				.setDesc("One tag for what a note is (#character_person), one per thing it belongs to, one per fact. Older tags still work; this moves them over after a review.")
 				.addButton((b) => b.setButtonText("Fix kinds and tags…").onClick(() => new NormaliseTagsModal(this.plugin, true).open()));
 			// The older tags, read from notes tagged before the scheme: one row, not five.
-			const olderRow = new Setting(containerEl).setName("Older tags").setDesc("Read from notes tagged before the scheme (#Character, #Region); new notes don't get them.");
+			const olderRow = new Setting(containerEl).setName("Older tags").setDesc("Read from notes tagged before the scheme (#character, #region); new notes don't get them.");
 			olderRow.settingEl.addClass("uv-compact-fields");
 			for (const type of ENTITY_TYPES) {
 				const wrap = el("label", { cls: "uv-mini-field" }, olderRow.controlEl);
@@ -449,7 +449,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			}
 		}
 		// Where new notes go, and the template each starts from: one small table.
-		const where = new Setting(containerEl).setName("Folders and templates").setDesc("The folder each kind of note goes in, and an optional template note (Templater syntax runs if Templater is installed).");
+		const where = new Setting(containerEl).setName("Folders and templates").setDesc("The folder each kind of note goes in, and an optional template note (templater syntax runs if templater is installed).");
 		where.settingEl.addClass("uv-setting-stack");
 		const grid = el("div", { cls: "uv-newnote-grid" }, where.settingEl);
 		for (const h of ["", "Folder", "Template"]) el("span", { cls: "uv-newnote-head", text: h }, grid);
@@ -469,29 +469,29 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			})());
 		}		new Setting(containerEl)
 			.setName("Sidebar button for every view")
-			.setDesc("Off: only the UniverseView star. Takes effect after reloading Obsidian.")
+			.setDesc("Off: only the universeview star. Takes effect after reloading Obsidian.")
 			.addToggle((t) => t.setValue(s.ribbonViews).onChange(async (v) => {
 				s.ribbonViews = v;
 				await this.save(false);
 			}));
 		new Setting(containerEl)
 			.setName("Open notes in a new tab")
-			.setDesc("When clicking items in UniverseView views. Ctrl/Cmd-click always opens a new tab.")
+			.setDesc("When clicking items in universeview views. Ctrl/cmd-click always opens a new tab.")
 			.addToggle((t) => t.setValue(s.openInNewTab).onChange(async (v) => {
 				s.openInNewTab = v;
 				await this.save(false);
 			}));
 		const clickOptions = { dashboard: "Dashboard note", note: "Markdown note", inspector: "Inspector", "dashboard+inspector": "Dashboard note and inspector", "note+inspector": "Markdown note and inspector" };
 		new Setting(containerEl)
-			.setName("Clicking a note in the Library")
-			.setDesc("What opens. The dashboard note is the page beside the tree (with the tree alone, it opens the markdown note).")
+			.setName("Clicking a note in the library")
+			.setDesc("What opens. The dashboard note is the page beside the tree (with the tree alone, it opens the Markdown note).")
 			.addDropdown((d) => d.addOptions(clickOptions).setValue(s.libraryClick ?? "dashboard").onChange(async (v) => {
 				s.libraryClick = v as TreeClick;
 				await this.save(false);
 			}));
 		new Setting(containerEl)
-			.setName("Clicking a note in the Files panel")
-			.setDesc("What opens. The dashboard note opens in the Library tab.")
+			.setName("Clicking a note in the files panel")
+			.setDesc("What opens. The dashboard note opens in the library tab.")
 			.addDropdown((d) => d.addOptions(clickOptions).setValue(s.panelClick ?? "note").onChange(async (v) => {
 				s.panelClick = v as TreeClick;
 				await this.save(false);
@@ -502,8 +502,8 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		helpTip(fnHead.nameEl, "A folder note is a folder's own note, kept inside it under the same name: California/California.md. Clicking the folder opens it; Alt-click just folds the folder; Ctrl/Cmd-click a folder without one to make one. Right-click a note for Turn into folder note, or a folder for Create, Detach or Delete folder note.");
 		if (pluginEnabled(this.app, "folder-notes")) {
 			new Setting(containerEl)
-				.setName("The Folder notes plugin is on")
-				.setDesc("UniverseView does everything it does here, so its explorer behaviour stays off while that plugin is on. Turn Folder notes off under Community plugins to use these instead; your folder notes stay as they are.")
+				.setName("The folder notes plugin is on")
+				.setDesc("Universeview does everything it does here, so its explorer behaviour stays off while that plugin is on. Turn folder notes off under community plugins to use these instead; your folder notes stay as they are.")
 				.settingEl.addClass("uv-setting-warn");
 		}
 		const repaint = async () => {
@@ -544,14 +544,14 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Template for new folder notes")
-			.setDesc("Used by Create folder note. Empty: a blank note.")
+			.setDesc("Used by create folder note. Empty: a blank note.")
 			.addText((t) => t.setPlaceholder("Templates/Folder.md").setValue(s.folderNoteTemplate ?? "").onChange(async (v) => {
 				s.folderNoteTemplate = v.trim() || undefined;
 				await this.save(false);
 			}));
 		new Setting(containerEl)
 			.setName("Where new notes go")
-			.setDesc("Inside what they belong to: a person in their house's folder (James II in House Whitmore), a place in the place it lies in, a title under its realm, an event where it happened. When that note has no folder of its own, beside it, or in a new one made for it.")
+			.setDesc("Inside what they belong to: a person in their house's folder (james ii in house whitmore), a place in the place it lies in, a title under its realm, an event where it happened. When that note has no folder of its own, beside it, or in a new one made for it.")
 			.addDropdown((d) => d.addOptions({ parent: "Inside its folder note, else beside it", convert: "Inside it, making it a folder note", off: "In the type's folder" }).setValue(s.placeNewNotes ?? "parent").onChange(async (v) => {
 				s.placeNewNotes = v as "parent" | "convert" | "off";
 				await this.save(false);
@@ -569,7 +569,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		toggle("Offer to update tags on rename", "Renaming House Whitmore offers to change #House_Whitmore (and #Nation_…, #Family_…) in the notes that use it.", () => s.renameTags !== false, (v) => (s.renameTags = v));
 		new Setting(containerEl)
 			.setName("Move notes into their folder notes")
-			.setDesc("Finds notes outside the folder note they belong in (a Whitmore in People/ rather than House Whitmore/) and lists the moves to tick before anything moves.")
+			.setDesc("Finds notes outside the folder note they belong in (a whitmore in people/ rather than house whitmore/) and lists the moves to tick before anything moves.")
 			.addButton((b) => b.setButtonText("Review moves…").onClick(() => new TidyModal(this.plugin).open()));
 		new Setting(containerEl)
 			.setName("When the map moves something")
@@ -579,8 +579,8 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 				await this.save(false);
 			}));
 		new Setting(containerEl)
-			.setName("Living and Dead folders")
-			.setDesc("When a house's folder has Living and Dead (or Alive and Deceased) folders, new people go in the one that fits, and someone given a death date is offered a move to Dead.")
+			.setName("Living and dead folders")
+			.setDesc("When a house's folder has living and dead (or alive and deceased) folders, new people go in the one that fits, and someone given a death date is offered a move to dead.")
 			.addToggle((t) => t.setValue(s.statusFolders !== false).onChange(async (v) => {
 				s.statusFolders = v;
 				await this.save(false);
@@ -771,7 +771,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Fade small areas when zoomed out")
-			.setDesc("Territories narrower than this on screen fade away as you zoom out, so the big realms stay readable; zoom in and they come back. 0 never fades. (Turn it off per map under Overlays.)")
+			.setDesc("Territories narrower than this on screen fade away as you zoom out, so the big realms stay readable; zoom in and they come back. 0 Never fades. (Turn it off per map under overlays.)")
 			.addSlider((sl) => sl.setLimits(0, 160, 8).setValue(s.fadeAreaPx).onChange(async (v) => {
 				s.fadeAreaPx = v;
 				await this.save();
@@ -807,7 +807,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		}
 		new Setting(lastKinds)
 			.setName("Traits")
-			.setDesc("What is special about a place goes in tags, not in its kind: a role (#Place_Role_Capital), a size (#Place_Size_Small) and a status (#Place_Status_Ruined). The roles and statuses are lists you can edit just below. A place with a role wears that role's crown, anchor or other icon on the map. The Tag standard window sets them.");
+			.setDesc("What is special about a place goes in tags, not in its kind: a role (#place_role_capital), a size (#place_size_small) and a status (#place_status_ruined). The roles and statuses are lists you can edit just below. A place with a role wears that role's crown, anchor or other icon on the map. The tag standard window sets them.");
 		// Roles and statuses are lists of your own: name, icon (a Lucide name or an emoji) and, for a role, its pin's colour.
 			type TraitRow = { name: string; icon: string; color: string };
 			const saveTraits = async () => {
@@ -890,7 +890,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		let newName = "";
 		new Setting(containerEl)
 			.setName("Save this look")
-			.setDesc("Keep the current look (everything in Map look and Territory styles) as a preset of your own.")
+			.setDesc("Keep the current look (everything in map look and territory styles) as a preset of your own.")
 			.addText((t) => t.setPlaceholder("Name").onChange((v) => (newName = v.trim())))
 			.addButton((b) => b.setButtonText("Save").onClick(async () => {
 				if (!newName) {
@@ -990,7 +990,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		const presetNow = TIER_NAME_PRESETS.find(([, , p]) => same(p, s.tierNames ?? {}))?.[0] ?? "own";
 		new Setting(containerEl)
 			.setName("Tier names")
-			.setDesc("What your world calls each tier of land, as in United States › California › Los Angeles County. A renamed tier works exactly like the built-in one: its name shows on the map, in the realm tree and in menus, tags like #Place_State put a land on it, and standardised tags use it. Each tier's ruler takes its title (a kingdom's King); a realm of a kind of its own names its ruler with ruler-title and its people with demonym, in its edit form.")
+			.setDesc("What your world calls each tier of land, as in united states › california › los angeles county. A renamed tier works exactly like the built-in one: its name shows on the map, in the realm tree and in menus, tags like #place_state put a land on it, and standardised tags use it. Each tier's ruler takes its title (a kingdom's king); a realm of a kind of its own names its ruler with ruler-title and its people with demonym, in its edit form.")
 			.addDropdown((d) => {
 				for (const [id, label] of TIER_NAME_PRESETS) d.addOption(id, label);
 				d.addOption("own", "Your own names");
@@ -1044,7 +1044,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 
 		// How each tier is drawn on the map.
 		const styles = el("div", { cls: "universeview-settings-rows" }, containerEl);
-		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from its kind and tags like #Place_Realm, #Place_Province or #Place_Size_Small.").settingEl.addClass("universeview-settings-rows-head");
+		new Setting(styles).setName("Territory styles").setDesc("How each tier of land is drawn on maps. Each card shows the land whole (left) and split into its vassals (right). A land's tier comes from its kind and tags like #place_realm, #place_province or #place_size_small.").settingEl.addClass("universeview-settings-rows-head");
 		const saveStyles = debounce(async () => {
 			await this.save(false);
 			this.plugin.restyleTerritories?.();
@@ -1055,7 +1055,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		});
 		new Setting(containerEl)
 			.setName("Standardise land tags")
-			.setDesc("Go through every place and realm: ruled land (#Place_Province #Place_Size_Small) or geography (#Place_Region #Place_Size_Enormous), with its tier or landform and size. You see each change before it's written.")
+			.setDesc("Go through every place and realm: ruled land (#place_province #place_size_small) or geography (#place_region #place_size_enormous), with its tier or landform and size. You see each change before it's written.")
 			.addButton((b) => b.setButtonText("Review tags…").onClick(() => new TagStandardModal(this.plugin).open()));
 		new Setting(styles).addButton((b) => b.setButtonText("Reset to the built-in styles").onClick(async () => {
 			s.tierStyles = undefined;
@@ -1145,7 +1145,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		
 				new Setting(containerEl)
 			.setName("How much the theme does")
-			.setDesc("Views and maps: the theme styles UniverseView and tints its maps. Views only: maps keep their own colours. All of Obsidian: sidebars, tabs and your notes take the theme too (undo by choosing another). Plain: only the theme's colours, backdrop and fonts, with Obsidian's own buttons, tabs and surface.")
+			.setDesc("Views and maps: the theme styles universeview and tints its maps. Views only: maps keep their own colours. All of Obsidian: sidebars, tabs and your notes take the theme too (undo by choosing another). Plain: only the theme's colours, backdrop and fonts, with Obsidian's own buttons, tabs and surface.")
 			.addDropdown((d) => {
 				const now = s.themeStyles === false ? "plain" : s.themeScope === "app" ? "app" : s.themeMap === false ? "views" : "maps";
 				d.addOptions({ maps: "Views and maps", views: "Views only (maps keep their colours)", app: "All of Obsidian too", plain: "Plain (colours, backdrop and fonts only)" }).setValue(now).onChange(async (v) => {
@@ -1303,7 +1303,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		if (personalSurface(s)) {
 			new Setting(containerEl)
 				.setName("Surface")
-				.setDesc("Tactile gives UniverseView's own tabs, buttons and panels raised keys, folder tabs and inset fields; flat is quiet and follows your Obsidian theme.")
+				.setDesc("Tactile gives universeview's own tabs, buttons and panels raised keys, folder tabs and inset fields; flat is quiet and follows your Obsidian theme.")
 				.addDropdown((d) => d.addOption("theme", "Theme's own").addOption("flat", "Flat").addOption("tactile", "Tactile").setValue(s.surfaceStyle ?? "theme").onChange(async (v) => {
 					s.surfaceStyle = v === "tactile" || v === "flat" ? v : undefined;
 					await save();
@@ -1351,7 +1351,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Folder colour")
-			.setDesc("The colour of folders in the Library and the Files panel. Manila by default.")
+			.setDesc("The colour of folders in the library and the files panel. Manila by default.")
 			.addColorPicker((c) => c.setValue(s.tactileFolderColor || "#e6c57e").onChange(async (v) => {
 				s.tactileFolderColor = v;
 				await save();
@@ -1367,7 +1367,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		this.foldHeading(containerEl, "Motion and density");
 		new Setting(containerEl)
 			.setName("Motion")
-			.setDesc("How quickly panels, cards, pins and the map animate. “Off” also applies when your system asks for reduced motion.")
+			.setDesc("How quickly panels, cards, pins and the map animate. “off” also applies when your system asks for reduced motion.")
 			.addDropdown((d) => {
 				for (const m of MOTIONS) d.addOption(m.id, `${m.name} — ${m.desc}`);
 				d.setValue(s.motion).onChange(async (v) => {
@@ -1385,7 +1385,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Animations")
-			.setDesc("Everything UniverseView animates: titles written or typed out, buttons outlined and coloured in, tabs and rows drawn in, cards dealt, lines and maps drawn, pins dropped, dialogs and cards opening. Turn it off on a large vault or a slow device. It is also off when Motion is Off or your system asks for reduced motion.")
+			.setDesc("Everything universeview animates: titles written or typed out, buttons outlined and coloured in, tabs and rows drawn in, cards dealt, lines and maps drawn, pins dropped, dialogs and cards opening. Turn it off on a large vault or a slow device. It is also off when motion is off or your system asks for reduced motion.")
 			.addToggle((tg) => tg.setValue(s.inkAnimation !== false).onChange(async (v) => {
 				s.inkAnimation = v ? undefined : false;
 				await save();
@@ -1398,7 +1398,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		const sounds = this.plugin.sounds;
 		new Setting(containerEl)
 			.setName("Writing sounds")
-			.setDesc("The noise of a pencil, pen, typewriter or keyboard, made in your device (nothing is downloaded). Silent until you choose a set. “Theme's own” gives each theme its own: pencil for Notebook, typewriter for Typewriter, retro beeps for Desktop.")
+			.setDesc("The noise of a pencil, pen, typewriter or keyboard, made in your device (nothing is downloaded). Silent until you choose a set. “theme's own” gives each theme its own: pencil for notebook, typewriter for typewriter, retro beeps for desktop.")
 			.addDropdown((d) => {
 				d.addOption("off", "Off").addOption("theme", `Theme's own (${themeSoundName(s.theme)})`);
 				for (const set of SOUND_SETS) d.addOption(set.id, `${set.name}: ${set.note}`);
@@ -1525,14 +1525,14 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("About").setHeading();
 		new Setting(containerEl)
 			.setName("Show what's new after an update")
-			.setDesc("Once, after UniverseView updates: what changed since the version you had.")
+			.setDesc("Once, after universeview updates: what changed since the version you had.")
 			.addToggle((t) => t.setValue(s.showWhatsNew !== false).onChange(async (v) => {
 				s.showWhatsNew = v;
 				await save();
 			}));
 		new Setting(containerEl)
 			.setName("Tour")
-			.setDesc("A short walk through what UniverseView does, where you can try on the themes and surface styles.")
+			.setDesc("A short walk through what universeview does, where you can try on the themes and surface styles.")
 			.addButton((b) => b.setButtonText("Take the tour").onClick(() => new TourModal(this.plugin).open()));
 		// Every version, newest first, right here (there is nothing else on this page to click through to).
 		const historyHead = el("h4", { cls: "uv-history-head", text: `Version ${buildLabel(this.plugin.manifest.version).long}: what changed in every version` }, containerEl);
@@ -1574,7 +1574,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 				await save();
 			}));
 		const tabNames: [string, string][] = [["timeline", "Timeline"], ["map", "Map"], ["links", "Links"], ["note", "Note"]];
-		const tabsSetting = new Setting(containerEl).setName("Tabs").setDesc("Which tabs to show (About and Edit are always there).");
+		const tabsSetting = new Setting(containerEl).setName("Tabs").setDesc("Which tabs to show (about and edit are always there).");
 		for (const [id, label] of tabNames) {
 			tabsSetting.addToggle((t) => {
 				t.setTooltip(label).setValue(!(s.inspectorHiddenTabs ?? []).includes(id)).onChange(async (v) => {
@@ -1621,7 +1621,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		helpTip(iconsHead.nameEl, "Each note shows its type's icon (a pin for a place) and, beside it, what it is more exactly: its own `icon:` (Change icon… on its right-click menu), its kind's icon (Kinds of place, under Maps & realms), or its kind of group's.\n\nIcons are Lucide names (lucide.dev) or an emoji. Leave a field empty for the built-in icon.");
 		new Setting(containerEl)
 			.setName("Icons in the file explorer and search")
-			.setDesc("Beside each UniverseView note, its type and kind, like a pin and a castle for a fort.")
+			.setDesc("Beside each universeview note, its type and kind, like a pin and a castle for a fort.")
 			.addToggle((t) => t.setValue(s.fileIcons !== false).onChange(async (v) => {
 				s.fileIcons = v;
 				await save();
@@ -1661,7 +1661,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 		}));
 		new Setting(containerEl)
 			.setName("Note in the status bar")
-			.setDesc("The open note's icons, what it is and where it sits (“Fort · Los Angeles County › California”) at the bottom of the window; click it for the inspector.")
+			.setDesc("The open note's icons, what it is and where it sits (“fort · los angeles county › california”) at the bottom of the window; click it for the inspector.")
 			.addToggle((t) => t.setValue(s.statusBar !== false).onChange(async (v) => {
 				s.statusBar = v;
 				await save();
@@ -1669,7 +1669,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Style tags in notes")
-			.setDesc("UniverseView's tags (#Character_Person, #Place_Realm, #Place_Size_Small, #Group_Nation_United_States…) as pills in their type's or realm's colour, in reading view and while editing.")
+			.setDesc("Universeview's tags (#character_person, #place_realm, #place_size_small, #group_nation_united_states…) as pills in their type's or realm's colour, in reading view and while editing.")
 			.addToggle((t) => t.setValue(s.styleTags !== false).onChange(async (v) => {
 				s.styleTags = v;
 				await save();
@@ -1704,27 +1704,27 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			.addToggle((t) => t.setValue(!!s.suggestedHotkeys).onChange(async (v) => {
 				s.suggestedHotkeys = v;
 				await this.save(false);
-				new Notice("Restart Obsidian (or turn UniverseView off and on) to apply the shortcuts.");
+				new Notice("Restart Obsidian (or turn universeview off and on) to apply the shortcuts.");
 			}));
 
 		new Setting(containerEl).setName("Hover cards").setHeading();
 		new Setting(containerEl)
 			.setName("Show hover cards")
-			.setDesc("Rest the pointer on anything in a UniverseView view for a summary: dates and age, family, where it is, what happened there and the note's opening lines. Hold Ctrl/Cmd for Obsidian's page preview instead.")
+			.setDesc("Rest the pointer on anything in a universeview view for a summary: dates and age, family, where it is, what happened there and the note's opening lines. Hold ctrl/cmd for Obsidian's page preview instead.")
 			.addToggle((t) => t.setValue(s.hoverCards).onChange(async (v) => {
 				s.hoverCards = v;
 				await save();
 			}));
 		new Setting(containerEl)
 			.setName("In notes")
-			.setDesc("Also show cards for links to UniverseView notes while you read and write.")
+			.setDesc("Also show cards for links to universeview notes while you read and write.")
 			.addDropdown((d) => d.addOptions({ off: "Never", alt: "While holding Alt", always: "Always" }).setValue(s.hoverInNotes).onChange(async (v) => {
 				s.hoverInNotes = v as typeof s.hoverInNotes;
 				await save();
 			}));
 		new Setting(containerEl)
 			.setName("Delay")
-			.setDesc("How long to rest on an item before its card opens (milliseconds). Hold Alt to open one at once.")
+			.setDesc("How long to rest on an item before its card opens (milliseconds). Hold alt to open one at once.")
 			.addSlider((sl) => sl.setLimits(0, 2000, 50).setValue(s.hoverDelay).onChange(async (v) => {
 				s.hoverDelay = v;
 				await save();
@@ -1756,7 +1756,7 @@ export class UniverseViewSettingTab extends PluginSettingTab {
 			}));
 		new Setting(containerEl)
 			.setName("Close after")
-			.setDesc("How long a card stays once the pointer leaves it (milliseconds), so you can move onto it. Drag a card by its handle (or any empty part) to keep it open where you drop it; keys while one is open: P pin, I inspect, E edit, O open the note, Esc close.")
+			.setDesc("How long a card stays once the pointer leaves it (milliseconds), so you can move onto it. Drag a card by its handle (or any empty part) to keep it open where you drop it; keys while one is open: P pin, i inspect, e edit, o open the note, esc close.")
 			.addSlider((sl) => sl.setLimits(0, 1500, 50).setValue(s.hoverHideDelay ?? 180).onChange(async (v) => {
 				s.hoverHideDelay = v;
 				await save();

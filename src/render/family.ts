@@ -133,7 +133,7 @@ export class FamilyTreeRenderer {
 		// Arrow keys walk from card to card, Enter centres the tree on the one marked, Esc lets go.
 		if (!embedded) {
 			this.root.tabIndex = 0;
-			this.root.setAttribute("aria-label", "Family tree: arrow keys move between people, Enter centres the tree on one");
+			this.root.setAttribute("aria-label", "Family tree: arrow keys move between people, enter centres the tree on one");
 			this.root.addEventListener("keydown", (evt) => this.onKey(evt));
 		}
 		if (embedded) {

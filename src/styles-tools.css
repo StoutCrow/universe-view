@@ -1505,6 +1505,8 @@ img.universeview-territory-icon {
 	color: var(--text-accent);
 	font-weight: 600;
 }
+.universeview-insp-empty-link { display: block; margin-top: 8px; cursor: pointer; font-size: var(--font-ui-smaller); color: var(--text-muted); text-decoration: underline; }
+.universeview-insp-empty-link:hover { color: var(--text-normal); }
 .universeview-insp-empty {
 	text-align: center;
 	color: var(--text-muted);

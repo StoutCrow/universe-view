@@ -72,11 +72,11 @@ export function treeOptionsMenu(plugin: UniverseViewPlugin, evt: MouseEvent, sho
 	const menu = new Menu();
 	if (shown) {
 		const { state, redraw } = shown;
-		menu.addItem((i) => i.setTitle("Show notes UniverseView doesn't use").setChecked(!state.onlyNotes).onClick(() => {
+		menu.addItem((i) => i.setTitle("Show notes universeview doesn't use").setChecked(!state.onlyNotes).onClick(() => {
 			state.onlyNotes = !state.onlyNotes;
 			redraw();
 		}));
-		menu.addItem((i) => i.setTitle("Show other files (.base, .canvas, images, PDFs)").setChecked(o.others).onClick(() => set({ others: !o.others })));
+		menu.addItem((i) => i.setTitle("Show other files (.base, .canvas, images, pdfs)").setChecked(o.others).onClick(() => set({ others: !o.others })));
 		menu.addSeparator();
 	}
 	const styles: [TreeOptions["colors"], string][] = [["both", "Colour names and bars"], ["text", "Colour names only"], ["bar", "Colour bars only"], ["none", "No colours"]];

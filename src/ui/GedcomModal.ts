@@ -20,10 +20,10 @@ export class GedcomModal extends Modal {
 	}
 
 	onOpen() {
-		this.titleEl.setText("Import a GEDCOM family tree");
+		this.titleEl.setText("Import a gedcom family tree");
 		const { contentEl } = this;
 		el("p", { cls: "setting-item-description", text: "Creates one note per person with birth, death, parents and partners. Existing notes with the same name are left untouched." }, contentEl);
-		new Setting(contentEl).setName("GEDCOM file").setDesc(".ged files exported from Ancestry, FamilySearch, Gramps, MyHeritage…").addButton((b) => {
+		new Setting(contentEl).setName("Gedcom file").setDesc(".ged files exported from Ancestry, FamilySearch, Gramps, MyHeritage…").addButton((b) => {
 			const input = el("input", { attr: { type: "file", accept: ".ged,.gedcom,text/plain" } });
 			input.hide();
 			contentEl.appendChild(input);

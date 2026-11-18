@@ -52,6 +52,30 @@ const HELP: Record<string, string> = {
 	Inside: "Places directly inside this one (`located-in:` on them), with how many more are inside those.",
 	People: "Everyone born, living, dead or in an event here or in any place inside it.",
 	"Societies here": "Groups that hold or live in this place, from its `cultures:` or `nation:`.",
+	Parents: "Written as `parents:` here, or as `children:` on the parent. They put this person in the family tree.",
+	Partners: "Spouses and partners, current first, with how it began and ended. Edit the kind and dates in the Edit tab.",
+	Children: "Found from other notes that name this person as a parent, plus any written as `children:` here.",
+	Siblings: "Worked out from shared parents. Half- and step-siblings are marked as such.",
+	"Part of": "The war or larger event this belongs to (`war:`).",
+	Battles: "Battles that name this war as theirs, in the order fought.",
+	"Lands changing hands": "Lands that went from one liege to another in this event (`transfers:`).",
+	"Lands occupied": "Lands held by someone else for a while in this war (`occupied:`). They keep their owner.",
+	"Holders over time": "Who held this title and when (`holders:`). The map and timeline use it to colour the land for any date.",
+	"Occupied by": "Who held this land while it was occupied, in any war.",
+};
+
+/** What each button along the bottom does, as its tooltip. */
+const ACTION_TIPS: Record<string, string> = {
+	"Open note": "Open the Markdown note itself",
+	"Play on the map": "Replay this war on the map, battle by battle",
+	Timeline: "Show it on the timeline",
+	"Family tree": "Show it in the family tree",
+	Realms: "Show it in the realm tree",
+	Map: "Show it on the map",
+	Connections: "Show everything it is tied to, as a graph",
+	"Icon…": "Choose the icon shown beside this note",
+	Settings: "Settings for this kind of note",
+	Edit: "Change its properties",
 };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -224,7 +248,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	const person = (into: HTMLElement, r: { key: string; name: string; resolved?: boolean }, sub?: string, tone?: string) => noteChip(p, into, r, opts, sub, tone);
 	const list = (title: string, ic: string, refs: { key: string; name: string; resolved?: boolean; sub?: string; tone?: string }[], max = 12) => {
 		if (!refs.length) return;
-		const s = section(`${title} (${refs.length})`, ic);
+		const s = section(`${title} (${refs.length})`, ic, title === "Relationships" && opts.tab ? ["Kinds…", () => p.openSettings("notes")] : undefined);
 		for (const r of refs.slice(0, max)) person(s, r, r.sub, r.tone);
 		if (refs.length > max) el("span", { cls: "universeview-ep-more", text: `+${refs.length - max} more` }, s);
 	};
@@ -435,7 +459,7 @@ export function entityPanel(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 	// ---- Ways in ----
 	const actions = el("div", { cls: "universeview-ep-actions" }, root);
 	const act = (ic: string, label: string, run: () => void) => {
-		const b = el("button", { cls: "universeview-ep-action" }, actions);
+		const b = el("button", { cls: "universeview-ep-action", attr: { "aria-label": ACTION_TIPS[label] ?? label } }, actions);
 		icon(el("span", {}, b), ic);
 		el("span", { text: label }, b);
 		b.addEventListener("click", run);

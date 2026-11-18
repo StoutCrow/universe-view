@@ -4084,7 +4084,7 @@ export class MapRenderer {
 			if (erase) {
 				const res = cutFrom(working, shapes, minPiece);
 				if (!res) {
-					new Notice("That would rub out the whole area. To remove it, use Delete.");
+					new Notice("That would rub out the whole area. To remove it, use delete.");
 					return;
 				}
 				history.push({ ring: working, extra, pushed: pushed.length });

@@ -18,6 +18,16 @@ import { nameRows, writeNames } from "../index/renames";
 import { formatDay } from "../dates/parser";
 import { ConfirmPrompt } from "../ui/TextPrompt";
 
+/** What each tab is for, in its tooltip. */
+const TAB_TIPS: Record<InspectorTab, string> = {
+	about: "everything known about the note at a glance",
+	edit: "change its properties; saved as you type",
+	timeline: "what happened to it, in order",
+	map: "where it is on the map",
+	links: "what links to it and what it links to",
+	note: "how UniverseView reads this note",
+};
+
 export const VIEW_INSPECTOR = "chronicle-inspector";
 
 /**
@@ -244,6 +254,8 @@ export class InspectorView extends ItemView {
 			const empty = el("div", { cls: "universeview-insp-empty" }, body);
 			icon(el("div", { cls: "universeview-insp-empty-icon" }, empty), "panel-right");
 			el("div", { text: "Open or pick a person, place, event or group in any view, and it shows here to read and edit." }, empty);
+			const more = el("a", { cls: "universeview-insp-empty-link", text: "Inspector settings: tabs, header, icons" }, empty);
+			more.addEventListener("click", () => this.plugin.openSettings("views"));
 			return;
 		}
 		// Who or what this is, at a glance, above the tabs.
@@ -258,7 +270,7 @@ export class InspectorView extends ItemView {
 		if (!have.includes(this.tab)) this.tab = "about";
 		const tabList: [InspectorTab, string, string][] = have.map((id) => (id === "edit" ? [id, this.editLabel(e), "pencil"] : id === "about" ? [id, "About", TYPE_ICONS[e.type]] : [id, TAB_INFO[id][0], TAB_INFO[id][1]]));
 		for (const [id, label, ic] of tabList) {
-			const b = el("button", { cls: "universeview-insp-tab" + (this.tab === id ? " is-active" : ""), attr: { "aria-label": label } }, tabs);
+			const b = el("button", { cls: "universeview-insp-tab" + (this.tab === id ? " is-active" : ""), attr: { "aria-label": `${label}: ${TAB_TIPS[id]}` } }, tabs);
 			icon(el("span", {}, b), ic);
 			el("span", { text: label }, b);
 			b.addEventListener("click", () => {

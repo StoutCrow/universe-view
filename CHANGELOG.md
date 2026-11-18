@@ -2,7 +2,23 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 4.6.0 — not released yet
+## 4.6.0 — 2026-11-18
+
+### The New note window
+- **One button per type, with the kinds under it.** Place has Place and Region; Society has Realm, House, People, Language, Faith, Organisation and Other. Object and Creature are there too. The window stays pinned near the top and keeps its height, so nothing jumps when you change type.
+- **Each kind asks what fits it.** A language has no ruler, a realm has a liege, a house a head, a faith its head; dates and places use the kind's own words. The Relationships list drops ties that make no sense (a language has none; a people has no vassals).
+- **Colour is the first field**, easy to reach.
+- **Name forms to tick**: *Kingdom of …*, *House …*, *The … people*, *Church of …*, *… Castle*, *Battle of …* and more for every kind. The plain name is kept as an alias, so a link to `England` still finds *Kingdom of England*.
+- **Typed names are read.** Writing *Kingdom of England* on the Realm button, or *House Whitmore* on House, splits it into form and name. A name that reads as another kind offers to switch to it.
+- **People's names are shortened from context.** *King Henry I the Bold* offers *Henry I Whitmore the Bold*: the title comes off (and stays an alias), and the surname comes from the house you chose or a parent, placed before the epithet.
+
+### Explanations and links
+- **"?" notes and tooltips** across the New note window (about 45 questions), the inspector (tabs, bottom buttons, more sections) and every view's Options panel (about 40 options).
+- **Links into the settings** from the places they belong: where new notes go, which relationships appear, calendars, and a *More settings for this view…* entry at the foot of each Options panel.
+- All interface text now follows the Obsidian sentence-case rules, so the plugin review lints clean.
+
+### Ready for translations
+- **A translation layer** (`src/i18n/`): the interface text gets one key per sentence in `en.ts`, shown through `t("key")` in Obsidian's own language, with English for anything not translated yet. French (`fr.ts`) is started, to be proofread by a French speaker. [TRANSLATING.md](TRANSLATING.md) explains how to add or fix a language. Screens are moved over a part at a time, Settings and the dashboard tabs first; until then they show English.
 
 ### Library clicks and hover card
 - **Choose what a click opens** in the Library and in the Files panel (Settings): the dashboard note, the markdown note, the inspector, or the note or dashboard together with the inspector.

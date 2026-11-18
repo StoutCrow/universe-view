@@ -1005,7 +1005,7 @@ export class OrgChartRenderer {
 		this.cursor(this.options.at);
 		const hit = svg("rect", { x: LABEL, y: 0, width: plotW, height: AXIS, class: "universeview-org-axis-hit" }, s);
 		const tip = svg("title", {}, hit);
-		tip.textContent = "Click to see the organisation on that date (Esc or the Time button for all time)";
+		tip.textContent = "Click to see the organisation on that date (esc or the time button for all time)";
 		hit.addEventListener("click", (evt) => {
 			const r = s.getBoundingClientRect();
 			const day = min + ((evt.clientX - r.left - LABEL) / plotW) * (max - min);

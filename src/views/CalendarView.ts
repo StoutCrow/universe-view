@@ -155,7 +155,7 @@ export class ConvertModal extends Modal {
 			el("div", { cls: "universeview-dash-muted", text: "Calendars line up through their epoch (Settings → Calendars). One without an epoch starts its year 1 on 1 January 1970." }, out);
 		};
 		new Setting(this.contentEl).setName("Date").addText((t) => {
-			t.setPlaceholder("E.g. 14 Highsun SE 3").setValue(text).onChange((v) => {
+			t.setPlaceholder("E.g. 14 Highsun se 3").setValue(text).onChange((v) => {
 				text = v;
 				show();
 			});

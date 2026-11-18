@@ -15,7 +15,7 @@ export class ValidateModal extends Modal {
 
 	onOpen() {
 		this.modalEl.addClass("universeview-validate-modal", "universeview-scope");
-		this.titleEl.setText("Check UniverseView data");
+		this.titleEl.setText("Check universeview data");
 		this.render();
 	}
 

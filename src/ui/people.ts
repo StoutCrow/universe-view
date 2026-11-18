@@ -183,7 +183,7 @@ export class SuccessionModal extends Modal {
 		const anchor = idx.get(this.holder ?? this.culture);
 		const cal = this.plugin.calendars.get(anchor?.calendar);
 		new Setting(this.contentEl).setName("On").setDesc("A date (blank = the holder's death, or today's latest record)").addText((t) => {
-			t.setPlaceholder("E.g. SE 40");
+			t.setPlaceholder("E.g. Se 40");
 			t.inputEl.addEventListener("change", () => {
 				const d = t.getValue().trim() ? this.plugin.parseDate(t.getValue(), cal.id) : null;
 				this.day = d ? d.end : undefined;
@@ -368,7 +368,7 @@ export class KnowledgeModal extends Modal {
 		});
 		const cal = this.plugin.calendars.get(this.plugin.index.get(this.person)?.calendar);
 		new Setting(this.contentEl).setName("On").setDesc("Blank = everything they ever learn").addText((t) => {
-			t.setPlaceholder("E.g. SE 20");
+			t.setPlaceholder("E.g. Se 20");
 			t.inputEl.addEventListener("change", () => {
 				const d = t.getValue().trim() ? this.plugin.parseDate(t.getValue(), cal.id) : null;
 				this.day = d ? d.end : undefined;

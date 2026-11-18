@@ -26,6 +26,7 @@ import { WhatsNewModal } from "./ui/WhatsNew";
 import { TourModal } from "./ui/Tour";
 import { relativeMenu } from "./ui/AddRelatives";
 import { compareVersions } from "./index/changelog";
+import { setLocale } from "./i18n";
 import { isHouse } from "./render/houses";
 import { setHelpDelay } from "./render/common";
 import { applyIconSettings, changeNoteIcon, decorateFileLists } from "./ui/icons";
@@ -134,6 +135,7 @@ export default class UniverseViewPlugin extends Plugin {
 	hoverCards?: HoverCards;
 
 	async onload() {
+		setLocale((window as unknown as { moment?: { locale(): string } }).moment?.locale());
 		await this.loadSettings();
 		void this.loadHistory().catch((err) => console.error("UniverseView: couldn't read the undo history", err));
 		applyAppearance(this.settings);
@@ -164,7 +166,7 @@ export default class UniverseViewPlugin extends Plugin {
 		this.registerView(VIEW_HOUSES, (leaf) => new HousesView(leaf, this));
 		this.registerView(VIEW_REALMS, (leaf) => new RealmsView(leaf, this));
 		this.registerView(VIEW_INSPECTOR, (leaf) => new InspectorView(leaf, this));
-		if (this.settings.ribbonViews) this.addRibbonIcon("panel-right", "UniverseView: inspector", () => void this.inspect(this.app.workspace.getActiveFile()?.path));
+		if (this.settings.ribbonViews) this.addRibbonIcon("panel-right", "Universeview: inspector", () => void this.inspect(this.app.workspace.getActiveFile()?.path));
 		this.registerHoverLinkSource(HOVER_SOURCE, { display: "UniverseView", defaultMod: true });
 		// Each extra below starts on its own: one that can't run here (a phone, an unusual theme or
 		// layout) switches only itself off, instead of stopping the plugin from enabling.
@@ -325,7 +327,7 @@ export default class UniverseViewPlugin extends Plugin {
 				told = onDisk;
 				const frag = createFragment();
 				frag.createSpan({ text: `UniverseView ${onDisk} has arrived (${running} is running). ` });
-				const btn = frag.createEl("button", { text: "Reload UniverseView", cls: "mod-cta" });
+				const btn = frag.createEl("button", { text: "Reload universeview", cls: "mod-cta" });
 				const notice = new Notice(frag, 0);
 				btn.addEventListener("click", () => {
 					notice.hide();
@@ -935,7 +937,7 @@ export default class UniverseViewPlugin extends Plugin {
 		const v = view ?? this.app.workspace.getActiveViewOfType(ItemView);
 		const type = v?.getViewType();
 		if (!v || !type?.startsWith("chronicle-")) {
-			new Notice("Open a UniverseView view first.");
+			new Notice("Open a universeview view first.");
 			return;
 		}
 		const state = v.getState();
@@ -983,7 +985,7 @@ export default class UniverseViewPlugin extends Plugin {
 			}
 		}
 		if (!this.settings.savedViews.length) {
-			new Notice("No saved views yet. Use the bookmark button in a UniverseView view's toolbar.");
+			new Notice("No saved views yet. Use the bookmark button in a universeview view's toolbar.");
 			return;
 		}
 		const m = new ViewsModal(this);
@@ -2063,7 +2065,7 @@ export default class UniverseViewPlugin extends Plugin {
 				return !!e;
 			},
 		});
-		this.addCommand({ id: "import-gedcom", name: "Import GEDCOM family tree", icon: "import", callback: () => new GedcomModal(this).open() });
+		this.addCommand({ id: "import-gedcom", name: "Import gedcom family tree", icon: "import", callback: () => new GedcomModal(this).open() });
 		this.addCommand({
 			id: "insert-view",
 			name: "Insert embedded view",
@@ -2158,7 +2160,7 @@ export default class UniverseViewPlugin extends Plugin {
 		});
 		this.addCommand({ id: "world-settings", name: "World settings (make or open this world's world note)", icon: "globe", callback: () => this.pickWorld("Settings for which world?", (w) => this.editWorld(w ?? "")) });
 		this.addCommand({ id: "inspector", name: "Open the inspector (read and edit the current note)", icon: "panel-right", ...this.keys(["Mod", "Alt"], "I"), callback: () => void this.inspect(this.app.workspace.getActiveFile()?.path) });
-		this.addCommand({ id: "why-happened", name: "Why did this happen? (causes and consequences)", icon: "git-pull-request-arrow", callback: () => this.openCauses(activePath()) });
+		this.addCommand({ id: "why-happened", name: "Why did this happen? (Causes and consequences)", icon: "git-pull-request-arrow", callback: () => this.openCauses(activePath()) });
 		this.addCommand({ id: "convert-date", name: "Convert a date between calendars", icon: "arrow-left-right", callback: () => new ConvertModal(this).open() });
 		this.addCommand({ id: "check-continuity", name: "Check story continuity (this chapter, or all)", icon: "book-open-check", callback: () => new ContinuityModal(this, activePath()).open() });
 		this.addCommand({ id: "story-ideas", name: "Story ideas from your world", icon: "lightbulb", callback: () => this.pickWorld("Ideas for which world?", (w) => new PromptsModal(this, w).open()) });
@@ -2177,7 +2179,7 @@ export default class UniverseViewPlugin extends Plugin {
 		// ---- Tidying ----
 		this.addCommand({ id: "find-duplicates", name: "Find duplicate notes", icon: "copy", callback: () => new DuplicatesModal(this).open() });
 		this.addCommand({ id: "loose-ends", name: "Loose ends (unlinked notes, places off the map…)", icon: "unlink", callback: () => this.pickWorld("Loose ends in which world?", (w) => new OrphansModal(this, w).open()) });
-		this.addCommand({ id: "make-bases", name: "Make Obsidian Bases (.base) for each type", icon: "database", callback: () => void this.makeBases() });
+		this.addCommand({ id: "make-bases", name: "Make Obsidian bases (.base) for each type", icon: "database", callback: () => void this.makeBases() });
 		this.addCommand({ id: "tidy-kinds-tags", name: "Tidy kinds and tags", icon: "tags", callback: () => new CleanupModal(this).open() });
 		this.addCommand({ id: "completeness", name: "How complete is the world?", icon: "gauge", callback: () => this.pickWorld("Which world?", (w) => new CompletenessModal(this, w).open()) });
 		this.addCommand({ id: "contradictions", name: "Find text that disagrees with properties", icon: "scale", callback: () => new ContradictionsModal(this).open() });
@@ -2188,7 +2190,7 @@ export default class UniverseViewPlugin extends Plugin {
 		this.addCommand({ id: "world-book", name: "Export a world book (web page / PDF)", icon: "book-open", callback: () => this.pickWorld("World book of which world?", (w) => void exportWorldBook(this, w)) });
 		this.addCommand({
 			id: "export-gedcom",
-			name: "Export family tree (GEDCOM)",
+			name: "Export family tree (gedcom)",
 			icon: "file-output",
 			callback: () => this.exportGedcomPrompt(),
 		});

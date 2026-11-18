@@ -496,7 +496,10 @@ export function iconButton(parent: HTMLElement, iconName: string, label: string,
 
 export function dropdown(parent: HTMLElement, options: [string, string][], value: string, onChange: (v: string) => void, label?: string): HTMLSelectElement {
 	const s = el("select", { cls: "dropdown universeview-select" }, parent);
-	if (label) s.setAttribute("aria-label", label);
+	if (label) {
+		s.setAttribute("aria-label", label);
+		s.title = label;
+	}
 	for (const [v, text] of options) {
 		const o = el("option", { text }, s);
 		o.value = v;
@@ -512,6 +515,14 @@ export function setPressed(b: HTMLElement, on: boolean) {
 	b.setAttribute("aria-pressed", String(on));
 }
 
+/** What a toolbar switch does, added to its tooltip. */
+const CHIP_TIPS: Record<string, string> = {
+	"Linked": "Follow the other panels: this one shows whatever they are focused on",
+	"Lock layout": "Stop the dashboard's panels being moved or resized",
+	"UniverseView notes only": "Hide notes UniverseView does not use",
+	"Move together": "Pan and zoom both maps as one",
+};
+
 export function toggleChip(parent: HTMLElement, label: string, iconName: string, value: boolean, onChange: (v: boolean) => void): HTMLElement {
 	const chip = el("button", { cls: "universeview-chip is-toggle", title: label }, parent);
 	const ic = el("span", { cls: "universeview-chip-icon" }, chip);
@@ -522,7 +533,7 @@ export function toggleChip(parent: HTMLElement, label: string, iconName: string,
 	icon(check, "check");
 	const sync = (v: boolean) => {
 		setPressed(chip, v);
-		chip.title = `${label}: ${v ? "on" : "off"}`;
+		chip.title = `${label}: ${v ? "on" : "off"}${CHIP_TIPS[label] ? `. ${CHIP_TIPS[label]}` : ""}`;
 	};
 	sync(value);
 	chip.addEventListener("click", () => {

@@ -1,4 +1,5 @@
 import { societySpec } from "../src/index/societies";
+import { NAME_FORMS, houseSurname, matchForm, otherKindOf, personFull, splitPerson, titleSplit, withSurname } from "../src/index/nameforms";
 import { creatorFieldsFor } from "../src/import/quickadd";
 import { journeyOf, whereAt } from "../src/index/journey";
 import { findColourAreas } from "../src/render/colours";
@@ -57,6 +58,7 @@ import { inRing, ringArea, splitRing } from "../src/index/geometry";
 /* Unit tests for the pure parts (dates, calendars, GEDCOM). Run with `npm test`. */
 import { CalendarRegistry, CustomCalendar, civilFromDays, daysFromCivil, holidaysOn, moonPhase, phaseName, seasonOf, yearTicks } from "../src/dates/calendars";
 import { formatDate, parseDate, parseSpan } from "../src/dates/parser";
+import { PACKS, checkPack, setLocale, t } from "../src/i18n";
 import { findKinship, guessType } from "../src/detect/classify";
 import { convertGedcomDate, parseGedcom } from "../src/import/gedcom";
 import { normalizeType, readCategory, readIcon, readLayer, readPair, readPinSize, readPoints, typeFromTag, writePoints } from "../src/index/reader";
@@ -203,6 +205,19 @@ eq(parseSpan("1800 - 1888 [", g).end?.openEnded, true, "a later-than end is flag
 eq(parseSpan("1800 - 1888", g).end?.openEnded, undefined, "a plain end is not");
 eq(parseDate("]1800", g)?.qualifier, "before", "date or earlier");
 eq(parseSpan("]1800 C.E. - 1888 C.E. [", k).ok, true, "brackets with eras");
+
+// Translation layer
+setLocale("en");
+eq(t("common.cancel"), "Cancel", "English text");
+eq(t("common.open", { name: "Anna" }), "Open Anna", "{name} filled in");
+setLocale("fr-CA");
+eq(t("common.cancel"), "Annuler", "French by language part");
+eq(t("common.open", { name: "Anna" }), "Ouvrir Anna", "French {name}");
+setLocale("de");
+eq(t("common.cancel"), "Cancel", "no translation: English");
+setLocale(undefined);
+eq(checkPack(PACKS.fr), [], "French keys and {names} match English");
+eq(checkPack({ "common.open": "Ouvrir" }), ["common.open: {names} differ from English"], "a lost {name} is caught");
 
 // Type detection
 const note = (p: string, body = "", props: Record<string, unknown> = {}) => ({ path: p, name: p.split("/").pop()!.replace(/\.md$/, ""), props, tags: [], body });
@@ -2020,5 +2035,10 @@ eq([creatorFieldsFor("culture", "language").some((f) => f.key === "leaders"), cr
 	eq(out.includes('- "type == \\"character\\""') && out.includes('- "file.hasTag(\\"Character_Person\\")"') && out.includes("      - note.born"), true, "bases: filter from the notes' own marks, columns from their properties");
 	eq(baseFor("Maps", "map", people, tagType), null, "bases: no notes of a type, no base");
 }
+// Name forms: dressed names are read back, titles shorten to a full name with the house's surname.
+eq([matchForm(NAME_FORMS.realm, "Kingdom of England"), matchForm(NAME_FORMS.house, "House Whitmore"), matchForm(NAME_FORMS.nationality, "The Whitmore people"), matchForm(NAME_FORMS.realm, "England"), matchForm(NAME_FORMS.group, "The Whitmore")], [{ form: "Kingdom of {name}", base: "England" }, { form: "House {name}", base: "Whitmore" }, { form: "The {name} people", base: "Whitmore" }, undefined, undefined], "name forms: a typed name is split into form and plain name");
+eq([otherKindOf("Kingdom of England", "person")?.key, otherKindOf("Kingdom of England", "realm"), otherKindOf("Henry", "person")], ["realm", undefined, undefined], "name forms: a name that reads as another kind");
+eq([titleSplit("King Henry I"), titleSplit("Henry I"), withSurname("Henry I", houseSurname("House Whitmore")), withSurname("Henry I Whitmore", "Whitmore"), withSurname("Henry I", undefined)], [{ title: "King", rest: "Henry I" }, undefined, "Henry I Whitmore", "Henry I Whitmore", "Henry I"], "name forms: a title shortens to a full name with the house's surname");
+eq([personFull(splitPerson("King Henry I the Bold"), "Whitmore"), personFull(splitPerson("Henry the Bold of Whitmore"), "Whitmore"), personFull(splitPerson("Queen Mary"), "Tudor"), personFull(splitPerson("John Smith Jr."), "Smith"), splitPerson("Henry II").numeral, splitPerson("Ivan Ivanov").numeral], ["Henry I Whitmore the Bold", "Henry the Bold of Whitmore", "Mary Tudor", "John Smith Jr.", "II", undefined], "name forms: suffixes stay at the end, the surname goes before them");
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

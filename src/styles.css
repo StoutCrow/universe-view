@@ -1189,6 +1189,14 @@ g.is-dimmed .universeview-net-link.is-lit {
 /* ---- Create modal ---------------------------------------------------------------------------- */
 
 /* The full creator opens at a comfortable size and can be dragged bigger from its corner. */
+/* Pinned to the top, so the type buttons stay put while the form below changes height. */
+.universeview-create-anchor {
+	align-items: flex-start;
+}
+.universeview-create-anchor .universeview-create-modal {
+	margin-top: 6vh;
+	max-height: 88vh;
+}
 .universeview-create-modal {
 	width: min(560px, 92vw);
 	min-width: min(420px, 92vw);
@@ -1199,9 +1207,47 @@ g.is-dimmed .universeview-net-link.is-lit {
 }
 .universeview-type-switch {
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
+	grid-template-columns: repeat(7, 1fr);
 	gap: 6px;
 	margin-bottom: 8px;
+}
+.universeview-sub-switch {
+	display: flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	gap: 6px;
+	margin-bottom: 8px;
+	min-height: 28px;
+}
+/* Keeps its height when a type has no kinds, so the name field and the form never shift. */
+.universeview-sub-switch.is-empty {
+	visibility: hidden;
+	height: 28px;
+	overflow: hidden;
+}
+.universeview-create-modal .universeview-create-fields {
+	min-height: 24rem;
+}
+.universeview-sub-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: auto;
+	padding: 4px 10px;
+	font-size: var(--font-ui-smaller);
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: none;
+	color: var(--text-muted);
+}
+.universeview-sub-btn.is-active {
+	background: var(--background-modifier-hover);
+	border-color: var(--text-faint);
+	color: var(--text-normal);
+}
+.universeview-sub-btn svg {
+	width: 14px;
+	height: 14px;
 }
 .universeview-type-btn {
 	display: flex;

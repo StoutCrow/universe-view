@@ -26,6 +26,8 @@ export interface SocietySpec {
 	liege?: boolean;
 	/** One line saying how it is used and joined. */
 	use: string;
+	/** The relationship kinds that make sense for it (a language has no enemies); none listed means every kind, an empty list none. */
+	relations?: string[];
 }
 
 export const SOCIETY_SPECS: Record<SocietyKind, SocietySpec> = {
@@ -38,21 +40,25 @@ export const SOCIETY_SPECS: Record<SocietyKind, SocietySpec> = {
 		label: "House", plural: "Houses and families", members: ["Member", "Members"], places: "Seats", branches: "Cadet branches", parent: "Branch of",
 		dates: ["Founded", "Died out"], leader: "Head of the house",
 		use: "A line of kin: joined by birth or marriage, with a head and branches that split off.",
+		relations: ["allies", "rivals", "enemies", "liege", "vassals", "leader", "heirs", "heir-to", "successors", "predecessors", "founder", "trade-partners"],
 	},
 	culture: {
 		label: "Culture", plural: "Cultures and peoples", members: ["Person", "People"], places: "Homeland", branches: "Peoples within", parent: "Descends from",
 		dates: ["Emerged", "Faded"],
 		use: "The people someone is of, by custom and heritage. It has no ruler; people belong to it by birth or upbringing.",
+		relations: ["allies", "rivals", "enemies", "trade-partners"],
 	},
 	language: {
 		label: "Language", plural: "Languages", members: ["Speaker", "Speakers"], places: "Spoken in", branches: "Dialects and descendants", parent: "Descends from",
 		dates: ["First spoken", "Last spoken"],
 		use: "Spoken (or written) by people and in places, as many as you like: you do not join it, you learn it. It has no ruler.",
+		relations: [],
 	},
 	faith: {
 		label: "Faith", plural: "Faiths", members: ["Follower", "Followers"], places: "Holy places", branches: "Denominations", parent: "Branch of",
 		dates: ["Founded", "Ended"], leader: "Head of the faith",
 		use: "What people believe. It can have a head, holy places and denominations, and people follow it by choice or upbringing.",
+		relations: ["allies", "rivals", "enemies", "leader", "founder", "successors", "predecessors"],
 	},
 	organisation: {
 		label: "Organisation", plural: "Organisations", members: ["Member", "Members"], places: "Based at", branches: "Sub-organisations", parent: "Part of",

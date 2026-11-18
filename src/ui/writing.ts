@@ -305,7 +305,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 				else empty.push([rk, prop]);
 			}
 			if (empty.length) {
-				new Setting(box).setName("Add a relationship").setDesc("allies, rivals, mentors, liege… or type your own in More").addDropdown((d) => {
+				new Setting(box).setName("Add a relationship").setDesc("Allies, rivals, mentors, liege… or type your own in more").addDropdown((d) => {
 					d.addOption("", "Choose…");
 					// Sorted under headings (bonds, alliance and rivalry, authority…), not one long list.
 					const grouped = new Map<string, [string, string][]>();
@@ -360,7 +360,7 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 		used.add(impKey).add(colKey).add("icon").add("pin-size").add("layer").add(keyFor("calendar"));
 		new Setting(more).setName("Importance").setDesc("1–5: higher stays visible when zoomed out or filtered").addSlider((sl) => sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => changes.set(impKey, v)));
 		new Setting(more).setName("Colour").setDesc(e.color ? "Its own colour" : "From its type or group; pick one to give it its own").addColorPicker((c) => c.setValue(e.color ?? "#7c5cff").onChange((v) => changes.set(colKey, v))).addExtraButton((b) => b.setIcon("rotate-ccw").setTooltip("Use the default colour").onClick(() => changes.set(colKey, "")));
-		const iconRow = new Setting(more).setName("Icon").setDesc("A Lucide icon name or an emoji, for map pins and cards");
+		const iconRow = new Setting(more).setName("Icon").setDesc("A lucide icon name or an emoji, for map pins and cards");
 		const preview = el("span", { cls: "universeview-qe-icon-preview" }, iconRow.controlEl);
 		const showIcon = (name: string) => {
 			preview.empty();

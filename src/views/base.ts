@@ -7,6 +7,7 @@ import { formatDay } from "../dates/parser";
 import type { TimeRange } from "../render/timelinerows";
 import { rangeOf } from "../index/EntityIndex";
 import { dropdown, el, icon, iconButton, setPressed } from "../render/common";
+import { setOptionsSettingsOpener } from "../render/optionsmenu";
 import { exportMenu, type ExportExtras } from "../ui/export";
 import { EntityInputSuggest } from "../ui/suggest";
 
@@ -88,6 +89,8 @@ export abstract class UniverseViewBase extends ItemView {
 	/** Re-creates the toolbar (e.g. when the list of folders changed). */
 	protected rebuildToolbar(fill: () => void) {
 		this.toolbar.empty();
+		this.toolbar.dataset.uvSettings = this.settingsTab;
+		setOptionsSettingsOpener((tab) => this.plugin.openSettings(tab));
 		fill();
 		const last = this.toolbar.lastElementChild as HTMLElement | null;
 		const g = last?.hasClass("universeview-toolbar-group") ? last : this.group();
