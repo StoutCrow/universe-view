@@ -1,0 +1,38 @@
+name: Bug report
+description: Something does not work, or works differently than you expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Please do not include private notes or personal information: trim your example down to what shows the problem.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: A small example
+      description: A note (or a few lines of properties) that shows the problem, and where you saw it (which view or window).
+      render: markdown
+  - type: input
+    id: version
+    attributes:
+      label: UniverseView version
+      description: Settings, then UniverseView, then About.
+    validations:
+      required: true
+  - type: input
+    id: obsidian
+    attributes:
+      label: Obsidian version and device
+      description: For example 1.13.0 on Windows, or on an iPhone.
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, other plugins that might interact, or a note on whether it used to work.

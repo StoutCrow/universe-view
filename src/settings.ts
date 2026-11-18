@@ -90,6 +90,8 @@ export interface UniverseViewSettings {
 	/** Tag written for each type when typeStyle is "tag". */
 	typeTags: Record<EntityType, string>;
 	newNoteFolders: Record<EntityType, string>;
+	/** Name forms written by hand in the New note window, per kind ("Free City of {name}"), kept for next time. */
+	customNameForms?: Record<string, string[]>;
 	templates: Record<EntityType, string>;
 	useDataview: boolean;
 	defaultCalendar: string;

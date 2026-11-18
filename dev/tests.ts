@@ -1,5 +1,5 @@
 import { societySpec } from "../src/index/societies";
-import { NAME_FORMS, houseSurname, matchForm, otherKindOf, personFull, splitPerson, titleSplit, withSurname } from "../src/index/nameforms";
+import { NAME_FORMS, NAME_GROUPS, addForm, applyForms, houseSurname, matchForm, otherKindOf, parseCustomForm, personFull, splitPerson, takesThe, titleSplit, withSurname } from "../src/index/nameforms";
 import { creatorFieldsFor } from "../src/import/quickadd";
 import { journeyOf, whereAt } from "../src/index/journey";
 import { findColourAreas } from "../src/render/colours";
@@ -2040,5 +2040,11 @@ eq([matchForm(NAME_FORMS.realm, "Kingdom of England"), matchForm(NAME_FORMS.hous
 eq([otherKindOf("Kingdom of England", "person")?.key, otherKindOf("Kingdom of England", "realm"), otherKindOf("Henry", "person")], ["realm", undefined, undefined], "name forms: a name that reads as another kind");
 eq([titleSplit("King Henry I"), titleSplit("Henry I"), withSurname("Henry I", houseSurname("House Whitmore")), withSurname("Henry I Whitmore", "Whitmore"), withSurname("Henry I", undefined)], [{ title: "King", rest: "Henry I" }, undefined, "Henry I Whitmore", "Henry I Whitmore", "Henry I"], "name forms: a title shortens to a full name with the house's surname");
 eq([personFull(splitPerson("King Henry I the Bold"), "Whitmore"), personFull(splitPerson("Henry the Bold of Whitmore"), "Whitmore"), personFull(splitPerson("Queen Mary"), "Tudor"), personFull(splitPerson("John Smith Jr."), "Smith"), splitPerson("Henry II").numeral, splitPerson("Ivan Ivanov").numeral], ["Henry I Whitmore the Bold", "Henry the Bold of Whitmore", "Mary Tudor", "John Smith Jr.", "II", undefined], "name forms: suffixes stay at the end, the surname goes before them");
+eq([parseCustomForm("Free City of …"), parseCustomForm("… of the North"), parseCustomForm("Free City of {name}"), parseCustomForm("Free City"), parseCustomForm("… …"), parseCustomForm("…")], ["Free City of {name}", "{name} of the North", "Free City of {name}", undefined, undefined, undefined], "name forms: a custom form needs words around one placeholder");
+eq([takesThe("realm"), takesThe("language"), takesThe("person"), NAME_FORMS.object.length > 0, Object.values(NAME_GROUPS).every((g) => g.length > 0), NAME_FORMS.nationality.includes("The {name}")], [true, true, false, true, true, false], "name forms: societies take a The of their own; groups hold no bare The");
+{
+	const both = addForm(addForm([], "King {name}"), "{name} the Great");
+	eq([applyForms(both, "Henry"), addForm(both, "Lord {name}"), addForm(["Kingdom of {name}"], "{name} Dynasty"), applyForms(["Kingdom of {name}", "{name} Dynasty"], "England"), addForm(["The {name} Empire"], "Kingdom of {name}")], ["King Henry the Great", ["{name} the Great", "Lord {name}"], ["Kingdom of {name}", "{name} Dynasty"], "Kingdom of England Dynasty", ["Kingdom of {name}"]], "name forms: a prefix and a suffix go together, two prefixes do not");
+}
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

@@ -2,6 +2,22 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
+## 4.6.1 — not released yet
+
+### Name forms, sorted and open-ended
+- **Forms are grouped by what they do** (*Titles before the name* and *Epithets after the name* for people, *Titles of rule* and *Empires, republics and unions* for realms, and so on), and the built-in ones are general enough for any world: *Federation of …*, *… City*, *Dr. …*, *Lost …*.
+- **Every list ends with Custom…**: write your own form (*Free city of …*, where … is the name). It is kept for next time, listed under *Yours*, and can be removed with its ×. Kinds have a Custom… too: a place or society kind in your own word (fleet, fort, coven) is written on the note.
+- **"The" is its own choice for societies**: tick *The …* to put it in front of the whole name, with any form (*The Kingdom of England*). Typing it is read back the same way.
+- More titles are recognised when a person's name is typed (Dr., Professor, General, President…).
+- **A prefix and a suffix can be ticked together** (*King …* with *… the Great* gives *King Henry the Great*). Two that want the same side of the name replace each other.
+- **The preset forms are broad**: a few general ones per kind, so anything more specific is yours to add under Custom….
+
+### Importance
+- **Importance is five named steps** (Footnote, Minor, Normal, Major, Key event) instead of a bare 1–5 slider, in the New note window, the edit form and the library inspector. Each step says on hover what it does, and the default is marked. The names match the quick creator and the timeline filter.
+
+### Community files
+- The repository now has a code of conduct, contributing guide, security policy (private reports through GitHub), issue forms for bugs, feature requests and translations, and a pull request template.
+
 ## 4.6.0 — 2026-11-18
 
 ### The New note window

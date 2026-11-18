@@ -515,6 +515,39 @@ export function setPressed(b: HTMLElement, on: boolean) {
 	b.setAttribute("aria-pressed", String(on));
 }
 
+/** The five levels of importance, with the words the quick creator and the timeline filter use. */
+export const IMPORTANCE_LEVELS: [number, string, string][] = [
+	[1, "Footnote", "Only shows when the timeline is fully zoomed in or unfiltered."],
+	[2, "Minor", "Shown when you are zoomed in."],
+	[3, "Normal", "The default: shown unless you filter the timeline down."],
+	[4, "Major", "Stays visible when the timeline is filtered or zoomed out."],
+	[5, "Key event", "Always stays: it counts as common knowledge once it has happened."],
+];
+
+/** Five named steps in place of a bare 1–5 slider: the level is named, the default is marked, and each step says what it does on hover. */
+export function importanceControl(parent: HTMLElement, value: number, onChange: (v: number) => void): HTMLElement {
+	const box = el("div", { cls: "universeview-importance", attr: { role: "radiogroup", "aria-label": "Importance" } }, parent);
+	const buttons: [number, HTMLElement][] = [];
+	const show = (v: number) => {
+		for (const [n, b] of buttons) {
+			b.toggleClass("is-active", n === v);
+			b.setAttribute("aria-checked", String(n === v));
+		}
+	};
+	for (const [n, name, tip] of IMPORTANCE_LEVELS) {
+		const b = el("button", { cls: "universeview-importance-step", attr: { role: "radio", "aria-label": `${name}: ${tip}`, title: `${name}: ${tip}` } }, box);
+		el("span", { cls: "universeview-importance-num", text: String(n) }, b);
+		el("span", { text: name }, b);
+		b.addEventListener("click", () => {
+			show(n);
+			onChange(n);
+		});
+		buttons.push([n, b]);
+	}
+	show(Math.round(value) || 3);
+	return box;
+}
+
 /** What a toolbar switch does, added to its tooltip. */
 const CHIP_TIPS: Record<string, string> = {
 	"Linked": "Follow the other panels: this one shows whatever they are focused on",

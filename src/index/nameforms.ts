@@ -4,23 +4,82 @@
  * full name takes the surname of their house. Pure, so it is testable.
  */
 
-/** Ways of writing a name, per kind of note: the type, or "region", "realm", "house", "nationality", "language", "faith", "organisation", "group". */
-export const NAME_FORMS: Record<string, string[]> = {
-	event: ["Battle of {name}", "Siege of {name}", "Treaty of {name}", "Fall of {name}", "Coronation of {name}", "Wedding of {name}", "War of {name}"],
-	person: ["King {name}", "Queen {name}", "Lord {name}", "Lady {name}", "Sir {name}", "Saint {name}", "Captain {name}", "{name} the Great", "{name} the Bold", "{name} the Elder", "{name} the Younger", "{name} Jr."],
-	place: ["{name} Castle", "{name} Abbey", "Fort {name}", "Port {name}", "Mount {name}", "River {name}", "Lake {name}", "{name} Bridge"],
-	region: ["The {name} Mountains", "The {name} Plains", "{name} Forest", "{name} Sea", "Isle of {name}", "The {name}"],
-	realm: ["Kingdom of {name}", "Duchy of {name}", "County of {name}", "Empire of {name}", "Republic of {name}", "Principality of {name}", "The {name} Empire"],
-	house: ["House {name}", "House of {name}", "Clan {name}", "The {name} family", "{name} Dynasty"],
-	nationality: ["The {name} people", "The {name}", "{name} folk"],
-	language: ["{name} language", "Old {name}", "Middle {name}", "Common {name}"],
-	faith: ["Church of {name}", "Faith of {name}", "Cult of {name}", "Order of {name}", "The {name} Faith"],
-	organisation: ["{name} Guild", "{name} Company", "Order of {name}", "Council of {name}", "The {name} Guard", "The {name} Army"],
-	group: ["The {name}", "{name} Society", "League of {name}"],
-	object: ["Sword of {name}", "Crown of {name}", "Ring of {name}", "Tome of {name}", "The {name} Crown"],
-	creature: ["The {name}", "Great {name}", "Elder {name}"],
-	map: ["Map of {name}", "{name} map"],
+/** A heading and the forms under it, for one kind of note. */
+export interface FormGroup {
+	label: string;
+	forms: string[];
+}
+
+/**
+ * Ways of writing a name, per kind of note (the type, or "region", "realm", "house", "nationality", "language", "faith",
+ * "organisation", "group"), sorted by what they do. A "The" in front of a society's name is a separate choice (see
+ * `takesThe`), so the groups never hold a bare "The {name}".
+ */
+export const NAME_GROUPS: Record<string, FormGroup[]> = {
+	event: [
+		{ label: "Conflicts", forms: ["Battle of {name}", "War of {name}"] },
+		{ label: "Turning points", forms: ["Founding of {name}", "Fall of {name}", "Treaty of {name}"] },
+	],
+	person: [
+		{ label: "Titles before the name", forms: ["King {name}", "Queen {name}", "Lord {name}", "Lady {name}", "Dr. {name}"] },
+		{ label: "Epithets after the name", forms: ["{name} the Great", "{name} the Elder", "{name} the Younger", "{name} Jr."] },
+	],
+	place: [
+		{ label: "Before the name", forms: ["Port {name}", "Mount {name}", "Lake {name}", "River {name}"] },
+		{ label: "After the name", forms: ["{name} City", "{name} Bay", "{name} Bridge"] },
+	],
+	region: [{ label: "Lands and waters", forms: ["The {name} Mountains", "{name} Forest", "{name} Sea", "Isle of {name}", "The {name}"] }],
+	realm: [
+		{ label: "Monarchies and empires", forms: ["Kingdom of {name}", "Empire of {name}", "The {name} Empire"] },
+		{ label: "Republics and unions", forms: ["Republic of {name}", "Federation of {name}"] },
+	],
+	house: [{ label: "Families", forms: ["House {name}", "Clan {name}", "The {name} family", "{name} Dynasty"] }],
+	nationality: [{ label: "A people", forms: ["The {name} people", "{name} folk"] }],
+	language: [{ label: "A language", forms: ["{name} language", "Old {name}", "Common {name}"] }],
+	faith: [{ label: "Faiths", forms: ["Church of {name}", "Faith of {name}", "The {name} Faith"] }],
+	organisation: [{ label: "Organisations", forms: ["{name} Company", "{name} Guild", "Council of {name}", "Order of {name}"] }],
+	group: [{ label: "Societies", forms: ["{name} Society", "League of {name}"] }],
+	object: [{ label: "Things", forms: ["The {name}", "Great {name}", "Lost {name}", "Ancient {name}"] }],
+	creature: [{ label: "Beasts", forms: ["The {name}", "Great {name}", "Elder {name}"] }],
+	map: [{ label: "Maps", forms: ["Map of {name}", "{name} map"] }],
 };
+
+/** Every built-in form per kind, flat (the groups are only for showing them). */
+export const NAME_FORMS: Record<string, string[]> = Object.fromEntries(Object.entries(NAME_GROUPS).map(([k, groups]) => [k, groups.flatMap((g) => g.forms)]));
+
+/** The kinds of society, which can take a "The" in front of the whole name (The Kingdom of England, The Whitmores). */
+const THE_KINDS = new Set(["realm", "house", "nationality", "language", "faith", "organisation", "group"]);
+export const takesThe = (key: string) => THE_KINDS.has(key);
+
+/** What a form puts before and after the name ("Kingdom of {name}" is "Kingdom of " and ""). */
+export function formParts(form: string): { pre: string; post: string } {
+	const [pre, post = ""] = form.split("{name}");
+	return { pre, post };
+}
+
+/** Whether two forms want the same side of the name (two prefixes, or two suffixes) and so cannot both be ticked. */
+export function formsClash(a: string, b: string): boolean {
+	const x = formParts(a);
+	const y = formParts(b);
+	return (!!x.pre && !!y.pre) || (!!x.post && !!y.post);
+}
+
+/** Adds a form to the ticked ones, dropping any that want the same side: "King {name}" and "{name} the Great" go together, "King {name}" and "Lord {name}" do not. */
+export function addForm(forms: string[], form: string): string[] {
+	return [...forms.filter((f) => !formsClash(f, form)), form];
+}
+
+/** The name with every ticked form around it ("King" + "the Great" + Henry gives King Henry the Great). */
+export function applyForms(forms: string[], base: string): string {
+	return forms.map((f) => formParts(f).pre).join("") + base + forms.map((f) => formParts(f).post).join("");
+}
+
+/** A form written by hand: "…", "..." , "*" or "{name}" stands for the name ("Free City of …" gives "Free City of {name}"). Needs exactly one and some words around it. */
+export function parseCustomForm(text: string): string | undefined {
+	const t = text.trim().replace(/\{name\}|…|\.\.\.|\*/g, "{name}");
+	if (t.split("{name}").length !== 2) return undefined;
+	return t.replace("{name}", "").trim() ? t : undefined;
+}
 
 /** The type, and kind written on the note, that each key of NAME_FORMS stands for. */
 export const FORM_TARGET: Record<string, { type: string; kind?: string; label: string }> = {
@@ -70,7 +129,7 @@ export function otherKindOf(text: string, current: string): { key: string; form:
 	return undefined;
 }
 
-const TITLES = /^(king|queen|lord|lady|sir|dame|saint|st\.?|captain|prince|princess|duke|duchess|count|countess|baron|baroness|emperor|empress|pope|archbishop|bishop)\s+(.+)$/i;
+const TITLES = /^(king|queen|lord|lady|sir|dame|saint|st\.?|captain|prince|princess|duke|duchess|count|countess|baron|baroness|emperor|empress|pope|archbishop|bishop|dr\.?|doctor|professor|prof\.?|general|admiral|commander|president|mr\.?|mrs\.?|ms\.?)\s+(.+)$/i;
 
 /** A person's name written with a title ("King Henry I"): the title and the name after it. */
 export function titleSplit(text: string): { title: string; rest: string } | undefined {

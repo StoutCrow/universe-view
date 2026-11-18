@@ -9,14 +9,14 @@ import type { Entity } from "../types";
 import { formatDate, parseDate } from "../dates/parser";
 import { readAliases } from "../index/aliases";
 import { Calendar, GREGORIAN_ID } from "../dates/calendars";
-import { TYPE_ICONS, TYPE_LABELS, el, helpTip, icon } from "../render/common";
+import { TYPE_ICONS, TYPE_LABELS, el, helpTip, icon, importanceControl } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { EntityInputSuggest } from "./suggest";
 import { generateNames, givenNames, trainNames } from "../index/names";
 import { presetKinds, relKind } from "../index/relkinds";
 import { tierName } from "../index/realms";
 import { societySpec } from "../index/societies";
-import { FORM_TARGET, NAME_FORMS, houseSurname, matchForm, otherKindOf, personFull, splitPerson } from "../index/nameforms";
+import { FORM_TARGET, NAME_FORMS, NAME_GROUPS, houseSurname, matchForm, otherKindOf, addForm, applyForms, parseCustomForm, personFull, splitPerson, takesThe } from "../index/nameforms";
 
 /**
  * Names to learn a style from: the members of the chosen groups when there are enough, otherwise
@@ -265,11 +265,13 @@ export class CreateEntityModal extends Modal {
 	/** The row of kind buttons under the types. */
 	private subEl!: HTMLElement;
 	/** The ticked way of writing the name ("Kingdom of {name}"), the row it sits in, and whether the bare name is kept as an alias. */
-	private form?: string;
+	private forms: string[] = [];
 	private formsEl!: HTMLElement;
 	private hintsEl!: HTMLElement;
 	private nameInput?: HTMLInputElement;
 	private alsoBare = true;
+	/** "The" in front of a society's whole name. */
+	private withThe = false;
 	/** The kind written on the note: realm, house, faith, region… (none for the plain type). */
 	private groupKind?: string;
 	private importance = 3;
@@ -321,7 +323,7 @@ export class CreateEntityModal extends Modal {
 		const nameSetting = new Setting(contentEl).setName("Name").addText((t) => {
 			nameInput = t.inputEl;
 			this.nameInput = t.inputEl;
-			t.setPlaceholder(this.form ? "Just the name" : "Note title").setValue(this.name).onChange((v) => {
+			t.setPlaceholder(this.forms.length ? "Just the name" : "Note title").setValue(this.name).onChange((v) => {
 				this.name = v;
 				this.renderForms();
 			});
@@ -354,11 +356,21 @@ export class CreateEntityModal extends Modal {
 		this.formsEl = el("div", { cls: "universeview-name-forms" }, contentEl);
 		// A name typed already dressed ("Kingdom of England") is taken apart when you leave the box, if it fits the kind chosen.
 		this.nameInput?.addEventListener("change", () => {
-			if (this.type === "person" || this.form) return;
-			const m = matchForm(NAME_FORMS[this.formKey()] ?? [], this.name);
-			if (!m) return;
-			this.form = m.form;
-			this.setName(m.base);
+			if (this.type === "person" || this.forms.length) return;
+			const forms = this.allForms();
+			const whole = matchForm(forms, this.name);
+			if (whole) {
+				this.forms = [whole.form];
+				this.setName(whole.base);
+				return;
+			}
+			// "The Kingdom of England" on a society: the The is ticked, then the rest is read as usual.
+			const the = /^the\s+(.+)$/i.exec(this.name.trim());
+			if (!the || !takesThe(this.formKey())) return;
+			this.withThe = true;
+			const rest = matchForm(forms, the[1]);
+			if (rest) this.forms = [rest.form];
+			this.setName(rest ? rest.base : the[1]);
 		});
 		this.fieldsEl = el("div", { cls: "universeview-create-fields" }, contentEl);
 		const footer = el("div", { cls: "modal-button-container" }, contentEl);
@@ -404,7 +416,8 @@ export class CreateEntityModal extends Modal {
 		if (t === "place" && this.groupKind === "region") this.std = { ...this.std, nature: "region" };
 		else if (t === "culture" && this.groupKind === "realm") this.std = { ...this.std, nature: "realm", tier: this.std.nature === "realm" && this.std.tier !== "6" ? this.std.tier : "2" };
 		for (const [k, b] of this.typeButtons) b.toggleClass("is-active", k === t);
-		this.form = undefined;
+		this.forms = [];
+		this.withThe = false;
 		this.renderForms();
 		this.renderKinds();
 		this.renderFields();
@@ -434,7 +447,7 @@ export class CreateEntityModal extends Modal {
 		if (!box) return;
 		box.empty();
 		const text = this.name.trim();
-		if (!text || this.form) return;
+		if (!text || this.forms.length) return;
 		const suggest = (message: string, apply: () => void) => {
 			const line = el("div", { cls: "universeview-name-suggest" }, box);
 			el("span", { text: message }, line);
@@ -461,7 +474,7 @@ export class CreateEntityModal extends Modal {
 			suggest(`Reads as a ${target.label}: ${other.base}`, () => {
 				this.groupKind = target.kind;
 				this.setType(target.type as EntityType);
-				this.form = other.form;
+				this.forms = [other.form];
 				this.setName(other.base);
 			});
 		}
@@ -469,34 +482,115 @@ export class CreateEntityModal extends Modal {
 
 	/** The key of the current choice in NAME_FORMS: the type, or the kind of place or society. */
 	private formKey(): string {
-		if (this.type === "culture") return this.groupKind ?? "group";
+		// A kind you wrote yourself has no forms of its own: it uses the general ones.
+		if (this.type === "culture") return this.groupKind && this.groupKind in NAME_FORMS ? this.groupKind : "group";
 		if (this.type === "place" && this.groupKind === "region") return "region";
 		return this.type;
 	}
 
-	/** The name with the ticked form around it. */
-	private fullName(): string {
-		const base = this.name.trim();
-		return this.form && base ? this.form.replace("{name}", base) : base;
+	/** The forms written by hand for this kind, kept in the settings for next time. */
+	private customForms(key = this.formKey()): string[] {
+		return this.plugin.settings.customNameForms?.[key] ?? [];
 	}
 
-	/** The tickable forms for this kind of note, and what the name will come out as. */
+	/** Every form for this kind: the built-in ones, then the ones you wrote. */
+	private allForms(key = this.formKey()): string[] {
+		return [...(NAME_FORMS[key] ?? []), ...this.customForms(key)];
+	}
+
+	/** The name with the ticked form around it, and a "The" in front if that is ticked (societies only). */
+	private fullName(): string {
+		const base = this.name.trim();
+		if (!base) return "";
+		const dressed = this.forms.length ? applyForms(this.forms, base) : base;
+		return this.withThe && takesThe(this.formKey()) && !/^the\s/i.test(dressed) ? `The ${dressed}` : dressed;
+	}
+
+	/** A form chip: ticked on click, unticked on a second click. */
+	private formChip(row: HTMLElement, f: string, custom = false) {
+		const on = this.forms.includes(f);
+		const b = el("button", { cls: "universeview-sub-btn" + (on ? " is-active" : ""), text: f.replace("{name}", "…"), attr: { "aria-pressed": String(on) } }, row);
+		b.addEventListener("click", () => {
+			this.forms = on ? this.forms.filter((x) => x !== f) : addForm(this.forms, f);
+			this.renderForms();
+		});
+		if (custom) {
+			const x = el("span", { cls: "universeview-chip-x", attr: { role: "button", "aria-label": "Remove this form" } }, b);
+			icon(x, "x");
+			x.addEventListener("click", (evt) => {
+				evt.stopPropagation();
+				const key = this.formKey();
+				const store = (this.plugin.settings.customNameForms ??= {});
+				store[key] = this.customForms(key).filter((y) => y !== f);
+				this.forms = this.forms.filter((x) => x !== f);
+				void this.plugin.saveSettings();
+				this.renderForms();
+			});
+		}
+	}
+
+	/** The tickable forms for this kind of note (sorted into groups, with your own and a way to write another), and what the name will come out as. */
 	private renderForms() {
 		this.renderHints();
 		const box = this.formsEl;
 		if (!box) return;
 		box.empty();
-		const forms = NAME_FORMS[this.formKey()] ?? [];
-		if (!this.fieldsEl || !forms.length) return;
-		const row = el("div", { cls: "universeview-name-forms-row" }, box);
-		for (const f of forms) {
-			const b = el("button", { cls: "universeview-sub-btn" + (f === this.form ? " is-active" : ""), text: f.replace("{name}", "…"), attr: { "aria-pressed": String(f === this.form) } }, row);
-			b.addEventListener("click", () => {
-				this.form = this.form === f ? undefined : f;
+		if (!this.fieldsEl) return;
+		const key = this.formKey();
+		const groups = NAME_GROUPS[key] ?? [];
+		const many = groups.length > 1;
+		for (const g of groups) {
+			const section = el("div", { cls: "universeview-name-forms-group" }, box);
+			if (many) el("div", { cls: "universeview-name-forms-label", text: g.label }, section);
+			const row = el("div", { cls: "universeview-name-forms-row" }, section);
+			for (const f of g.forms) this.formChip(row, f);
+		}
+		// Societies can also take a "The" in front of the whole name, whatever form is ticked.
+		const mine = this.customForms(key);
+		const section = el("div", { cls: "universeview-name-forms-group" }, box);
+		if (takesThe(key) || mine.length || many) el("div", { cls: "universeview-name-forms-label", text: "Yours" }, section);
+		const row = el("div", { cls: "universeview-name-forms-row" }, section);
+		if (takesThe(key)) {
+			const dressed = this.forms.some((x) => /^the\s/i.test(x));
+			const the = el("button", { cls: "universeview-sub-btn" + (this.withThe || dressed ? " is-active" : ""), text: "The …", attr: { "aria-pressed": String(this.withThe || dressed), "aria-label": dressed ? "This form already starts with The" : "Put The in front of the whole name" } }, row);
+			if (dressed) the.setAttr("disabled", "true");
+			the.addEventListener("click", () => {
+				this.withThe = !this.withThe;
 				this.renderForms();
 			});
 		}
-		if (this.form && this.name.trim()) {
+		for (const f of mine) this.formChip(row, f, true);
+		// Always a way to write your own: "Free City of …" or "… of the North", where … stands for the name.
+		const add = el("button", { cls: "universeview-sub-btn is-custom", text: "Custom…", attr: { "aria-label": "Write your own form, with … for the name" } }, row);
+		add.addEventListener("click", () => {
+			add.hide();
+			const line = el("div", { cls: "universeview-name-forms-custom" }, section);
+			const input = el("input", { attr: { type: "text", placeholder: "e.g. Free City of …  (… is the name)" } }, line);
+			const note = el("div", { cls: "universeview-name-forms-note" }, line);
+			const save = () => {
+				const form = parseCustomForm(input.value);
+				if (!form) {
+					note.setText("Write the words around … once, for example: free city of …");
+					return;
+				}
+				const store = (this.plugin.settings.customNameForms ??= {});
+				if (!this.allForms(key).includes(form)) store[key] = [...this.customForms(key), form];
+				void this.plugin.saveSettings();
+				this.forms = addForm(this.forms, form);
+				this.renderForms();
+			};
+			input.addEventListener("keydown", (evt) => {
+				if (evt.key === "Enter") {
+					evt.preventDefault();
+					evt.stopPropagation();
+					save();
+				}
+			});
+			const ok = el("button", { text: "Add" }, line);
+			ok.addEventListener("click", save);
+			input.focus();
+		});
+		if ((this.forms.length || this.withThe) && this.name.trim()) {
 			const line = el("div", { cls: "universeview-name-forms-result" }, box);
 			el("span", { text: `Will be named ${this.fullName()}` }, line);
 			const label = el("label", { cls: "universeview-name-forms-alias" }, line);
@@ -513,6 +607,7 @@ export class CreateEntityModal extends Modal {
 		this.subEl.empty();
 		this.subEl.toggleClass("is-empty", !kinds.length);
 		const current = this.groupKind ?? (this.type === "culture" ? "group" : "place");
+		const known = kinds.some(([id]) => id === (current === "culture" ? "nationality" : current));
 		for (const [id, written, ic, label] of kinds) {
 			const b = el("button", { cls: "universeview-sub-btn" + (id === (current === "culture" ? "nationality" : current) ? " is-active" : "") }, this.subEl);
 			icon(el("span", {}, b), ic);
@@ -524,6 +619,39 @@ export class CreateEntityModal extends Modal {
 				this.setType(this.type);
 			});
 		}
+		if (!kinds.length) return;
+		// A kind of your own: written on the note as the word you type (a fort, a fleet, a coven…).
+		if (!known && this.groupKind) {
+			const own = el("button", { cls: "universeview-sub-btn is-active", text: this.groupKind }, this.subEl);
+			own.setAttr("aria-label", "Your own kind: click to write another");
+			own.addEventListener("click", () => this.askKind());
+		} else {
+			const add = el("button", { cls: "universeview-sub-btn is-custom", text: "Custom…", attr: { "aria-label": "Write your own kind of " + (this.type === "culture" ? "society" : "place") } }, this.subEl);
+			add.addEventListener("click", () => this.askKind());
+		}
+	}
+
+	/** Asks for a kind in your own words, in place of the button row. */
+	private askKind() {
+		this.subEl.empty();
+		const input = el("input", { cls: "universeview-sub-input", attr: { type: "text", placeholder: "Kind, e.g. fleet or fort", value: this.groupKind && !KINDS[this.type]?.some(([, w]) => w === this.groupKind) ? this.groupKind : "" } }, this.subEl);
+		const done = () => {
+			const kind = input.value.trim().toLowerCase();
+			this.groupKind = kind || undefined;
+			this.setType(this.type);
+		};
+		input.addEventListener("keydown", (evt) => {
+			if (evt.key === "Enter") {
+				evt.preventDefault();
+				evt.stopPropagation();
+				done();
+			} else if (evt.key === "Escape") {
+				evt.stopPropagation();
+				this.renderKinds();
+			}
+		});
+		input.addEventListener("blur", () => window.setTimeout(() => this.subEl.contains(input) && done(), 100));
+		input.focus();
 	}
 
 	/** Moves the folder to inside what the note belongs to, as its links change (unless typed by hand). */
@@ -714,10 +842,11 @@ export class CreateEntityModal extends Modal {
 				this.listField("participants", "People", ["person"], keep("participants", p.participants));
 				this.listField("places", "Places", ["place"], keep("places", p.places));
 				this.listField("cultures", "Societies", ["culture"], keep("cultures", p.cultures));
-				new Setting(this.fieldsEl)
-					.setName("Importance")
-					.setDesc("Higher importance stays visible when you filter the timeline.")
-					.addSlider((sl) => sl.setLimits(1, 5, 1).setValue(this.importance).onChange((v) => (this.importance = v)));
+				{
+					const imp = new Setting(this.fieldsEl).setName("Importance").setDesc("Higher stays visible when you filter or zoom out the timeline.");
+					imp.settingEl.addClass("universeview-importance-setting");
+					importanceControl(imp.controlEl, this.importance, (v) => (this.importance = v));
+				}
 				break;
 			case "person":
 				this.dateField("born", "Born", "Birth date, if known.");
@@ -933,7 +1062,7 @@ export class CreateEntityModal extends Modal {
 		const aka = readAliases(this.extra.aliases ?? "", name);
 		// The bare name stays findable when a form dressed it ("England" for "Kingdom of England").
 		const bare = clean(this.name.trim());
-		if (this.form && this.alsoBare && bare && bare !== name && !aka.includes(bare)) aka.push(bare);
+		if ((this.forms.length || this.withThe) && this.alsoBare && bare && bare !== name && !aka.includes(bare)) aka.push(bare);
 		if (aka.length) fm.aliases = aka;
 		// What "More about it" holds.
 		const x = (k: string) => this.extra[k]?.trim();

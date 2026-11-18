@@ -4,6 +4,23 @@
 .uv-create-placement { display: flex; align-items: center; gap: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 6px 0 2px; }
 .uv-create-placement svg { width: 14px; height: 14px; color: var(--interactive-accent); }
 .universeview-name-suggest { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; padding: 4px 0; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.universeview-importance { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.universeview-importance-step { display: inline-flex; align-items: center; gap: 6px; height: auto; padding: 3px 8px; font-size: var(--font-ui-smaller); background: transparent; border: 1px solid var(--background-modifier-border); box-shadow: none; color: var(--text-muted); }
+.universeview-importance-step.is-active { background: var(--background-modifier-hover); border-color: var(--text-faint); color: var(--text-normal); }
+.universeview-importance-num { font-variant-numeric: tabular-nums; color: var(--text-faint); }
+.universeview-importance-step.is-active .universeview-importance-num { color: var(--text-normal); }
+.universeview-importance-setting .setting-item-control { flex: 1 1 auto; }
+.universeview-name-forms-group { padding: 4px 0 2px; }
+.universeview-name-forms-label { margin-bottom: 4px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.universeview-name-forms-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.universeview-name-forms-custom input { flex: 1 1 200px; }
+.universeview-name-forms-note { flex: 1 0 100%; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.universeview-sub-btn.is-custom { border-style: dashed; }
+.universeview-sub-btn:disabled { opacity: 0.6; }
+.universeview-chip-x { display: inline-flex; margin-left: 2px; color: var(--text-faint); }
+.universeview-chip-x:hover { color: var(--text-normal); }
+.universeview-chip-x svg { width: 12px; height: 12px; }
+.universeview-sub-input { min-width: 220px; }
 .universeview-name-forms-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 2px; }
 .universeview-name-forms-result { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .universeview-name-forms-alias { display: flex; align-items: center; gap: 6px; }

@@ -1,0 +1,30 @@
+name: Translation
+description: Offer a translation, proofread one, or report a wording problem in a language
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The interface text lives in `src/i18n/`, one file per language. How to add or fix a language is in [TRANSLATING.md](https://github.com/StoutCrow/universe-view/blob/main/TRANSLATING.md). No code is needed.
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: For example French (fr).
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What you would like to do
+      options:
+        - Write a new translation
+        - Proofread an existing one
+        - Report a wrong or unclear word
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: The text you want to add or fix, and where you saw it. You can also attach the language file.

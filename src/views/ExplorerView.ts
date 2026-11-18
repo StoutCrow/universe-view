@@ -9,7 +9,7 @@ import { buildFieldAliases, findMapping, setMapping, type FieldName } from "../s
 import { settingWords } from "../index/worldsetting";
 import { formatDate, formatSpan } from "../dates/parser";
 import { validate } from "../index/validate";
-import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, openEntity, setPressed, showEntityMenu, svg, toggleChip, typeColorVar } from "../render/common";
+import { TYPE_ICONS, TYPE_LABELS, el, entityColor, icon, iconButton, importanceControl, openEntity, setPressed, showEntityMenu, svg, toggleChip, typeColorVar } from "../render/common";
 import { subOrgs } from "../render/orgchart";
 import { placeStyleFields, placeKinds, LAYER_NAMES, kindDefaults } from "../ui/PlaceStyleModal";
 import { TextPrompt } from "../ui/TextPrompt";
@@ -622,9 +622,9 @@ export class ExplorerView extends UniverseViewBase {
 			const d = kindDefaults(this.plugin, e.category);
 			el("div", { cls: "universeview-dash-muted", text: `Shown on the map as ${e.pinSize ?? d.size ?? "event-sized"} pins, layer ${e.layer ?? d.layer} (${LAYER_NAMES[(e.layer ?? d.layer) - 1].toLowerCase()}).` }, body);
 		}
-		new Setting(body).setName("Importance").setDesc("1–5: bigger on timelines and in lists.").addSlider((sl) =>
-			sl.setLimits(1, 5, 1).setValue(e.importance).onChange((v) => void write(keyFor("importance"), v)),
-		);
+		const imp = new Setting(body).setName("Importance").setDesc("Higher stays visible when zoomed out or filtered, and is bigger in lists.");
+		imp.settingEl.addClass("universeview-importance-setting");
+		importanceControl(imp.controlEl, e.importance, (v) => void write(keyFor("importance"), v));
 		new Setting(body).setName("Color").addColorPicker((c) => {
 			c.setValue(toHex(e.color) ?? "#888888");
 			c.onChange((v) => void write(keyFor("color"), v));
