@@ -110,6 +110,19 @@ export function parseDate(value: unknown, cal: Calendar): ChronDate | null {
 	let s = raw.replace(/^\[\[|\]\]$/g, "").replace(/(\d),(?=\d{3}\b)/g, "$1").trim();
 	let approx = false;
 	let qualifier: ChronDate["qualifier"];
+	let openEnded = false;
+
+	// Interval brackets: "]1800" = 1800 or earlier, "1888 [" = 1888 or later; "[1800" and "1888 ]" are exact.
+	if (/^\]/.test(s)) {
+		qualifier = "before";
+		approx = true;
+	}
+	if (/\[$/.test(s)) {
+		qualifier = "after";
+		approx = true;
+		openEnded = true;
+	}
+	s = s.replace(/^[[\]]\s*|\s*[[\]]$/g, "");
 
 	if (APPROX_PREFIX.test(s)) {
 		approx = true;
@@ -152,7 +165,7 @@ export function parseDate(value: unknown, cal: Calendar): ChronDate | null {
 	let { start, end } = single;
 	if (qualifier === "before") end = start;
 	if (qualifier === "after") start = end;
-	return { start, end, precision: single.precision, approx, qualifier, calendar: cal.id, raw };
+	return { start, end, precision: single.precision, approx, qualifier, ...(openEnded ? { openEnded } : {}), calendar: cal.id, raw };
 }
 
 const SPAN_SPLIT = /^(.*?)\s*(?:\s-\s?|\s?-\s|–|—|\s+to\s+|\.\.)\s*(.*)$/i;

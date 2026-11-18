@@ -16,6 +16,8 @@ export interface ChronDate {
 	approx: boolean;
 	/** "before" / "after" qualifier, if any. */
 	qualifier?: "before" | "after";
+	/** Written "1888 [": at least that late, the real date unknown (an end date becomes an open end). */
+	openEnded?: boolean;
 	calendar: string;
 	raw: string;
 }
@@ -149,6 +151,10 @@ export interface Entity {
 	terrain?: string;
 	/** Written as still going ("1292 C.E. -", `end: present`): drawn up to the current date. */
 	openEnd?: boolean;
+	/** An end written "1888 [": it lasted at least until this day, and ended some time after. */
+	endAtLeast?: number;
+	/** "max age: 750": how many years a person can live, so one born within it counts as alive. */
+	maxAge?: number;
 	/** Events that come round again (`repeat: yearly`): festivals, anniversaries, market days. */
 	repeat?: "yearly" | "monthly" | "weekly";
 	/** Events that led to this one (`caused-by:`), and that this one led to (`led-to:`). */

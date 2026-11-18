@@ -57,7 +57,7 @@ export function deduceTies(idx: DeduceIndex, opts: DeduceOptions) {
 	const persons = idx.all("person");
 	const alive = (p: Entity, day: number) => idx.existsAt(p, day);
 	/** Someone with a birth date that makes it plausible they were still alive on `day` (no death date does not mean alive). */
-	const plausiblyAlive = (p: Entity, day: number) => !!p.start && p.start.start <= day && day - p.start.start < 110 * YEAR;
+	const plausiblyAlive = (p: Entity, day: number) => !!p.start && p.start.start <= day && day - p.start.start < (p.maxAge ?? 110) * YEAR;
 
 	// 1. Widowed: a partner died while the other, born within a lifetime of that day, has no death date and no later end.
 	for (const [key, list] of idx.partnersOf) {

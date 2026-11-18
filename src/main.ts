@@ -550,10 +550,16 @@ export default class UniverseViewPlugin extends Plugin {
 	 * open, a group with no end, a person born within a long lifetime of it). Undefined: draw as before.
 	 */
 	openEndOf(e: Entity): number | undefined {
-		if (!this.settings.openEndsToToday || e.end || !e.start) return undefined;
+		if (e.end || !e.start) return undefined;
 		const today = this.todayFor(e.folder, e.calendar);
+		// "1888 [": lived at least to then; drawn on to a lifetime past birth (or today, if sooner), fading.
+		if (e.endAtLeast !== undefined) {
+			const to = Math.max(e.endAtLeast, e.start.start + (e.maxAge ?? 110) * 365.25);
+			return today === undefined ? to : Math.max(Math.min(to, today), e.endAtLeast);
+		}
+		if (!this.settings.openEndsToToday) return undefined;
 		if (today === undefined || today <= e.start.start) return undefined;
-		const still = e.openEnd || e.type === "culture" || (e.type === "person" && today - e.start.start < 110 * 365.25) || (e.type === "place" && !!e.start);
+		const still = e.openEnd || e.type === "culture" || (e.type === "person" && today - e.start.start < (e.maxAge ?? 110) * 365.25) || (e.type === "place" && !!e.start);
 		return still ? today : undefined;
 	}
 

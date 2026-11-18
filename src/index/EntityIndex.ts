@@ -638,6 +638,14 @@ export class EntityIndex extends Events {
 			}
 		}
 		if (type === "event" && !e.start) issues.push("Event has no date");
+		// An end written "1888 [" is not an end: it lasted at least that long, and may still be going.
+		if (e.end?.openEnded) {
+			e.endAtLeast = e.end.end;
+			e.end = undefined;
+			openEnd = true;
+		}
+		const maxAge = parseFloat(asText(reader.get("maxAge") ?? ""));
+		if (maxAge > 0) e.maxAge = maxAge;
 		if (openEnd && !e.end) e.openEnd = true;
 		if (e.start && e.end && e.end.end < e.start.start) issues.push("End date is before start date");
 		return e;

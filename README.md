@@ -93,6 +93,7 @@ Your notes stay plain Markdown: UniverseView only reads properties (frontmatter,
 - **Tidying**: duplicates (with merge), loose ends (including notes that share a name), moving notes into the folder notes they belong in, Living/Dead moves on a death date, tags updated when a note is renamed, tag clean-up, how complete a world is, text that contradicts the properties, and data checks.
 - **Export**: PNG or SVG pictures, decorated maps, a world book, a whole website, and GEDCOM. GEDCOM import too.
 - **Looks**: six themes, light and dark, and every view embeddable in a note.
+- **Long lives and unknown dates**: `max-age: 750` on a person says how long they can live (the default is 110 years), so a long-lived elf with no death date is drawn as still alive, not as a dot. Brackets mark what you don't know: `]` before a date is "that or earlier", `[` after one is "that or later", so `lifespan: "]1800 - 1888 ["` means neither date is known, and a death written `1888 [` is an open end that fades out. Works for every date (born, died, founded, dissolved). Quote the value in YAML.
 - **Fits your vault**: reads Charted Roots, tag-typed vaults, lifespans like `1262 - 1294 C.E.`, and your own property names. Everything it changes can be undone.
 
 What changed in each version is in the [changelog](CHANGELOG.md), and inside UniverseView: after an update a *What's new* window shows what changed since the version you had, and the action *What's new (version history)* (or Settings â†’ Look & cards â†’ About) shows every version.

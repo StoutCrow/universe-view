@@ -12,7 +12,7 @@ export type FieldName =
 	| "relations" | "parentCultures" | "relatedCultures" | "coordinates" | "map" | "position"
 	| "locatedIn" | "image" | "color" | "importance" | "calendar" | "gender" | "summary"
 	| "lifespan" | "children" | "childCultures" | "birthPlace" | "deathPlace" | "mapId" | "knows" | "knownBy"
-	| "leads" | "residences" | "startPlace" | "endPlace";
+	| "leads" | "residences" | "startPlace" | "endPlace" | "maxAge";
 
 /**
  * Property names that are recognized for each field, in priority order. Users can extend these.
@@ -28,6 +28,7 @@ export const DEFAULT_FIELD_ALIASES: Record<FieldName, string[]> = {
 	founded: ["founded", "formed", "established", "start", "from", "made", "created", "forged", "built", "crafted"],
 	dissolved: ["dissolved", "ended", "fell", "end", "until", "destroyed", "lost"],
 	lifespan: ["lifespan", "life", "years", "span", "active", "dates"],
+	maxAge: ["max-age", "max_age", "maxage", "max age", "life-limit", "life limit", "life-expectancy", "life expectancy"],
 	participants: ["participants", "people", "characters", "involved", "who"],
 	places: ["places", "place", "location-name", "where", "locations", "location", "seat"],
 	cultures: [

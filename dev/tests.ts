@@ -194,6 +194,16 @@ eq(span("??? - ???"), null, "fully unknown");
 eq(span("1262 - 1294 C.E.", k), ["1262 C.E.", "1294 C.E."], "span in an era-after calendar");
 eq(span("394 C.E. -", k), ["394 C.E.", null], "open span in an era-after calendar");
 
+// Interval brackets: "]" = that date or earlier, "[" after a date = that date or later
+eq(span("]1800 - 1888 ["), ["before 1800", "after 1888"], "neither end known");
+eq(span("[1800 - 1888 ["), ["1800", "after 1888"], "birth known, death after");
+eq(span("]1800 - 1888 ]"), ["before 1800", "1888"], "death known, birth before");
+eq(span("[1800 - 1888 ]"), ["1800", "1888"], "both exact");
+eq(parseSpan("1800 - 1888 [", g).end?.openEnded, true, "a later-than end is flagged open");
+eq(parseSpan("1800 - 1888", g).end?.openEnded, undefined, "a plain end is not");
+eq(parseDate("]1800", g)?.qualifier, "before", "date or earlier");
+eq(parseSpan("]1800 C.E. - 1888 C.E. [", k).ok, true, "brackets with eras");
+
 // Type detection
 const note = (p: string, body = "", props: Record<string, unknown> = {}) => ({ path: p, name: p.split("/").pop()!.replace(/\.md$/, ""), props, tags: [], body });
 eq(guessType(note("Nature/Diseases/Blights/Blight of 1299.md", "The Blight of 1299 was a massive pestilence that spread.")).type, "event", "event despite concept-ish folders");

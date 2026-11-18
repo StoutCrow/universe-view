@@ -69,6 +69,13 @@ What changed in each version of UniverseView. The [README](README.md) describes 
 ### Liege and descent
 - **"Part of" and "Descends from" were two meanings in one place.** A group's line of descent is now only ever *Descends from* (the Library, the table, the creators, the hover card and the panel), and who it answers to is its **liege**: the quick creator has a Liege field, and the hover card shows *Liege* (a group's older `cultures:` list reads as a liege too). The Library no longer mixes group memberships into the descent row; the notes themselves are untouched.
 
+## 4.5.1 — 2026-11-18
+
+### Long lives and unknown dates
+- **Set how long someone can live.** `max-age: 750` on a person (also `max_age`, `life-limit`, `life-expectancy`) replaces the built-in 110 years. An elf with a birth date and no death date, born within that many years of today, is drawn as still alive: an open bar fading out, not a dot. It also counts for widowed partners and other "were they alive then?" checks.
+- **Dates with brackets for what you don't know.** `]` before a date means "that or earlier"; `[` after a date means "that or later"; the other side is exact. In `lifespan:` and in any date (born, died, founded, dissolved…): `"]1800 - 1888 ["` (neither known), `"[1800 - 1888 ["` (born 1800, died after 1888), `"]1800 - 1888 ]"` (born before 1800, died 1888). Quote the value in YAML, as it starts with a bracket.
+- **A later-than end is an open end.** Someone who lived to at least 1888 is drawn up to that year and on to a lifetime past their birth (or today, if sooner), fading out like someone still alive, not as a dot.
+
 ## 4.5.0 — 2026-11-13
 
 ### Places have an address
