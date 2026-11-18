@@ -190,7 +190,7 @@
 .uv-fo-item.is-tinted .uv-fo-link { color: color-mix(in srgb, var(--uv-file-color) var(--uv-file-strength), var(--text-normal)); }
 .uv-fo-icons { display: inline-flex; gap: 2px; color: var(--text-faint); align-self: center; }
 .uv-fo-icons svg { width: 12px; height: 12px; }
-.uv-fo-link { text-decoration: none; }
+.uv-fo-link { text-decoration-line: none; }
 .uv-fo-meta { color: var(--text-faint); font-size: var(--font-ui-smaller); }
 .uv-fo-where { margin-left: auto; color: var(--text-faint); font-size: var(--font-ui-smaller); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
 

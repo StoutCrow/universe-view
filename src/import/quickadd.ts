@@ -26,6 +26,10 @@ export interface QuickAdd {
 	aliases?: string[];
 	/** Where a person died. */
 	deathPlace?: string;
+	/** A regnal number or generation ("II", "3rd"). */
+	number?: string;
+	/** Names friends and enemies use ("the Bold"); they also find the note. */
+	nicknames?: string[];
 	partners?: string[];
 	children?: string[];
 	/** On an event: what led to it, and what it led to. */
@@ -61,8 +65,13 @@ export interface QuickAddContext {
 const EVENT_WORDS = /\b(battle|siege|war|treaty|coronation|founding|foundation|death|birth|marriage|wedding|fall|sack|rebellion|revolt|council|massacre|raid|discovery|election|uprising|invasion|duel|accord|pact|plague|festival|voyage|expedition|crowning|burning|flood|eruption)\b/i;
 const CULTURE_WORDS = /^(house|order|kingdom|empire|guild|clan|church|tribe|company|league|republic|realm|dynasty|faith|cult|brotherhood|sisterhood|council of|federation|commonwealth|corporation|agency|ministry|department of|party|fleet)\b/i;
 const PLACE_WORDS = /\b(city|town|village|keep|castle|fort|fortress|tower|abbey|temple|port|harbou?r|bridge|forest|wood|mountain|river|lake|island|isle|valley|pass|hold|citadel|station|spaceport|airport|base|colony|outpost|habitat|planet|moon)\b/i;
-const TYPE_PREFIX = /^(event|person|character|culture|group|faction|place|location|map)\s*:\s*/i;
-const TYPE_OF: Record<string, EntityType> = { event: "event", person: "person", character: "person", culture: "culture", group: "culture", faction: "culture", place: "place", location: "place", map: "map" };
+const OBJECT_WORDS = /\b(sword|blade|dagger|spear|axe|bow|shield|crown|ring|amulet|staff|wand|relic|artefact|artifact|tome|grimoire|scroll|chalice|grail|throne|banner|armou?r|helm|gem|jewel|talisman|orb|key|ship|vessel|probe|satellite|device)\b/i;
+const CREATURE_WORDS = /\b(dragon|wyrm|wolf|beast|monster|giant|troll|ogre|goblin|griffin|phoenix|hound|serpent|spirit|ghost|horse|bear|eagle|raven|drake|kraken|alien|android|robot)\b/i;
+const TYPE_PREFIX = /^(event|person|character|culture|group|faction|place|location|map|object|item|artefact|artifact|relic|creature|beast|monster|animal)\s*:\s*/i;
+const TYPE_OF: Record<string, EntityType> = {
+	event: "event", person: "person", character: "person", culture: "culture", group: "culture", faction: "culture", place: "place", location: "place", map: "map",
+	object: "object", item: "object", artefact: "object", artifact: "object", relic: "object", creature: "creature", beast: "creature", monster: "creature", animal: "creature",
+};
 
 const names = (s: string) => s.split(/\s*(?:,|\band\b|&|\+)\s*/i).map((x) => x.replace(/^\[\[|\]\]$/g, "").trim()).filter(Boolean);
 
@@ -150,6 +159,8 @@ export function parseQuickAdd(text: string, ctx: QuickAddContext): QuickAdd {
 	else if (CULTURE_WORDS.test(out.name)) out.type = "culture";
 	else if (EVENT_WORDS.test(out.name) || out.participants.length || out.date) out.type = "event";
 	else if (PLACE_WORDS.test(out.name)) out.type = "place";
+	else if (OBJECT_WORDS.test(out.name)) out.type = "object";
+	else if (CREATURE_WORDS.test(out.name)) out.type = "creature";
 	return out;
 }
 
@@ -199,6 +210,8 @@ export const CREATOR_FIELDS: Record<EntityType, CreatorField[]> = {
 		{ key: "end", label: "Died", input: "date" },
 		{ key: "gender", label: "Gender", input: "choice", options: GENDER },
 		{ key: "occupation", label: "Occupation", input: "text" },
+		{ key: "number", label: "Number", input: "text", hint: "II, 3rd…" },
+		{ key: "nicknames", label: "Nicknames", input: "words", hint: "The Bold, Red…" },
 		{ key: "parents", label: "Parents", input: "links", types: ["person"] },
 		{ key: "cultures", label: "House and groups", input: "links", types: ["culture"] },
 		{ key: "birthPlace", label: "Born at", input: "link", types: ["place"] },
@@ -315,6 +328,8 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 			if (q.end) fm.died = q.end;
 			if (q.gender) fm.gender = q.gender;
 			if (q.occupation) fm.occupation = q.occupation;
+			if (q.number?.trim()) fm.number = q.number.trim();
+			if (q.nicknames?.length) fm.nickname = [...new Set(q.nicknames.map((a) => a.trim()).filter(Boolean))];
 			if (q.birthPlace) fm.birthplace = link(q.birthPlace);
 			if (q.deathPlace) fm.deathplace = link(q.deathPlace);
 			if (q.residences?.length) fm.residences = list(q.residences);
@@ -352,7 +367,8 @@ export function quickAddFrontmatter(q: QuickAdd, link = (n: string) => `[[${n}]]
 				break;
 	}
 	// What every note can have.
-	if (q.aliases?.length) fm.aliases = [...new Set(q.aliases.map((a) => a.trim()).filter(Boolean))];
+	const names = [...(q.aliases ?? []), ...(q.type === "person" ? q.nicknames ?? [] : [])].map((a) => a.trim()).filter(Boolean);
+	if (names.length) fm.aliases = [...new Set(names)];
 	if (q.color) fm.color = q.color;
 	if (q.image) fm.image = link(q.image.replace(/^!?\[\[|\]\]$/g, ""));
 	if (q.summary) fm.summary = q.summary;

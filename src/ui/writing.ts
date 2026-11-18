@@ -102,6 +102,17 @@ export function buildEditor(p: UniverseViewPlugin, box: HTMLElement, e: Entity, 
 			t.inputEl.rows = 2;
 		});
 
+		if (e.type === "person") {
+			used.add("number");
+			used.add("nickname");
+			new Setting(box).setName("Number").addText((t) => {
+				t.setPlaceholder("II, 3rd…").setValue(fm.number === undefined || fm.number === null ? "" : asText(fm.number)).onChange((v) => changes.set("number", v.trim()));
+			});
+			new Setting(box).setName("Nicknames").setDesc("Separated by commas.").addText((t) => {
+				t.setPlaceholder("The Bold, Red…").setValue(([] as unknown[]).concat(fm.nickname ?? []).map(asText).join(", ")).onChange((v) => changes.set("nickname", v.split(",").map((s) => s.trim()).filter(Boolean)));
+			});
+		}
+
 		// ---- Links, as chips
 		const names = (v: unknown): string[] => ([] as unknown[]).concat(v ?? []).map((x) => (x && typeof x === "object" ? linkTarget(Object.values(x).find((y) => typeof y === "string" && /\[\[/.test(y))) : linkTarget(x)) ?? "").filter(Boolean);
 		/** What an object entry (`{ name, from, to, kind }`) says about the tie, in the shape the editor works with. */

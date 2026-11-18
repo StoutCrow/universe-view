@@ -2,7 +2,7 @@ import { Keymap, Menu, Platform, ViewStateResult } from "obsidian";
 import type { Entity, EntityType } from "../types";
 import { rangeOf } from "../index/EntityIndex";
 import { validate } from "../index/validate";
-import { TYPE_ICONS, el, icon, iconButton, setPressed } from "../render/common";
+import { TYPE_ICONS, TYPE_LABELS, el, icon, iconButton, setPressed } from "../render/common";
 import { GROUP_KINDS, groupKind } from "../render/houses";
 import { LIST_INFO, ListKind, kinCount, listRows, renderList } from "../render/panels";
 import { VIEW_DASHBOARD } from "./DashboardView";
@@ -199,8 +199,8 @@ export class OverviewView extends UniverseViewBase {
 			if (badge) el("span", { cls: "universeview-ov-badge", text: String(badge) }, b);
 			b.addEventListener("click", run);
 		};
-		for (const t of ["event", "person", "culture", "place"] as EntityType[]) {
-			action(TYPE_ICONS[t], `New ${t}`, () => p.createEntityPrompt({ type: t, scope: this.world || undefined }));
+		for (const t of ["event", "person", "culture", "place", "object", "creature"] as EntityType[]) {
+			action(TYPE_ICONS[t], `New ${TYPE_LABELS[t].toLowerCase()}`, () => p.createEntityPrompt({ type: t, scope: this.world || undefined }));
 		}
 		const issues = validate(idx).filter((i) => i.severity !== "info" && (!this.world || i.key.startsWith(this.world + "/")));
 		action("wand-2", "Detect types", () => new DetectModal(p).open());

@@ -9,7 +9,7 @@ import { factsFromPath, standardTag, standardTagsFor, type TagSample } from "../
 import { factTag, kindTag, parseTag, tidyKinds } from "../index/tagscheme";
 import { TYPE_ICONS, TYPE_LABELS, el, icon } from "../render/common";
 import { GROUP_KINDS } from "../render/houses";
-import { LinkList } from "./CreateEntityModal";
+import { LinkList, type CreatePrefill } from "./CreateEntityModal";
 import { makeFolderNote, placementFor } from "./foldernotes";
 import { SETTLEMENT_KINDS, choiceTags, standardFields, type TagChoice } from "./tagstandard";
 
@@ -81,6 +81,23 @@ export class QuickCreator {
 	private get cal() {
 		const idx = this.plugin.index;
 		return this.plugin.calendars.get(idx.dominantCalendar(this.host.world));
+	}
+
+	/** Starts with what a "+" button already knows: the type, name, date and the notes it links to. */
+	prefill(p: CreatePrefill) {
+		const kind = p.groupKind === "nationality" ? "culture" : p.groupKind;
+		const id = p.type === "culture" ? (kind && CHOICES.some((c) => c[0] === kind) ? kind : "group") : p.type;
+		if (id && CHOICES.some((c) => c[0] === id)) this.choice = id;
+		this.text = p.name ?? "";
+		const set = (k: keyof QuickAdd, v: string | string[] | undefined) => {
+			if (Array.isArray(v) ? v.length : v) this.fields[k] = v;
+		};
+		set("date", p.date);
+		set("places", p.places);
+		set("participants", p.participants);
+		set("parents", p.parents);
+		set("cultures", p.type === "culture" ? p.parentCultures : p.cultures);
+		if (p.childOf) set("children", [this.plugin.index.get(p.childOf)?.name ?? ""].filter(Boolean));
 	}
 
 	private parseLine(line: string, useRow = false) {
@@ -636,7 +653,7 @@ export class QuickCreator {
 	private moreOptions() {
 		const { q, kind } = this.current();
 		this.host.close();
-		this.plugin.createEntityPrompt({
+		this.plugin.openFullCreator({
 			type: q.type,
 			groupKind: kind === "realm" || kind === "house" ? kind : undefined,
 			name: q.name,

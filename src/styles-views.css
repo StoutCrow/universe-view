@@ -1225,7 +1225,7 @@ button.universeview-org-outline-fold:disabled { visibility: hidden; }
 	opacity: 0.4;
 }
 .universeview-org-legend-row.is-off span {
-	text-decoration: line-through;
+	text-decoration-line: line-through;
 }
 .universeview-org-legend-swatch {
 	flex: 0 0 auto;
@@ -1494,7 +1494,7 @@ button.universeview-dash-rel:hover .universeview-dash-rel-remove,
 .uv-tl-card-head { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: start; }
 .uv-tl-card-icon { width: 28px; height: 28px; border-radius: var(--uv-r-md); display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--item-color) 16%, transparent); color: var(--item-color); }
 .uv-tl-card-icon svg { width: 15px; height: 15px; }
-.uv-tl-card-title a { font-weight: 600; font-size: var(--font-ui-medium); color: var(--text-normal); cursor: pointer; text-decoration: none; }
+.uv-tl-card-title a { font-weight: 600; font-size: var(--font-ui-medium); color: var(--text-normal); cursor: pointer; text-decoration-line: none; }
 .uv-tl-card-title a:hover { color: var(--text-accent); }
 .uv-tl-card-kind, .uv-tl-card-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); }
 .uv-tl-card-date { margin: 8px 0 2px; font-variant-numeric: tabular-nums; }
@@ -1502,7 +1502,7 @@ button.universeview-dash-rel:hover .universeview-dash-rel-remove,
 .uv-tl-card-row { display: grid; grid-template-columns: 60px 1fr; gap: 6px; margin-top: 6px; }
 .uv-tl-card-label { color: var(--text-faint); font-size: var(--font-ui-smaller); padding-top: 2px; }
 .uv-tl-card-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.uv-tl-card-chip { padding: 1px 8px; border-radius: var(--uv-r-lg); background: var(--background-secondary); color: var(--text-normal); cursor: pointer; text-decoration: none; }
+.uv-tl-card-chip { padding: 1px 8px; border-radius: var(--uv-r-lg); background: var(--background-secondary); color: var(--text-normal); cursor: pointer; text-decoration-line: none; }
 .uv-tl-card-chip:hover { background: var(--background-modifier-hover); color: var(--text-accent); }
 .uv-tl-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .uv-tl-card-actions button { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; font-size: var(--font-ui-smaller); }
@@ -1530,7 +1530,7 @@ button.universeview-dash-rel:hover .universeview-dash-rel-remove,
 .universeview-net-node.is-pinned .universeview-net-shape { stroke-dasharray: 3 2; stroke: var(--text-muted); stroke-width: 2px; }
 .uv-net-card { position: absolute; top: 12px; right: 12px; z-index: 5; width: 260px; max-width: calc(100% - 24px); padding: 10px 12px; border-radius: var(--uv-r-lg); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-top: 3px solid var(--node-color, var(--interactive-accent)); box-shadow: var(--shadow-l); font-size: var(--font-ui-small); }
 .uv-net-card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.uv-net-card-name { font-weight: 600; font-size: var(--font-ui-medium); color: var(--text-normal); cursor: pointer; text-decoration: none; }
+.uv-net-card-name { font-weight: 600; font-size: var(--font-ui-medium); color: var(--text-normal); cursor: pointer; text-decoration-line: none; }
 .uv-net-card-name:hover { color: var(--text-accent); }
 .uv-net-card-sub { color: var(--text-muted); font-size: var(--font-ui-smaller); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .uv-net-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }

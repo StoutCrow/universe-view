@@ -786,6 +786,8 @@ export class TimelineRenderer {
 			this.pendingKey = undefined;
 		}
 		this.renderCauses();
+		// Entrance animations belong to the first draw only; panning and zooming redraw everything.
+		this.root.addClass("is-settled");
 	}
 
 	/** A nation is drawn by what draws it on the lineage. */

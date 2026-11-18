@@ -76,17 +76,17 @@
 }
 .universeview-owner-link {
 	color: var(--text-normal);
-	text-decoration: none;
+	text-decoration-line: none;
 	cursor: pointer;
 }
 .universeview-owner-link:hover {
 	color: var(--text-accent);
-	text-decoration: underline;
+	text-decoration-line: underline;
 }
 .universeview-owner-link.is-unresolved {
 	color: var(--text-muted);
 	cursor: default;
-	text-decoration: none;
+	text-decoration-line: none;
 }
 .universeview-hc-owner {
 	padding: 0 12px 6px;
@@ -160,7 +160,7 @@
 	font-size: 1.2em;
 	font-weight: 700;
 	color: var(--text-normal);
-	text-decoration: none;
+	text-decoration-line: none;
 	line-height: 1.15;
 	cursor: pointer;
 	overflow-wrap: anywhere;
@@ -609,7 +609,7 @@
 }
 .universeview-ep .universeview-ep-event-name {
 	color: var(--text-normal);
-	text-decoration: none;
+	text-decoration-line: none;
 	cursor: pointer;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -617,7 +617,7 @@
 }
 .universeview-ep .universeview-ep-event-name:hover {
 	color: var(--text-accent);
-	text-decoration: underline;
+	text-decoration-line: underline;
 }
 
 /* Tags and actions */
@@ -982,7 +982,7 @@ body.uv-no-region-labels .universeview-territory-label.is-region { display: none
 .uv-war-battles { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
 .uv-war-battle { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 8px; padding: 4px 6px; border-radius: var(--uv-r-md); }
 .uv-war-battle:hover { background: var(--background-modifier-hover); }
-.uv-war-battle a { cursor: pointer; color: var(--text-normal); text-decoration: none; }
+.uv-war-battle a { cursor: pointer; color: var(--text-normal); text-decoration-line: none; }
 .uv-war-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--background-modifier-border-hover); }
 .uv-war-sub { font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .uv-war-tally { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px; padding-top: 8px; border-top: 1px solid var(--background-modifier-border); }
@@ -1007,7 +1007,7 @@ body.uv-no-region-labels .universeview-territory-label.is-region { display: none
 /* Quick add, several lines: leave one out, change its kind, see how it links. */
 .uv-quickadd-many { flex-wrap: wrap; }
 .uv-quickadd-many.is-off { opacity: 0.45; }
-.uv-quickadd-many.is-off strong { text-decoration: line-through; }
+.uv-quickadd-many.is-off strong { text-decoration-line: line-through; }
 .uv-quickadd-type.is-switch { height: auto; padding: 1px 8px; border-radius: var(--uv-r-lg); font-size: var(--font-ui-smaller); box-shadow: none; background: var(--background-secondary); cursor: pointer; }
 .uv-quickadd-type.is-switch:hover { background: var(--interactive-accent); color: var(--text-on-accent); }
 .uv-quickadd-links { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; padding-left: 52px; margin-top: 2px; }

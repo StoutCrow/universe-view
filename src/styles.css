@@ -433,7 +433,7 @@ body {
 	color: var(--text-accent);
 }
 .universeview-tl-lane-name.is-link:hover {
-	text-decoration: underline;
+	text-decoration-line: underline;
 }
 .universeview-tl-lane-count {
 	color: var(--text-faint);

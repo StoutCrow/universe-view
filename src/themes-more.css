@@ -9,9 +9,9 @@ body:is(.universeview-theme-journal, .universeview-theme-neon, .universeview-the
 }
 body:is(.universeview-theme-neon, .universeview-theme-typewriter, .universeview-theme-woodcut):not(#uv-strong) .universeview-ov-title {
 	font-size: 2.2em;
-	text-decoration: none;
+	text-decoration-line: none;
 }
-body:is(.universeview-theme-woodcut, .universeview-theme-neon):not(#uv-strong) :is(.universeview-module-title, .universeview-ov-panel-head h3) { text-decoration: none; }
+body:is(.universeview-theme-woodcut, .universeview-theme-neon):not(#uv-strong) :is(.universeview-module-title, .universeview-ov-panel-head h3) { text-decoration-line: none; }
 body.universeview-theme-neon .universeview-ov-title { letter-spacing: 0.06em; }
 body.universeview-theme-typewriter .universeview-ov-title { letter-spacing: 0.08em; }
 

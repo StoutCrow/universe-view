@@ -1115,7 +1115,7 @@ button.universeview-dash-tool:hover {
 }
 .universeview-table-cell.is-invalid .universeview-cell-text {
 	color: var(--text-error);
-	text-decoration: underline;
+	text-decoration-line: underline;
 }
 .universeview-cell-input {
 	width: 100%;
@@ -1505,7 +1505,7 @@ img.universeview-territory-icon {
 	color: var(--text-accent);
 	font-weight: 600;
 }
-.universeview-insp-empty-link { display: block; margin-top: 8px; cursor: pointer; font-size: var(--font-ui-smaller); color: var(--text-muted); text-decoration: underline; }
+.universeview-insp-empty-link { display: block; margin-top: 8px; cursor: pointer; font-size: var(--font-ui-smaller); color: var(--text-muted); text-decoration-line: underline; }
 .universeview-insp-empty-link:hover { color: var(--text-normal); }
 .universeview-insp-empty {
 	text-align: center;

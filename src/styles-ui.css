@@ -233,7 +233,7 @@ button.universeview-ov-tile {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	text-decoration: none;
+	text-decoration-line: none;
 }
 .universeview-hc-name:hover {
 	color: var(--text-accent);
@@ -262,7 +262,7 @@ button.universeview-ov-tile {
 .universeview-hc-link {
 	color: var(--text-normal);
 	cursor: pointer;
-	text-decoration: none;
+	text-decoration-line: none;
 	border-bottom: 1px solid color-mix(in srgb, var(--text-accent) 35%, transparent);
 }
 .universeview-hc-link:hover {
@@ -1056,7 +1056,7 @@ button.universeview-ov-tile {
 	color: var(--text-normal);
 }
 .universeview-legend-row.is-off .universeview-legend-label {
-	text-decoration: line-through;
+	text-decoration-line: line-through;
 }
 .universeview-map-banner.has-actions {
 	pointer-events: auto;
@@ -1368,7 +1368,7 @@ button.universeview-theme-card.is-active {
 	letter-spacing: normal;
 	text-transform: none;
 	text-shadow: none;
-	text-decoration: none;
+	text-decoration-line: none;
 	font-variant: normal;
 }
 .uv-tc-sample .uv-tc-title:not(#uv-strong)::first-letter { font-size: inherit; color: inherit; text-shadow: none; }
@@ -1699,7 +1699,7 @@ body.uv-t-panels .uv-options {
 /* Undo history: what was just undone, ahead of the list, with Redo. */
 .uv-history-undone { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border); }
 .uv-history-undone-head { margin-bottom: 6px; font-size: var(--font-ui-small); color: var(--text-muted); }
-.uv-history-row.is-undone .uv-history-label { color: var(--text-muted); text-decoration: line-through; }
+.uv-history-row.is-undone .uv-history-label { color: var(--text-muted); text-decoration-line: line-through; }
 /* A group heading inside an Options panel (the map has many options, in groups). */
 .uv-options-heading {
 	margin: 8px 8px 2px;

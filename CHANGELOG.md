@@ -2,7 +2,20 @@
 
 What changed in each version of UniverseView. The [README](README.md) describes every feature in full.
 
-## 4.6.1 — not released yet
+## 4.6.1 — 2026-11-18
+
+### One creator for every "+"
+- **Every + button opens the Quick creator** in the inspector (toolbar buttons, right-click *New…* and *Add … here* entries, the overview buttons and the `New <type>` commands), already filled in with what the button knew: type, name, date, places, people and groups. The full New note window is still one click away (*Relationships, colour, logo and more…*) and is used for a pin placed on a map, another calendar, and Map notes.
+- **Object and Creature** are in the overview's New buttons and in the command list (*New object*, *New creature*). The overview's buttons use the type names (*New society*).
+- **People have a Number and Nicknames** (II, 3rd; The Bold) in the Quick creator and in the inspector's edit form. They are written as `number:` and `nickname:`, and a nickname is also an alias, so a link written with it finds the note.
+- **The typed line knows the new types**: start it with `object:`, `item:`, `artifact:`, `relic:`, `creature:`, `beast:`, `monster:` or `animal:` (also as `type: …`). With no prefix, a name with a sword, crown, ring or ship in it reads as an Object, and one with a dragon, wolf or ghost as a Creature.
+
+### Smoother timeline and buttons
+- **Scrolling or zooming the timeline no longer replays its entrance animations.** Every pan and zoom redraws the lanes, and each redraw wrote the titles out and faded the bars in again. They now animate on the first draw only.
+- **Buttons no longer play two animations at once**: the hand-drawn outline stops while a button is pressed, so only the fill shows.
+
+### Plugin review
+- The written-in titles, tabs and button fills, and the arrow-ended Tag tabs, are drawn with masks instead of `clip-path`, and underlines use the `text-decoration-line` family, so the review no longer flags those two browser features as partly supported.
 
 ### Name forms, sorted and open-ended
 - **Forms are grouped by what they do** (*Titles before the name* and *Epithets after the name* for people, *Titles of rule* and *Empires, republics and unions* for realms, and so on), and the built-in ones are general enough for any world: *Federation of …*, *… City*, *Dr. …*, *Lost …*.

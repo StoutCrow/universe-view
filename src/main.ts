@@ -1106,8 +1106,15 @@ export default class UniverseViewPlugin extends Plugin {
 
 	// ---- Notes ---------------------------------------------------------------------------------------
 
+	/** Every "+" leads to the Quick creator in the inspector; only what it has no field for (a spot on a map, another calendar) uses the full window. */
 	createEntityPrompt(prefill: CreatePrefill = {}) {
 		if (prefill.scope === undefined) prefill.scope = this.inferScope(prefill);
+		if (prefill.type === "map" || prefill.map || prefill.position || prefill.calendar) return this.openFullCreator(prefill);
+		void this.inspect().then(() => (this.app.workspace.getLeavesOfType(VIEW_INSPECTOR)[0]?.view as InspectorView | undefined)?.startCreating(prefill.scope, prefill));
+	}
+
+	/** The full window, for everything the Quick creator leaves out. */
+	openFullCreator(prefill: CreatePrefill = {}) {
 		new CreateEntityModal(this, prefill).open();
 	}
 
@@ -1915,7 +1922,7 @@ export default class UniverseViewPlugin extends Plugin {
 				this.showViewMenu(undefined, { x: r.left + r.width / 2 - 120, y: r.top + 120 });
 			},
 		});
-		const types: EntityType[] = ["event", "person", "culture", "place", "map"];
+		const types: EntityType[] = ["event", "person", "culture", "place", "object", "creature", "map"];
 		for (const t of types) {
 			this.addCommand({ id: `new-${t}`, name: `New ${t}`, icon: TYPE_ICONS[t], callback: () => this.createEntityPrompt({ type: t }) });
 		}

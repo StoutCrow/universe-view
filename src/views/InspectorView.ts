@@ -1,5 +1,6 @@
 import { ItemView, Menu, Notice, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { QuickCreator } from "../ui/QuickCreator";
+import type { CreatePrefill } from "../ui/CreateEntityModal";
 import type UniverseViewPlugin from "../main";
 import { el, entityColor, helpTip, icon, tuckDescriptions, TYPE_ICONS } from "../render/common";
 import type { Entity, EntityType } from "../types";
@@ -146,7 +147,7 @@ export class InspectorView extends ItemView {
 	private redrawWaiting = false;
 
 	/** Opens the Quick creator in this panel, saving what's being edited first. */
-	startCreating(world?: string) {
+	startCreating(world?: string, prefill?: CreatePrefill) {
 		void this.flushEdits().then(() => {
 			this.editor = undefined;
 			this.creator = new QuickCreator(this.plugin, {
@@ -157,6 +158,7 @@ export class InspectorView extends ItemView {
 					this.render();
 				},
 			});
+			if (prefill) this.creator.prefill(prefill);
 			this.render();
 		});
 	}

@@ -4,14 +4,19 @@
    as you point at them and coloured in as you press them; and a folder unfolds to show its notes. Nothing here
    touches the sample cards in Settings (.uv-pv): they show their own theme only. */
 
+@property --uv-w {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 100%;
+}
 @property --uv-p {
 	syntax: "<percentage>";
 	inherits: false;
 	initial-value: 0%;
 }
 @keyframes uv-write {
-	from { clip-path: inset(-8px 100% -8px 0); }
-	to { clip-path: inset(-8px -8px -8px 0); }
+	from { --uv-w: 0%; -webkit-mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); }
+	to { --uv-w: 100%; -webkit-mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); }
 }
 @keyframes uv-caret {
 	0%, 49% { border-right-color: currentcolor; }
@@ -97,18 +102,16 @@ body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .unive
 	pointer-events: none;
 	background: var(--uv-fill);
 	opacity: 0;
-	clip-path: inset(0 100% 0 0);
 }
 body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip:not(.mod-cta-chip), .universeview-icon-btn:not(.mod-cta-icon), .universeview-ov-action):not(.uv-pv *):active::after {
 	animation: uv-fill 0.35s ease-out forwards;
 }
 body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-woodcut, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-atelier, .universeview-theme-journal, .universeview-theme-typewriter) :is(.universeview-chip, .universeview-icon-btn).is-active:not(.uv-pv *)::after {
 	opacity: 0.85;
-	clip-path: none;
 }
 @keyframes uv-fill {
-	from { opacity: 1; clip-path: inset(0 100% 0 0); }
-	to { opacity: 1; clip-path: inset(0 0 0 0); }
+	from { opacity: 1; --uv-w: 0%; -webkit-mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); }
+	to { opacity: 1; --uv-w: 100%; -webkit-mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); }
 }
 body.uv-ink.universeview-theme-woodcut :is(.universeview-chip, .universeview-icon-btn):is(.is-active, :active):not(.uv-pv *):not(#uv-strong):not(#uv-strong) { color: var(--uv-fill-fg); }
 
@@ -133,7 +136,14 @@ body.uv-ink .universeview-dash-row.is-opening .universeview-dash-row-icon {
 }
 
 /* ---- A title that was just written stays written when its view redraws (see inkonce.ts) ---- */
-body.uv-ink .uv-seen:not(#uv-strong):not(#uv-strong):not(#uv-strong) { animation: none; clip-path: none; border-right: 0; }
+body.uv-ink .uv-seen:not(#uv-strong):not(#uv-strong):not(#uv-strong) { animation: none; border-right: 0; }
+
+/* ---- The timeline redraws on every pan and zoom: nothing in it enters again after the first draw ---- */
+body.uv-ink .universeview-timeline.is-settled :is(.universeview-tl-lane-label, .universeview-tl-bar, .universeview-tl-item, .universeview-tl-dot, .universeview-tl-tick, .universeview-tl-gridline, .uv-draw, svg *):not(#uv-strong):not(#uv-strong) { animation: none; border-right: 0; }
+.universeview-timeline.is-settled :is(.universeview-tl-lane-label, .universeview-tl-bar, .universeview-tl-item, .universeview-tl-dot, svg *):not(#uv-strong) { animation: none; }
+
+/* ---- A button is outlined while pointed at and coloured while pressed, never both at once ---- */
+body.uv-ink :is(.universeview-chip, .universeview-icon-btn, .universeview-ov-action):not(.uv-pv *):active:not(#uv-strong):not(#uv-strong):not(#uv-strong)::before { animation: none; opacity: 0; }
 
 /* ---- Tabs: the open tab is written in, typed in or blurred in as you switch ---- */
 @keyframes uv-tab-fade {
@@ -141,8 +151,8 @@ body.uv-ink .uv-seen:not(#uv-strong):not(#uv-strong):not(#uv-strong) { animation
 	to { opacity: 1; }
 }
 @keyframes uv-tab-in {
-	from { clip-path: inset(-6px 100% -6px 0); }
-	to { clip-path: inset(-6px -6px -6px 0); }
+	from { --uv-w: 0%; -webkit-mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); }
+	to { --uv-w: 100%; -webkit-mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); mask-image: linear-gradient(to right, #000 var(--uv-w), transparent var(--uv-w)); }
 }
 body.uv-ink:is(.universeview-theme-notebook, .universeview-theme-watercolor, .universeview-theme-manuscript, .universeview-theme-journal, .universeview-theme-atelier, .universeview-theme-woodcut, .universeview-theme-archive, .universeview-theme-scholar) :is(.uv-hub-tab.is-active, .universeview-insp-tab.is-active, .uv-subtab.is-on):not(.uv-pv *) {
 	animation: uv-tab-in 0.22s ease-out backwards;
