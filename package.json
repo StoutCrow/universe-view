@@ -29,7 +29,7 @@
     "@types/node": "^20.14.0",
     "esbuild": "^0.21.5",
     "eslint": "^9.39.5",
-    "eslint-plugin-obsidianmd": "^0.4.2",
+    "eslint-plugin-obsidianmd": "^0.6.0",
     "lucide": "^0.344.0",
     "obsidian": "^1.5.7",
     "tslib": "^2.6.3",
