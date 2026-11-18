@@ -45,7 +45,7 @@ jobs:
           if [ "$tag" != "$version" ]; then echo "Tag $tag doesn't match manifest.json version $version"; exit 1; fi
 
       - name: Attest the release files were built here
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             main.js
