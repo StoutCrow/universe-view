@@ -1,0 +1,65 @@
+# Test builds for BRAT, made only in a PRIVATE copy of this repository (e.g. StoutCrow/universe-view-dev).
+# Every push to the `dev` branch there builds the plugin and publishes it as a pre-release named
+# <next patch>-dev.<run number> (4.6.1 -> 4.6.2-dev.17), so BRAT on every collaborator's Obsidian
+# picks it up as an update. In the public repository this workflow never runs.
+name: Dev build
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dev-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24.x"
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Stamp a dev version into manifest.json
+        id: ver
+        run: |
+          version=$(node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            const [a, b, c] = m.version.split("-")[0].split(".").map(Number);
+            m.version = `${a}.${b}.${c + 1}-dev.${process.env.GITHUB_RUN_NUMBER}`;
+            fs.writeFileSync("manifest.json", JSON.stringify(m, null, "\t") + "\n");
+            process.stdout.write(m.version);
+          ')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          notes="Dev build of $(git rev-parse --short HEAD) by ${{ github.actor }}: $(git log -1 --format=%s)"
+          gh release create "$VERSION" --target "$GITHUB_SHA" --title "$VERSION" --prerelease --notes "$notes" \
+            main.js manifest.json styles.css
+
+      - name: Keep only the 10 newest dev builds
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --limit 100 --json tagName,isPrerelease,createdAt \
+            --jq '[.[] | select(.isPrerelease and (.tagName | contains("-dev.")))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
+          while read -r tag; do gh release delete "$tag" --yes --cleanup-tag; done
