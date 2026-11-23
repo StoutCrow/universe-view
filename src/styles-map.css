@@ -639,3 +639,5 @@ body.uv-map-compass .universeview-map:not(.is-embedded) .universeview-map-canvas
 .uv-thing-chip.is-creature { color: var(--color-green); }
 .uv-thing-chip.is-object { color: var(--color-yellow); }
 .uv-thing-badge:hover .uv-thing-chip { border-color: var(--interactive-accent); }
+/* On a phone the toolbar is one sideways-scrolling strip, so the map's tool cluster stays on that line too (wrapped, it stood as a tall column and pushed the map down). */
+.is-mobile .universeview-toolbar .uv-map-tools:not(#uv-strong) { flex-wrap: nowrap; margin-left: 0; }
