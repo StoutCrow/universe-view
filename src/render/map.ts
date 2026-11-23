@@ -1,6 +1,6 @@
 import { ROW_INFO } from "../index/membership";
 import { groupsByRow } from "../ui/groupsplit";
-import { journeyOf } from "../index/journey";
+import { journeyOf, whereAt } from "../index/journey";
 import * as L from "leaflet";
 import { Menu, Notice, Platform, TFile, debounce } from "obsidian";
 import { phoneCopy, phoneCopyByName, savePhoneCopy, tooBigForPhone } from "./phonecopy";
@@ -5381,17 +5381,14 @@ export class MapRenderer {
 	// ---- Creatures and objects -------------------------------------------------------------------
 
 	/**
-	 * Where an object or creature is: an object's dated `places:` entry for the slider's date (with no
-	 * date set, the latest one), else the places its note names.
+	 * Where a creature or object is: a creature where its note places it; an object at its stop on the
+	 * slider's date (kept there, or with whoever held it; `journeyOf`), else at its latest stop.
 	 */
 	private thingPlaces(e: Entity, at: number | undefined): string[] {
-		const hist = e.placeHistory ?? [];
-		if (!hist.length) return e.places.map((p) => p.key);
-		if (at === undefined) {
-			const latest = hist.reduce((a, b) => ((b.from?.start ?? -Infinity) >= (a.from?.start ?? -Infinity) ? b : a));
-			return [latest.ref.key];
-		}
-		return hist.filter((h) => (!h.from || h.from.start <= at) && (!h.to || h.to.end >= at)).map((h) => h.ref.key);
+		if (e.type !== "object") return e.places.map((p) => p.key);
+		const stops = journeyOf(this.plugin.index, e);
+		const stop = at === undefined ? stops[stops.length - 1] : whereAt(stops, at);
+		return stop ? [stop.place.key] : [];
 	}
 
 	/** A small badge by each place holding creatures or objects: one chip per kind with a count; a click opens the note, or a menu when there are several. */

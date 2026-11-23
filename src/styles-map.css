@@ -607,10 +607,10 @@ body.uv-map-compass .universeview-map:not(.is-embedded) .universeview-map-canvas
 /* Simplify and Grow, tried on: the outline as it is now stays under the new one, dashed. */
 .uv-simplify-orig { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; opacity: 0.85; pointer-events: none; }
 
-/* Creatures and objects by a place (map option): a small badge above and left of its pin, one chip per kind. */
+/* Creatures and objects by a place (map option): a small badge left of its pin (the name and event count sit to the right), one chip per kind. */
 .uv-thing-badge {
 	position: absolute;
-	transform: translate(calc(-100% - 6px), calc(-100% - 2px));
+	transform: translate(calc(-100% - 13px), -50%);
 	display: flex;
 	gap: 2px;
 	cursor: pointer;
