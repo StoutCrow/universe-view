@@ -544,13 +544,14 @@ export class MapView extends UniverseViewBase {
 			["heatmap", "Event heat map", "A glow where events happened (follows the time slider)"],
 			["showMovements", "Campaigns and migrations", "Arrows for wars, campaigns, migrations and voyages across several places"],
 			["showPeople", "People at this date", "Where each person is on the time slider's date: at an event, on the road, or at home (their residence). Needs a date set on the slider"],
+			["showThings", "Creatures and objects", "A small badge by each place with the creatures found there and the objects kept there (follows the time slider)"],
 			["showWars", "Battles", "Crossed swords where battles were fought, coloured by who won, joined by their war's campaign (follows the time slider)"],
 			["showNotes", "Map notes", "Your sticky notes, arrows and lines"],
 			["useLayers", "Zoom layers", "Small places appear as you zoom in"],
 			["cluster", "Group crowded pins", "When zoomed out, pins close together merge into a numbered bubble"],
 			["photoPins", "Photos in pins", "Places with a picture show it in their pin"],
 		];
-		const isOn = (k: keyof MapOptions) => (k === "heatmap" || k === "photoPins" || k === "showPeople" ? !!o[k] : o[k] !== false);
+		const isOn = (k: keyof MapOptions) => (k === "heatmap" || k === "photoPins" || k === "showPeople" || k === "showThings" ? !!o[k] : o[k] !== false);
 		const by = o.colorBy ?? this.plugin.settings.pinColorBy;
 		return [
 			{ type: "heading", label: "Map" },

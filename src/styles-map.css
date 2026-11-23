@@ -606,3 +606,36 @@ body.uv-map-compass .universeview-map:not(.is-embedded) .universeview-map-canvas
 .universeview-territory.is-linked { stroke: var(--interactive-accent); stroke-width: 3; stroke-dasharray: 8 5; fill-opacity: 0.3; }
 /* Simplify and Grow, tried on: the outline as it is now stays under the new one, dashed. */
 .uv-simplify-orig { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; opacity: 0.85; pointer-events: none; }
+
+/* Creatures and objects by a place (map option): a small badge above and left of its pin, one chip per kind. */
+.uv-thing-badge {
+	position: absolute;
+	transform: translate(calc(-100% - 6px), calc(-100% - 2px));
+	display: flex;
+	gap: 2px;
+	cursor: pointer;
+}
+.uv-thing-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	height: 18px;
+	padding: 0 4px;
+	border-radius: 9px;
+	box-sizing: border-box;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: 10px;
+	font-weight: var(--font-bold);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	white-space: nowrap;
+}
+.uv-thing-chip svg {
+	width: 11px;
+	height: 11px;
+}
+.uv-thing-chip.is-creature { color: var(--color-green); }
+.uv-thing-chip.is-object { color: var(--color-yellow); }
+.uv-thing-badge:hover .uv-thing-chip { border-color: var(--interactive-accent); }

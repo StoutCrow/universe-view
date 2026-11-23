@@ -19,7 +19,7 @@ import { styleKeyOf } from "../index/placekinds";
 import { formatDate, formatSpan } from "../dates/parser";
 import { activeAt } from "../index/EntityIndex";
 import { motionMs } from "../appearance";
-import { bindHover, cultureColor, el, emptyState, entityColor, glyph, hashColor, helpTip, icon, openEntity, ownershipLines, resourceUrl, showEntityMenu, typeColorVar, warningItem } from "./common";
+import { bindHover, cultureColor, el, emptyState, entityColor, glyph, hashColor, helpTip, icon, openEntity, ownershipLines, resourceUrl, showEntityMenu, TYPE_ICONS, typeColorVar, warningItem } from "./common";
 import { fillFrom, nearestSet, Pt, Raster, rasterize, simplifyOpen, simplifyRing, snapPoint, snapRing, traceOutlines } from "./fill";
 import { days, kmPerUnit, parseScale, planJourney, ROUTE_SPEED, SPEED_KM, TERRAIN_SLOW, terrainFactor, type RouteLine, type XY } from "./travel";
 import { totalPopulation } from "../index/tidy";
@@ -95,6 +95,8 @@ export interface MapOptions {
 	within?: string;
 	/** Where each person is on the time slider's date: at an event, on the road, or at home. Off unless asked for. */
 	showPeople?: boolean;
+	/** Creatures where they are found and objects where they are kept (on the time slider's date), as small badges by each place. Off unless asked for. */
+	showThings?: boolean;
 	/** Arrows for wars, campaigns, migrations and voyages that cross several places. */
 	showMovements?: boolean;
 	/** Crowded pins merge into numbered bubbles when zoomed out. */
@@ -225,6 +227,7 @@ export class MapRenderer {
 	private heatLayer?: L.LayerGroup;
 	private moveLayer?: L.LayerGroup;
 	private peopleLayer?: L.LayerGroup;
+	private thingLayer?: L.LayerGroup;
 	private noteLayer?: L.LayerGroup;
 	private warLayer?: L.LayerGroup;
 	private strategyLayer?: L.LayerGroup;
@@ -512,6 +515,7 @@ export class MapRenderer {
 		this.drawMovements();
 		this.drawWars();
 		this.drawPeople();
+		this.drawThings();
 		this.drawPins();
 		this.drawHeat();
 		this.drawNotes();
@@ -769,6 +773,7 @@ export class MapRenderer {
 		this.moveLayer = L.layerGroup().addTo(map);
 		this.warLayer = L.layerGroup().addTo(map);
 		this.peopleLayer = L.layerGroup().addTo(map);
+		this.thingLayer = L.layerGroup().addTo(map);
 		this.layers = L.layerGroup().addTo(map);
 		this.clusterLayer = L.layerGroup().addTo(map);
 		this.noteLayer = L.layerGroup().addTo(map);
@@ -5326,6 +5331,7 @@ export class MapRenderer {
 	redrawMoving() {
 		this.drawMovements();
 		this.drawPeople();
+		this.drawThings();
 	}
 
 	private drawPeople() {
@@ -5368,6 +5374,67 @@ export class MapRenderer {
 			L.marker(ll, { icon: L.divIcon({ html, className: "universeview-pin-wrap", iconSize: [0, 0] }), zIndexOffset: 900 })
 				.bindTooltip(names.length > 8 ? `${names.slice(0, 8).join(", ")} and ${names.length - 8} more` : names.join(", "), { direction: "top", offset: [0, -10] })
 				.on("click", (evt: L.LeafletMouseEvent) => openEntity(this.plugin, people.length === 1 || !place ? people[0].key : place, evt.originalEvent))
+				.addTo(layer);
+		}
+	}
+
+	// ---- Creatures and objects -------------------------------------------------------------------
+
+	/**
+	 * Where an object or creature is: an object's dated `places:` entry for the slider's date (with no
+	 * date set, the latest one), else the places its note names.
+	 */
+	private thingPlaces(e: Entity, at: number | undefined): string[] {
+		const hist = e.placeHistory ?? [];
+		if (!hist.length) return e.places.map((p) => p.key);
+		if (at === undefined) {
+			const latest = hist.reduce((a, b) => ((b.from?.start ?? -Infinity) >= (a.from?.start ?? -Infinity) ? b : a));
+			return [latest.ref.key];
+		}
+		return hist.filter((h) => (!h.from || h.from.start <= at) && (!h.to || h.to.end >= at)).map((h) => h.ref.key);
+	}
+
+	/** A small badge by each place holding creatures or objects: one chip per kind with a count; a click opens the note, or a menu when there are several. */
+	private drawThings() {
+		const layer = this.thingLayer;
+		if (!layer) return;
+		layer.clearLayers();
+		if (!this.options.showThings) return;
+		const idx = this.plugin.index;
+		const at = this.options.at;
+		const within = this.withinSet();
+		const spots = new Map<string, { ll: L.LatLng; things: Entity[] }>();
+		for (const e of [...idx.all("creature"), ...idx.all("object")]) {
+			if ((at !== undefined && !idx.existsAt(e, at)) || !this.seen(e.key)) continue;
+			if (this.options.folder && !e.path.startsWith(this.options.folder + "/")) continue;
+			for (const key of new Set(this.thingPlaces(e, at))) {
+				if (within && !within.has(key)) continue;
+				const ll = spots.get(key)?.ll ?? this.latLngOf(key);
+				if (!ll) continue;
+				const spot = spots.get(key) ?? { ll, things: [] };
+				spot.things.push(e);
+				spots.set(key, spot);
+			}
+		}
+		for (const { ll, things } of spots.values()) {
+			const html = el("div", { cls: "uv-thing-badge" });
+			for (const type of ["creature", "object"] as const) {
+				const n = things.filter((t) => t.type === type).length;
+				if (!n) continue;
+				const chip = el("span", { cls: `uv-thing-chip is-${type}` }, html);
+				icon(chip, TYPE_ICONS[type]);
+				if (n > 1) el("span", { text: String(n) }, chip);
+			}
+			const names = things.map((t) => t.name);
+			L.marker(ll, { icon: L.divIcon({ html, className: "universeview-pin-wrap", iconSize: [0, 0] }), zIndexOffset: 850 })
+				.bindTooltip(names.length > 8 ? `${names.slice(0, 8).join(", ")} and ${names.length - 8} more` : names.join(", "), { direction: "top", offset: [0, -14] })
+				.on("click", (evt: L.LeafletMouseEvent) => {
+					L.DomEvent.stop(evt);
+					if (things.length === 1) return openEntity(this.plugin, things[0].key, evt.originalEvent);
+					const menu = new Menu();
+					for (const t of things) menu.addItem((item) => item.setTitle(t.name).setIcon(TYPE_ICONS[t.type]).onClick(() => openEntity(this.plugin, t.key)));
+					menu.showAtMouseEvent(evt.originalEvent);
+				})
 				.addTo(layer);
 		}
 	}
