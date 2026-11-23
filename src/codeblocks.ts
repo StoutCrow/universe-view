@@ -306,6 +306,7 @@ export function registerCodeBlocks(plugin: UniverseViewPlugin) {
 			fadeSmall: bool(c["fade-small"] ?? c.fade, true),
 			tiers: bool(c.tiers, true),
 			heatmap: bool(c.heatmap ?? c["heat-map"], false),
+			showThings: bool(c.things ?? c.creatures ?? c.objects, false),
 			colorBy: (["culture", "category", "region", "type"] as const).find((x) => x === str(c["color-by"] ?? c.colors)),
 		}, true);
 	}, 400);

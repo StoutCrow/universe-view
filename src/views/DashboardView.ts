@@ -39,7 +39,7 @@ export const MODULE_KINDS: Record<ModuleKind, KindInfo> = {
 	calendar: { name: "Calendar", icon: "calendar-days", block: "chronicle-calendar", view: "chronicle-calendar", w: 7, h: 10, help: "folder: World\nmode: month (or year, agenda)\ndate: 14 Highsun SE 3" },
 	houses: { name: "Houses", icon: "castle", block: "chronicle-houses", view: "chronicle-houses", w: 12, h: 10, help: "folder: World\ndescent: true\nall: false" },
 	org: { name: "Organisation chart", icon: "network", block: "chronicle-org", view: "chronicle-orgchart", w: 12, h: 12, subject: { key: "root", label: "Organisation", types: ["culture"] }, help: "root: Organisation name\nat: 1250\nmembers: true\ntimeline: true\nrelations: true\nties: true\ndepth: 3" },
-	map: { name: "Map", icon: "map", block: "chronicle-map", view: "chronicle-map", w: 7, h: 11, subject: { key: "map", label: "Map", types: ["map"] }, help: "map: Map note name (or world)\ntrace: Person name\nfocus: Place name\nevents-only: true" },
+	map: { name: "Map", icon: "map", block: "chronicle-map", view: "chronicle-map", w: 7, h: 11, subject: { key: "map", label: "Map", types: ["map"] }, help: "map: Map note name (or world)\ntrace: Person name\nfocus: Place name\nevents-only: true\nthings: true" },
 	stats: { name: "At a glance", icon: "gauge", w: 12, h: 3, help: "(no options)" },
 	events: { name: "Key events", icon: "calendar-clock", view: "chronicle-timeline", w: 5, h: 6, help: "limit: 10" },
 	people: { name: "People", icon: "users", view: "chronicle-family", w: 5, h: 6, help: "limit: 10" },
