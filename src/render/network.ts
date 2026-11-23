@@ -90,6 +90,8 @@ export class NetworkRenderer {
 	private nodes: Node[] = [];
 	private links: Link[] = [];
 	private fitted = false;
+	/** Which names show at this zoom (0 from afar, 2 close up); see `lodFor`. */
+	private lod = -1;
 	private resizeObs: ResizeObserver;
 	/** Drag from one note to another to tie them (also with Alt held, any time). */
 	linkMode = false;
@@ -104,7 +106,7 @@ export class NetworkRenderer {
 		this.root = el("div", { cls: "universeview-network" + (embedded ? " is-embedded" : "") }, container);
 		this.svgEl = svg("svg", { class: "universeview-canvas" }, this.root);
 		this.layer = svg("g", {}, this.svgEl);
-		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.1, maxScale: 4 });
+		this.pz = new PanZoom(this.svgEl, this.layer, { requireModifier: embedded, minScale: 0.1, maxScale: 4, onChange: (t) => this.lodFor(t.k) });
 		if (embedded) {
 			const box = el("div", { cls: "universeview-embed-controls" }, this.root);
 			iconButton(box, "zoom-in", "Zoom in", () => this.pz.zoomBy(1.3));
@@ -127,6 +129,17 @@ export class NetworkRenderer {
 
 	zoomBy(f: number) {
 		this.pz.zoomBy(f);
+	}
+
+	/**
+	 * Names by zoom, so a fitted graph stays readable on a phone or a big vault: from afar only the
+	 * best-connected notes are named, more as you zoom in. Hovered, lit and picked notes keep theirs (CSS).
+	 */
+	private lodFor(k: number) {
+		const level = k < 0.75 ? 0 : k < 0.9 ? 1 : 2;
+		if (level === this.lod) return;
+		this.lod = level;
+		this.root.dataset.lod = String(level);
 	}
 
 	fit() {
@@ -273,8 +286,12 @@ export class NetworkRenderer {
 				this.pick(undefined);
 			});
 		}
+		// Name rank: the 8 best-connected notes are named from afar, the next 16 from mid zoom, the rest close up.
+		const order = new Map([...this.nodes].sort((a, b) => b.degree - a.degree).map((n, i) => [n.key, i]));
 		for (const n of this.nodes) {
-			const g = svg("g", { class: `universeview-net-node type-${n.entity.type}`, "data-universeview-drag": "1", "data-key": n.key }, nodeLayer);
+			const i = order.get(n.key) ?? 0;
+			const rank = i < 8 ? 0 : i < 24 ? 1 : 2;
+			const g = svg("g", { class: `universeview-net-node type-${n.entity.type}`, "data-universeview-drag": "1", "data-key": n.key, "data-rank": String(rank) }, nodeLayer);
 			if (n.key === this.options.focus) g.classList.add("is-focus");
 			if (n.inactive) g.classList.add("is-inactive");
 			if (this.options.pinned?.[n.key]) g.classList.add("is-pinned");
@@ -501,6 +518,7 @@ export class NetworkRenderer {
 
 	private simulate(alpha: number) {
 		const n = this.nodes.length;
+		const aspect = this.root.clientWidth && this.root.clientHeight ? this.root.clientWidth / this.root.clientHeight : 1;
 		this.sim = forceSimulation<Node, Link>(this.nodes)
 			.force(
 				"link",
@@ -512,8 +530,9 @@ export class NetworkRenderer {
 			.force("charge", forceManyBody<Node>().strength((d) => -170 - d.degree * 30))
 			.force("collide", forceCollide<Node>().radius((d) => d.r + 22))
 			.force("center", forceCenter(0, 0))
-			.force("x", forceX(0).strength(0.04))
-			.force("y", forceY(0).strength(0.04))
+			// Pulled in harder across the short side, so the layout takes the view's shape (tall on a phone, wide on a monitor) and fits larger.
+			.force("x", forceX(0).strength(0.04 * Math.min(2.5, Math.max(1, 1 / aspect))))
+			.force("y", forceY(0).strength(0.04 * Math.min(2.5, Math.max(1, aspect))))
 			.alpha(alpha)
 			.alphaDecay(n > 400 ? 0.05 : 0.028)
 			.on("tick", () => this.tick());

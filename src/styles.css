@@ -817,6 +817,11 @@ body.universeview-gender-tint .universeview-card.gender-f {
 .universeview-net-node.type-culture .universeview-net-label {
 	font-weight: var(--font-semibold);
 }
+/* Names by zoom (`lodFor` in render/network.ts): from afar only rank 0, at mid zoom ranks 0 and 1; hovered, lit, picked and focused notes keep their names. */
+.universeview-network[data-lod="0"] .universeview-net-node:not([data-rank="0"]):not(:hover):not(.is-lit):not(.is-picked):not(.is-focus) .universeview-net-label,
+.universeview-network[data-lod="1"] .universeview-net-node[data-rank="2"]:not(:hover):not(.is-lit):not(.is-picked):not(.is-focus) .universeview-net-label {
+	display: none;
+}
 .universeview-net-node:hover .universeview-net-shape {
 	stroke: var(--text-accent);
 }
