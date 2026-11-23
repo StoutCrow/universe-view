@@ -611,6 +611,13 @@ body.is-mobile button.uv-hub-section {
 body.is-mobile .uv-hub-page {
 	padding: 16px 14px 40px;
 }
+/* The version line would take a row of its own under the top tabs; About still shows it. Page tabs match the top tabs' height, so two rows of them take less room. */
+body.is-mobile .uv-hub-version {
+	display: none;
+}
+body.is-mobile button.uv-hub-tab {
+	height: 36px;
+}
 /* The running version and build number, at the foot of the side tabs. */
 .uv-hub-version {
 	margin-top: auto;
