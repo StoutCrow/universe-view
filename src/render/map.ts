@@ -1098,7 +1098,7 @@ export class MapRenderer {
 		const live = place.cultures.filter((c) => this.options.at === undefined || activeAt(c, this.options.at));
 		const byRow = new Map(groupsByRow(this.plugin, live));
 		const owned = ownershipLines(this.plugin, box, place.key, this.options.at, "universeview-popup-meta universeview-owner");
-		// Who lives here and what they speak and believe, then the creatures found here (in this place or any inside it).
+		// Who lives here and what they speak and believe, then the creatures found and objects kept here (in this place or any inside it).
 		const listRow = (label: string, refs: { key: string; name: string }[]) => {
 			if (!refs.length) return;
 			const row = el("div", { cls: "universeview-popup-meta universeview-popup-row" }, box);
@@ -1120,6 +1120,8 @@ export class MapRenderer {
 			return false;
 		};
 		listRow("Creatures", idx.all("creature").filter((c) => c.places.some((p) => inside(p.key))).map((c) => ({ key: c.key, name: c.name })));
+		// Objects here on the slider's date (kept here, or with someone who lives here), else where they last were.
+		listRow("Objects", idx.all("object").filter((o) => (this.options.at === undefined || idx.existsAt(o, this.options.at)) && this.thingPlaces(o, this.options.at).some(inside)).map((o) => ({ key: o.key, name: o.name })));
 		const pop = totalPopulation(this.plugin.index, place.key);
 		if (pop) el("div", { cls: "universeview-popup-meta", text: `Population ${pop.total.toLocaleString()}${pop.counted > 1 ? ` (${pop.counted} places)` : ""}` }, box);
 		if (place.summary) el("div", { cls: "universeview-popup-summary", text: place.summary }, box);
