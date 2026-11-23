@@ -29,12 +29,12 @@
     "@types/node": "^20.14.0",
     "esbuild": "^0.21.5",
     "eslint": "^9.39.5",
-    "eslint-plugin-obsidianmd": "^0.4.2",
+    "eslint-plugin-obsidianmd": "^0.6.0",
     "lucide": "^0.344.0",
     "obsidian": "^1.5.7",
     "tslib": "^2.6.3",
     "typescript": "^5.4.5",
-    "typescript-eslint": "^8.72.1",
+    "typescript-eslint": "^8.73.0",
     "yaml": "^2.4.5"
   },
   "dependencies": {
